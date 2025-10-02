@@ -1,6 +1,8 @@
 import sys
 import numpy as np
 import pyqtgraph as pg
+import threading
+import time
 from PyQt6 import QtWidgets, uic
 
 class MyGraphWindow(QtWidgets.QMainWindow):
@@ -104,6 +106,19 @@ class MyGraphWindow(QtWidgets.QMainWindow):
             # Apply initial lock state immediately
             _set_tab_lock(self.chkLockTab.isChecked())
 
+        # Start a background daemon thread that prints "hello world" every second
+        # This uses time.sleep but won't block the GUI because it's running in a
+        # separate daemon thread. We use an Event to signal shutdown on close.
+        self._stop_event = threading.Event()
+
+        def _printer():
+            while not self._stop_event.is_set():
+                print("hello world")
+                time.sleep(1)
+
+        t = threading.Thread(target=_printer, daemon=True)
+        t.start()
+
     def setup_graphs(self):
         """Initializes each graph with a fixed range and disables user scaling."""
         for i, graph in enumerate(self.graphs):
@@ -147,6 +162,14 @@ class MyGraphWindow(QtWidgets.QMainWindow):
         
         # Update the plot line's data.
         self.plots[index].setData(self.x_data, y_data)
+
+    def closeEvent(self, event):
+        """Signal background threads to stop when the window is closing."""
+        try:
+            self._stop_event.set()
+        except Exception:
+            pass
+        super().closeEvent(event)
         
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
