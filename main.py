@@ -3,14 +3,26 @@ import numpy as np
 import pyqtgraph as pg
 import threading
 import time
-from PyQt6 import QtWidgets, uic
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import QUiLoader
+from PySide6.QtCore import QFile
 
 class MyGraphWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         
-        # Load the UI file.
-        uic.loadUi('POC.ui', self)
+        # Load the UI file using PySide6's QUiLoader so the UI is available
+        # as children of this QMainWindow (so findChild will work).
+        ui_file = QFile('POC.ui')
+        if ui_file.open(QFile.ReadOnly):
+            loader = QUiLoader()
+            try:
+                loader.load(ui_file, self)
+            except Exception as e:
+                print(f"Warning: failed to load POC.ui: {e}")
+            ui_file.close()
+        else:
+            print('Warning: could not open POC.ui')
 
         # Helper to get a widget by attribute name, then by findChild
         def _get_widget(cls, name):
