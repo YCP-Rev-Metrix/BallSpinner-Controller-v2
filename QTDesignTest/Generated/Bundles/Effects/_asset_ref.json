@@ -1,0 +1,29 @@
+{
+    "designer/images/material.png": [
+        "ShockwaveEffect.qml"
+    ],
+    "designer/images/material16.png": [
+        "ShockwaveEffect.qml"
+    ],
+    "designer/images/material@2x.png": [
+        "ShockwaveEffect.qml"
+    ],
+    "designer/shockwave.metainfo": [
+        "ShockwaveEffect.qml"
+    ],
+    "images/debris.png": [
+        "ShockwaveEffect.qml"
+    ],
+    "shaders/debris.frag": [
+        "ShockwaveEffect.qml"
+    ],
+    "shaders/debris.vert": [
+        "ShockwaveEffect.qml"
+    ],
+    "shaders/shockwave.frag": [
+        "ShockwaveEffect.qml"
+    ],
+    "shaders/shockwave.vert": [
+        "ShockwaveEffect.qml"
+    ]
+}

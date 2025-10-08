@@ -1,0 +1,17 @@
+{
+    "designer/aluminium.metainfo": [
+        "AluminiumMaterial.qml"
+    ],
+    "designer/images/material.png": [
+        "AluminiumMaterial.qml"
+    ],
+    "designer/images/material16.png": [
+        "AluminiumMaterial.qml"
+    ],
+    "designer/images/material@2x.png": [
+        "AluminiumMaterial.qml"
+    ],
+    "images/Metal029_2K_Displacement.png": [
+        "AluminiumMaterial.qml"
+    ]
+}

@@ -1,0 +1,47 @@
+# Build output
+build/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.qm
+*.qrc.cpp
+*.moc
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+
+# Qt Creator specific files (if using Qt Creator alongside Design Studio)
+*.user
+*.pro.user
+*.creator
+*.qmlproject.user
+
+# Qt Design Studio specific files
+.qmlproject.user.*
+*.qmlc
+*.qmlcache
+*.qmltypes
+
+# Temporary files
+*~
+*.bak
+*.swp
+*.swo
+*.tmp
+*.log
+
+# macOS specific files
+.DS_Store
+
+# Windows specific files
+Thumbs.db
+Desktop.ini
+
+# IDE-specific files (if applicable)
+.vscode/
+.idea/
