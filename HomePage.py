@@ -3,6 +3,8 @@ import pyqtgraph as pg
 import numpy as np
 import threading
 import time
+from CloudTest import CloudTest
+
 
 class HomePage(QtWidgets.QMainWindow):
     def __init__(self):
@@ -10,7 +12,7 @@ class HomePage(QtWidgets.QMainWindow):
         
         # Load the UI file.
         uic.loadUi('POC.ui', self)
-
+  
         # Helper to get a widget by attribute name, then by findChild
         def _get_widget(cls, name):
             w = getattr(self, name, None)
