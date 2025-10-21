@@ -22,6 +22,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         tiltGraph = self.findChild(pg.PlotWidget, 'graph2')
         angleGraph = self.findChild(pg.PlotWidget, 'graph3')
 
+
         #Graph configurations
 
         #Spin Motor graph setup

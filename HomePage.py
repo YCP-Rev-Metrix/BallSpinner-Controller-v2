@@ -20,7 +20,9 @@ class HomePage(QtWidgets.QMainWindow):
         # The DiagnosticModePage is embedded as a promoted/custom widget in the UI.
         # In the HomePage.ui provided the objectName for that widget is likely 'widget_2' or 'DiagnosticModePage'.
         # Try to find it by the standard object name used in the UI.
-        self.diagnosticPage = self.findChild(QtWidgets.QWidget, 'DiagnosticModePage') or self.findChild(QtWidgets.QWidget, 'widget_2')
+        self.diagnosticPage = self.findChild(QtWidgets.QWidget, 'DiagnosticModePage')
+        self.setFixedSize(1920, 1080)  # Set fixed window size to 1920x1080
+
        
 
     def on_tab_changed(self, index):
