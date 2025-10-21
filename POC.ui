@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>932</width>
+    <height>920</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -43,6 +43,13 @@
         <item row="1" column="5">
          <widget class="PlotWidget" name="graph3" native="true"/>
         </item>
+        <item row="0" column="3">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Prototype Diagnostic Mode</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="tab_2">
@@ -52,14 +59,48 @@
        <widget class="QCheckBox" name="chkLockTab">
         <property name="geometry">
          <rect>
-          <x>210</x>
-          <y>30</y>
-          <width>321</width>
-          <height>141</height>
+          <x>70</x>
+          <y>50</y>
+          <width>731</width>
+          <height>31</height>
          </rect>
         </property>
         <property name="text">
          <string>LockTab</string>
+        </property>
+       </widget>
+       <widget class="QWidget" name="horizontalLayoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>50</x>
+          <y>120</y>
+          <width>801</width>
+          <height>351</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_3">
+         <item row="0" column="0">
+          <widget class="InteractiveSineWave" name="BrandonWidget_2" native="true"/>
+         </item>
+         <item row="0" column="2">
+          <widget class="InteractiveSineWave" name="BrandonWidget" native="true"/>
+         </item>
+         <item row="0" column="1">
+          <widget class="InteractiveSineWave" name="BrandonWidget_3" native="true"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>350</x>
+          <y>20</y>
+          <width>211</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Prototype Shot Page</string>
         </property>
        </widget>
       </widget>
@@ -72,7 +113,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>932</width>
      <height>33</height>
     </rect>
    </property>
@@ -84,6 +125,12 @@
    <class>PlotWidget</class>
    <extends>QWidget</extends>
    <header>pyqtgraph</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>InteractiveSineWave</class>
+   <extends>QWidget</extends>
+   <header>InteractiveSineWave</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
