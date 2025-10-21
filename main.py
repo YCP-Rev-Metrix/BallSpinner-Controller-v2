@@ -6,7 +6,6 @@ from HomePage import HomePage
 # Initialize logging at application startup
 setup_logging()
 
-count = 0
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])

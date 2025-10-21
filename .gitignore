@@ -27,6 +27,7 @@ htmlcov/
 # PyQt/Qt specific ignores
 # Generated UI files (from .ui files using pyuic6)
 *.ui.py
+*_ui.py
 
 # Resource files (from .qrc files using pyrcc6)
 *_rc.py
