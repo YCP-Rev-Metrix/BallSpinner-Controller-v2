@@ -1,5 +1,5 @@
 from PyQt6 import QtWidgets, uic
-from iCloud import api_get_test_data
+from CloudAPI import api_get_test_data
 
 class CloudTest(QtWidgets.QWidget):
     def __init__(self, parent=None):
