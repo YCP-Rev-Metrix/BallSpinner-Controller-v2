@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>932</width>
-    <height>920</height>
+    <width>930</width>
+    <height>828</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,7 +18,7 @@
     <item row="0" column="1">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -159,8 +159,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>932</width>
-     <height>19</height>
+     <width>930</width>
+     <height>33</height>
     </rect>
    </property>
   </widget>
@@ -168,15 +168,15 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PlotWidget</class>
-   <extends>QWidget</extends>
-   <header>pyqtgraph</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>InteractiveSineWave</class>
    <extends>QWidget</extends>
    <header>InteractiveSineWave</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QWidget</extends>
+   <header>pyqtgraph</header>
    <container>1</container>
   </customwidget>
   <customwidget>
