@@ -86,9 +86,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
                     time.sleep(0.25)
                     continue
 
-                spinArray= np.append(spinArray, 400* 0.01 * self.spinDial.value())
-                tiltArray= np.append(tiltArray, 90* 0.01*self.tiltDial.value())
-                angleArray= np.append(angleArray,  45* 0.01 *self.angleDial.value())
+                spinArray= np.append(spinArray, 400* 0.01 * self.spinDial.value()) #max rpm 400
+                tiltArray= np.append(tiltArray, 90* 0.01*self.tiltDial.value()) #max tilt 90 degrees
+                angleArray= np.append(angleArray,  45* 0.01 *self.angleDial.value()) #`max angle 45 degrees`
                 xArray= np.append(xArray, xArray[-1]+0.25)
 
                 spinGraph.setXRange(max(0, xArray[-1]-3), xArray[-1])
