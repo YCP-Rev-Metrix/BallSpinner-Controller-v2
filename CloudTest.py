@@ -1,4 +1,5 @@
 from PyQt6 import QtWidgets, uic
+from backend.cloud_api.CloudAPI import api_get_test_data
 
 class CloudTest(QtWidgets.QWidget):
     def __init__(self, parent=None):
@@ -11,9 +12,12 @@ class CloudTest(QtWidgets.QWidget):
     
     def ask_cloud_for_6(self):
         """Handle the 'Ask Cloud for 6' button click"""
-        # Update the label with some response
-        self.label.setText("Cloud says: 6")
-        print("Asked cloud for 6")
+        #Ask the cloud for the test data
+        status_code, data = api_get_test_data()
+        if status_code == 200:
+            self.label.setText(str(data))
+        else:
+            self.label.setText("Error: " + data)
     
     def clear_label(self):
         """Handle the 'Clear Label' button click"""
