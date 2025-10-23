@@ -1,84 +1,45 @@
-# This file is used to ignore files which are generated
-# ----------------------------------------------------------------------------
-
-*~
-*.autosave
-*.a
-*.core
-*.moc
-*.o
-*.obj
-*.orig
-*.rej
-*.so
-*.so.*
-*_pch.h.cpp
-*_resource.rc
-*.qm
-.#*
-*.*#
-core
-!core/
-tags
-.DS_Store
-.directory
-*.debug
-Makefile*
-*.prl
-*.app
-moc_*.cpp
-ui_*.h
-qrc_*.cpp
-Thumbs.db
-*.res
-*.rc
-/.qmake.cache
-/.qmake.stash
-
-# qtcreator generated files
-*.pro.user*
-*.qbs.user*
-CMakeLists.txt.user*
-
-# xemacs temporary files
-*.flc
-
-# Vim temporary files
-.*.swp
-
-# Visual Studio generated files
-*.ib_pdb_index
-*.idb
-*.ilk
-*.pdb
-*.sln
-*.suo
-*.vcproj
-*vcproj.*.*.user
-*.ncb
-*.sdf
-*.opensdf
-*.vcxproj
-*vcxproj.*
-
-# MinGW generated files
-*.Debug
-*.Release
-
-# Python byte code
+# Python-specific ignores
+__pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+build/
+dist/
+*.egg-info/
+.tox/
+.pytest_cache/
+.mypy_cache/
+.hypothesis/
+.coverage
+htmlcov/
 
-# Binaries
-# --------
-*.dll
-*.exe
+# Editor/IDE specific ignores
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
 
-# Directories with generated files
-.moc/
-.obj/
-.pch/
-.rcc/
-.uic/
-/build*/
+# PyQt/Qt specific ignores
+# Generated UI files (from .ui files using pyuic6)
+*.ui.py
+*_ui.py
 
-venv/  
+# Resource files (from .qrc files using pyrcc6)
+*_rc.py
+
+# Build directories for compiled resources or modules
+# Adjust if your build process creates specific directories
+# e.g., if you compile C++ extensions with SIP or Shiboken
+# build_qt/
+# release/
+# debug/
+
+# Log files, temporary files, etc.
+*.log
+*.tmp
+temp/

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1512</width>
+    <height>892</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout_4">
+    <item row="0" column="0">
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tabDiagnosticMode">
+       <attribute name="title">
+        <string>Diagnostic Mode</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <widget class="DiagnosticModePage" name="widget_2" native="true"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabShotMode">
+       <attribute name="title">
+        <string>Shot Mode</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Prototype Shot Page</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QGridLayout" name="gridLayout_3">
+          <item row="0" column="0">
+           <widget class="InteractiveSineWave" name="BrandonWidget_2" native="true"/>
+          </item>
+          <item row="0" column="1">
+           <widget class="InteractiveSineWave" name="BrandonWidget_3" native="true"/>
+          </item>
+          <item row="0" column="2">
+           <widget class="InteractiveSineWave" name="BrandonWidget" native="true"/>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabCloud">
+       <attribute name="title">
+        <string>Page</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="CloudTest" name="cloudTest" native="true"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabAnalysisMode">
+       <attribute name="title">
+        <string>Analysis mode</string>
+       </attribute>
+       <widget class="AnalysisModePage" name="widget" native="true">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>891</width>
+          <height>811</height>
+         </rect>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1512</width>
+     <height>33</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>InteractiveSineWave</class>
+   <extends>QWidget</extends>
+   <header>InteractiveSineWave</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>AnalysisModePage</class>
+   <extends>QWidget</extends>
+   <header>AnalysisModePage</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>DiagnosticModePage</class>
+   <extends>QWidget</extends>
+   <header>DiagnosticModePage</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CloudTest</class>
+   <extends>QWidget</extends>
+   <header>CloudTest</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
