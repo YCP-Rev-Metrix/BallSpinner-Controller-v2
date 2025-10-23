@@ -11,12 +11,21 @@ angleArray = np.array([0.0])
 xArray = np.array([0.0])
 
 
+
+
 class DiagnosticModePage(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         
         # Load the UI file.
         uic.loadUi('DiagnosticModePage.ui', self)
+        #Buttons
+        btnStart = self.findChild(QtWidgets.QPushButton, 'btnStart')
+        btnStop = self.findChild(QtWidgets.QPushButton, 'btnStop')
+        btnClear = self.findChild(QtWidgets.QPushButton, 'btnClear')
+
+        
+
         # Additional initialization code can go here
         spinGraph = self.findChild(pg.PlotWidget, 'graph1')
         tiltGraph = self.findChild(pg.PlotWidget, 'graph2')
@@ -32,7 +41,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.spinCurve = spinGraph.plot(xArray, spinArray, pen=pg.mkPen(color='b', width=2)) #Extra refrence allows to be manipulated in thread
         spinGraph.setYRange(0,420)
         spinGraph.setMouseEnabled(x=False, y=False)
-        #Tilit Motor graph setup
+        #Tilt Motor graph setup
         tiltGraph.setTitle("Diagnostic Tilt Graph")
         tiltGraph.setLabel('left', 'Tilt Angle', units='Degrees')
         tiltGraph.setLabel('bottom', 'Time', units='s')
@@ -55,7 +64,11 @@ class DiagnosticModePage(QtWidgets.QWidget):
         # Simulate generating data in a separate thread
         
         # control flag: only update while active (set by HomePage)
-        self.active = True
+        self.active = False
+
+        btnStart.clicked.connect(lambda: self.set_active(True))
+        btnStop.clicked.connect(lambda: self.set_active(False))
+        btnClear.clicked.connect(lambda: clear_graphs())
 
         # public setter used by HomePage.on_tab_changed
         def set_active(v: bool):
@@ -88,9 +101,19 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 self.angleCurve.setData(xArray, angleArray)
 
                 time.sleep(0.25) # 4x a second
+        def clear_graphs():
+            global spinArray, tiltArray, angleArray, xArray
+            spinArray = np.array([0.0])
+            tiltArray = np.array([0.0])
+            angleArray = np.array([0.0])
+            xArray = np.array([0.0])
+            self.spinCurve.setData(xArray, spinArray)
+            self.tiltCurve.setData(xArray, tiltArray)
+            self.angleCurve.setData(xArray, angleArray)
 
         t = threading.Thread(target=_Generator, daemon=True)
         t.start()
+
 
 
 

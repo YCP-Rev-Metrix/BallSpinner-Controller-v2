@@ -15,7 +15,7 @@ class HomePage(QtWidgets.QMainWindow):
         uic.loadUi('HomePage.ui', self)
         
         tab = self.findChild(QtWidgets.QTabWidget, 'tabWidget')
-        tab.currentChanged.connect(self.on_tab_changed)
+        #tab.currentChanged.connect(self.on_tab_changed)
 
         # The DiagnosticModePage is embedded as a promoted/custom widget in the UI.
         # In the HomePage.ui provided the objectName for that widget is likely 'widget_2' or 'DiagnosticModePage'.
@@ -24,7 +24,7 @@ class HomePage(QtWidgets.QMainWindow):
         self.setFixedSize(1920, 1080)  # Set fixed window size to 1920x1080
 
        
-
+    """'''
     def on_tab_changed(self, index):
         # make sure diagnostic updates only run when the Diagnostic tab is selected
         # In HomePage.ui the Diagnostic Mode tab is usually index 0; adjust if different.
@@ -40,7 +40,7 @@ class HomePage(QtWidgets.QMainWindow):
                     setattr(diag, 'active', is_diagnostic)
             else:
                 setattr(diag, 'active', is_diagnostic)
-
+    '''"""
        
 
     def closeEvent(self, event):
