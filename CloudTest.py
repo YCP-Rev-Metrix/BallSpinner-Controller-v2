@@ -1,5 +1,5 @@
 from PyQt6 import QtWidgets, uic
-from CloudAPI import api_get_test_data
+from backend.cloud_api.CloudAPI import api_get_test_data
 
 class CloudTest(QtWidgets.QWidget):
     def __init__(self, parent=None):

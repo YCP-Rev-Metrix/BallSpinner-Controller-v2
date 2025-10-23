@@ -2,7 +2,7 @@
 import requests
 import json
 from logs.logger_config import get_logger
-from iCloud import iCloud
+from .iCloud import iCloud
 # Get logger for this module
 logger = get_logger(__name__)
 
