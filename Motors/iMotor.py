@@ -20,7 +20,7 @@ class iMotor(metaclass=ABCMeta):
 
     # Turns on Motor at Specified Power (Duty Cycle)
     @abstractmethod
-    def start(self, dutyCycle = 100):
+    def start(self):
         pass
 
     @abstractmethod
@@ -28,7 +28,7 @@ class iMotor(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def changeSpeed(self, dutyCycle : int):
+    def changeSpeed(self, dutyCycle : float):
         pass
 
     @abstractmethod
