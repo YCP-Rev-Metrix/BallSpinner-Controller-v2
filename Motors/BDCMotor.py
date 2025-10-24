@@ -17,7 +17,7 @@ class BDCMotor(iMotor):
     targetPower = 0.0
     GPIO_Pin = 26; #GPIO Pin for the Motor
     motor = PWMOutputDevice(GPIO_Pin, frequency=FREQ)
-
+    pi = pigpio.pi()
      
     def __init__(self, GPIOPin : int):
         self.start(self)
@@ -28,32 +28,34 @@ class BDCMotor(iMotor):
     def disconnect(self, GPIOPin : int):
         pass
 
-    def set_pulse(pi):
+    def set_pulse():
         pi.set_servo_pulsewidth(PIN, int(currSpeed))
 
-    def arm(pi):
-        set_pulse(pi, MIN_THR)
+    def arm():
+        currSpeed = MIN_THR
+        set_pulse()
         time.sleep(ARM_TIME_S)
 
-    def disarm(pi):
-        set_pulse(pi, 0)
+    def disarm():
+        currSpeed = 0
+        self.set_pulse()
 
     # Turns on Motor at Specified Power (Duty Cycle)
-    def start(self):
-        pi = pigpio.pi()
-        if not pi.connected:
+    def start(self, rpm=1):
+        if not self.pi.connected:
             sys.stderr.write(
                 "pigpio daemon not running.\n"
                 "Start it with:  sudo systemctl start pigpiod\n"
                 "Or enable it:  sudo systemctl enable --now pigpiod\n"
             )
             sys.exit(1)
-        arm(pi)
-        time.sleep(2)
+        else :
+            self.arm()
+            time.sleep(2)
 
 
     def stop(self):
-        disarm(pi)
+        self.disarm()
         pi.stop()
 
     def changeSpeed(self, dutyCycle : float):
@@ -70,7 +72,7 @@ class BDCMotor(iMotor):
                 currSpeed += STEP
                 if currSpeed > targetSpeed:
                     currSpeed = targetSpeed
-                set_pulse(pi, currSpeed)
+                self.set_pulse(currSpeed)
                 time.sleep(0.01)
             else:
                 break
