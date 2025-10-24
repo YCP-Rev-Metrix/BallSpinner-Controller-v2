@@ -22,6 +22,11 @@ class BDCMotor(iMotor):
     def __init__(self, GPIOPin : int):
         start(self)
         
+    def connect(self, GPIOPin : int):
+        pass
+
+    def disconnect(self, GPIOPin : int):
+        pass
 
     def set_pulse(pi):
         pi.set_servo_pulsewidth(PIN, int(currSpeed))
