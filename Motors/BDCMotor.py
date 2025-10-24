@@ -20,7 +20,7 @@ class BDCMotor(iMotor):
 
      
     def __init__(self, GPIOPin : int):
-        start(self)
+        self.start(self)
         
     def connect(self, GPIOPin : int):
         pass
