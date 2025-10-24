@@ -3,12 +3,14 @@ from gpiozero import PWMOutputDevice
 import time
 import pigpio
 
-MIN_THR = 0.050
-MID_THR = 0.075
-MAX_THR = 0.100
-STEP = 0.002   # ~2 per-mille
+MIN_THR = 1050
+MID_THR = 1500
+MAX_THR = 2000
+STEP = 2   # ~2 per-mille
 FREQ = 50
 ARM_TIME_S = 3.0
+pi = pigpio.pi()
+
 
 class BDCMotor(iMotor):
     motorID = 0
@@ -17,8 +19,8 @@ class BDCMotor(iMotor):
     targetPower = 0.0
     GPIO_Pin = 26; #GPIO Pin for the Motor
     motor = PWMOutputDevice(GPIO_Pin, frequency=FREQ)
-    pi = pigpio.pi()
-     
+    pi=pigpio.pi()
+
     def __init__(self, GPIOPin : int):
         self.start(self)
         
@@ -28,17 +30,22 @@ class BDCMotor(iMotor):
     def disconnect(self, GPIOPin : int):
         pass
 
-    def set_pulse():
-        pi.set_servo_pulsewidth(PIN, int(currSpeed))
+    def clamp(self, x, lo, hi):
+        return lo if x < lo else hi if x > hi else x
 
-    def arm():
-        currSpeed = MIN_THR
-        set_pulse()
+    def set_pulse(self):
+        pi.set_servo_pulsewidth(self.GPIO_Pin, int(self.currSpeed))
+
+    def arm(self, pi):
+        self.currSpeed = MIN_THR
+        self.set_pulse()
         time.sleep(ARM_TIME_S)
+        print("armed")
 
-    def disarm():
+    def disarm(self, pi):
         currSpeed = 0
         self.set_pulse()
+        pi.stop()
 
     # Turns on Motor at Specified Power (Duty Cycle)
     def start(self, rpm=1):
@@ -50,29 +57,42 @@ class BDCMotor(iMotor):
             )
             sys.exit(1)
         else :
-            self.arm()
+            self.arm(self)
             time.sleep(2)
 
 
     def stop(self):
-        self.disarm()
+        self.disarm(pi)
         pi.stop()
 
     def changeSpeed(self, dutyCycle : float):
-        targetSpeed = self.clamp(dutyCycle/8000+0.05, MIN_THR, MAX_THR)
-        rampUp(self)
+        print("Changing speed to ", dutyCycle)
+        self.targetSpeed = self.clamp(dutyCycle*2.375+1050, MIN_THR, MAX_THR)
+        if(self.targetSpeed>self.currSpeed) : self.rampUp() 
+        else : self.rampDown()
 
 
     def getCurrentSpeed(self):
-        return currSpeed
+        return self.currSpeed
 
     def rampUp(self):
         while True:
-            if currSpeed < targetSpeed:
-                currSpeed += STEP
-                if currSpeed > targetSpeed:
-                    currSpeed = targetSpeed
-                self.set_pulse(currSpeed)
+            if self.currSpeed < self.targetSpeed:
+                self.currSpeed += STEP
+                if self.currSpeed > self.targetSpeed:
+                    self.currSpeed = self.targetSpeed
+                self.set_pulse()
+                time.sleep(0.01)
+            else:
+                break
+
+    def rampDown(self):
+        while True:
+            if self.currSpeed > self.targetSpeed:
+                self.currSpeed -= STEP
+                if self.currSpeed < self.targetSpeed:
+                    self.currSpeed = self.targetSpeed
+                self.set_pulse()
                 time.sleep(0.01)
             else:
                 break
