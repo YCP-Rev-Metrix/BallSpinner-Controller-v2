@@ -1,4 +1,5 @@
 from PyQt6 import QtWidgets, uic
+from Motors.BDCMotor import BDCMotor
 import pyqtgraph as pg
 import numpy as np
 import threading
@@ -9,7 +10,7 @@ spinArray = np.array([0.0])
 tiltArray = np.array([0.0])
 angleArray = np.array([0.0])
 xArray = np.array([0.0])
-
+Motor = BDCMotor(26)
 
 
 
@@ -67,7 +68,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.active = False
 
         btnStart.clicked.connect(lambda: self.set_active(True))
+        btnStart.clicked.connect(lambda: Motor.start())
         btnStop.clicked.connect(lambda: self.set_active(False))
+        btnStop.clicked.connect(lambda: Motor.stop())
         btnClear.clicked.connect(lambda: clear_graphs())
 
         # public setter used by HomePage.on_tab_changed
@@ -91,6 +94,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 angleArray= np.append(angleArray,  45* 0.01 *self.angleDial.value()) #`max angle 45 degrees`
                 xArray= np.append(xArray, xArray[-1]+0.25)
 
+                Motor.changeSpeed(spinArray[-1])
                 spinGraph.setXRange(max(0, xArray[-1]-3), xArray[-1])
                 tiltGraph.setXRange(max(0, xArray[-1]-3), xArray[-1])
                 angleGraph.setXRange(max(0, xArray[-1]-3), xArray[-1])

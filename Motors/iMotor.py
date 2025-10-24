@@ -32,7 +32,7 @@ class iMotor(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def int getCurrentSpeed(self):
+    def getCurrentSpeed(self):
         pass
 
     @abstractmethod

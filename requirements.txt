@@ -1,7 +1,10 @@
 certifi==2025.10.5
 charset-normalizer==3.4.4
+colorzero==2.0
+gpiozero==2.0.1
 idna==3.11
 numpy==2.3.3
+pigpio==1.78
 PyQt6==6.9.1
 PyQt6-Qt6==6.9.2
 PyQt6_sip==13.10.2
