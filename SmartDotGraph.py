@@ -40,6 +40,9 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.chkMagnetometer_Y = self.findChild(QtWidgets.QCheckBox, 'chkMG_Y')
         self.chkMagnetometer_Z = self.findChild(QtWidgets.QCheckBox, 'chkMG_Z')
         self.chkLight = self.findChild(QtWidgets.QCheckBox, 'chkLight')
+        self.chkLimitView = self.findChild(QtWidgets.QCheckBox, 'chkLimitView')
+        self.dsbLookBackSeconds = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbLookBackSeconds')
+    
 
         #Initialize graph
         self.graph.setTitle("Smart Dot Sensor Data")
@@ -59,6 +62,15 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.chkMagnetometer_Z.stateChanged.connect(self.update_graph)
         self.chkLight.stateChanged.connect(self.update_graph)
         self.update_graph()  # Initial graph update
+
+        #Limit view checkbox
+        self.chkLimitView.stateChanged.connect(self.toggle_limit_view)
+        self.dsbLookBackSeconds.valueChanged.connect(self.toggle_limit_view)
+    def toggle_limit_view(self):
+        if self.chkLimitView.isChecked():
+            self.graph.setXRange(arrayGeneralTime[-1]- self.dsbLookBackSeconds.value(), arrayGeneralTime[-1])
+        else:
+            self.graph.enableAutoRange(axis='x')
     def update_graph(self):
         self.graph.clear()  # Clear existing plots
 
