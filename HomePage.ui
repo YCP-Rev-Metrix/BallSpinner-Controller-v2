@@ -6,16 +6,16 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1512</width>
-    <height>892</height>
+    <width>930</width>
+    <height>856</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_4">
-    <item row="0" column="0">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
        <number>0</number>
@@ -26,7 +26,7 @@
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
-         <widget class="DiagnosticModePage" name="widget_2" native="true"/>
+         <widget class="DiagnosticModePage" name="DiagnosticModePage" native="true"/>
         </item>
        </layout>
       </widget>
@@ -57,16 +57,6 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tabCloud">
-       <attribute name="title">
-        <string>Page</string>
-       </attribute>
-       <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="0">
-         <widget class="CloudTest" name="cloudTest" native="true"/>
-        </item>
-       </layout>
-      </widget>
       <widget class="QWidget" name="tabAnalysisMode">
        <attribute name="title">
         <string>Analysis mode</string>
@@ -91,8 +81,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1512</width>
-     <height>33</height>
+     <width>930</width>
+     <height>30</height>
     </rect>
    </property>
   </widget>
@@ -115,12 +105,6 @@
    <class>DiagnosticModePage</class>
    <extends>QWidget</extends>
    <header>DiagnosticModePage</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>CloudTest</class>
-   <extends>QWidget</extends>
-   <header>CloudTest</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

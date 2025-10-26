@@ -66,9 +66,19 @@ class DiagnosticModePage(QtWidgets.QWidget):
         # control flag: only update while active (set by HomePage)
         self.active = False
 
-        btnStart.clicked.connect(lambda: self.set_active(True))
-        btnStop.clicked.connect(lambda: self.set_active(False))
+        btnStart.clicked.connect(lambda: toggle_Buttons())
+        btnStop.clicked.connect(lambda: toggle_Buttons())
         btnClear.clicked.connect(lambda: clear_graphs())
+
+        def toggle_Buttons():
+            if self.active:
+                btnStart.setEnabled(False)
+                btnStop.setEnabled(True)
+                self.set_active(False)
+            else:
+                btnStart.setEnabled(True)
+                btnStop.setEnabled(False)
+                self.set_active(True)
 
         # public setter used by HomePage.on_tab_changed
         def set_active(v: bool):

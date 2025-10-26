@@ -1,23 +1,19 @@
 from PyQt6 import QtWidgets, uic
 import pyqtgraph as pg
-import numpy as numpy
+import numpy as np
 
-
-arrayAccelerometer_X = numpy.array([1,1,1,1,1,1,1,1,1,1])
-arrayAccelerometer_Y = numpy.array([2,2,2,2,2,2,2,2,2,2])
-arrayAccelerometer_Z = numpy.array([3,3,3,3,3,3,3,3,3,3])
-
-arrayGyroscope_X = numpy.array([4,4,4,4,4,4,4,4,4,4])
-arrayGyroscope_Y = numpy.array([5,5,5,5,5,5,5,5,5,5])
-arrayGyroscope_Z = numpy.array([6,6,6,6,6,6,6,6,6,6])
-
-arrayMagnetometer_X = numpy.array([7,7,7,7,7,7,7,7,7,7])
-arrayMagnetometer_Y = numpy.array([8,8,8,8,8,8,8,8,8,8])
-arrayMagnetometer_Z = numpy.array([9,9,9,9,9,9,9,9,9,9])
-
-arrayLight = numpy.array([10,10,10,10,10,10,10,10,10,10])
-
-arrayGeneralTime = numpy.array([0,1,2,3,4,5,6,7,8,9])
+# Module-level arrays used by the graph update. Kept as globals for minimal changes
+arrayGeneralTime = np.array([0.0])
+arrayAccelerometer_X = np.array([0.0])
+arrayAccelerometer_Y = np.array([0.0])
+arrayAccelerometer_Z = np.array([0.0])
+arrayGyroscope_X = np.array([0.0])
+arrayGyroscope_Y = np.array([0.0])
+arrayGyroscope_Z = np.array([0.0])
+arrayMagnetometer_X = np.array([0.0])
+arrayMagnetometer_Y = np.array([0.0])
+arrayMagnetometer_Z = np.array([0.0])
+arrayLight = np.array([0.0])
 
 
 class SmartDotGraph(QtWidgets.QWidget):
@@ -42,6 +38,8 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.chkLight = self.findChild(QtWidgets.QCheckBox, 'chkLight')
         self.chkLimitView = self.findChild(QtWidgets.QCheckBox, 'chkLimitView')
         self.dsbLookBackSeconds = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbLookBackSeconds')
+        self.btnSelectAll = self.findChild(QtWidgets.QPushButton, 'btnSelectAll')
+        self.btnDeselectAll = self.findChild(QtWidgets.QPushButton, 'btnDeselectAll')
     
 
         #Initialize graph
@@ -50,6 +48,11 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.graph.setLabel('bottom', 'Time', units='s')
         self.graph.setMouseEnabled(x=False, y=False)
         self.graph.setYRange(0,15)
+        legend = self.graph.addLegend()
+        legend.setColumnCount(3)
+  
+       
+   
         # Connect checkbox state changes to update_graph method
         self.chkAccelerometer_X.stateChanged.connect(self.update_graph)
         self.chkAccelerometer_Y.stateChanged.connect(self.update_graph)
@@ -66,6 +69,33 @@ class SmartDotGraph(QtWidgets.QWidget):
         #Limit view checkbox
         self.chkLimitView.stateChanged.connect(self.toggle_limit_view)
         self.dsbLookBackSeconds.valueChanged.connect(self.toggle_limit_view)
+
+        #Select/Deselect All buttons
+        self.btnSelectAll.clicked.connect(self.select_all)
+        self.btnDeselectAll.clicked.connect(self.deselect_all)
+    def select_all(self):
+        self.chkAccelerometer_X.setChecked(True)
+        self.chkAccelerometer_Y.setChecked(True)
+        self.chkAccelerometer_Z.setChecked(True)
+        self.chkGyroscope_X.setChecked(True)
+        self.chkGyroscope_Y.setChecked(True)
+        self.chkGyroscope_Z.setChecked(True)
+        self.chkMagnetometer_X.setChecked(True)
+        self.chkMagnetometer_Y.setChecked(True)
+        self.chkMagnetometer_Z.setChecked(True)
+        self.chkLight.setChecked(True)
+    def deselect_all(self):
+        self.chkAccelerometer_X.setChecked(False)
+        self.chkAccelerometer_Y.setChecked(False)
+        self.chkAccelerometer_Z.setChecked(False)
+        self.chkGyroscope_X.setChecked(False)
+        self.chkGyroscope_Y.setChecked(False)
+        self.chkGyroscope_Z.setChecked(False)
+        self.chkMagnetometer_X.setChecked(False)
+        self.chkMagnetometer_Y.setChecked(False)
+        self.chkMagnetometer_Z.setChecked(False)
+        self.chkLight.setChecked(False)
+
     def toggle_limit_view(self):
         if self.chkLimitView.isChecked():
             self.graph.setXRange(arrayGeneralTime[-1]- self.dsbLookBackSeconds.value(), arrayGeneralTime[-1])
@@ -88,14 +118,39 @@ class SmartDotGraph(QtWidgets.QWidget):
         if self.chkGyroscope_Z.isChecked():
             self.graph.plot(arrayGeneralTime, arrayGyroscope_Z, pen=pg.mkPen(color='y', width=2), name='Gyroscope_Z')
         if self.chkMagnetometer_X.isChecked():
-            self.graph.plot(arrayGeneralTime, arrayMagnetometer_X, pen=pg.mkPen(color='w', width=2), name='Magnetometer_X')
+            self.graph.plot(arrayGeneralTime, arrayMagnetometer_X, pen=pg.mkPen(color="#008080", width=2), name='Magnetometer_X')
         if self.chkMagnetometer_Y.isChecked():
-            self.graph.plot(arrayGeneralTime, arrayMagnetometer_Y, pen=pg.mkPen(color='#FFA500', width=2), name='Magnetometer_Y')  # Orange
+            self.graph.plot(arrayGeneralTime, arrayMagnetometer_Y, pen=pg.mkPen(color="#800000", width=2), name='Magnetometer_Y')  # Orange
         if self.chkMagnetometer_Z.isChecked():
             self.graph.plot(arrayGeneralTime, arrayMagnetometer_Z, pen=pg.mkPen(color='#800080', width=2), name='Magnetometer_Z')  # Purple
         if self.chkLight.isChecked():
-            self.graph.plot(arrayGeneralTime, arrayLight, pen=pg.mkPen(color='#808080', width=2), name='Light')  # Gray
-#I didnt need to right this myself but its here now            
+            self.graph.plot(arrayGeneralTime, arrayLight, pen=pg.mkPen(color='w', width=2), name='Light')  # Gray
+        self.toggle_limit_view()  # Apply limit view if enabled
+
+    #expose UpdateData as a class method
+    def UpdateData(self, timeArray, accelerometerX, accelerometerY, accelerometerZ,gyroscopeX, gyroscopeY, gyroscopeZ,magnetometerX, magnetometerY, magnetometerZ,lightArray):
+        global arrayGeneralTime
+        global arrayAccelerometer_X, arrayAccelerometer_Y, arrayAccelerometer_Z
+        global arrayGyroscope_X, arrayGyroscope_Y, arrayGyroscope_Z
+        global arrayMagnetometer_X, arrayMagnetometer_Y, arrayMagnetometer_Z
+        global arrayLight
+
+        arrayGeneralTime = timeArray
+        arrayAccelerometer_X = accelerometerX
+        arrayAccelerometer_Y = accelerometerY
+        arrayAccelerometer_Z = accelerometerZ
+        arrayGyroscope_X = gyroscopeX
+        arrayGyroscope_Y = gyroscopeY
+        arrayGyroscope_Z = gyroscopeZ
+        arrayMagnetometer_X = magnetometerX
+        arrayMagnetometer_Y = magnetometerY
+        arrayMagnetometer_Z = magnetometerZ
+        arrayLight = lightArray
+
+        # Refresh the graph with new data
+        # Use Qt's event loop to schedule the update if needed; direct call works for simple tests
+        self.update_graph()
+
 
 
 if __name__ == '__main__':
@@ -105,7 +160,7 @@ if __name__ == '__main__':
     
     # Create and show the main window
     window = SmartDotGraph()
-    window.setWindowTitle("Diagnostic Mode Page")
+    window.setWindowTitle("Smart Dot Graph")
     window.show()
     
     # Start the event loop

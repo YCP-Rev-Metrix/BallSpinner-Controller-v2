@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>454</width>
-    <height>512</height>
+    <width>910</width>
+    <height>864</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -89,6 +89,20 @@
          <widget class="QCheckBox" name="chkLight">
           <property name="text">
            <string>Light</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnSelectAll">
+          <property name="text">
+           <string>Select All</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnDeselectAll">
+          <property name="text">
+           <string>Deselect All</string>
           </property>
          </widget>
         </item>
