@@ -1,5 +1,6 @@
 from PyQt6 import QtWidgets, uic
 from Motors.BDCMotor import BDCMotor
+from Motors.SimMotor import SimMotor
 import pyqtgraph as pg
 import numpy as np
 import threading
@@ -10,7 +11,7 @@ spinArray = np.array([0.0])
 tiltArray = np.array([0.0])
 angleArray = np.array([0.0])
 xArray = np.array([0.0])
-Motor = BDCMotor(26)
+Motor = SimMotor(26)
 
 
 

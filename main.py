@@ -1,11 +1,12 @@
 from PyQt6 import QtWidgets
 from logs.logger_config import setup_logging
-
+from gpiozero import Device
+from gpiozero.pins.mock import MockFactory, MockPWMPin
 from HomePage import HomePage
 
 # Initialize logging at application startup
 setup_logging()
-
+Device.pin_factory = MockFactory(pin_class=MockPWMPin)
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])
