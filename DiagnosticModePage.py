@@ -71,14 +71,14 @@ class DiagnosticModePage(QtWidgets.QWidget):
         btnClear.clicked.connect(lambda: clear_graphs())
 
         def toggle_Buttons():
-            if self.active:
+            if not self.active:
                 btnStart.setEnabled(False)
                 btnStop.setEnabled(True)
-                self.set_active(False)
+                self.set_active(True)
             else:
                 btnStart.setEnabled(True)
                 btnStop.setEnabled(False)
-                self.set_active(True)
+                self.set_active(False)
 
         # public setter used by HomePage.on_tab_changed
         def set_active(v: bool):
