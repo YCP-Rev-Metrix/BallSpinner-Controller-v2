@@ -219,26 +219,12 @@ class InputGraph(QtWidgets.QWidget):
         # are visible even when no user points exist.
         self.endpoint_scatter = pg.ScatterPlotItem(pen=pg.mkPen('w'), brush='g', size=10, symbol='s')
         self.plot_widget.addItem(self.endpoint_scatter)
-
-        # Prevent squishing: enforce a reasonable minimum width for this widget
-        try:
-            self._min_width = 220
-            self.setMinimumWidth(self._min_width)
-        except Exception:
-            self._min_width = None
         # Track the plotted curve so we can remove it between generations
         self.curve_plot = None
         # Connect mouse click event
         self.plot_widget.scene().sigMouseClicked.connect(self.onClick)
 
     def onClick(self, event):
-        # Only respond to left-button clicks (ignore other mouse buttons)
-        try:
-            if event.button() != QtCore.Qt.MouseButton.LeftButton:
-                return
-        except Exception:
-            # Some event sources may not have button(); continue mapping position
-            pass
 
         # Map the click position from scene coordinates to plot (data) coordinates
         scene_pos = event.scenePos()
@@ -340,10 +326,7 @@ class InputGraph(QtWidgets.QWidget):
 
     def onDegreeChanged(self, val):
         """Called when the degree spinbox changes."""
-        try:
-            self.degree = int(val)
-        except Exception:
-            self.degree = None
+        self.degree = int(val)     
         self.generate_and_plot_curve()
 
     def onMappingChanged(self, _val=None):
@@ -411,10 +394,7 @@ class InputGraph(QtWidgets.QWidget):
     def set_end_y(self, value: float):
         """Set the end Y endpoint value programmatically."""
         # Accept raw (0..1) value and update displayed spin to mapped coordinate
-        try:
-            raw = float(value)
-        except Exception:
-            return
+        raw = float(value)
         self.end_y = raw
         # Safely update displayed spin
         self._safe_set_spin_value(self.end_y_spin, self._map_y(raw))
@@ -431,10 +411,7 @@ class InputGraph(QtWidgets.QWidget):
 
     def set_max_points(self, value: int):
         """Programmatically set the maximum stored points."""
-        try:
-            self.max_points_spin.setValue(int(value))
-        except Exception:
-            self.max_points = int(value)
+        self.max_points_spin.setValue(int(value))
 
     def set_default_endpoints(self, start_raw: float, end_raw: float, apply_now: bool = False):
         """Set default start/end Y endpoints (raw values in [0,1]).
@@ -444,14 +421,8 @@ class InputGraph(QtWidgets.QWidget):
         Otherwise the defaults are stored and used the next time the reset
         button is pressed.
         """
-        try:
-            s = float(start_raw)
-        except Exception:
-            return
-        try:
-            e = float(end_raw)
-        except Exception:
-            return
+        s = float(start_raw)
+        e = float(end_raw)
         # clamp to [0,1]
         s = max(0.0, min(1.0, s))
         e = max(0.0, min(1.0, e))
@@ -715,59 +686,16 @@ class InputGraph(QtWidgets.QWidget):
 
     def show_controls(self):
         """Show the graphical controls container."""
-        try:
-            self.controls_container.show()
-            # restore previous height if available, otherwise use the sizeHint
-            try:
-                if getattr(self, '_controls_prev_height', None):
-                    h = self._controls_prev_height
-                else:
-                    h = self.controls_container.sizeHint().height()
-                # guard against zero/None
-                if h and h > 0:
-                    self.controls_container.setFixedHeight(h)
-                else:
-                    try:
-                        self.controls_container.setFixedHeight(self.controls_container.sizeHint().height())
-                    except Exception:
-                        pass
-            except Exception:
-                pass
-        except Exception:
-            pass
+        self.controls_container.show()
 
     def hide_endpoints(self):
         """Hide the start/end Y controls container and set its height to zero."""
-        try:
-            # Do not adjust the container height when hiding — simply hide it so the
-            # layout can manage spacing. This preserves the natural height and avoids
-            # forcing the layout to collapse.
-            try:
-                self.endpoints_container.hide()
-            except Exception:
-                pass
-            try:
-                self.endpoint_scatter.hide()
-            except Exception:
-                pass
-        except Exception:
-            pass
-
+        self.endpoints_container.hide()
+        
     def show_endpoints(self):
         """Show the start/end Y controls container and restore its height."""
-        try:
-            # Simply show the container without forcing a fixed height so layout
-            # will naturally allocate its space.
-            try:
-                self.endpoints_container.show()
-            except Exception:
-                pass
-            try:
-                self.endpoint_scatter.show()
-            except Exception:
-                pass
-        except Exception:
-            pass
+        self.endpoints_container.show()
+        
 
     def generate_and_plot_curve(self):
         """Fit a polynomial through the stored points plus endpoints and plot it.
