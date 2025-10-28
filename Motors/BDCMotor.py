@@ -1,5 +1,6 @@
 from .iMotor import iMotor
-from gpiozero import PWMOutputDevice
+from gpiozero import PWMOutputDevice, Device
+from gpiozero.pins.native import NativeFactory
 import time
 import pigpio
 
@@ -19,6 +20,7 @@ class BDCMotor(iMotor):
     targetPower = 0.0
     GPIO_Pin = 26; #GPIO Pin for the Motor
     motor = PWMOutputDevice(GPIO_Pin, frequency=FREQ)
+    #motor.pin_factory = NativeFactory()
     pi=pigpio.pi()
 
     def __init__(self, GPIOPin : int):

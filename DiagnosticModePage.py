@@ -11,7 +11,18 @@ spinArray = np.array([0.0])
 tiltArray = np.array([0.0])
 angleArray = np.array([0.0])
 xArray = np.array([0.0])
-Motor = SimMotor(26)
+
+def is_raspberry_pi():
+    """Checks if the code is running on a Raspberry Pi."""
+    try:
+        with io.open('/sys/firmware/devicetree/base/model', 'r') as m:
+            if 'raspberry pi' in m.read().lower():
+                return True
+    except FileNotFoundError:
+        pass
+    return False
+
+
 
 
 
@@ -19,6 +30,13 @@ class DiagnosticModePage(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         
+
+        # check if pi, if not then run sim motor
+        if is_raspberry_pi():
+            Motor = BDCMotor(26)
+        else :
+            Motor = SimMotor(26)
+            
         # Load the UI file.
         uic.loadUi('DiagnosticModePage.ui', self)
         #Buttons
