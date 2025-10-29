@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>910</width>
-    <height>864</height>
+    <width>901</width>
+    <height>892</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,7 +18,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>4</number>
       </property>
       <widget class="QWidget" name="tabDiagnosticMode">
        <attribute name="title">
@@ -61,7 +61,7 @@
       </widget>
       <widget class="QWidget" name="tabCloudTest">
        <attribute name="title">
-        <string>Page</string>
+        <string>CloudTest</string>
        </attribute>
        <widget class="CloudTest" name="widget_2" native="true">
         <property name="geometry">
@@ -74,6 +74,16 @@
         </property>
        </widget>
       </widget>
+      <widget class="QWidget" name="tabSmartDotTest">
+       <attribute name="title">
+        <string>SmartDotTest</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_4">
+        <item row="0" column="0">
+         <widget class="SmartDotTestPage" name="widget_3" native="true"/>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -83,7 +93,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>910</width>
+     <width>901</width>
      <height>33</height>
     </rect>
    </property>
@@ -113,6 +123,12 @@
    <class>ShotModePage</class>
    <extends>QWidget</extends>
    <header>ShotModePage</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SmartDotTestPage</class>
+   <extends>QWidget</extends>
+   <header>SmartDotTestPage</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
