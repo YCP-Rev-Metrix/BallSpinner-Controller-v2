@@ -39,14 +39,16 @@ class BDCMotor(iMotor):
         pi.set_servo_pulsewidth(self.GPIO_Pin, int(self.currSpeed))
 
     def arm(self, pi):
+        pi=pigpio.pi()
         self.currSpeed = MIN_THR
         self.set_pulse()
         time.sleep(ARM_TIME_S)
         print("armed")
 
     def disarm(self, pi):
-        currSpeed = 0
+        self.currSpeed = 0
         self.set_pulse()
+
         pi.stop()
 
     # Turns on Motor at Specified Power (Duty Cycle)
@@ -65,10 +67,11 @@ class BDCMotor(iMotor):
 
     def stop(self):
         self.disarm(pi)
+        print("running pi.stop")
         pi.stop()
 
     def changeSpeed(self, dutyCycle : float):
-        print("Changing speed to ", dutyCycle)
+        #print("Changing speed to ", dutyCycle) 
         self.targetSpeed = self.clamp(dutyCycle*2.375+1050, MIN_THR, MAX_THR)
         if(self.targetSpeed>self.currSpeed) : self.rampUp() 
         else : self.rampDown()
