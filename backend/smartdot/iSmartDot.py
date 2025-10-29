@@ -73,8 +73,8 @@ class iSmartDot(metaclass=ABCMeta):
     def stopLight(self):
         pass 
 
-    @abstractmethod
-    def UUID(self) -> str: 
-        pass
+    # @abstractmethod
+    # def UUID(self) -> str: 
+    #     pass
         # Scan Bluetooth Devices and filters for specific devices
 
