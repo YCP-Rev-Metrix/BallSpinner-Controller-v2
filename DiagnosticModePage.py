@@ -61,7 +61,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         spinGraph.setLabel('left', 'Spin Rate', units='RPM')
         spinGraph.setLabel('bottom', 'Time', units='s')
         self.spinCurve = spinGraph.plot(xArray, spinArray, pen=pg.mkPen(color='b', width=2)) #Extra refrence allows to be manipulated in thread
-        spinGraph.setYRange(0,420)
+        spinGraph.setYRange(0,620)
         spinGraph.setMouseEnabled(x=False, y=False)
         #Tilt Motor graph setup
         tiltGraph.setTitle("Diagnostic Tilt Graph")
@@ -110,7 +110,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
                     time.sleep(0.25)
                     continue
 
-                spinArray= np.append(spinArray, 400* 0.01 * self.spinDial.value()) #max rpm 400
+                spinArray= np.append(spinArray, 600* 0.01 * self.spinDial.value()) #max rpm 400
                 tiltArray= np.append(tiltArray, 90* 0.01*self.tiltDial.value()) #max tilt 90 degrees
                 angleArray= np.append(angleArray,  45* 0.01 *self.angleDial.value()) #`max angle 45 degrees`
                 xArray= np.append(xArray, xArray[-1]+0.25)
