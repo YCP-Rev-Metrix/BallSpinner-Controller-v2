@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>917</width>
+    <width>901</width>
     <height>892</height>
    </rect>
   </property>
@@ -21,7 +21,7 @@
        <widget class="QWidget" name="widget_2" native="true">
         <layout class="QGridLayout" name="gridLayout">
          <item row="1" column="3">
-          <widget class="QPushButton" name="pushButton_3">
+          <widget class="QPushButton" name="btnDiagnostic">
            <property name="enabled">
             <bool>true</bool>
            </property>
@@ -43,7 +43,7 @@
           </widget>
          </item>
          <item row="1" column="5">
-          <widget class="QPushButton" name="pushButton">
+          <widget class="QPushButton" name="btnAnalysis">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
              <horstretch>0</horstretch>
@@ -62,7 +62,7 @@
           </widget>
          </item>
          <item row="1" column="0">
-          <widget class="QPushButton" name="pushButton_2">
+          <widget class="QPushButton" name="btnShot">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
              <horstretch>0</horstretch>

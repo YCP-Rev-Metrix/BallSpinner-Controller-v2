@@ -14,12 +14,22 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>4</number>
+       <number>0</number>
       </property>
+      <widget class="QWidget" name="tabFrontPage">
+       <attribute name="title">
+        <string>Page</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="FrontPage" name="FrontPage" native="true"/>
+        </item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="tabDiagnosticMode">
        <attribute name="title">
         <string>Diagnostic Mode</string>
@@ -48,7 +58,7 @@
        <attribute name="title">
         <string>Analysis mode</string>
        </attribute>
-       <widget class="AnalysisModePage" name="widget" native="true">
+       <widget class="AnalysisModePage" name="AnlaysisModePage" native="true">
         <property name="geometry">
          <rect>
           <x>10</x>
@@ -63,7 +73,7 @@
        <attribute name="title">
         <string>CloudTest</string>
        </attribute>
-       <widget class="CloudTest" name="widget_2" native="true">
+       <widget class="CloudTest" name="CloudTestPage" native="true">
         <property name="geometry">
          <rect>
           <x>0</x>
@@ -80,7 +90,7 @@
        </attribute>
        <layout class="QGridLayout" name="gridLayout_4">
         <item row="0" column="0">
-         <widget class="SmartDotTestPage" name="widget_3" native="true"/>
+         <widget class="SmartDotTestPage" name="SmartDotTestPage" native="true"/>
         </item>
        </layout>
       </widget>
@@ -94,7 +104,7 @@
      <x>0</x>
      <y>0</y>
      <width>901</width>
-     <height>33</height>
+     <height>30</height>
     </rect>
    </property>
   </widget>
@@ -129,6 +139,12 @@
    <class>SmartDotTestPage</class>
    <extends>QWidget</extends>
    <header>SmartDotTestPage</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>FrontPage</class>
+   <extends>QWidget</extends>
+   <header>FrontPage</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
