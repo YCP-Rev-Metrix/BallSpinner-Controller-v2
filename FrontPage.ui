@@ -37,6 +37,9 @@
              <height>50</height>
             </size>
            </property>
+           <property name="styleSheet">
+            <string notr="true">font-size: 30px</string>
+           </property>
            <property name="text">
             <string>Diagnotic Mode</string>
            </property>
@@ -56,6 +59,9 @@
              <height>50</height>
             </size>
            </property>
+           <property name="styleSheet">
+            <string notr="true">font-size: 30px</string>
+           </property>
            <property name="text">
             <string>Analysis mode</string>
            </property>
@@ -74,6 +80,9 @@
              <width>20</width>
              <height>80</height>
             </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">font-size: 30px</string>
            </property>
            <property name="text">
             <string>Shot Mode</string>
@@ -165,23 +174,13 @@
          <string notr="true">font-size: 50pt;</string>
         </property>
         <property name="text">
-         <string>RevMetrix</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;RevMetrix&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="textFormat">
+         <enum>Qt::RichText</enum>
         </property>
         <property name="scaledContents">
          <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QLabel" name="label_2">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="pixmap">
-         <pixmap>logo.png</pixmap>
         </property>
        </widget>
       </item>
