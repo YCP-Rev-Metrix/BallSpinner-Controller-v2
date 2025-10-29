@@ -89,16 +89,16 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.active = False
 
         btnStart.clicked.connect(lambda: self.set_active(True))
-        btnStart.clicked.connect(lambda: Motor.start())
         btnStop.clicked.connect(lambda: self.set_active(False))
-        btnStop.clicked.connect(lambda: Motor.stop())
         btnClear.clicked.connect(lambda: clear_graphs())
 
         # public setter used by HomePage.on_tab_changed
         def set_active(v: bool):
             self.active = bool(v)
+            if self.active: Motor.start()
+            else : Motor.stop()
         self.set_active = set_active
-
+        
         self._stop_event = threading.Event()
 
         def _Generator():
