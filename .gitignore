@@ -43,3 +43,7 @@ htmlcov/
 *.log
 *.tmp
 temp/
+
+
+#Ignore metawaer data for individual connections
+.metawear/
