@@ -5,6 +5,8 @@ import pyqtgraph as pg
 import numpy as np
 import threading
 import time
+import os
+import io
 
 
 spinArray = np.array([0.0])
@@ -36,7 +38,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
             Motor = BDCMotor(26)
         else :
             Motor = SimMotor(26)
-            
+
         # Load the UI file.
         uic.loadUi('DiagnosticModePage.ui', self)
         #Buttons
