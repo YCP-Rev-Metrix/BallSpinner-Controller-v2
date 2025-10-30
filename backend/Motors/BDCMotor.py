@@ -49,6 +49,8 @@ class BDCMotor(iMotor):
         print("armed")
 
     def disarm(self, pi):
+        self.targetSpeed = MIN_THR
+        self.rampDown()
         self.currSpeed = 0
         self.set_pulse()
 
