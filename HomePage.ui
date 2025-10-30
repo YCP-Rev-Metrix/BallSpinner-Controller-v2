@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1512</width>
+    <width>901</width>
     <height>892</height>
    </rect>
   </property>
@@ -14,19 +14,29 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_4">
-    <item row="0" column="0">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
        <number>0</number>
       </property>
+      <widget class="QWidget" name="tabFrontPage">
+       <attribute name="title">
+        <string>Page</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="FrontPage" name="FrontPage" native="true"/>
+        </item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="tabDiagnosticMode">
        <attribute name="title">
         <string>Diagnostic Mode</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
-         <widget class="DiagnosticModePage" name="widget_2" native="true"/>
+         <widget class="DiagnosticModePage" name="DiagnosticModePage" native="true"/>
         </item>
        </layout>
       </widget>
@@ -36,34 +46,11 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>Prototype Shot Page</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <layout class="QGridLayout" name="gridLayout_3">
           <item row="0" column="0">
-           <widget class="InteractiveSineWave" name="BrandonWidget_2" native="true"/>
-          </item>
-          <item row="0" column="1">
-           <widget class="InteractiveSineWave" name="BrandonWidget_3" native="true"/>
-          </item>
-          <item row="0" column="2">
-           <widget class="InteractiveSineWave" name="BrandonWidget" native="true"/>
+           <widget class="ShotModePage" name="ShotModePage" native="true"/>
           </item>
          </layout>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="tabCloud">
-       <attribute name="title">
-        <string>Page</string>
-       </attribute>
-       <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="0">
-         <widget class="CloudTest" name="cloudTest" native="true"/>
         </item>
        </layout>
       </widget>
@@ -71,7 +58,7 @@
        <attribute name="title">
         <string>Analysis mode</string>
        </attribute>
-       <widget class="AnalysisModePage" name="widget" native="true">
+       <widget class="AnalysisModePage" name="AnlaysisModePage" native="true">
         <property name="geometry">
          <rect>
           <x>10</x>
@@ -82,6 +69,31 @@
         </property>
        </widget>
       </widget>
+      <widget class="QWidget" name="tabCloudTest">
+       <attribute name="title">
+        <string>CloudTest</string>
+       </attribute>
+       <widget class="CloudTest" name="CloudTestPage" native="true">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>761</width>
+          <height>621</height>
+         </rect>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tabSmartDotTest">
+       <attribute name="title">
+        <string>SmartDotTest</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_4">
+        <item row="0" column="0">
+         <widget class="SmartDotTestPage" name="SmartDotTestPage" native="true"/>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -91,20 +103,14 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1512</width>
-     <height>33</height>
+     <width>901</width>
+     <height>30</height>
     </rect>
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>InteractiveSineWave</class>
-   <extends>QWidget</extends>
-   <header>InteractiveSineWave</header>
-   <container>1</container>
-  </customwidget>
   <customwidget>
    <class>AnalysisModePage</class>
    <extends>QWidget</extends>
@@ -121,6 +127,24 @@
    <class>CloudTest</class>
    <extends>QWidget</extends>
    <header>CloudTest</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ShotModePage</class>
+   <extends>QWidget</extends>
+   <header>ShotModePage</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SmartDotTestPage</class>
+   <extends>QWidget</extends>
+   <header>SmartDotTestPage</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>FrontPage</class>
+   <extends>QWidget</extends>
+   <header>FrontPage</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
