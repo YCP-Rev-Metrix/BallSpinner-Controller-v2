@@ -40,9 +40,9 @@ class BDCMotor(iMotor):
         pi.set_servo_pulsewidth(self.GPIO_Pin, int(self.currSpeed))
 
     def arm(self, pi):
-        if not self.isRunning :
-            pi.start()
-            self.isRunning=True
+        #if not self.isRunning :
+        #    pi.start()
+        #    self.isRunning=True
         self.currSpeed = MIN_THR
         self.set_pulse()
         time.sleep(ARM_TIME_S)
@@ -52,8 +52,8 @@ class BDCMotor(iMotor):
         self.currSpeed = 0
         self.set_pulse()
 
-        pi.stop()
-        self.isRunning=False
+        #pi.stop()
+        #self.isRunning=False
 
     # Turns on Motor at Specified Power (Duty Cycle)
     def start(self, rpm=1):
@@ -71,8 +71,8 @@ class BDCMotor(iMotor):
 
     def stop(self):
         self.disarm(pi)
-        print("running pi.stop")
-        pi.stop()
+        #print("running pi.stop")
+        #pi.stop()
 
     def changeSpeed(self, dutyCycle : float):
         print("Changing speed to ", dutyCycle/12+1119.5) 
