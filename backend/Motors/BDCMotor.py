@@ -40,9 +40,9 @@ class BDCMotor(iMotor):
         pi.set_servo_pulsewidth(self.GPIO_Pin, int(self.currSpeed))
 
     def arm(self, pi):
-        if not isRunning :
+        if not self.isRunning :
             pi.start()
-            isRunning=True
+            self.isRunning=True
         self.currSpeed = MIN_THR
         self.set_pulse()
         time.sleep(ARM_TIME_S)
