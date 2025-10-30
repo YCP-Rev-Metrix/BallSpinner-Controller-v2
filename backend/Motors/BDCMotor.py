@@ -37,6 +37,11 @@ class BDCMotor(iMotor):
         return lo if x < lo else hi if x > hi else x
 
     def set_pulse(self):
+        # Weird slip thing between 1120 and 1125 pulses, where the motor jitters but does not move.
+        # When it reaches 1125, it spins at ~100rpm, once we get a tachometer on it we can get it
+        # nailed down for sure. For now, this statement limits it to 0 and then that amount to 
+        # avoid jitter.
+        if self.currSpeed > 1120.0 : self.currSpeed += 5.0
         pi.set_servo_pulsewidth(self.GPIO_Pin, int(self.currSpeed))
 
     def arm(self, pi):
