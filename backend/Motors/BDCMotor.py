@@ -22,6 +22,7 @@ class BDCMotor(iMotor):
     motor = PWMOutputDevice(GPIO_Pin, frequency=FREQ)
     #motor.pin_factory = NativeFactory()
     pi=pigpio.pi()
+    isRunning=True
 
     def __init__(self, GPIOPin : int):
         self.start(self)
@@ -39,7 +40,9 @@ class BDCMotor(iMotor):
         pi.set_servo_pulsewidth(self.GPIO_Pin, int(self.currSpeed))
 
     def arm(self, pi):
-        pi=pigpio.pi()
+        if not isRunning :
+            pi.start()
+            isRunning=True
         self.currSpeed = MIN_THR
         self.set_pulse()
         time.sleep(ARM_TIME_S)
@@ -50,6 +53,7 @@ class BDCMotor(iMotor):
         self.set_pulse()
 
         pi.stop()
+        self.isRunning=False
 
     # Turns on Motor at Specified Power (Duty Cycle)
     def start(self, rpm=1):
