@@ -75,8 +75,8 @@ class BDCMotor(iMotor):
         pi.stop()
 
     def changeSpeed(self, dutyCycle : float):
-        print("Changing speed to ", dutyCycle/12+1100.0) 
-        self.targetSpeed = self.clamp(dutyCycle/12.0+1100.0, MIN_THR, MAX_THR)
+        print("Changing speed to ", dutyCycle/12+1119.5) 
+        self.targetSpeed = self.clamp(dutyCycle/12.0+1119.5, MIN_THR, MAX_THR)
         if(self.targetSpeed>self.currSpeed) : self.rampUp() 
         else : self.rampDown()
 
