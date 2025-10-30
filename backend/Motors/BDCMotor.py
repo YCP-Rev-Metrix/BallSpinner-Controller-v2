@@ -81,7 +81,7 @@ class BDCMotor(iMotor):
         # When it reaches 1125, it spins at ~100rpm, once we get a tachometer on it we can get it
         # nailed down for sure. For now, this statement limits it to 0 and then that amount to 
         # avoid jitter.
-        if self.targetSpeed > 1120.0 : self.targetSpeed += 5.0
+        if self.targetSpeed >= 1120.0 : self.targetSpeed += 5.0
         if(self.targetSpeed>self.currSpeed) : self.rampUp() 
         else : self.rampDown()
 
