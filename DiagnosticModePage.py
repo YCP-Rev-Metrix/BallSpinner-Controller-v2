@@ -1,14 +1,29 @@
 from PyQt6 import QtWidgets, uic
+from backend.Motors.BDCMotor import BDCMotor
+from backend.Motors.SimMotor import SimMotor
 import pyqtgraph as pg
 import numpy as np
 import threading
 import time
+import os
+import io
 
 
 spinArray = np.array([0.0])
 tiltArray = np.array([0.0])
 angleArray = np.array([0.0])
 xArray = np.array([0.0])
+
+def is_raspberry_pi():
+    """Checks if the code is running on a Raspberry Pi."""
+    try:
+        with io.open('/sys/firmware/devicetree/base/model', 'r') as m:
+            if 'raspberry pi' in m.read().lower():
+                return True
+    except FileNotFoundError:
+        pass
+    return False
+
 
 
 
@@ -17,6 +32,13 @@ class DiagnosticModePage(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         
+
+        # check if pi, if not then run sim motor
+        if is_raspberry_pi():
+            Motor = BDCMotor(26)
+        else :
+            Motor = SimMotor(26)
+
         # Load the UI file.
         uic.loadUi('DiagnosticModePage.ui', self)
         #Buttons
@@ -39,7 +61,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         spinGraph.setLabel('left', 'Spin Rate', units='RPM')
         spinGraph.setLabel('bottom', 'Time', units='s')
         self.spinCurve = spinGraph.plot(xArray, spinArray, pen=pg.mkPen(color='b', width=2)) #Extra refrence allows to be manipulated in thread
-        spinGraph.setYRange(0,420)
+        spinGraph.setYRange(0,620)
         spinGraph.setMouseEnabled(x=False, y=False)
         #Tilt Motor graph setup
         tiltGraph.setTitle("Diagnostic Tilt Graph")
@@ -83,8 +105,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
         # public setter used by HomePage.on_tab_changed
         def set_active(v: bool):
             self.active = bool(v)
+            if self.active: Motor.start()
+            else : Motor.stop()
         self.set_active = set_active
-
+        
         self._stop_event = threading.Event()
 
         def _Generator():
@@ -96,11 +120,12 @@ class DiagnosticModePage(QtWidgets.QWidget):
                     time.sleep(0.25)
                     continue
 
-                spinArray= np.append(spinArray, 400* 0.01 * self.spinDial.value()) #max rpm 400
+                spinArray= np.append(spinArray, 600* 0.01 * self.spinDial.value()) #max rpm 400
                 tiltArray= np.append(tiltArray, 90* 0.01*self.tiltDial.value()) #max tilt 90 degrees
                 angleArray= np.append(angleArray,  45* 0.01 *self.angleDial.value()) #`max angle 45 degrees`
                 xArray= np.append(xArray, xArray[-1]+0.25)
 
+                Motor.changeSpeed(spinArray[-1])
                 spinGraph.setXRange(max(0, xArray[-1]-3), xArray[-1])
                 tiltGraph.setXRange(max(0, xArray[-1]-3), xArray[-1])
                 angleGraph.setXRange(max(0, xArray[-1]-3), xArray[-1])
