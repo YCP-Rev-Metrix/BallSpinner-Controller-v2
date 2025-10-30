@@ -1,7 +1,14 @@
 from PyQt6 import QtWidgets, QtCore, uic
+from PyQt6.QtCore import pyqtSignal
+from backend.smartdot.ScanSmartDots import ScanSmartDot
+from backend.smartdot.MetaMotionS import MetaMotion
+
 
 class SmartDotConnectWidget(QtWidgets.QWidget):
     
+    signalSmartDotConnected = pyqtSignal(MetaMotion)
+
+
     def __init__(self, parent=None):
         super().__init__(parent)
         # load the .ui file (name matches file in repo)
@@ -9,6 +16,8 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
 
         # Grab the connect button and status label created by the .ui file
         self.btnConnect = self.findChild(QtWidgets.QPushButton, 'btnConnect')
+        self.lblStatus = self.findChild(QtWidgets.QLabel, 'lblStatus')
+        self.lblStatus.setText("Not Connected")
 
         # Grab the QScrollArea and the widget it contains.
         # The .ui defines the scroll area as 'conDevices' and the contained widget
@@ -18,28 +27,18 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         self.wDeviceList = self.conDevices.widget()
         self.Devices = []
 
-        self.setFixedSize(200, 600)
-        
-        """
-        self.Devices = ["SmartDot Device 1", "SmartDot Device 2", "SmartDot Device 3"]
-
-        # Create UI elements for each device and add them to the scroll area's layout.
-        self.deviceButtons = []
-        layout = self.wDeviceList.layout()
-        if layout is None:
-            # If the contained widget does not have a layout in the .ui, create one.
-            layout = QtWidgets.QVBoxLayout(self.wDeviceList)
-
-        for device in self.Devices:
-            btn = QtWidgets.QPushButton(f"Connect to {device}")
-            layout.addWidget(btn)
-            btn.clicked.connect(lambda _, d=device: self.connect_to_smartdot(d))
-        """
+        self.setFixedSize(300, 600)
+        self.scanner = ScanSmartDot()
+        self.scanner.scan10Seconds()
+        self.setDeviceList(self.scanner.devices)
         
 
     def connect_to_smartdot(self, text):
         # Simulate connection logic
-        print(text)
+        self.smartdot = MetaMotion(text)
+        if(self.smartdot.connected):
+            self.lblStatus.setText(f"Connected to {text}")
+        self.signalSmartDotConnected.emit(self.smartdot)
 
     def setDeviceList(self, devices):
         #remove existing buttons

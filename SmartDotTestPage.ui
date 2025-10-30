@@ -41,6 +41,13 @@
      </property>
     </widget>
    </item>
+    <item>
+     <widget class="QPushButton" name="btnDisconnect">
+      <property name="text">
+       <string>Disconnect</string>
+      </property>
+     </widget>
+    </item>
   </layout>
  </widget>
  <customwidgets>

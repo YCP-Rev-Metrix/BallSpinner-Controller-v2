@@ -2,7 +2,10 @@ from PyQt6 import QtWidgets, QtCore, uic
 from PyQt6.QtCore import Qt, QTimer
 import numpy as np
 from SmartDotGraph import SmartDotGraph
+from SmartDotConnectWidget import SmartDotConnectWidget
 import math
+from backend.smartdot.MetaMotionS import MetaMotion
+
 
 class SmartDotTestPage(QtWidgets.QWidget):
     
@@ -13,6 +16,13 @@ class SmartDotTestPage(QtWidgets.QWidget):
 
         # Find the embedded SmartDotGraph widget created by the .ui (named SmartDotGraphContainer)
         self.SmartDotGraph = self.findChild(SmartDotGraph, 'smartDotGraph')
+        self.btnDisconnect = self.findChild(QtWidgets.QPushButton, 'btnDisconnect')
+        self.btnDisconnect.clicked.connect(self.disconnectSmartDot)
+        self.smartdotConnectWidget = self.findChild(SmartDotConnectWidget, 'SmartDotConnect')
+        self.smartdotConnectWidget.signalSmartDotConnected.connect(self.connectSmartDot)
+
+        self.SmartDot = None  # Placeholder for the connected SmartDot device
+
         # Instance arrays to persist between timer callbacks
         self.arrayGeneralTime = np.array([0.0])
         self.arrayAccelerometer_X = np.array([0.0])
@@ -49,11 +59,24 @@ class SmartDotTestPage(QtWidgets.QWidget):
         if self.btnStop:
             self.btnStop.setEnabled(False)
 
+    def disconnectSmartDot(self):
+        print("Disconnecting SmartDot...")
+        # Here you would add the actual disconnection code
+        if self.SmartDot:
+            self.SmartDot.disconnect()
+    def connectSmartDot(self, device):
+        print("Connecting SmartDot...")
+        self.SmartDot = device
+        # Here you would add the actual connection code
+        
+
     def start_updates(self):
         """Start the QTimer and enable periodic updates."""
         if not self._timer.isActive():
             self._timer.start()
-        self.active = True
+            self.active = True
+            print("start collecting")
+            self.SmartDot.startCollecting()
         if self.btnStart:
             self.btnStart.setEnabled(False)
         if self.btnStop:
@@ -61,9 +84,12 @@ class SmartDotTestPage(QtWidgets.QWidget):
 
     def stop_updates(self):
         """Stop the QTimer and pause updates."""
+     
         if self._timer.isActive():
             self._timer.stop()
         self.active = False
+        print("stop collecting")
+        self.SmartDot.stopCollecting()
         if self.btnStart:
             self.btnStart.setEnabled(True)
         if self.btnStop:
@@ -71,6 +97,13 @@ class SmartDotTestPage(QtWidgets.QWidget):
 
     def _on_timer(self):
         """Called on the GUI thread by QTimer every 15 ms to generate and push data to the graph."""
+        if self.SmartDot:
+            self.SmartDotGraph.updateDataBetter(self.SmartDot.xl_time,self.SmartDot.xl_x, self.SmartDot.xl_y, self.SmartDot.xl_z,
+                                                self.SmartDot.gy_time,self.SmartDot.gy_x, self.SmartDot.gy_y, self.SmartDot.gy_z,
+                                                self.SmartDot.mg_time, self.SmartDot.mg_x, self.SmartDot.mg_y, self.SmartDot.mg_z,
+                                                self.SmartDot.lt_time, self.SmartDot.lt_value)
+            #UpdateData(self.SmartDot.xl_time,self.SmartDot.xl_x, self.SmartDot.xl_y, self.SmartDot.xl_z,self.SmartDot.gy_x, self.SmartDot.gy_y, self.SmartDot.gy_z,self.SmartDot.mg_x, self.SmartDot.mg_y, self.SmartDot.mg_z,self.SmartDot.lt_value)
+            return
         if not self.active:
             return
         # Simulate data generation
@@ -93,8 +126,8 @@ class SmartDotTestPage(QtWidgets.QWidget):
         """
 
         # Update the embedded graph widget (runs on GUI thread)
-
-        self.SmartDotGraph.UpdateData(self.arrayGeneralTime,self.arrayAccelerometer_X, self.arrayAccelerometer_Y, self.arrayAccelerometer_Z,self.arrayGyroscope_X, self.arrayGyroscope_Y, self.arrayGyroscope_Z,self.arrayMagnetometer_X, self.arrayMagnetometer_Y, self.arrayMagnetometer_Z,self.arrayLight)
+        
+        #self.SmartDotGraph.UpdateData(self.arrayGeneralTime,self.arrayAccelerometer_X, self.arrayAccelerometer_Y, self.arrayAccelerometer_Z,self.arrayGyroscope_X, self.arrayGyroscope_Y, self.arrayGyroscope_Z,self.arrayMagnetometer_X, self.arrayMagnetometer_Y, self.arrayMagnetometer_Z,self.arrayLight)
 
 
     def test_connection(self):

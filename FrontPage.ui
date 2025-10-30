@@ -41,7 +41,7 @@
             <string notr="true">font-size: 30px</string>
            </property>
            <property name="text">
-            <string>Diagnotic Mode</string>
+            <string>Diagnostic Mode</string>
            </property>
           </widget>
          </item>

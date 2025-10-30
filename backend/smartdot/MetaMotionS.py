@@ -1,4 +1,4 @@
-from iSmartDot import iSmartDot
+from .iSmartDot import iSmartDot
 from mbientlab.metawear import MetaWear, libmetawear, parse_value
 from mbientlab.metawear.cbindings import *
 from mbientlab.warble import * 
@@ -9,6 +9,8 @@ from datetime import datetime
 import ctypes
 import struct
 import time
+import queue
+import math
 class MetaMotion(iSmartDot):
 
     XL_availSampleRate = [12.5, 25, 50, 100, 200, 400, 800]
@@ -25,9 +27,11 @@ class MetaMotion(iSmartDot):
     LT_availRange = [600, 1300, 8000, 16000, 32000, 64000]
     
     def __init__(self, MAC_Address="", autoConnect=True, is_local=False):
+        self.connected = False
         self._MAC_ADDRESS = MAC_Address
+        
         if autoConnect:
-            self.connect(MAC_Address)
+            self.connected =self.connect(MAC_Address)
 
         #temp rig to create a different data capture method for local mode HMI
         self.data_arr= [None,None,None,None]
@@ -38,6 +42,25 @@ class MetaMotion(iSmartDot):
     #try:
         self.device = MetaWear(MAC_Address)
         self.device.connect()
+
+        self.xl_time = []
+        self.xl_x = []
+        self.xl_y = []
+        self.xl_z = []
+
+        self.gy_time = []
+        self.gy_x = []
+        self.gy_y = []
+        self.gy_z = []
+
+        self.mg_time = []
+        self.mg_x = []
+        self.mg_y = []
+        self.mg_z = []
+
+        self.lt_time = []
+        self.lt_value = []
+
         #set connection parameters 7.5ms connection interval, 0 Slave interval, 6s timeout
         libmetawear.mbl_mw_settings_set_connection_parameters(self.device.board, 7.5, 7.5, 0, 6000)
         
@@ -106,13 +129,18 @@ class MetaMotion(iSmartDot):
         # else:
         time_val = time.time() - self.xl_start_time
         #print(f"{time.time()} - {self.xl_start_time} = {time_val}")
-        self.data_arr[0] ={
+        self.data_arr[0]= {
             'timestamp':time_val,
             'x':parsedData.x, 
             'y':parsedData.y, 
             'z':parsedData.z
         }
-        # print(f"XL: {self.data_arr[0]}")
+        self.xl_time.append(time_val)
+        self.xl_x.append(parsedData.x)
+        self.xl_y.append(parsedData.y)
+        self.xl_z.append(parsedData.z)
+        #print(self.xl_time)
+        # print(f"XL: {self.data_arr}")
     def magDataHandler(self, ctx, data):
         #Parse data into Cartesian Values
         parsedData = parse_value(data)
@@ -150,6 +178,10 @@ class MetaMotion(iSmartDot):
             'z':parsedData.z
         }
         # print(f"MG: {self.data_arr[1]}")
+        self.mg_time.append(time_val)
+        self.mg_x.append(parsedData.x)
+        self.mg_y.append(parsedData.y)
+        self.mg_z.append(parsedData.z)
 
     def gyroDataHandler(self, ctx, data):
         #Parse data into Cartesian Values
@@ -188,6 +220,10 @@ class MetaMotion(iSmartDot):
             'z':parsedData.z
         }            
         # print(f"GY: {self.data_arr[2]}")
+        self.gy_time.append(time_val)
+        self.gy_x.append(parsedData.x)
+        self.gy_y.append(parsedData.y)
+        self.gy_z.append(parsedData.z)
 
     def lightDataHandler(self, ctx, data):
         parsedData = parse_value(data)
@@ -214,6 +250,8 @@ class MetaMotion(iSmartDot):
             'z':0
         }               
         # print(f"LT: {self.data_arr[3]}")
+        self.lt_time.append(time_val)
+        self.lt_value.append(parsedData)
 
     def startMag(self):  
         libmetawear.mbl_mw_mag_bmm150_stop(self.device.board)
@@ -240,8 +278,8 @@ class MetaMotion(iSmartDot):
     # Define a callback function to handle data
     def i2c_data_handler(self, ctx, data):
         data_obj = data.contents
-        print(f"Raw Data: {data_obj}")
-        print("Datadata%s -> %s &  %s" % (self.device.address, parse_value(data), data.contents))
+        # print(f"Raw Data: {data_obj}")
+        # print("Datadata%s -> %s &  %s" % (self.device.address, parse_value(data), data.contents))
         #print("ur problem here bro")DatadataC8:30:26:28:92:4A -> [] &  {epoch : 1742670940955, extra : 4108379404, value : 4098885936, type_id : 4, length : 0}
     
     def startAccel(self):
@@ -431,7 +469,17 @@ class MetaMotion(iSmartDot):
             LTDataRates = tuple(LTDataRates.keys())
             self.LT_SampleRate = LTDataRates[dataRate]
             self.LT_IntRate = LTIntegrationTime[dataRate]
-
+    def startCollecting(self):
+        self.setSampleRates(25,25,4,1)
+        self.startAccel()
+        self.startMag()
+        self.startGyro()
+        self.startLight()
+    def stopCollecting(self):
+        self.stopAccel()
+        self.stopMag()
+        self.stopGyro()
+        self.stopLight()
 if __name__ == "__main__":
     smartdot = MetaMotion(MAC_Address="D0:F2:9D:CA:87:53")
     # smartdot.setSampleRanges()

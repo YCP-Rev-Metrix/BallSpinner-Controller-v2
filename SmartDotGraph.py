@@ -47,7 +47,6 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.graph.setLabel('left', 'Sensor Values', units='Units')
         self.graph.setLabel('bottom', 'Time', units='s')
         self.graph.setMouseEnabled(x=False, y=False)
-        self.graph.setYRange(0,15)
         legend = self.graph.addLegend()
         legend.setColumnCount(3)
   
@@ -150,6 +149,37 @@ class SmartDotGraph(QtWidgets.QWidget):
         # Refresh the graph with new data
         # Use Qt's event loop to schedule the update if needed; direct call works for simple tests
         self.update_graph()
+    def updateDataBetter(self,
+                        acclerometerTime, acclerometerX, accelerometerY, accelerometerZ,
+                        gyroscoperTime, gyroscopeX, gyroscopeY, gyroscopeZ,
+                        magnometerTime, 
+                        magnetometerX, magnetometerY, magnetometerZ,
+                        lightTime, lightValue):
+        self.graph.clear()  # Clear existing plots
+        # Plot data based on checkbox states
+        if self.chkAccelerometer_X.isChecked():
+            self.graph.plot(acclerometerTime, acclerometerX, pen=pg.mkPen(color='r', width=2), name='Accelerometer_X')
+        if self.chkAccelerometer_Y.isChecked():
+            self.graph.plot(acclerometerTime, accelerometerY, pen=pg.mkPen(color='g', width=2), name='Accelerometer_Y')
+        if self.chkAccelerometer_Z.isChecked():
+            self.graph.plot(acclerometerTime, accelerometerZ, pen=pg.mkPen(color='b', width=2), name='Accelerometer_Z')
+        if self.chkGyroscope_X.isChecked():
+            self.graph.plot(gyroscoperTime, gyroscopeX, pen=pg.mkPen(color='c', width=2), name='Gyroscope_X')
+        if self.chkGyroscope_Y.isChecked():
+            self.graph.plot(gyroscoperTime, gyroscopeY, pen=pg.mkPen(color='m', width=2), name='Gyroscope_Y')
+        if self.chkGyroscope_Z.isChecked():
+            self.graph.plot(gyroscoperTime, gyroscopeZ, pen=pg.mkPen(color='y', width=2), name='Gyroscope_Z')
+        if self.chkMagnetometer_X.isChecked():
+            self.graph.plot(magnometerTime, magnetometerX, pen=pg.mkPen(color="#008080", width=2), name='Magnetometer_X')
+        if self.chkMagnetometer_Y.isChecked():
+            self.graph.plot(magnometerTime, magnetometerY, pen=pg.mkPen(color="#800000", width=2), name='Magnetometer_Y')  # Orange
+        if self.chkMagnetometer_Z.isChecked():
+            self.graph.plot(magnometerTime, magnetometerZ, pen=pg.mkPen(color='#800080', width=2), name='Magnetometer_Z')  # Purple
+        if self.chkLight.isChecked():
+            self.graph.plot(lightTime, lightValue, pen=pg.mkPen(color='w', width=2), name='Light')  # Gray
+        self.toggle_limit_view()  # Apply limit view if enabled
+
+
 
 
 
