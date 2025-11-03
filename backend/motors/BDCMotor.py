@@ -9,7 +9,7 @@ MID_THR = 1500
 MAX_THR = 2000
 STEP = 2   # ~2 per-mille
 FREQ = 50
-ARM_TIME_S = 0.5
+ARM_TIME_S = 0.15
 pi = pigpio.pi()
 
 
