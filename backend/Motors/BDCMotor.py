@@ -9,7 +9,7 @@ MID_THR = 1500
 MAX_THR = 2000
 STEP = 2   # ~2 per-mille
 FREQ = 50
-ARM_TIME_S = 3.0
+ARM_TIME_S = 0.5
 pi = pigpio.pi()
 
 
@@ -68,7 +68,7 @@ class BDCMotor(iMotor):
             sys.exit(1)
         else :
             self.arm(self)
-            time.sleep(2)
+            #time.sleep(2)        #test with no sleep
 
 
     def stop(self):
