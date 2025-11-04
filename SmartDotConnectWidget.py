@@ -1,12 +1,19 @@
 from PyQt6 import QtWidgets, QtCore, uic
 from PyQt6.QtCore import pyqtSignal
-from backend.smartdot.ScanSmartDots import ScanSmartDot
-from backend.smartdot.MetaMotionS import MetaMotion
+import utils
+if utils.is_raspberry_pi():
+    from backend.smartdot.ScanSmartDots import ScanSmartDot
+    from backend.smartdot.MetaMotionS import MetaMotion
+else:
+    from backend.smartdot.SimSmartDot import SimSmartDot
 
 
 class SmartDotConnectWidget(QtWidgets.QWidget):
     
-    signalSmartDotConnected = pyqtSignal(MetaMotion)
+    if utils.is_raspberry_pi():
+        signalSmartDotConnected = pyqtSignal(MetaMotion)
+    else:
+        signalSmartDotConnected = pyqtSignal(SimSmartDot)
 
 
     def __init__(self, parent=None):
@@ -28,9 +35,13 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         self.Devices = []
 
         self.setFixedSize(300, 600)
-        self.scanner = ScanSmartDot()
-        self.scanner.scan10Seconds()
-        self.setDeviceList(self.scanner.devices)
+        if utils.is_raspberry_pi():
+            self.scanner = ScanSmartDot()
+            self.scanner.scan10Seconds()
+            self.setDeviceList(self.scanner.devices)
+        else:
+            self.smartdot = SimSmartDot()
+            self.setDeviceList(["SI:MU:LA:TE:D1:!!:!!"])
         
 
     def connect_to_smartdot(self, text):

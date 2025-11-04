@@ -4,7 +4,11 @@ import numpy as np
 from SmartDotGraph import SmartDotGraph
 from SmartDotConnectWidget import SmartDotConnectWidget
 import math
-from backend.smartdot.MetaMotionS import MetaMotion
+import utils
+if utils.is_raspberry_pi():
+    from backend.smartdot.MetaMotionS import MetaMotion
+else:
+    from backend.smartdot.SimSmartDot import SimSmartDot
 
 
 class SmartDotTestPage(QtWidgets.QWidget):
