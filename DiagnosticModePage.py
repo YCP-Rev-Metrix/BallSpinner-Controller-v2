@@ -7,25 +7,13 @@ import threading
 import time
 import os
 import io
+import utils
 
 
 spinArray = np.array([0.0])
 tiltArray = np.array([0.0])
 angleArray = np.array([0.0])
 xArray = np.array([0.0])
-
-def is_raspberry_pi():
-    """Checks if the code is running on a Raspberry Pi."""
-    try:
-        with io.open('/sys/firmware/devicetree/base/model', 'r') as m:
-            if 'raspberry pi' in m.read().lower():
-                return True
-    except FileNotFoundError:
-        pass
-    return False
-
-
-
 
 
 class DiagnosticModePage(QtWidgets.QWidget):
@@ -34,7 +22,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         
 
         # check if pi, if not then run sim motor
-        if is_raspberry_pi():
+        if utils.is_raspberry_pi():
             Motor = BDCMotor(26)
         else :
             Motor = SimMotor(26)
