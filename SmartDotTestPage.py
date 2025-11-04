@@ -9,10 +9,12 @@ if utils.is_raspberry_pi():
     from backend.smartdot.MetaMotionS import MetaMotion
 else:
     from backend.smartdot.SimSmartDot import SimSmartDot
+from PyQt6.QtCore import pyqtSignal
 
 
 class SmartDotTestPage(QtWidgets.QWidget):
-    
+    changePage = pyqtSignal(int, str)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         # load the .ui file (name matches file in repo)
@@ -22,8 +24,13 @@ class SmartDotTestPage(QtWidgets.QWidget):
         self.SmartDotGraph = self.findChild(SmartDotGraph, 'smartDotGraph')
         self.btnDisconnect = self.findChild(QtWidgets.QPushButton, 'btnDisconnect')
         self.btnDisconnect.clicked.connect(self.disconnectSmartDot)
+        # Initially disable disconnect until a SmartDot is connected
+        if self.btnDisconnect:
+            self.btnDisconnect.setEnabled(False)
         self.smartdotConnectWidget = self.findChild(SmartDotConnectWidget, 'SmartDotConnect')
         self.smartdotConnectWidget.signalSmartDotConnected.connect(self.connectSmartDot)
+
+        
 
         self.SmartDot = None  # Placeholder for the connected SmartDot device
 
@@ -52,6 +59,8 @@ class SmartDotTestPage(QtWidgets.QWidget):
         # Wire Start/Stop buttons from the UI
         self.btnStart = self.findChild(QtWidgets.QPushButton, 'btnStart')
         self.btnStop = self.findChild(QtWidgets.QPushButton, 'btnStop')
+
+       
         if self.btnStart:
             self.btnStart.clicked.connect(self.start_updates)
         if self.btnStop:
@@ -59,18 +68,23 @@ class SmartDotTestPage(QtWidgets.QWidget):
 
         # Set initial button states
         if self.btnStart:
-            self.btnStart.setEnabled(True)
+            self.btnStart.setEnabled(False)
         if self.btnStop:
             self.btnStop.setEnabled(False)
 
     def disconnectSmartDot(self):
         print("Disconnecting SmartDot...")
+        self.btnStart.setEnabled(False)
         # Here you would add the actual disconnection code
         if self.SmartDot:
             self.SmartDot.disconnect()
     def connectSmartDot(self, device):
         print("Connecting SmartDot...")
         self.SmartDot = device
+        self.btnStart.setEnabled(True)
+        # Enable disconnect once a device is connected
+        if self.btnDisconnect:
+            self.btnDisconnect.setEnabled(True)
         print(f"SmartDot: {self.SmartDot}")
         print(f"Smart dot type: {type(self.SmartDot)}")
         # Here you would add the actual connection code
@@ -83,6 +97,9 @@ class SmartDotTestPage(QtWidgets.QWidget):
             self.active = True
             print("start collecting")
             self.SmartDot.startCollecting()
+            # While collecting, prevent disconnecting
+            if self.btnDisconnect:
+                self.btnDisconnect.setEnabled(False)
         if self.btnStart:
             self.btnStart.setEnabled(False)
         if self.btnStop:
@@ -96,6 +113,9 @@ class SmartDotTestPage(QtWidgets.QWidget):
         self.active = False
         print("stop collecting")
         self.SmartDot.stopCollecting()
+        # Re-enable disconnect after collecting stops
+        if self.btnDisconnect:
+            self.btnDisconnect.setEnabled(True)
         if self.btnStart:
             self.btnStart.setEnabled(True)
         if self.btnStop:
