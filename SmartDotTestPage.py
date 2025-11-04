@@ -71,6 +71,8 @@ class SmartDotTestPage(QtWidgets.QWidget):
     def connectSmartDot(self, device):
         print("Connecting SmartDot...")
         self.SmartDot = device
+        print(f"SmartDot: {self.SmartDot}")
+        print(f"Smart dot type: {type(self.SmartDot)}")
         # Here you would add the actual connection code
         
 

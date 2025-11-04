@@ -3,6 +3,29 @@ from abc import ABCMeta, abstractmethod
 
 class iSmartDot(metaclass=ABCMeta): 
 
+    def __init__(self):
+        # Required data storage fields for all sensor types
+        # Accelerometer (XL) data
+        self.xl_time = []
+        self.xl_x = []
+        self.xl_y = []
+        self.xl_z = []
+        
+        # Gyroscope (GY) data
+        self.gy_time = []
+        self.gy_x = []
+        self.gy_y = []
+        self.gy_z = []
+        
+        # Magnetometer (MG) data
+        self.mg_time = []
+        self.mg_x = []
+        self.mg_y = []
+        self.mg_z = []
+        
+        # Light sensor (LT) data
+        self.lt_time = []
+        self.lt_value = []
     
     #Confirm all class under this interface have called all functions
     @classmethod
@@ -72,6 +95,21 @@ class iSmartDot(metaclass=ABCMeta):
     @abstractmethod
     def stopLight(self):
         pass 
+    @abstractmethod
+    def accelDataHandler(self, ctx, data):
+        pass
+
+    @abstractmethod
+    def gyroDataHandler(self, ctx, data):
+        pass
+
+    @abstractmethod
+    def magDataHandler(self, ctx, data):
+        pass
+
+    @abstractmethod
+    def lightDataHandler(self, ctx, data):
+        pass
 
     # @abstractmethod
     # def UUID(self) -> str: 

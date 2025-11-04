@@ -27,6 +27,7 @@ class MetaMotion(iSmartDot):
     LT_availRange = [600, 1300, 8000, 16000, 32000, 64000]
     
     def __init__(self, MAC_Address="", autoConnect=True, is_local=False):
+        super().__init__()
         self.connected = False
         self._MAC_ADDRESS = MAC_Address
         
@@ -43,23 +44,6 @@ class MetaMotion(iSmartDot):
         self.device = MetaWear(MAC_Address)
         self.device.connect()
 
-        self.xl_time = []
-        self.xl_x = []
-        self.xl_y = []
-        self.xl_z = []
-
-        self.gy_time = []
-        self.gy_x = []
-        self.gy_y = []
-        self.gy_z = []
-
-        self.mg_time = []
-        self.mg_x = []
-        self.mg_y = []
-        self.mg_z = []
-
-        self.lt_time = []
-        self.lt_value = []
 
         #set connection parameters 7.5ms connection interval, 0 Slave interval, 6s timeout
         libmetawear.mbl_mw_settings_set_connection_parameters(self.device.board, 7.5, 7.5, 0, 6000)
@@ -150,26 +134,7 @@ class MetaMotion(iSmartDot):
             self.prevMagEpoch = data.contents.epoch
         
         timeStamp = (data.contents.epoch - self.prevMagEpoch)/1000 #Epoch is given in ms
-        # if not self.is_local_mode:
-        #     #Pack Sample Count into 3 Byte Big Endian Int
-        #     self.MagSampleCount += 1
-        #     sampleCountInBytes = struct.pack('>I',self.MagSampleCount )[1:4]
-            
-        #     # Pack Timestamp, and x,y,z into 4 Byte Little Endian Floats
-        #     timeStampInBytes : bytearray = struct.pack("<f", timeStamp)
-        #     xValInBytes : bytearray = struct.pack('<f', parsedData.x) 
-        #     yValInBytes : bytearray = struct.pack('<f', parsedData.y)
-        #     zValInBytes : bytearray = struct.pack('<f', parsedData.z)
-
-        #     mess = sampleCountInBytes + timeStampInBytes + xValInBytes + yValInBytes + zValInBytes
-            
-        #     try: # Check if TCP connection is set up, if not, just print xyz values in terminal
-        #         self.magDataSig(mess)
-        #         #print("Encoded Data " + xValInBytes.hex() + ' ' + yValInBytes.hex() + ' ' + zValInBytes.hex())
-        #     except Exception as e:
-        #         print(f"Unexpected error in MGDataHandler: {e}")
-        #         print(parsedData)
-        # else:
+       
         time_val = time.time() - self.mg_start_time
         self.data_arr[1] ={
             'timestamp':time_val,
@@ -192,26 +157,7 @@ class MetaMotion(iSmartDot):
             self.prevGyroEpoch = data.contents.epoch
 
         timeStamp = (data.contents.epoch - self.prevGyroEpoch)/1000 #Epoch is given in ms
-        # if not self.is_local_mode:
-        #     #Pack Sample Count into 3 Byte Big Endian Int
-        #     self.GyroSampleCount+=1
-        #     sampleCountInBytes = struct.pack('>I',self.GyroSampleCount )[1:4]
-            
-        #     # Pack Timestamp, and x,y,z into 4 Byte Little Endian Floats
-        #     timeStampInBytes : bytearray = struct.pack("<f", timeStamp)
-        #     xValInBytes : bytearray = struct.pack('<f', parsedData.x) 
-        #     yValInBytes : bytearray = struct.pack('<f', parsedData.y)
-        #     zValInBytes : bytearray = struct.pack('<f', parsedData.z)
-
-        #     mess = sampleCountInBytes + timeStampInBytes + xValInBytes + yValInBytes + zValInBytes
-            
-        #     try: # Check if TCP connection is set up, if not, just print in terminal
-        #         self.gyroDataSig(mess)
-        #     # print("Encoded Data " + xValInBytes.hex() + ' ' + yValInBytes.hex() + ' ' + zValInBytes.hex())
-        #     except Exception as e:
-        #         print(parsedData)
-        #         print(e)
-        # else:
+       
         time_val = time.time() - self.gy_start_time
         self.data_arr[2] ={
             'timestamp':time_val,

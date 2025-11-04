@@ -38,15 +38,20 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         if utils.is_raspberry_pi():
             self.scanner = ScanSmartDot()
             self.scanner.scan10Seconds()
+            self.scanner.devices.append("SI:MU:LA:TE:DD:OT")
             self.setDeviceList(self.scanner.devices)
+
         else:
             self.smartdot = SimSmartDot()
-            self.setDeviceList(["SI:MU:LA:TE:D1:!!:!!"])
+            self.setDeviceList(["SI:MU:LA:TE:DD:OT"])
         
 
     def connect_to_smartdot(self, text):
         # Simulate connection logic
-        self.smartdot = MetaMotion(text)
+        if utils.is_raspberry_pi():
+            self.smartdot = MetaMotion(text)
+        else:
+            self.smartdot = SimSmartDot(text)
         if(self.smartdot.connected):
             self.lblStatus.setText(f"Connected to {text}")
         self.signalSmartDotConnected.emit(self.smartdot)
