@@ -1,3 +1,4 @@
+from ctypes import cast
 from unittest import case
 from PyQt6 import QtWidgets, uic
 import pyqtgraph as pg
@@ -26,10 +27,26 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.chkMagnetometer_Z = self.findChild(QtWidgets.QCheckBox, 'chkMG_Z')
         self.chkLight = self.findChild(QtWidgets.QCheckBox, 'chkLight')
         self.chkLimitView = self.findChild(QtWidgets.QCheckBox, 'chkLimitView')
-        self.dsbLookBackSeconds = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbLookBackSeconds')
+
         self.btnSelectAll = self.findChild(QtWidgets.QPushButton, 'btnSelectAll')
         self.btnDeselectAll = self.findChild(QtWidgets.QPushButton, 'btnDeselectAll')
-    
+
+        self.dsbLookBackSeconds = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbLookBackSeconds')
+        self.cbolimitView = self.findChild(QtWidgets.QComboBox, 'cboLimitView')
+        self.dsbMinXValue = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbMinX')
+        self.dsbMaxXValue = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbMaxX')
+        self.lblXMax = self.findChild(QtWidgets.QLabel, 'lblXMax')
+        self.lblXMin = self.findChild(QtWidgets.QLabel, 'lblXMin')
+
+        self.cbolimitView.currentTextChanged.connect(self.limitViewBox)
+        self.dsbMinXValue.valueChanged.connect(self.setRange)
+        self.dsbMaxXValue.valueChanged.connect(self.setRange)
+        # Hide limit view controls when not needed
+        self.lblXMax.setVisible(False)
+        self.lblXMin.setVisible(False)
+        self.dsbLookBackSeconds.setVisible(False)
+        self.dsbMinXValue.setVisible(False)
+        self.dsbMaxXValue.setVisible(False)
 
         #Initialize graph
         self.graph.setTitle("Smart Dot Sensor Data")
@@ -39,10 +56,35 @@ class SmartDotGraph(QtWidgets.QWidget):
         legend = self.graph.addLegend()
         legend.setColumnCount(3)
 
+        # initalize storage for plot data
+        self.accelerometerTime = np.array([0.0])
+        self.accelerometerX = np.array([0.0])
+        self.accelerometerY = np.array([0.0])
+        self.accelerometerZ = np.array([0.0])
+        self.gyroscopeTime = np.array([0.0])
+        self.gyroscopeX = np.array([0.0])
+        self.gyroscopeY = np.array([0.0])
+        self.gyroscopeZ = np.array([0.0])
+        self.magnetometerTime = np.array([0.0])
+        self.magnetometerX = np.array([0.0])
+        self.magnetometerY = np.array([0.0])
+        self.magnetometerZ = np.array([0.0])
+        self.lightTime = np.array([0.0])
+        self.lightValue = np.array([0.0])
+
 
         #Select/Deselect All buttons
         self.btnSelectAll.clicked.connect(self.select_all)
         self.btnDeselectAll.clicked.connect(self.deselect_all)
+        # Print graph coordinates to terminal when user clicks on the graph
+        # We map the scene position of the mouse click to the view (data) coordinates
+        self.graph.scene().sigMouseClicked.connect(self._on_graph_click)
+
+        # References to labels in the UI where we'll display the clicked values
+        self.lblAccelerometer = self.findChild(QtWidgets.QLabel, 'lblAccelerometer')
+        self.lblGyroscopeData = self.findChild(QtWidgets.QLabel, 'lblGyroscopeData')
+        self.lblMagnomaterData = self.findChild(QtWidgets.QLabel, 'lblMagnomaterData')
+        self.lblLightData = self.findChild(QtWidgets.QLabel, 'lblLightData')
     def select_all(self):
         self.chkAccelerometer_X.setChecked(True)
         self.chkAccelerometer_Y.setChecked(True)
@@ -65,10 +107,151 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.chkMagnetometer_Y.setChecked(False)
         self.chkMagnetometer_Z.setChecked(False)
         self.chkLight.setChecked(False)
+    #to change code outside of updateDataBetter
+    def limitViewBox(self):
+        try:
+            last = max(self.accelerometerTime[-1], self.gyroscopeTime[-1], self.magnetometerTime[-1], self.lightTime[-1])
+        except ValueError:
+            last = 0
+        match self.cbolimitView.currentText():
+            case 'Scroll':
+                self.lblXMax.setVisible(False)
+                self.lblXMin.setVisible(False)
+                self.dsbLookBackSeconds.setVisible(True)
+                self.dsbMinXValue.setVisible(False)
+                self.dsbMaxXValue.setVisible(False)
+                self.graph.setXRange(last - self.dsbLookBackSeconds.value(), last)
+            case 'View All':
+                self.lblXMax.setVisible(False)
+                self.lblXMin.setVisible(False)
+                self.dsbLookBackSeconds.setVisible(False)
+                self.dsbMinXValue.setVisible(False)
+                self.dsbMaxXValue.setVisible(False)
+                self.graph.enableAutoRange(axis='x')
+            case "Range":
+                self.lblXMax.setVisible(True)
+                self.lblXMin.setVisible(True)
+                self.dsbLookBackSeconds.setVisible(False)
+                self.dsbMinXValue.setVisible(True)
+                self.dsbMaxXValue.setVisible(True)
+                self.graph.setXRange(self.dsbMinXValue.value(), self.dsbMaxXValue.value())
+            case _:
+                self.graph.enableAutoRange(axis='x')
+    def setRange(self):
+        self.graph.setXRange(self.dsbMinXValue.value(), self.dsbMaxXValue.value())
 
+    def limit_view_change(self,last):
+        match self.cbolimitView.currentText():
+            case 'Scroll':
+                self.graph.setXRange(last - self.dsbLookBackSeconds.value(), last)
+            case 'View All':
+                self.graph.enableAutoRange(axis='x')
+            case "Range":
+                self.graph.setXRange(self.dsbMinXValue.value(), self.dsbMaxXValue.value())
+            case _:
+                self.graph.enableAutoRange(axis='x')
+    
 
+    def _on_graph_click(self, event):
+        """Handle mouse clicks on the plot scene and print mapped data coordinates.
 
-    #expose UpdateData as a class method
+        The event is a QGraphicsSceneMouseEvent. We convert the event's
+        scene position into the view (data) coordinates using the plot's ViewBox.
+        """
+        try:
+            # scenePos is in scene coordinates; map to view (data) coordinates
+            pos = event.scenePos()
+            vb = self.graph.getPlotItem().getViewBox()
+            data_point = vb.mapSceneToView(pos)
+            x_click = float(data_point.x())
+            y_click = float(data_point.y())
+            # Prepare formatting helper
+            def _fmt(v):
+                try:
+                    return f"{float(v):.3f}"
+                except Exception:
+                    return "N/A"
+
+            def _fmt_html(v, color):
+                """Return an HTML span-wrapped formatted value using _fmt and a CSS color."""
+                return f"<span style='color:{color}'>{_fmt(v)}</span>"
+
+            # Helper to find nearest index
+            def _nearest(time_arr, val):
+                if time_arr is None or len(time_arr) == 0:
+                    return None
+                ta = np.asarray(time_arr)
+                return int(np.argmin(np.abs(ta - val)))
+
+            # Accelerometer
+            if self.accelerometerTime is not None and len(self.accelerometerTime) > 0:
+                idx = _nearest(self.accelerometerTime, x_click)
+                if idx is not None:
+                    t = float(np.asarray(self.accelerometerTime)[idx])
+                    ax = float(np.asarray(self.accelerometerX)[idx]) if self.accelerometerX is not None else None
+                    ay = float(np.asarray(self.accelerometerY)[idx]) if self.accelerometerY is not None else None
+                    az = float(np.asarray(self.accelerometerZ)[idx]) if self.accelerometerZ is not None else None
+                    # Update label instead of printing, color values to match plot lines
+                    if self.lblAccelerometer is not None:
+                        # colors match plotting pens: x=red, y=green, z=blue
+                        ax_html = _fmt_html(ax, '#ff0000')
+                        ay_html = _fmt_html(ay, '#00aa00')
+                        az_html = _fmt_html(az, '#0000ff')
+                        self.lblAccelerometer.setText(
+                            f"Accelerometer @ t={t:.3f} (idx={idx}): x={ax_html}, y={ay_html}, z={az_html}"
+                        )
+
+            # Gyroscope
+            if self.gyroscopeTime is not None and len(self.gyroscopeTime) > 0:
+                idx = _nearest(self.gyroscopeTime, x_click)
+                if idx is not None:
+                    t = float(np.asarray(self.gyroscopeTime)[idx])
+                    gx = float(np.asarray(self.gyroscopeX)[idx]) if self.gyroscopeX is not None else None
+                    gy = float(np.asarray(self.gyroscopeY)[idx]) if self.gyroscopeY is not None else None
+                    gz = float(np.asarray(self.gyroscopeZ)[idx]) if self.gyroscopeZ is not None else None
+                    if self.lblGyroscopeData is not None:
+                        # gyro colors: x=cyan, y=magenta, z=yellow
+                        gx_html = _fmt_html(gx, '#00ffff')
+                        gy_html = _fmt_html(gy, '#ff00ff')
+                        gz_html = _fmt_html(gz, '#ffff00')
+                        self.lblGyroscopeData.setText(
+                            f"Gyroscope @ t={t:.3f} (idx={idx}): x={gx_html}, y={gy_html}, z={gz_html}"
+                        )
+
+            # Magnetometer
+            if self.magnetometerTime is not None and len(self.magnetometerTime) > 0:
+                idx = _nearest(self.magnetometerTime, x_click)
+                if idx is not None:
+                    t = float(np.asarray(self.magnetometerTime)[idx])
+                    mx = float(np.asarray(self.magnetometerX)[idx]) if self.magnetometerX is not None else None
+                    my = float(np.asarray(self.magnetometerY)[idx]) if self.magnetometerY is not None else None
+                    mz = float(np.asarray(self.magnetometerZ)[idx]) if self.magnetometerZ is not None else None
+                    if self.lblMagnomaterData is not None:
+                        # magnetometer colors match plot hex codes used earlier
+                        mx_html = _fmt_html(mx, '#008080')
+                        my_html = _fmt_html(my, '#800000')
+                        mz_html = _fmt_html(mz, '#800080')
+                        self.lblMagnomaterData.setText(
+                            f"Magnetometer @ t={t:.3f} (idx={idx}): x={mx_html}, y={my_html}, z={mz_html}"
+                        )
+
+            # Light
+            if self.lightTime is not None and len(self.lightTime) > 0:
+                idx = _nearest(self.lightTime, x_click)
+                if idx is not None:
+                    t = float(np.asarray(self.lightTime)[idx])
+                    lv = float(np.asarray(self.lightValue)[idx]) if self.lightValue is not None else None
+                    if self.lblLightData is not None:
+                        # light uses a neutral gray color
+                        lv_html = _fmt_html(lv, '#777777')
+                        self.lblLightData.setText(
+                            f"Light @ t={t:.3f} (idx={idx}): value={lv_html}"
+                        )
+
+        except Exception as e:
+            # Fallback: print the exception to help debugging
+            print("Error mapping graph click to data coords:", e)
+
  
     def updateDataBetter(self,
                         acclerometerTime, acclerometerX, accelerometerY, accelerometerZ,
@@ -77,6 +260,22 @@ class SmartDotGraph(QtWidgets.QWidget):
                         magnetometerX, magnetometerY, magnetometerZ,
                         lightTime, lightValue):
         self.graph.clear()  # Clear existing plots
+        #store data in class variables
+        self.accelerometerTime = acclerometerTime
+        self.accelerometerX = acclerometerX
+        self.accelerometerY = accelerometerY    
+        self.accelerometerZ = accelerometerZ
+        self.gyroscopeTime = gyroscoperTime
+        self.gyroscopeX = gyroscopeX
+        self.gyroscopeY = gyroscopeY
+        self.gyroscopeZ = gyroscopeZ
+        self.magnetometerTime = magnometerTime
+        self.magnetometerX = magnetometerX
+        self.magnetometerY = magnetometerY
+        self.magnetometerZ = magnetometerZ
+        self.lightTime = lightTime
+        self.lightValue = lightValue
+
         # Plot data based on checkbox states
         if self.chkAccelerometer_X.isChecked():
             self.graph.plot(acclerometerTime, acclerometerX, pen=pg.mkPen(color='r', width=2), name='Accelerometer_X')
@@ -98,55 +297,59 @@ class SmartDotGraph(QtWidgets.QWidget):
             self.graph.plot(magnometerTime, magnetometerZ, pen=pg.mkPen(color='#800080', width=2), name='Magnetometer_Z')  # Purple
         if self.chkLight.isChecked():
             self.graph.plot(lightTime, lightValue, pen=pg.mkPen(color='w', width=2), name='Light')  # Gray
-        last = max(acclerometerTime[-1], gyroscoperTime[-1], magnometerTime[-1], lightTime[-1])
-        if self.chkLimitView.isChecked():
-            self.graph.setXRange(last - self.dsbLookBackSeconds.value(), last)
-        else:
-            self.graph.enableAutoRange(axis='x')
+        try:
+            last = max(acclerometerTime[-1], gyroscoperTime[-1], magnometerTime[-1], lightTime[-1])
+        except ValueError:
+            last = 0
+        self.limit_view_change(last)
     def updateAccelerometer(self, time, x, y, z):
+        # store latest accelerometer arrays for click lookup
+        self.accelerometerTime = np.asarray(time)
+        self.accelerometerX = np.asarray(x)
+        self.accelerometerY = np.asarray(y)
+        self.accelerometerZ = np.asarray(z)
         if self.chkAccelerometer_X.isChecked():
             self.graph.plot(time, x, pen=pg.mkPen(color='r', width=2), name='Accelerometer_X')
         if self.chkAccelerometer_Y.isChecked():
             self.graph.plot(time, y, pen=pg.mkPen(color='g', width=2), name='Accelerometer_Y')
         if self.chkAccelerometer_Z.isChecked():
             self.graph.plot(time, z, pen=pg.mkPen(color='b', width=2), name='Accelerometer_Z')
-        last = time[-1]
-        if self.chkLimitView.isChecked():
-            self.graph.setXRange(last - self.dsbLookBackSeconds.value(), last)
-        else:
-            self.graph.enableAutoRange(axis='x')
+        self.limit_view_change(time[-1])
     def updateGyroscope(self, time, x, y, z):
+        # store latest gyroscope arrays for click lookup
+        self.gyroscopeTime = np.asarray(time)
+        self.gyroscopeX = np.asarray(x)
+        self.gyroscopeY = np.asarray(y)
+        self.gyroscopeZ = np.asarray(z)
         if self.chkGyroscope_X.isChecked():
             self.graph.plot(time, x, pen=pg.mkPen(color='c', width=2), name='Gyroscope_X')
         if self.chkGyroscope_Y.isChecked():
             self.graph.plot(time, y, pen=pg.mkPen(color='m', width=2), name='Gyroscope_Y')
         if self.chkGyroscope_Z.isChecked():
             self.graph.plot(time, z, pen=pg.mkPen(color='y', width=2), name='Gyroscope_Z')
-        last = time[-1]
-        if self.chkLimitView.isChecked():
-            self.graph.setXRange(last - self.dsbLookBackSeconds.value(), last)
-        else:
-            self.graph.enableAutoRange(axis='x')
+        self.limit_view_change(time[-1])
     def updateMagnetometer(self, time, x, y, z):
+        # store latest magnetometer arrays for click lookup
+        self.magnetometerTime = np.asarray(time)
+        self.magnetometerX = np.asarray(x)
+        self.magnetometerY = np.asarray(y)
+        self.magnetometerZ = np.asarray(z)
+
         if self.chkMagnetometer_X.isChecked():
             self.graph.plot(time, x, pen=pg.mkPen(color="#008080", width=2), name='Magnetometer_X')
         if self.chkMagnetometer_Y.isChecked():
             self.graph.plot(time, y, pen=pg.mkPen(color="#800000", width=2), name='Magnetometer_Y')
         if self.chkMagnetometer_Z.isChecked():
             self.graph.plot(time, z, pen=pg.mkPen(color='#800080', width=2), name='Magnetometer_Z')
-        last = time[-1]
-        if self.chkLimitView.isChecked():
-            self.graph.setXRange(last - self.dsbLookBackSeconds.value(), last)
-        else:
-            self.graph.enableAutoRange(axis='x')
+        self.limit_view_change(time[-1])
     def updateLight(self, time, value):
+        # store latest light arrays for click lookup
+        self.lightTime = np.asarray(time)
+        self.lightValue = np.asarray(value)
+
         if self.chkLight.isChecked():
             self.graph.plot(time, value, pen=pg.mkPen(color='w', width=2), name='Light')
-        last = time[-1]
-        if self.chkLimitView.isChecked():
-            self.graph.setXRange(last - self.dsbLookBackSeconds.value(), last)
-        else:
-            self.graph.enableAutoRange(axis='x')
+        self.limit_view_change(time[-1])
     def setMode(self, mode):
         match mode:
             case 'Accelerometer':
@@ -225,7 +428,7 @@ if __name__ == '__main__':
     window.setWindowTitle("Smart Dot Graph")
     window.show()
 
-    window.setMode('Gyroscope')
+ 
     
     # Start the event loop
     sys.exit(app.exec())
