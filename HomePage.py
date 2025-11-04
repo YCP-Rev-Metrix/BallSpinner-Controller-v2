@@ -1,3 +1,4 @@
+import platform
 from PyQt6 import QtWidgets, uic
 
 from FrontPage import FrontPage
@@ -25,8 +26,8 @@ class HomePage(QtWidgets.QMainWindow):
         self.frontPage.changePage.connect(self.switch_to_page)
 
         # Replace FrontPage tab with FrontPage instance
-        
-        self.setFixedSize(1920, 1080)  # Set fixed window size to 1920x1080 s
+        if(platform.system() != 'Darwin'):
+            self.setFixedSize(1920, 1080)  # Set fixed window size to 1920x1080
 
        
     def switch_to_page(self, index, data):
