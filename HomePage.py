@@ -24,10 +24,15 @@ class HomePage(QtWidgets.QMainWindow):
 
         # Create FrontPage instance and connect signal
         self.frontPage.changePage.connect(self.switch_to_page)
+        self.diagnosticPage.changePage.connect(self.switch_to_page)
+        self.shotModePage.changePage.connect(self.switch_to_page)
+        #self.smartDotTestPage.changePage.connect(self.switch_to_page)
 
-        # Replace FrontPage tab with FrontPage instance
+        # lock resolution to 1920x1080 except on macOS
         if(platform.system() != 'Darwin'):
             self.setFixedSize(1920, 1080)  # Set fixed window size to 1920x1080
+        else:
+            self.setBaseSize(1920, 1080)  # Set base window size to 1920x1080 on macOS
 
        
     def switch_to_page(self, index, data):

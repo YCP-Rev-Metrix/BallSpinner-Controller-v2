@@ -6,14 +6,37 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>910</width>
-    <height>892</height>
+    <width>1111</width>
+    <height>1351</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QPushButton" name="btnHome">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>20</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: red; color: white; font-size: 30;</string>
+     </property>
+     <property name="text">
+      <string>⌂</string>
+     </property>
+    </widget>
+   </item>
    <item>
     <widget class="QWidget" name="widget_4" native="true">
      <layout class="QHBoxLayout" name="horizontalLayout">

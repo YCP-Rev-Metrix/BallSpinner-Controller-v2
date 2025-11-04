@@ -8,6 +8,7 @@ import time
 import os
 import io
 import utils
+from PyQt6.QtCore import pyqtSignal
 
 
 spinArray = np.array([0.0])
@@ -17,6 +18,8 @@ xArray = np.array([0.0])
 
 
 class DiagnosticModePage(QtWidgets.QWidget):
+    changePage = pyqtSignal(int, str)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         
@@ -33,6 +36,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
         btnStart = self.findChild(QtWidgets.QPushButton, 'btnStart')
         btnStop = self.findChild(QtWidgets.QPushButton, 'btnStop')
         btnClear = self.findChild(QtWidgets.QPushButton, 'btnClear')
+
+        self.btnHome = self.findChild(QtWidgets.QPushButton, 'btnHome')
+        self.btnHome.clicked.connect(lambda: self.changePage.emit(0, "Home"))
 
         
 

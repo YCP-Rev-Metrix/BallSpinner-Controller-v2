@@ -1,8 +1,10 @@
 from PyQt6 import QtWidgets, QtCore, uic
 from InputGraph import InputGraph
+from PyQt6.QtCore import pyqtSignal
 
 
 class ShotModePage(QtWidgets.QWidget):
+    changePage = pyqtSignal(int, str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -11,6 +13,10 @@ class ShotModePage(QtWidgets.QWidget):
 
         # Grab the three InputGraph widgets created by the .ui file and store references
         # The object names come from the .ui: 'inputGraph_RPM', 'InputGraph_Tilt', 'InputGraph_Angle'
+        self.btnHome = self.findChild(QtWidgets.QPushButton, 'btnHome')
+        self.btnHome.clicked.connect(lambda: self.changePage.emit(0, "Home"))
+
+
         self.graph_rpm = self.findChild(InputGraph, 'inputGraph_RPM')
         self.graph_tilt = self.findChild(InputGraph, 'InputGraph_Tilt')
         self.graph_angle = self.findChild(InputGraph, 'InputGraph_Angle')
