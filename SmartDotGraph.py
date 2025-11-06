@@ -2,7 +2,7 @@ from ctypes import cast
 from unittest import case
 from PyQt6 import QtWidgets, uic
 import pyqtgraph as pg
-import numpy as np
+import numpy as np 
 
 # Module-level arrays used by the graph update. Kept as globals for minimal changes
 
@@ -54,7 +54,7 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.graph.setLabel('bottom', 'Time', units='s')
         self.graph.setMouseEnabled(x=False, y=False)
         legend = self.graph.addLegend()
-        legend.setColumnCount(3)
+        legend.setColumnCount(2)
 
         # initalize storage for plot data
         self.accelerometerTime = np.array([0.0])
