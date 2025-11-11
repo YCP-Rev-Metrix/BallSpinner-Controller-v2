@@ -105,6 +105,16 @@ class DiagnosticModePage(QtWidgets.QWidget):
         
         self._stop_event = threading.Event()
 
+        def EStop():
+            Motor.stop()
+            clear_graphs()
+            btnStart.setEnabled(True)
+            btnStop.setEnabled(False)
+            self.set_active(False)
+        # expose EStop publicly so other modules can call: instance.EStop()
+        self.EStop = EStop
+
+
         def _Generator():
             global spinArray, tiltArray, angleArray, xArray
             while not self._stop_event.is_set():

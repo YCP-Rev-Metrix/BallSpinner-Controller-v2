@@ -15,6 +15,9 @@ class HomePage(QtWidgets.QMainWindow):
         
         # Load the UI file.
         uic.loadUi('HomePage.ui', self)
+
+        self.EStop = self.findChild(QtWidgets.QPushButton, 'btnEStop')
+        self.EStop.setStyleSheet("background-color: red; font-weight: bold; font-size: 16px;")
         
         self.tab = self.findChild(QtWidgets.QTabWidget, 'tabWidget')
         self.frontPage = self.findChild(QtWidgets.QWidget, 'FrontPage')
@@ -27,6 +30,8 @@ class HomePage(QtWidgets.QMainWindow):
         self.diagnosticPage.changePage.connect(self.switch_to_page)
         self.shotModePage.changePage.connect(self.switch_to_page)
         #self.smartDotTestPage.changePage.connect(self.switch_to_page)
+
+        self.EStop.clicked.connect(lambda: self.diagnosticPage.EStop())
 
         # lock resolution to 1920x1080 except on macOS
         if(platform.system() != 'Darwin'):
