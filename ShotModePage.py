@@ -33,13 +33,26 @@ class ShotModePage(QtWidgets.QWidget):
         self.graph_tilt.set_bounds(0,1,-45,45)
         self.graph_angle.set_bounds(0,1,-90,90)
 
-        self.graph_rpm.set_default_endpoints(0,0)
-        self.graph_angle.set_default_endpoints(0,0)
-        self.graph_tilt.set_default_endpoints(0,0)
+        self.graph_rpm.set_default_endpoints(0,0,True)
+        self.graph_angle.set_default_endpoints(0,0,True)
+        self.graph_tilt.set_default_endpoints(0,0,True)
 
-        self.graph_rpm.set_max_points(3)
+        self.graph_rpm.set_max_points(10)
         self.graph_tilt.set_max_points(3)
         self.graph_angle.set_max_points(3)
+
+        self.graph_rpm.reset_view_and_clear()
+        self.graph_tilt.reset_view_and_clear()
+        self.graph_angle.reset_view_and_clear()
+
+        self.graph_rpm.set_x_units("sec")
+        self.graph_tilt.set_x_units("sec")
+        self.graph_angle.set_x_units("sec")
+
+        self.graph_rpm.set_y_units("RPM")
+        self.graph_tilt.set_y_units("°")
+        self.graph_angle.set_y_units("°")
+
 
 
         self.sliderTime = self.findChild(QtWidgets.QSlider, 'sliderTime')

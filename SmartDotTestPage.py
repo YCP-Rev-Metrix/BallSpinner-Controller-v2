@@ -24,9 +24,6 @@ class SmartDotTestPage(QtWidgets.QWidget):
         self.SmartDotGraph = self.findChild(SmartDotGraph, 'smartDotGraph')
         self.btnDisconnect = self.findChild(QtWidgets.QPushButton, 'btnDisconnect')
         self.btnDisconnect.clicked.connect(self.disconnectSmartDot)
-        # Initially disable disconnect until a SmartDot is connected
-        if self.btnDisconnect:
-            self.btnDisconnect.setEnabled(False)
         self.smartdotConnectWidget = self.findChild(SmartDotConnectWidget, 'SmartDotConnect')
         self.smartdotConnectWidget.signalSmartDotConnected.connect(self.connectSmartDot)
 
@@ -82,9 +79,6 @@ class SmartDotTestPage(QtWidgets.QWidget):
         print("Connecting SmartDot...")
         self.SmartDot = device
         self.btnStart.setEnabled(True)
-        # Enable disconnect once a device is connected
-        if self.btnDisconnect:
-            self.btnDisconnect.setEnabled(True)
         print(f"SmartDot: {self.SmartDot}")
         print(f"Smart dot type: {type(self.SmartDot)}")
         # Here you would add the actual connection code
@@ -97,9 +91,6 @@ class SmartDotTestPage(QtWidgets.QWidget):
             self.active = True
             print("start collecting")
             self.SmartDot.startCollecting()
-            # While collecting, prevent disconnecting
-            if self.btnDisconnect:
-                self.btnDisconnect.setEnabled(False)
         if self.btnStart:
             self.btnStart.setEnabled(False)
         if self.btnStop:
@@ -113,9 +104,6 @@ class SmartDotTestPage(QtWidgets.QWidget):
         self.active = False
         print("stop collecting")
         self.SmartDot.stopCollecting()
-        # Re-enable disconnect after collecting stops
-        if self.btnDisconnect:
-            self.btnDisconnect.setEnabled(True)
         if self.btnStart:
             self.btnStart.setEnabled(True)
         if self.btnStop:
