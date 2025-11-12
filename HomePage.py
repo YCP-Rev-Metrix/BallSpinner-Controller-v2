@@ -2,6 +2,7 @@ from PyQt6 import QtWidgets, uic
 
 from FrontPage import FrontPage
 from SmartDotTestPage import SmartDotTestPage
+from BallSpinnerController import BallSpinnerController
 
 
 
@@ -9,9 +10,9 @@ from SmartDotTestPage import SmartDotTestPage
 
 
 class HomePage(QtWidgets.QMainWindow):
-    def __init__(self):
+    def __init__(self, bsc : BallSpinnerController):
         super().__init__()
-        
+        self.bsc = bsc
         # Load the UI file.
         uic.loadUi('HomePage.ui', self)
         
@@ -31,6 +32,7 @@ class HomePage(QtWidgets.QMainWindow):
        
     def switch_to_page(self, index, data):
         """Switch to the specified tab index and update the window title."""
+        self.bsc.openMode(index)
         self.tab.setCurrentIndex(index)
         # data is if page needs components hidden or shown; not used yet
        

@@ -4,6 +4,7 @@ from gpiozero import Device
 from gpiozero.pins.mock import MockFactory, MockPWMPin
 from gpiozero.pins.native import NativeFactory
 from HomePage import HomePage
+from BallSpinnerController import BallSpinnerController
 
 
 def is_raspberry_pi():
@@ -27,7 +28,8 @@ setup_logging()
 #Device.pin_factory = MockFactory(pin_class=MockPWMPin)
 
 if __name__ == '__main__':
+    bsc = BallSpinnerController() #Create the BallSpinnerController instance
     app = QtWidgets.QApplication([])
-    window = HomePage()
+    window = HomePage(bsc)
     window.show()
     QtWidgets.QApplication.exec()
