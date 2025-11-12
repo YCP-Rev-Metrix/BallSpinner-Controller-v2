@@ -37,6 +37,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         self.setFixedSize(300, 600)
         if utils.is_raspberry_pi():
             self.scanner = ScanSmartDot()
+            #TODO: IN thread 
             self.scanner.scan10Seconds()
             self.scanner.devices.append("SI:MU:LA:TE:DD:OT")
             self.setDeviceList(self.scanner.devices)
