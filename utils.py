@@ -1,4 +1,5 @@
 import io
+import os
 def is_raspberry_pi():
     """Checks if the code is running on a Raspberry Pi."""
     try:
@@ -8,3 +9,13 @@ def is_raspberry_pi():
     except FileNotFoundError:
         pass
     return False
+
+def is_raspberry_pi_5():
+    try:
+        with io.open('/sys/firmware/devicetree/base/model', 'r') as m:
+            if 'raspberry pi 5' in m.read().lower():
+                return True
+    except FileNotFoundError:
+        pass
+    return False
+
