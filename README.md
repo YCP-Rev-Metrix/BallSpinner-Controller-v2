@@ -1,3 +1,34 @@
+# BallSpinner Controller v2 - Desktop setup guide
+
+## Windows - WSL
+It is recommended to use WSL as that is what our team used. 
+
+### Running the project
+Clone the repo
+```bash
+git clone https://github.com/YCP-Rev-Metrix/BallSpinner-Controller-v2/
+```
+
+**Build the virtual environment**
+```bash
+cd BallSpinner-Controller-v2
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### Developing the frontend
+Install the QT Designer from https://www.pythonguis.com/installation/install-qt-designer-standalone/
+There is a link inside of this article that will download it right to Windows. 
+
+TODO: Matt Fill out this section? Maybe you have a good tutorial?
+
+## Mac
+
+TODO: Matt, you will have to describe install steps for Mac.
+
+
+
+
 # BallSpinner Controller v2 - Raspberry Pi Setup Guide
 
 This guide will walk you through setting up a Raspberry Pi to run the BallSpinner-Controller-v2 application.
@@ -295,7 +326,11 @@ cd ~/MetaWear-SDK-Python/MetaWear-SDK-Cpp
 make CXX=g++ CXXFLAGS="-Wall -fPIC -std=c++14 -I$(pwd)/src" -j$(nproc)
 ```
 
-A successful build will show completion messages at the end of the output.
+A successful build will show these lines at the end:
+```bash
+ln -sf libmetawear.so.0.20.7 dist/release/lib/arm/libmetawear.so.0
+ln -sf libmetawear.so.0 dist/release/lib/arm/libmetawear.so
+```
 
 ### Step 12: Set Library Paths and Compiler Flags
 
