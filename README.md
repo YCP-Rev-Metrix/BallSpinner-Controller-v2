@@ -1,4 +1,6 @@
 # BallSpinner Controller v2 - Desktop setup guide
+## Notes
+The Code is setup to be Operating System independent. So libraries like Metawear using bluetooth and our motor functionality, ensures that we are on the Raspberry Pi to run. This allows us to develop on any platform and still be able to run the project 
 
 ## Windows - WSL
 It is recommended to use WSL as that is what our team used. 
