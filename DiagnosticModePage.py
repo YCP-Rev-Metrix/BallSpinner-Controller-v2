@@ -37,8 +37,6 @@ class DiagnosticModePage(QtWidgets.QWidget):
         btnStop = self.findChild(QtWidgets.QPushButton, 'btnStop')
         btnClear = self.findChild(QtWidgets.QPushButton, 'btnClear')
 
-        self.btnHome = self.findChild(QtWidgets.QPushButton, 'btnHome')
-        self.btnHome.clicked.connect(lambda: self.changePage.emit(0, "Home"))
 
         
 
