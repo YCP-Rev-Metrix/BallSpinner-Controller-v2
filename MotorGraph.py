@@ -103,7 +103,7 @@ class MotorGraph(QtWidgets.QWidget):
     def limitViewBox(self):
         try:
             last = max(self.MotorTime[-1], self.DataTime[-1])
-        except ValueError:
+        except Exception:
             last = 0
         match self.cbolimitView.currentText():
             case 'Scroll':

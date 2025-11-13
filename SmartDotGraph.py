@@ -112,7 +112,7 @@ class SmartDotGraph(QtWidgets.QWidget):
     def limitViewBox(self):
         try:
             last = max(self.accelerometerTime[-1], self.gyroscopeTime[-1], self.magnetometerTime[-1], self.lightTime[-1])
-        except ValueError:
+        except Exception:
             last = 0
         match self.cbolimitView.currentText():
             case 'Scroll':
