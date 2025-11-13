@@ -6,35 +6,85 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>910</width>
+    <width>904</width>
     <height>892</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <item row="1" column="0">
-    <widget class="QPushButton" name="btn_Test_Start">
-     <property name="text">
-      <string>Test_Start</string>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <widget class="MotorGraph" name="MotorGraph" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string/>
+   <item>
+    <widget class="QWidget" name="ButtonContainer" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Analysis</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton">
+        <property name="text">
+         <string>Coming soon</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_3">
+        <property name="text">
+         <string>insert button text here</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_2">
+        <property name="text">
+         <string>PlaceHolder</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_4">
+        <property name="text">
+         <string>are we gonna use all of these buttons</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_5">
+        <property name="text">
+         <string>Who knows</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
-   <item row="0" column="0">
-    <widget class="SmartDotGraph" name="SmartDotGraphContainer" native="true"/>
-   </item>
-   <item row="2" column="0">
-    <widget class="QPushButton" name="btn_TestStop">
-     <property name="text">
-      <string>Test_Stop</string>
+   <item>
+    <widget class="SmartDotGraph" name="SmartDotGraph" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
     </widget>
    </item>
@@ -45,6 +95,12 @@
    <class>SmartDotGraph</class>
    <extends>QWidget</extends>
    <header>SmartDotGraph</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MotorGraph</class>
+   <extends>QWidget</extends>
+   <header>MotorGraph</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

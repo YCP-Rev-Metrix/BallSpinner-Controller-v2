@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>901</width>
+    <width>904</width>
     <height>892</height>
    </rect>
   </property>
@@ -17,40 +17,37 @@
    <layout class="QVBoxLayout" name="verticalLayout">
     <item alignment="Qt::AlignHCenter">
      <widget class="QPushButton" name="btnEStop">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="text">
        <string>     E-STOP     </string>
       </property>
      </widget>
     </item>
     <item>
-     <widget class="QTabWidget" name="tabWidget">
+     <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>3</number>
       </property>
-      <widget class="QWidget" name="tabFrontPage">
-       <attribute name="title">
-        <string>Page</string>
-       </attribute>
+      <widget class="QWidget" name="pageFrontPage">
        <layout class="QGridLayout" name="gridLayout">
         <item row="0" column="0">
          <widget class="FrontPage" name="FrontPage" native="true"/>
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tabDiagnosticMode">
-       <attribute name="title">
-        <string>Diagnostic Mode</string>
-       </attribute>
+      <widget class="QWidget" name="pageDiagnosticMode">
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
          <widget class="DiagnosticModePage" name="DiagnosticModePage" native="true"/>
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tabShotMode">
-       <attribute name="title">
-        <string>Shot Mode</string>
-       </attribute>
+      <widget class="QWidget" name="pageShotMode">
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <layout class="QGridLayout" name="gridLayout_3">
@@ -61,40 +58,27 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tabAnalysisMode">
-       <attribute name="title">
-        <string>Analysis mode</string>
-       </attribute>
-       <widget class="AnalysisModePage" name="AnlaysisModePage" native="true">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>891</width>
-          <height>811</height>
-         </rect>
-        </property>
-       </widget>
+      <widget class="QWidget" name="AnalysisModePage">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_analysis">
+        <item row="0" column="0">
+         <widget class="AnalysisModePage" name="AnlaysisModePage" native="true"/>
+        </item>
+       </layout>
       </widget>
-      <widget class="QWidget" name="tabCloudTest">
-       <attribute name="title">
-        <string>CloudTest</string>
-       </attribute>
-       <widget class="CloudTest" name="CloudTestPage" native="true">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>761</width>
-          <height>621</height>
-         </rect>
-        </property>
-       </widget>
+      <widget class="QWidget" name="pageCloudTest">
+       <layout class="QGridLayout" name="gridLayout_cloud">
+        <item row="0" column="0">
+         <widget class="CloudTest" name="CloudTestPage" native="true"/>
+        </item>
+       </layout>
       </widget>
-      <widget class="QWidget" name="tabSmartDotTest">
-       <attribute name="title">
-        <string>SmartDotTest</string>
-       </attribute>
+      <widget class="QWidget" name="pageSmartDotTest">
        <layout class="QGridLayout" name="gridLayout_4">
         <item row="0" column="0">
          <widget class="SmartDotTestPage" name="SmartDotTestPage" native="true"/>
@@ -110,14 +94,48 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>901</width>
+     <width>904</width>
      <height>33</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuNavigation">
+    <property name="title">
+     <string>Navigation</string>
+    </property>
+    <addaction name="actionHome"/>
+    <addaction name="actionCloud_Test"/>
+   </widget>
+   <addaction name="menuNavigation"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionHome">
+   <property name="text">
+    <string>Home</string>
+   </property>
+  </action>
+  <action name="actionDiagnostic_Mode">
+   <property name="text">
+    <string>Diagnostic Mode</string>
+   </property>
+  </action>
+  <action name="actionAnalysis_Mode">
+   <property name="text">
+    <string>Analysis Mode</string>
+   </property>
+  </action>
+  <action name="actionCloud_Test">
+   <property name="text">
+    <string>Cloud Test</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>SmartDotTestPage</class>
+   <extends>QWidget</extends>
+   <header>SmartDotTestPage</header>
+   <container>1</container>
+  </customwidget>
   <customwidget>
    <class>AnalysisModePage</class>
    <extends>QWidget</extends>
@@ -140,12 +158,6 @@
    <class>ShotModePage</class>
    <extends>QWidget</extends>
    <header>ShotModePage</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>SmartDotTestPage</class>
-   <extends>QWidget</extends>
-   <header>SmartDotTestPage</header>
    <container>1</container>
   </customwidget>
   <customwidget>

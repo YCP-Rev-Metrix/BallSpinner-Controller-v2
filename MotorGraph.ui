@@ -23,72 +23,44 @@
       <item>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <widget class="QCheckBox" name="chkXL_X">
+         <widget class="QCheckBox" name="chkSpin">
           <property name="text">
-           <string>Acceleration X</string>
+           <string>Spin Instruction</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="chkXL_Y">
+         <widget class="QCheckBox" name="chkAngle">
           <property name="text">
-           <string>Acceleration Y</string>
+           <string>Angle Instruction</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="chkXL_Z">
+         <widget class="QCheckBox" name="chkTilt">
           <property name="text">
-           <string>Acceleration Z</string>
+           <string>Tilt instruction</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="chkGL_X">
+         <widget class="QCheckBox" name="chkSpinData">
           <property name="text">
-           <string>Gyroscope_X</string>
+           <string>Spin Data</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="chkGL_Y">
+         <widget class="QCheckBox" name="chkAngleData">
           <property name="text">
-           <string>Gyroscope_Y</string>
+           <string>Angle Data</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="chkGL_Z">
+         <widget class="QCheckBox" name="chkTiltData">
           <property name="text">
-           <string>Gyroscope_Z</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="chkMG_X">
-          <property name="text">
-           <string>Magnetometer X</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="chkMG_Y">
-          <property name="text">
-           <string>Magnetometer Y</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="chkMG_Z">
-          <property name="text">
-           <string>Magnetometer Z</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="chkLight">
-          <property name="text">
-           <string>Light</string>
+           <string>Tilt Data</string>
           </property>
          </widget>
         </item>
@@ -115,30 +87,16 @@
     <widget class="QWidget" name="widgetValues" native="true">
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
-       <widget class="QLabel" name="lblAccelerometer">
+       <widget class="QLabel" name="lblMotorData">
         <property name="text">
-         <string>Accelerometer data</string>
+         <string>Motor Instructions</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="lblGyroscopeData">
+       <widget class="QLabel" name="lblEncoderData">
         <property name="text">
-         <string>Gyroscope data</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="lblMagnomaterData">
-        <property name="text">
-         <string>Magnotometer data</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="lblLightData">
-        <property name="text">
-         <string>Light data</string>
+         <string>Encoder Data</string>
         </property>
        </widget>
       </item>
@@ -207,6 +165,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QLabel" name="lblXMax">
+        <property name="text">
+         <string>Max</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QDoubleSpinBox" name="dsbMaxX">
         <property name="decimals">
          <number>3</number>
@@ -216,13 +181,6 @@
         </property>
         <property name="value">
          <double>2.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="lblXMax">
-        <property name="text">
-         <string>Max</string>
         </property>
        </widget>
       </item>

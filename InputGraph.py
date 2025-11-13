@@ -16,8 +16,8 @@ class InputGraph(QtWidgets.QWidget):
         # --- Plot Setup ---
         self.plot_widget = pg.PlotWidget()
         # store axis label texts so units can be changed later via accessors
-        self._y_label_text = 'Y-Axis'
-        self._x_label_text = 'X-Axis'
+        self._y_label_text = 'Value'
+        self._x_label_text = 'Time'
         self.plot_widget.setLabel('left', self._y_label_text, units='units')
         self.plot_widget.setLabel('bottom', self._x_label_text, units='units')
         self.plot_widget.setTitle("Input Graph")
@@ -47,7 +47,7 @@ class InputGraph(QtWidgets.QWidget):
     # (degree control removed — spline degree is handled internally)
 
         # Start and End Y controls (float) constrained to [0,1]
-        self.start_y_label = QtWidgets.QLabel("Start Y:")
+        self.start_y_label = QtWidgets.QLabel("Start Value:")
         self.start_y_spin = QtWidgets.QDoubleSpinBox()
         self.start_y_spin.setRange(0.0, 1.0)
         self.start_y_spin.setSingleStep(0.01)
@@ -60,7 +60,7 @@ class InputGraph(QtWidgets.QWidget):
         endpoints_layout.addWidget(self.start_y_label)
         endpoints_layout.addWidget(self.start_y_spin)
 
-        self.end_y_label = QtWidgets.QLabel("End Y:")
+        self.end_y_label = QtWidgets.QLabel("End Value:")
         self.end_y_spin = QtWidgets.QDoubleSpinBox()
         self.end_y_spin.setRange(0.0, 1.0)
         self.end_y_spin.setSingleStep(0.01)
@@ -77,7 +77,7 @@ class InputGraph(QtWidgets.QWidget):
             self._endpoints_prev_height = None
 
         # Y mapping controls (output scaling/shifting)
-        self.ymin_label = QtWidgets.QLabel("Y min:")
+        self.ymin_label = QtWidgets.QLabel("Value min:")
         self.ymin_spin = QtWidgets.QDoubleSpinBox()
         self.ymin_spin.setRange(-10000.0, 10000.0)
         self.ymin_spin.setSingleStep(0.1)
@@ -86,7 +86,7 @@ class InputGraph(QtWidgets.QWidget):
         controls_hbox.addWidget(self.ymin_label)
         controls_hbox.addWidget(self.ymin_spin)
 
-        self.ymax_label = QtWidgets.QLabel("Y max:")
+        self.ymax_label = QtWidgets.QLabel("Value max:")
         self.ymax_spin = QtWidgets.QDoubleSpinBox()
         self.ymax_spin.setRange(-10000.0, 10000.0)
         self.ymax_spin.setSingleStep(0.1)
@@ -96,7 +96,7 @@ class InputGraph(QtWidgets.QWidget):
         controls_hbox.addWidget(self.ymax_spin)
 
         # X mapping controls (output scaling). Constrained to [0,10]
-        self.xmin_label = QtWidgets.QLabel("X min:")
+        self.xmin_label = QtWidgets.QLabel("Time min:")
         self.xmin_spin = QtWidgets.QDoubleSpinBox()
         self.xmin_spin.setRange(0.0, 10.0)
         self.xmin_spin.setSingleStep(0.1)
@@ -105,7 +105,7 @@ class InputGraph(QtWidgets.QWidget):
         controls_hbox.addWidget(self.xmin_label)
         controls_hbox.addWidget(self.xmin_spin)
 
-        self.xmax_label = QtWidgets.QLabel("X max:")
+        self.xmax_label = QtWidgets.QLabel("Time max:")
         self.xmax_spin = QtWidgets.QDoubleSpinBox()
         self.xmax_spin.setRange(0.0, 10.0)
         self.xmax_spin.setSingleStep(0.1)

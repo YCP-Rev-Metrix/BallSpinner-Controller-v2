@@ -34,7 +34,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         self.wDeviceList = self.conDevices.widget()
         self.Devices = []
 
-        self.setFixedSize(300, 600)
+        self.setFixedSize(250, 600)
         if utils.is_raspberry_pi():
             self.scanner = ScanSmartDot()
             self.scanner.scan10Seconds()
@@ -73,6 +73,8 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
 
         for device in self.Devices:
             btn = QtWidgets.QPushButton(f"Connect to {device}")
+            btn.setFixedWidth(200)
+            btn.setStyleSheet("font-size: 12px;")
             layout.addWidget(btn)
             btn.clicked.connect(lambda _, d=device: self.connect_to_smartdot(d))
 

@@ -13,9 +13,6 @@ class ShotModePage(QtWidgets.QWidget):
 
         # Grab the three InputGraph widgets created by the .ui file and store references
         # The object names come from the .ui: 'inputGraph_RPM', 'InputGraph_Tilt', 'InputGraph_Angle'
-        self.btnHome = self.findChild(QtWidgets.QPushButton, 'btnHome')
-        self.btnHome.clicked.connect(lambda: self.changePage.emit(0, "Home"))
-
 
         self.graph_rpm = self.findChild(InputGraph, 'inputGraph_RPM')
         self.graph_tilt = self.findChild(InputGraph, 'InputGraph_Tilt')
@@ -29,7 +26,7 @@ class ShotModePage(QtWidgets.QWidget):
         self.graph_tilt.hide_controls()
         self.graph_angle.hide_controls()
 
-        self.graph_rpm.set_bounds(0,1,0,400)
+        self.graph_rpm.set_bounds(0,1,0,600)
         self.graph_tilt.set_bounds(0,1,-45,45)
         self.graph_angle.set_bounds(0,1,-90,90)
 
@@ -69,14 +66,14 @@ class ShotModePage(QtWidgets.QWidget):
     def start_shot(self):
         print("Shot started!")
         # Todo implement shot logic here based on graph settings and duration.
-        print(self.graph_rpm.get_polynomial_display())
-        print(self.graph_tilt.get_polynomial_display())
-        print(self.graph_angle.get_polynomial_display())
+        print(self.graph_rpm.sample_spline_display(0.1))
+        print(self.graph_tilt.sample_spline_display(0.1))
+        print(self.graph_angle.sample_spline_display(0.1))
 
     def update_shot_duration_label(self, value):
         # value comes from QSlider.value() (int)
         self.lblShotDuration.setText(f"Shot Duration: {1 + 0.02 * value:.2f} sec")
-        self.graph_rpm.set_bounds(0,1 + 0.02 * value,0,400)
+        self.graph_rpm.set_bounds(0,1 + 0.02 * value,0,600)
         self.graph_tilt.set_bounds(0,1 + 0.02 * value,-45,45)
         self.graph_angle.set_bounds(0,1 + 0.02 * value,-90,90)
         

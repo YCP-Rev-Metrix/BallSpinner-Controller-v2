@@ -41,6 +41,7 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.cbolimitView.currentTextChanged.connect(self.limitViewBox)
         self.dsbMinXValue.valueChanged.connect(self.setRange)
         self.dsbMaxXValue.valueChanged.connect(self.setRange)
+        self.dsbLookBackSeconds.valueChanged.connect(self.limitViewBox)
         # Hide limit view controls when not needed
         self.lblXMax.setVisible(False)
         self.lblXMin.setVisible(False)
@@ -277,30 +278,11 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.lightValue = lightValue
 
         # Plot data based on checkbox states
-        if self.chkAccelerometer_X.isChecked():
-            self.graph.plot(acclerometerTime, acclerometerX, pen=pg.mkPen(color='r', width=2), name='Accelerometer_X')
-        if self.chkAccelerometer_Y.isChecked():
-            self.graph.plot(acclerometerTime, accelerometerY, pen=pg.mkPen(color='g', width=2), name='Accelerometer_Y')
-        if self.chkAccelerometer_Z.isChecked():
-            self.graph.plot(acclerometerTime, accelerometerZ, pen=pg.mkPen(color='b', width=2), name='Accelerometer_Z')
-        if self.chkGyroscope_X.isChecked():
-            self.graph.plot(gyroscoperTime, gyroscopeX, pen=pg.mkPen(color='c', width=2), name='Gyroscope_X')
-        if self.chkGyroscope_Y.isChecked():
-            self.graph.plot(gyroscoperTime, gyroscopeY, pen=pg.mkPen(color='m', width=2), name='Gyroscope_Y')
-        if self.chkGyroscope_Z.isChecked():
-            self.graph.plot(gyroscoperTime, gyroscopeZ, pen=pg.mkPen(color='y', width=2), name='Gyroscope_Z')
-        if self.chkMagnetometer_X.isChecked():
-            self.graph.plot(magnometerTime, magnetometerX, pen=pg.mkPen(color="#008080", width=2), name='Magnetometer_X')
-        if self.chkMagnetometer_Y.isChecked():
-            self.graph.plot(magnometerTime, magnetometerY, pen=pg.mkPen(color="#800000", width=2), name='Magnetometer_Y')  # Orange
-        if self.chkMagnetometer_Z.isChecked():
-            self.graph.plot(magnometerTime, magnetometerZ, pen=pg.mkPen(color='#800080', width=2), name='Magnetometer_Z')  # Purple
-        if self.chkLight.isChecked():
-            self.graph.plot(lightTime, lightValue, pen=pg.mkPen(color='w', width=2), name='Light')  # Gray
-        try:
-            last = max(acclerometerTime[-1], gyroscoperTime[-1], magnometerTime[-1], lightTime[-1])
-        except ValueError:
-            last = 0
+        self.drawAccelerometer()
+        self.drawGyroscope()
+        self.drawMagnetometer()
+        self.drawLight()
+        last = max(acclerometerTime[-1], gyroscoperTime[-1], magnometerTime[-1], lightTime[-1])
         self.limit_view_change(last)
     def updateAccelerometer(self, time, x, y, z):
         # store latest accelerometer arrays for click lookup
@@ -308,12 +290,7 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.accelerometerX = np.asarray(x)
         self.accelerometerY = np.asarray(y)
         self.accelerometerZ = np.asarray(z)
-        if self.chkAccelerometer_X.isChecked():
-            self.graph.plot(time, x, pen=pg.mkPen(color='r', width=2), name='Accelerometer_X')
-        if self.chkAccelerometer_Y.isChecked():
-            self.graph.plot(time, y, pen=pg.mkPen(color='g', width=2), name='Accelerometer_Y')
-        if self.chkAccelerometer_Z.isChecked():
-            self.graph.plot(time, z, pen=pg.mkPen(color='b', width=2), name='Accelerometer_Z')
+        self.drawAccelerometer()
         self.limit_view_change(time[-1])
     def updateGyroscope(self, time, x, y, z):
         # store latest gyroscope arrays for click lookup
@@ -321,12 +298,7 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.gyroscopeX = np.asarray(x)
         self.gyroscopeY = np.asarray(y)
         self.gyroscopeZ = np.asarray(z)
-        if self.chkGyroscope_X.isChecked():
-            self.graph.plot(time, x, pen=pg.mkPen(color='c', width=2), name='Gyroscope_X')
-        if self.chkGyroscope_Y.isChecked():
-            self.graph.plot(time, y, pen=pg.mkPen(color='m', width=2), name='Gyroscope_Y')
-        if self.chkGyroscope_Z.isChecked():
-            self.graph.plot(time, z, pen=pg.mkPen(color='y', width=2), name='Gyroscope_Z')
+        self.drawGyroscope()
         self.limit_view_change(time[-1])
     def updateMagnetometer(self, time, x, y, z):
         # store latest magnetometer arrays for click lookup
@@ -334,23 +306,17 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.magnetometerX = np.asarray(x)
         self.magnetometerY = np.asarray(y)
         self.magnetometerZ = np.asarray(z)
-
-        if self.chkMagnetometer_X.isChecked():
-            self.graph.plot(time, x, pen=pg.mkPen(color="#008080", width=2), name='Magnetometer_X')
-        if self.chkMagnetometer_Y.isChecked():
-            self.graph.plot(time, y, pen=pg.mkPen(color="#800000", width=2), name='Magnetometer_Y')
-        if self.chkMagnetometer_Z.isChecked():
-            self.graph.plot(time, z, pen=pg.mkPen(color='#800080', width=2), name='Magnetometer_Z')
+        self.drawMagnetometer()
         self.limit_view_change(time[-1])
     def updateLight(self, time, value):
         # store latest light arrays for click lookup
         self.lightTime = np.asarray(time)
         self.lightValue = np.asarray(value)
-
-        if self.chkLight.isChecked():
-            self.graph.plot(time, value, pen=pg.mkPen(color='w', width=2), name='Light')
+        self.drawLight()
         self.limit_view_change(time[-1])
     def setMode(self, mode):
+
+    
         match mode:
             case 'Accelerometer':
                 self.chkAccelerometer_X.setVisible(True)
@@ -416,7 +382,30 @@ class SmartDotGraph(QtWidgets.QWidget):
                 self.chkMagnetometer_Y.setVisible(True)
                 self.chkMagnetometer_Z.setVisible(True)
                 self.chkLight.setVisible(True)
-
+    def drawAccelerometer(self) :
+        if self.chkAccelerometer_X.isChecked():
+            self.graph.plot(self.accelerometerTime, self.accelerometerX, pen=pg.mkPen(color='r', width=2), name='Accelerometer_X')
+        if self.chkAccelerometer_Y.isChecked():
+            self.graph.plot(self.accelerometerTime, self.accelerometerY, pen=pg.mkPen(color='g', width=2), name='Accelerometer_Y')
+        if self.chkAccelerometer_Z.isChecked():
+            self.graph.plot(self.accelerometerTime, self.accelerometerZ, pen=pg.mkPen(color='b', width=2), name='Accelerometer_Z')
+    def drawGyroscope(self) :
+        if self.chkGyroscope_X.isChecked():
+            self.graph.plot(self.gyroscopeTime, self.gyroscopeX, pen=pg.mkPen(color='c', width=2), name='Gyroscope_X')
+        if self.chkGyroscope_Y.isChecked():
+            self.graph.plot(self.gyroscopeTime, self.gyroscopeY, pen=pg.mkPen(color='m', width=2), name='Gyroscope_Y')
+        if self.chkGyroscope_Z.isChecked():
+            self.graph.plot(self.gyroscopeTime, self.gyroscopeZ, pen=pg.mkPen(color='y', width=2), name='Gyroscope_Z')   
+    def drawMagnetometer(self) :
+        if self.chkMagnetometer_X.isChecked():
+            self.graph.plot(self.magnetometerTime, self.magnetometerX, pen=pg.mkPen(color="#008080", width=2), name='Magnetometer_X')
+        if self.chkMagnetometer_Y.isChecked():
+            self.graph.plot(self.magnetometerTime, self.magnetometerY, pen=pg.mkPen(color="#800000", width=2), name='Magnetometer_Y')
+        if self.chkMagnetometer_Z.isChecked():
+            self.graph.plot(self.magnetometerTime, self.magnetometerZ, pen=pg.mkPen(color='#800080', width=2), name='Magnetometer_Z')
+    def drawLight(self) :
+        if self.chkLight.isChecked():
+            self.graph.plot(self.lightTime, self.lightValue, pen=pg.mkPen(color='w', width=2), name='Light')
 
 if __name__ == '__main__':
     # Standard boilerplate for a PyQt application
