@@ -27,11 +27,11 @@ class HomePage(QtWidgets.QMainWindow):
         self.shotModePage = self.findChild(QtWidgets.QWidget, 'ShotModePage')
         self.smartDotTestPage = self.findChild(QtWidgets.QWidget, 'SmartDotTestPage')
 
-        # Create FrontPage instance and connect signal
-        self.frontPage.changePage.connect(self.switch_to_page)
-        self.diagnosticPage.changePage.connect(self.switch_to_page)
+        # connect page change signals 
+        self.frontPage.changePage.connect(self.switch_to_page) #100% Nescessary
+        self.diagnosticPage.changePage.connect(self.switch_to_page) #curr
         self.shotModePage.changePage.connect(self.switch_to_page)
-        #self.smartDotTestPage.changePage.connect(self.switch_to_page)
+
 
         self.EStop.clicked.connect(lambda: self.diagnosticPage.EStop())
 
@@ -64,4 +64,14 @@ class HomePage(QtWidgets.QMainWindow):
         except Exception:
             pass
         super().closeEvent(event)
+
+"""
+Order of pages in stackedWidget:
+0 - FrontPage
+1 - DiagnosticModePage
+2 - ShotModePage
+3 - AnalysisModePage
+4 - Cloud Test 
+5 - SmartDotTestPage (Currently not used, can be replaced)
+"""
         
