@@ -7,6 +7,8 @@ if utils.is_raspberry_pi():
 else:
     from backend.smartdot.SimSmartDot import SimSmartDot
 
+from backend.smartdot.SubprocessScan import ProcessRunner
+import ast
 
 class SmartDotConnectWidget(QtWidgets.QWidget):
     
@@ -34,17 +36,68 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         self.wDeviceList = self.conDevices.widget()
         self.Devices = []
 
-        self.setFixedSize(250, 600)
+        self.process_runner = ProcessRunner()
+        self.process_runner.outputReceived.connect(self.on_process_output)
+        self.process_runner.errorReceived.connect(self.on_process_error)
+        self.process_runner.finished.connect(self.on_process_finished)
+
+        self.setFixedSize(300, 600)
         if utils.is_raspberry_pi():
-            self.scanner = ScanSmartDot()
-            self.scanner.scan10Seconds()
-            self.scanner.devices.append("SI:MU:LA:TE:DD:OT")
-            self.setDeviceList(self.scanner.devices)
+            # self.scanner = ScanSmartDot()
+            pass
+            # #TODO: IN thread 
+            # self.scanner.scan10Seconds()
+            # self.scanner.devices.append("SI:MU:LA:TE:DD:OT")
+            # self.setDeviceList(self.scanner.devices)
 
         else:
             self.smartdot = SimSmartDot()
             self.setDeviceList(["SI:MU:LA:TE:DD:OT"])
         
+    def start_scan(self):
+        """Starts the ScanSmartDots.py script using ProcessRunner"""
+        self.lblStatus.setText("Scanning for SmartDots...")
+        print("Starting scan subprocess...")
+
+        # You can pass absolute or relative path to ScanSmartDots.py
+        self.process_runner.start("python3", ["-u", "backend/smartdot/ScanSmartDots.py"])
+    # Handlers for ProcessRunner signals
+    def on_process_output(self, text: str):
+        print("[Scan Output]", text)
+
+        if "Found devices:" in text:
+            try:
+                # Extract everything after the colon
+                list_part = text.split("Found devices:")[1].strip()
+
+                # Safely parse the list using ast.literal_eval
+                devices = ast.literal_eval(list_part)
+                devices.append("SI:MU:LA:TE:DD:OT")
+
+
+                if isinstance(devices, list):
+                    print("Parsed device list:", devices)
+                    self.lblStatus.setText(f"Found {len(devices)} devices")
+                    self.setDeviceList(devices)
+                else:
+                    print("Unexpected format for devices:", list_part)
+                    self.lblStatus.setText("Scan complete (no valid devices found)")
+            except Exception as e:
+                print("Error parsing device list:", e)
+                self.lblStatus.setText("Error parsing scan output")
+
+        else:
+            # Generic live output update
+            self.lblStatus.setText(f"Scan running... {text}")
+
+    def on_process_error(self, text: str):
+        print("[Scan Error]", text)
+        self.lblStatus.setText(f"Error: {text}")
+
+    def on_process_finished(self, code: int, status: int):
+        print(f"Scan finished (code={code}, status={status})")
+        self.lblStatus.setText("Scan complete")
+        # You could reload the device list here if the scan outputs it to a file or stdout
 
     def connect_to_smartdot(self, text):
         # Simulate connection logic
@@ -73,8 +126,6 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
 
         for device in self.Devices:
             btn = QtWidgets.QPushButton(f"Connect to {device}")
-            btn.setFixedWidth(200)
-            btn.setStyleSheet("font-size: 12px;")
             layout.addWidget(btn)
             btn.clicked.connect(lambda _, d=device: self.connect_to_smartdot(d))
 

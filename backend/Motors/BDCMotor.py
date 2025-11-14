@@ -1,8 +1,6 @@
 from .iMotor import iMotor
-from gpiozero import PWMOutputDevice, Device
-from gpiozero.pins.native import NativeFactory
+from gpiozero import PWMOutputDevice
 import time
-import pigpio
 
 MIN_THR = 1050
 MID_THR = 1500
@@ -10,7 +8,6 @@ MAX_THR = 2000
 STEP = 2   # ~2 per-mille
 FREQ = 50
 ARM_TIME_S = 3.0
-pi = pigpio.pi()
 
 
 class BDCMotor(iMotor):
@@ -18,102 +15,125 @@ class BDCMotor(iMotor):
     currSpeed = 0.0
     targetSpeed = 0.0
     targetPower = 0.0
-    GPIO_Pin = 26; #GPIO Pin for the Motor
-    motor = PWMOutputDevice(GPIO_Pin, frequency=FREQ)
-    #motor.pin_factory = NativeFactory()
-    pi=pigpio.pi()
-    isRunning=True
+    GPIO_Pin = 26
+    motor = None
 
-    def __init__(self, GPIOPin : int):
-        self.start(self)
-        
-    def connect(self, GPIOPin : int):
+    def __init__(self, GPIOPin: int):
+        self.GPIO_Pin = GPIOPin
+        #print(f"pin: {self.GPIO_Pin}")
+        # Initialize software PWM using gpiozero
+        self.motor = PWMOutputDevice(GPIOPin, frequency=FREQ)
+        time.sleep(1)
+        self.start()
+
+    # ---------------- CONNECT / DISCONNECT ----------------
+    def connect(self, GPIOPin: int):
+        # No special hardware setup needed with gpiozero
         pass
 
-    def disconnect(self, GPIOPin : int):
-        pass
+    def disconnect(self, GPIOPin: int):
+        if self.motor:
+            self.motor.close()
+        print(f"Motor on GPIO{GPIOPin} disconnected.")
 
+    # ---------------- UTILITY ----------------
     def clamp(self, x, lo, hi):
-        return lo if x < lo else hi if x > hi else x
-
+ #       return lo if x < lo else hi if x > hi else x
+    	return max(lo, min(x, hi))
+    # ---------------- PULSE CONTROL ----------------
     def set_pulse(self):
-        pi.set_servo_pulsewidth(self.GPIO_Pin, int(self.currSpeed))
+        if self.motor:
+            # ESC expects 1050–2000 µs, 50 Hz => duty 0.0525–0.1
+            duty = (self.currSpeed - MIN_THR) / (MAX_THR - MIN_THR)  # 0..1
+            v1 = duty
+            duty = duty * (0.1 - 0.05) + 0.05  # Map to ESC duty range
+            v2 = duty
+            clamp_val = self.clamp(duty, 0.051, 0.1)
+            print(f"clamp value: {clamp_val}")
+            self.motor.value = float(clamp_val)
+            print(f"clamp: {self.clamp(duty, 0.05, 0.1)}")
+            print(f"v1 {v1} v2 {v2} self.motor duty value: {self.motor.value}")
 
-    def arm(self, pi):
-        #if not self.isRunning :
-        #    pi.start()
-        #    self.isRunning=True
+
+    # ---------------- ARM / DISARM ----------------
+    def arm(self):
+        print(f"this is motor. :{self.motor}")
         self.currSpeed = MIN_THR
+
+        #self.motor.value = 0.0
+        #time.sleep(1)
+
+        #print("Full speed")
+        #self.motor.value = 0.1
+        #time.sleep(2)
+
+        print("Low speed")
+        #self.motor.value = 0.05
+        #time.sleep(2)
+
+        #print("Half speed")
+        #self.motor.value = .075
+        #time.sleep(4)
         self.set_pulse()
-        time.sleep(ARM_TIME_S)
+        #self.motor.value = 0.075
+        self.motor.value = 0.06
+        print(f"THIS IS MOTOR IN ARMs.: {self.motor.value}")
+        time.sleep(.25)
+        #self.motor.value = 0.05
         print("armed")
 
-    def disarm(self, pi):
+    def disarm(self):
         self.targetSpeed = MIN_THR
         self.rampDown()
         self.currSpeed = 0
         self.set_pulse()
+        print("disarmed")
 
-        #pi.stop()
-        #self.isRunning=False
-
-    # Turns on Motor at Specified Power (Duty Cycle)
+    # ---------------- MOTOR CONTROL ----------------
     def start(self, rpm=1):
-        if not self.pi.connected:
-            sys.stderr.write(
-                "pigpio daemon not running.\n"
-                "Start it with:  sudo systemctl start pigpiod\n"
-                "Or enable it:  sudo systemctl enable --now pigpiod\n"
-            )
-            sys.exit(1)
-        else :
-            self.arm(self)
-            time.sleep(2)
-
+        self.arm()
+        time.sleep(.5)
 
     def stop(self):
-        self.disarm(pi)
-        #print("running pi.stop")
-        #pi.stop()
+        self.disarm()
+        self.disconnect(self.GPIO_Pin)
 
-    def changeSpeed(self, dutyCycle : float):
-        print("Changing speed to ", dutyCycle/12+1119.5) 
-        self.targetSpeed = self.clamp(dutyCycle/12.0+1119.5, MIN_THR, MAX_THR)
-        # Weird slip thing between 1120 and 1125 pulses, where the motor jitters but does not move.
-        # When it reaches 1125, it spins at ~100rpm, once we get a tachometer on it we can get it
-        # nailed down for sure. For now, this statement limits it to 0 and then that amount to 
-        # avoid jitter.
-        if self.targetSpeed >= 1120.0 : self.targetSpeed += 5.0
-        if(self.targetSpeed>self.currSpeed) : self.rampUp() 
-        else : self.rampDown()
-
+    def changeSpeed(self, dutyCycle: float):
+        self.targetSpeed = self.clamp(dutyCycle / 12.0 + 1119.5, MIN_THR, MAX_THR)
+        if self.targetSpeed >= 1120.0:
+            self.targetSpeed += 5.0
+        #print(f"new target speed: {self.targetSpeed}")
+        if self.targetSpeed > self.currSpeed:
+            self.rampUp()
+        else:
+            self.rampDown()
 
     def getCurrentSpeed(self):
         return self.currSpeed
 
     def rampUp(self):
-        while True:
-            if self.currSpeed < self.targetSpeed:
-                self.currSpeed += STEP
-                if self.currSpeed > self.targetSpeed:
-                    self.currSpeed = self.targetSpeed
-                self.set_pulse()
-                time.sleep(0.01)
-            else:
-                break
+        # print("ramping up to speed")
+        while self.currSpeed < self.targetSpeed:
+            self.currSpeed += STEP
+            if self.currSpeed > self.targetSpeed:
+                self.currSpeed = self.targetSpeed
+            self.set_pulse()
+            time.sleep(0.05)
+        # print(f"current speed: {self.currSpeed}")
+
 
     def rampDown(self):
-        while True:
-            if self.currSpeed > self.targetSpeed:
-                self.currSpeed -= STEP
-                if self.currSpeed < self.targetSpeed:
-                    self.currSpeed = self.targetSpeed
-                self.set_pulse()
-                time.sleep(0.01)
-            else:
-                break
+        # print("ramping down to speed")
+        while self.currSpeed > self.targetSpeed:
+            self.currSpeed -= STEP
+            if self.currSpeed < self.targetSpeed:
+                self.currSpeed = self.targetSpeed
+            self.set_pulse()
+            time.sleep(0.05)
+        # print(f"current speed: {self.currSpeed}")
 
-    def setDutyCycle(self, dutyCycle : int):
+    def setDutyCycle(self, dutyCycle: int):
+        # Direct duty cycle (0-100%)
+        #if self.motor:
+         #   self.motor.value = self.clamp(dutyCycle / 100.0, 0.0, 1.0)
         pass
-
-        
