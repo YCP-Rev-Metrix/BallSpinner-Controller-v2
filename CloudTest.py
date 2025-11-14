@@ -1,7 +1,9 @@
 from PyQt6 import QtWidgets, uic
+from PyQt6.QtCore import pyqtSignal
 from backend.cloud_api.CloudAPI import api_get_test_data
 
 class CloudTest(QtWidgets.QWidget):
+    changePage = pyqtSignal(int, str)
     def __init__(self, parent=None):
         super().__init__(parent)
         uic.loadUi('cloudTest.ui', self)

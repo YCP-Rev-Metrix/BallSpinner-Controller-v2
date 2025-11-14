@@ -1,14 +1,14 @@
 import platform
+from unittest import case
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QAction
 
 from FrontPage import FrontPage
 from SmartDotTestPage import SmartDotTestPage
-
-
-
- 
-
+from AnalysisModePage import AnalysisModePage
+from DiagnosticModePage import DiagnosticModePage
+from ShotModePage import ShotModePage
+from CloudTest import CloudTest
 
 class HomePage(QtWidgets.QMainWindow):
     def __init__(self):
@@ -20,18 +20,23 @@ class HomePage(QtWidgets.QMainWindow):
         self.EStop = self.findChild(QtWidgets.QPushButton, 'btnEStop')
         self.EStop.setStyleSheet("background-color: red; font-weight: bold; font-size: 16px;")
         
-        self.tab = self.findChild(QtWidgets.QStackedWidget, "stackedWidget")
+        # This is the container for all pages
+        self.tab = self.findChild(QtWidgets.QStackedWidget, "stackedWidget") 
 
-        self.frontPage = self.findChild(QtWidgets.QWidget, 'FrontPage')
-        self.diagnosticPage = self.findChild(QtWidgets.QWidget, 'DiagnosticModePage')
-        self.shotModePage = self.findChild(QtWidgets.QWidget, 'ShotModePage')
-        self.smartDotTestPage = self.findChild(QtWidgets.QWidget, 'SmartDotTestPage')
+        self.frontPage = self.findChild(FrontPage, 'FrontPage')
+        self.diagnosticPage = self.findChild(DiagnosticModePage, 'DiagnosticModePage')
+        self.shotModePage = self.findChild(ShotModePage, 'ShotModePage')
+        self.analysisModePage = self.findChild(AnalysisModePage, 'AnalysisModePage')
+        self.cloudTestPage = self.findChild(CloudTest, 'CloudTestPage')
+        self.smartDotTestPage = self.findChild(SmartDotTestPage, 'SmartDotTestPage')
 
         # connect page change signals 
         self.frontPage.changePage.connect(self.switch_to_page) #100% Nescessary
-        self.diagnosticPage.changePage.connect(self.switch_to_page) #curr
+        self.diagnosticPage.changePage.connect(self.switch_to_page)
         self.shotModePage.changePage.connect(self.switch_to_page)
-
+        self.analysisModePage.changePage.connect(self.switch_to_page)
+        self.cloudTestPage.changePage.connect(self.switch_to_page)
+        self.smartDotTestPage.changePage.connect(self.switch_to_page)
 
         self.EStop.clicked.connect(lambda: self.diagnosticPage.EStop())
 
@@ -55,7 +60,27 @@ class HomePage(QtWidgets.QMainWindow):
         """Switch to the specified tab index and update the window title."""
         self.tab.setCurrentIndex(index)
         # data is if page needs components hidden or shown; not used yet
-       
+        match index:
+            case 0: #Front Page
+                #No Data Expected
+                pass
+            case 1: #Diagnostic Page
+                #No Data Expected
+                pass
+            case 2: #Shot Mode Page
+                #No Data Expected
+                pass
+            case 3: #Analysis Mode Page
+                #No Data Expected
+                pass
+            case 4: #Cloud Test Page
+                #No Data Expected
+                pass
+            case 5: #SmartDot Test Page
+                #No Data Expected
+                pass
+            case _:
+                pass
 
     def closeEvent(self, event):
         """Signal background threads to stop when the window is closing."""
