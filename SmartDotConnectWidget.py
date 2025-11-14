@@ -41,7 +41,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         self.process_runner.errorReceived.connect(self.on_process_error)
         self.process_runner.finished.connect(self.on_process_finished)
 
-        self.setFixedSize(300, 600)
+        self.setFixedSize(250, 600)
         if utils.is_raspberry_pi():
             # self.scanner = ScanSmartDot()
             pass
