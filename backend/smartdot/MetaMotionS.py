@@ -11,6 +11,7 @@ import struct
 import time
 import queue
 import math
+import subprocess
 class MetaMotion(iSmartDot):
 
     XL_availSampleRate = [12.5, 25, 50, 100, 200, 400, 800]
@@ -40,47 +41,56 @@ class MetaMotion(iSmartDot):
     def connect(self, MAC_Address) -> bool:
     #print("Attempting to connect to device")
     #print(MAC_Address)
-    #try:
-        self.device = MetaWear(MAC_Address)
-        self.device.connect()
+        try:
+            self.device = MetaWear(MAC_Address)
+            self.device.connect()
 
 
-        #set connection parameters 7.5ms connection interval, 0 Slave interval, 6s timeout
-        libmetawear.mbl_mw_settings_set_connection_parameters(self.device.board, 7.5, 7.5, 0, 6000)
-        
-        #setup event loops
-        self.accelCallback = FnVoid_VoidP_DataP(self.accelDataHandler)
-        self.magCallback = FnVoid_VoidP_DataP(self.magDataHandler)
-        self.gyroCallback = FnVoid_VoidP_DataP(self.gyroDataHandler)
-        self.lightCallback = FnVoid_VoidP_DataP(self.lightDataHandler)
+            #set connection parameters 7.5ms connection interval, 0 Slave interval, 6s timeout
+            libmetawear.mbl_mw_settings_set_connection_parameters(self.device.board, 7.5, 7.5, 0, 6000)
+            
+            #setup event loops
+            self.accelCallback = FnVoid_VoidP_DataP(self.accelDataHandler)
+            self.magCallback = FnVoid_VoidP_DataP(self.magDataHandler)
+            self.gyroCallback = FnVoid_VoidP_DataP(self.gyroDataHandler)
+            self.lightCallback = FnVoid_VoidP_DataP(self.lightDataHandler)
 
-        #I2C Reading setup
-        self.XL_ODR_Callback = FnVoid_VoidP_DataP(self.i2c_data_handler)
-        #0x68 is bmi270 i2c addr. 0x40 is odr register addr.
-        self.XL_ODR_parameters= I2cReadParameters(device_addr= 0x68, register_addr= 0x40)
+            #I2C Reading setup
+            self.XL_ODR_Callback = FnVoid_VoidP_DataP(self.i2c_data_handler)
+            #0x68 is bmi270 i2c addr. 0x40 is odr register addr.
+            self.XL_ODR_parameters= I2cReadParameters(device_addr= 0x68, register_addr= 0x40)
 
 
-        #set configurabe settings for each sensor's Rate and Range
-        self.XL_availSampleRate = MetaMotion.XL_availSampleRate
-        self.XL_availRange = MetaMotion.XL_availRange
-        self.GY_availSampleRate = MetaMotion.GY_availSampleRate
-        self.GY_availRange = MetaMotion.GY_availRange
-        self.MG_availSampleRate = MetaMotion.MG_availSampleRate
-        self.MG_availRange = MetaMotion.MG_availRange
-        self.LT_availRange = MetaMotion.LT_availRange
-        self.LT_availSampleRate = MetaMotion.LT_availSampleRate
+            #set configurabe settings for each sensor's Rate and Range
+            self.XL_availSampleRate = MetaMotion.XL_availSampleRate
+            self.XL_availRange = MetaMotion.XL_availRange
+            self.GY_availSampleRate = MetaMotion.GY_availSampleRate
+            self.GY_availRange = MetaMotion.GY_availRange
+            self.MG_availSampleRate = MetaMotion.MG_availSampleRate
+            self.MG_availRange = MetaMotion.MG_availRange
+            self.LT_availRange = MetaMotion.LT_availRange
+            self.LT_availSampleRate = MetaMotion.LT_availSampleRate
 
-        
-        #self.setSampleRanges(XL=100, GY=100, MG=10)
+            
+            #self.setSampleRanges(XL=100, GY=100, MG=10)
 
-        self.XL_Range = 2
-        self.GY_Range = 2
-        
-        self.MG_SampleRate = 10
+            self.XL_Range = 2
+            self.GY_Range = 2
+            
+            self.MG_SampleRate = 10
 
-        self.turnOnBlueLED()
-        print("Connected to device")
-        return True
+            self.turnOnBlueLED()
+            print("Connected to device")
+            return True
+        except Exception as e:
+            print(e)
+            if "Timed out" in str(e):
+                #Restart bluetooth and try again real quick :P
+                print("You timed out")
+                subprocess.run(["sudo", "systemctl", "restart", "bluetooth"])
+                time.sleep(1)
+                self.connect(MAC_Address)
+
 
     def accelDataHandler(self, ctx, data): 
         #Parse data into Cartesian Values
