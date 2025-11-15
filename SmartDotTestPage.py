@@ -28,7 +28,7 @@ class SmartDotTestPage(QtWidgets.QWidget):
         if self.btnDisconnect:
             self.btnDisconnect.setEnabled(False)
         self.smartdotConnectWidget = self.findChild(SmartDotConnectWidget, 'SmartDotConnect')
-        self.smartdotConnectWidget.start_scan()
+        # self.smartdotConnectWidget.start_scan()
         self.smartdotConnectWidget.signalSmartDotConnected.connect(self.connectSmartDot)
 
         
