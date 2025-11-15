@@ -30,6 +30,7 @@ class SmartDotTestPage(QtWidgets.QWidget):
         self.smartdotConnectWidget = self.findChild(SmartDotConnectWidget, 'SmartDotConnect')
         # self.smartdotConnectWidget.start_scan()
         self.smartdotConnectWidget.signalSmartDotConnected.connect(self.connectSmartDot)
+        self.smartdotConnectWidget.signalDeviceDisconnected.connect(self.on_device_disconnected)
 
         
 
@@ -74,11 +75,30 @@ class SmartDotTestPage(QtWidgets.QWidget):
             self.btnStop.setEnabled(False)
 
     def disconnectSmartDot(self):
-        print("Disconnecting SmartDot...")
         self.btnStart.setEnabled(False)
         # Here you would add the actual disconnection code
         if self.SmartDot:
+            print("Disconnecting SmartDot...")
             self.SmartDot.disconnect()
+    
+    def on_device_disconnected(self, mac_address):
+        """Called when device disconnects"""
+        print(f"Device disconnected: {mac_address}")
+        # Disable the disconnect button
+        if self.btnDisconnect:
+            self.btnDisconnect.setEnabled(False)
+        # Disable start/stop buttons since device is disconnected
+        if self.btnStart:
+            self.btnStart.setEnabled(False)
+        if self.btnStop:
+            self.btnStop.setEnabled(False)
+        # Stop timer if running
+        if self._timer.isActive():
+            self._timer.stop()
+        self.active = False
+        # Clear the SmartDot reference
+        self.SmartDot = None
+    
     def connectSmartDot(self, device):
         print("Connecting SmartDot...")
         self.SmartDot = device

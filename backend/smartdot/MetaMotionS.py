@@ -12,6 +12,7 @@ import time
 import queue
 import math
 import subprocess
+import threading
 class MetaMotion(iSmartDot):
 
     XL_availSampleRate = [12.5, 25, 50, 100, 200, 400, 800]
@@ -27,10 +28,11 @@ class MetaMotion(iSmartDot):
     LT_availSampleRate = [.5, 1, 2, 5, 10, 20]
     LT_availRange = [600, 1300, 8000, 16000, 32000, 64000]
     
-    def __init__(self, MAC_Address="", autoConnect=True, is_local=False):
+    def __init__(self, MAC_Address="", autoConnect=True, is_local=False, disconnect_callback=None):
         super().__init__()
         self.connected = False
         self._MAC_ADDRESS = MAC_Address
+        self.disconnect_callback = disconnect_callback
         
         if autoConnect:
             self.connected =self.connect(MAC_Address)
@@ -38,12 +40,40 @@ class MetaMotion(iSmartDot):
         #temp rig to create a different data capture method for local mode HMI
         self.data_arr= [None,None,None,None]
 
-    def connect(self, MAC_Address) -> bool:
+    def connect(self, MAC_Address, retry_count=0, status_callback=None) -> bool:
     #print("Attempting to connect to device")
     #print(MAC_Address)
         try:
             self.device = MetaWear(MAC_Address)
-            self.device.connect()
+            
+            # Run the blocking connect() call in a separate thread
+            connection_result = {'success': False, 'error': None}
+            connection_event = threading.Event()
+            
+            def connect_thread():
+                try:
+                    self.device.connect()
+                    connection_result['success'] = True
+                except Exception as e:
+                    connection_result['error'] = e
+                finally:
+                    connection_event.set()
+            
+            # Start the connection thread
+            connect_thread_obj = threading.Thread(target=connect_thread, daemon=True)
+            connect_thread_obj.start()
+            
+            # Wait for connection to complete (this allows the UI to remain responsive)
+            # The thread will set the event when done
+            connection_event.wait()
+            
+            # Check if connection was successful
+            if not connection_result['success']:
+                # Re-raise the exception from the thread so it can be caught by the outer exception handler
+                if connection_result['error']:
+                    raise connection_result['error']
+                else:
+                    raise Exception("Connection failed")
 
 
             #set connection parameters 7.5ms connection interval, 0 Slave interval, 6s timeout
@@ -81,15 +111,27 @@ class MetaMotion(iSmartDot):
 
             self.turnOnBlueLED()
             print("Connected to device")
+
+
+            #connect the onDisconnect callback
+            self.device.on_disconnect = lambda status: self.disconnect_print()
+
+            
             return True
         except Exception as e:
             print(e)
-            if "Timed out" in str(e):
-                #Restart bluetooth and try again real quick :P
-                print("You timed out")
+            if "Timed out" in str(e) and retry_count == 0:
+                #Restart bluetooth and try again real quick :P (only retry once)
+                print("You timed out - retrying connection...")
+                # Call status callback if provided to notify UI of retry
+                if status_callback:
+                    status_callback("Connection failed, retrying...")
                 subprocess.run(["sudo", "systemctl", "restart", "bluetooth"])
                 time.sleep(1)
-                self.connect(MAC_Address)
+                # Retry with incremented retry_count to prevent infinite loops
+                return self.connect(MAC_Address, retry_count=1, status_callback=status_callback)
+            # Re-raise the exception if it's not a timeout or if we've already retried
+            raise
 
 
     def accelDataHandler(self, ctx, data): 
@@ -230,7 +272,12 @@ class MetaMotion(iSmartDot):
     def disconnect(self):
         self.turnOffLED()
         self.device.disconnect()
-      
+
+    def disconnect_print(self):
+        print("The MetaMotion Device is Disconnected")
+        # Call disconnect callback if provided to notify UI
+        if self.disconnect_callback:
+            self.disconnect_callback(self._MAC_ADDRESS)
     # Define a callback function to handle data
     def i2c_data_handler(self, ctx, data):
         data_obj = data.contents

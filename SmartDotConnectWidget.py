@@ -1,5 +1,5 @@
 from PyQt6 import QtWidgets, QtCore, uic
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSignal, QThread
 import utils
 if utils.is_raspberry_pi():
     from backend.smartdot.ScanSmartDots import ScanSmartDot
@@ -10,12 +10,55 @@ else:
 from backend.smartdot.SubprocessScan import ProcessRunner
 import ast
 
+class ConnectionWorker(QThread):
+    """Worker thread to handle MetaMotion connection without blocking UI"""
+    connectionComplete = pyqtSignal(object)  # Emits the connected smartdot object
+    connectionFailed = pyqtSignal(str)  # Emits error message
+    statusUpdate = pyqtSignal(str)  # Emits status update messages
+    deviceDisconnected = pyqtSignal(str)  # Emits MAC address when device disconnects
+    
+    def __init__(self, mac_address, is_simulated=False):
+        super().__init__()
+        self.mac_address = mac_address
+        self.is_simulated = is_simulated
+    
+    def run(self):
+        try:
+            if utils.is_raspberry_pi() and not self.is_simulated:
+                # Create MetaMotion with autoConnect=False so we can handle retry status
+                # Set up disconnect callback to emit signal when device disconnects
+                smartdot = MetaMotion(self.mac_address, autoConnect=False, 
+                                     disconnect_callback=lambda mac: self.deviceDisconnected.emit(mac))
+                # Manually call connect with status callback to show retry status
+                try:
+                    # Pass status callback to connect() so it can notify us when retry happens
+                    smartdot.connected = smartdot.connect(self.mac_address, status_callback=lambda msg: self.statusUpdate.emit(msg))
+                except Exception as e:
+                    # Re-raise to be caught by outer exception handler
+                    raise
+            else:
+                smartdot = SimSmartDot(self.mac_address)
+            
+            if smartdot.connected:
+                self.connectionComplete.emit(smartdot)
+            else:
+                self.connectionFailed.emit(f"Failed to connect to {self.mac_address}")
+        except Exception as e:
+            error_str = str(e)
+            # If we get here after a timeout, it means the retry also failed
+            if "Timed out" in error_str:
+                self.connectionFailed.emit("Connection failed")
+            else:
+                self.connectionFailed.emit(f"Connection error: {error_str}")
+
 class SmartDotConnectWidget(QtWidgets.QWidget):
     
     if utils.is_raspberry_pi():
         signalSmartDotConnected = pyqtSignal(MetaMotion)
     else:
         signalSmartDotConnected = pyqtSignal(SimSmartDot)
+    
+    signalDeviceDisconnected = pyqtSignal(str)  # Emits MAC address when device disconnects
 
 
     def __init__(self, parent=None):
@@ -45,6 +88,8 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         if self.scanBtn:
             self.scanBtn.clicked.connect(self.start_scan)
 
+        # Track connection worker thread
+        self.connection_worker = None
 
         self.setFixedSize(300, 600)
         if utils.is_raspberry_pi():
@@ -105,14 +150,43 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         # You could reload the device list here if the scan outputs it to a file or stdout
 
     def connect_to_smartdot(self, text):
-        # Simulate connection logic
-        if utils.is_raspberry_pi():
-            self.smartdot = MetaMotion(text)
-        else:
-            self.smartdot = SimSmartDot(text)
-        if(self.smartdot.connected):
-            self.lblStatus.setText(f"Connected to {text}")
+        # Update status to show connection attempt
+        self.lblStatus.setText(f"Connecting to {text}...")
+        
+        # Check if this is a simulated device
+        is_simulated = (text == "SI:MU:LA:TE:DD:OT" or not utils.is_raspberry_pi())
+        
+        # Create and start connection worker thread
+        self.connection_worker = ConnectionWorker(text, is_simulated)
+        self.connection_worker.connectionComplete.connect(self.on_connection_success)
+        self.connection_worker.connectionFailed.connect(self.on_connection_failed)
+        self.connection_worker.statusUpdate.connect(self.on_status_update)
+        self.connection_worker.deviceDisconnected.connect(self.on_device_disconnected)
+        # Forward the disconnect signal to external listeners (like SmartDotTestPage)
+        self.connection_worker.deviceDisconnected.connect(self.signalDeviceDisconnected.emit)
+        self.connection_worker.start()
+    
+    def on_connection_success(self, smartdot):
+        """Called when connection succeeds"""
+        self.smartdot = smartdot
+        device_address = self.smartdot._MAC_ADDRESS if hasattr(self.smartdot, '_MAC_ADDRESS') else "device"
+        self.lblStatus.setText(f"Connected to {device_address}")
         self.signalSmartDotConnected.emit(self.smartdot)
+    
+    def on_status_update(self, status_message):
+        """Called when status update is emitted"""
+        self.lblStatus.setText(status_message)
+    
+    def on_device_disconnected(self, mac_address):
+        """Called when device disconnects"""
+        self.lblStatus.setText(f'Disconnected "{mac_address}"')
+        #Disable the disconnect button
+        self.btnDisconnect.setEnabled(False)
+    
+    def on_connection_failed(self, error_message):
+        """Called when connection fails"""
+        self.lblStatus.setText(error_message)
+        print(f"Connection failed: {error_message}")
 
     def setDeviceList(self, devices):
         #remove existing buttons
