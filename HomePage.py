@@ -23,6 +23,7 @@ class HomePage(QtWidgets.QMainWindow):
         # This is the container for all pages
         self.tab = self.findChild(QtWidgets.QStackedWidget, "stackedWidget") 
 
+        # Find each page by its class type
         self.frontPage = self.findChild(FrontPage, 'FrontPage')
         self.diagnosticPage = self.findChild(DiagnosticModePage, 'DiagnosticModePage')
         self.shotModePage = self.findChild(ShotModePage, 'ShotModePage')
@@ -38,6 +39,8 @@ class HomePage(QtWidgets.QMainWindow):
         self.cloudTestPage.changePage.connect(self.switch_to_page)
         self.smartDotTestPage.changePage.connect(self.switch_to_page)
 
+
+        # connect E-Stop button to diagnostic page E-Stop function
         self.EStop.clicked.connect(lambda: self.diagnosticPage.EStop())
 
         # lock resolution to 1920x1080 except on macOS
