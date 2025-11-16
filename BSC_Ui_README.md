@@ -133,7 +133,7 @@ Import the following alongside whatever you need for your page
 From there create your pages class, use the following code as a template
 
 	class [YourPage](QtWidgets.QWidget):
-    changePage = pyqtSignal(int, str) 
+    changePage = pyqtSignal(int, object) 
 	 #Insert Your other signals here if aplicable
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -313,7 +313,7 @@ Import the following alongside whatever you need for your page
 From there create your page's class, use the following code as a template
 
 	class [YourPage](QtWidgets.QWidget):
-    changePage = pyqtSignal(int, str) 
+    changePage = pyqtSignal(int, object) 
 	 # Insert your other signals here if applicable
     def __init__(self, parent=None):
         super().__init__(parent)
