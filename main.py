@@ -19,7 +19,8 @@ def is_raspberry_pi():
 
 
 if is_raspberry_pi():
-    Device.pin_factory = NativeFactory()
+    pass
+        # Device.pin_factory = NativeFactory()
 else:
     # Use a mock pin factory off-device (e.g., macOS, dev machine)
     Device.pin_factory = MockFactory(pin_class=MockPWMPin)
