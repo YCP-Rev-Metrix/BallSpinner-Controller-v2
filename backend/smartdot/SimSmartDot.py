@@ -46,6 +46,7 @@ class SimSmartDot(iSmartDot):
         self.gy_timer_thread = None
         self.mg_timer_thread = None
         self.lt_timer_thread = None
+        self._MAC_ADDRESS = MAC_Address
 
         self.connect(MAC_Address)
 

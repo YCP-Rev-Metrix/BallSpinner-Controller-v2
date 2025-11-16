@@ -1,14 +1,21 @@
 from PyQt6 import QtWidgets, QtCore, uic
 from PyQt6.QtCore import pyqtSignal, QThread
 import utils
+
+from backend.smartdot.iSmartDot import iSmartDot
 if utils.is_raspberry_pi():
     from backend.smartdot.ScanSmartDots import ScanSmartDot
     from backend.smartdot.MetaMotionS import MetaMotion
+    from backend.smartdot.SimSmartDot import SimSmartDot
+
 else:
     from backend.smartdot.SimSmartDot import SimSmartDot
 
 from backend.smartdot.SubprocessScan import ProcessRunner
 import ast
+
+from globals import smartdotConnectionManager
+
 
 class ConnectionWorker(QThread):
     """Worker thread to handle MetaMotion connection without blocking UI"""
@@ -53,11 +60,12 @@ class ConnectionWorker(QThread):
 
 class SmartDotConnectWidget(QtWidgets.QWidget):
     
-    if utils.is_raspberry_pi():
-        signalSmartDotConnected = pyqtSignal(MetaMotion)
-    else:
-        signalSmartDotConnected = pyqtSignal(SimSmartDot)
-    
+    # if utils.is_raspberry_pi():
+    #     signalSmartDotConnected = pyqtSignal(MetaMotion)
+    # else:
+    #     signalSmartDotConnected = pyqtSignal(SimSmartDot)
+
+    signalSmartDotConnected = pyqtSignal(iSmartDot)
     signalDeviceDisconnected = pyqtSignal(str)  # Emits MAC address when device disconnects
 
 
@@ -78,6 +86,13 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         # Use the scroll area's widget() accessor to get the contained QWidget.
         self.wDeviceList = self.conDevices.widget()
         self.Devices = []
+
+        # Grab the disconnect QScrollArea and the widget it contains.
+        # The .ui defines the scroll area as 'conDisconnectDevices' and the contained widget
+        # is the scroll area's widget (named 'scrollAreaWidgetContentsDisconnect' in the .ui).
+        self.conDisconnectDevices = self.findChild(QtWidgets.QScrollArea, 'conDisconnectDevices')
+        # Use the scroll area's widget() accessor to get the contained QWidget.
+        self.wDisconnectDeviceList = self.conDisconnectDevices.widget()
 
         self.process_runner = ProcessRunner()
         self.process_runner.outputReceived.connect(self.on_process_output)
@@ -103,6 +118,11 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         else:
             self.smartdot = SimSmartDot()
             self.setDeviceList(["SI:MU:LA:TE:DD:OT"])
+
+        print(smartdotConnectionManager)
+        
+        # Update disconnect list to show any existing connections
+        self.updateDisconnectList()
         
     def start_scan(self):
         """Starts the ScanSmartDots.py script using ProcessRunner"""
@@ -155,7 +175,13 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         
         # Check if this is a simulated device
         is_simulated = (text == "SI:MU:LA:TE:DD:OT" or not utils.is_raspberry_pi())
-        
+
+        #Check if we are already connected to this SmartDot
+        for i in smartdotConnectionManager.get_connections():
+            if i == text:
+                self.lblStatus.setText(f"Already connected to {text}")
+                return
+
         # Create and start connection worker thread
         self.connection_worker = ConnectionWorker(text, is_simulated)
         self.connection_worker.connectionComplete.connect(self.on_connection_success)
@@ -172,6 +198,13 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         device_address = self.smartdot._MAC_ADDRESS if hasattr(self.smartdot, '_MAC_ADDRESS') else "device"
         self.lblStatus.setText(f"Connected to {device_address}")
         self.signalSmartDotConnected.emit(self.smartdot)
+
+        #Add the connection to the manager upon successful connection
+        smartdotConnectionManager.add_connection(self.smartdot._MAC_ADDRESS, self.smartdot)
+        print(f"Connections: {smartdotConnectionManager.get_connections()}")
+        
+        # Update disconnect list to show the new connection
+        self.updateDisconnectList()
     
     def on_status_update(self, status_message):
         """Called when status update is emitted"""
@@ -180,8 +213,14 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
     def on_device_disconnected(self, mac_address):
         """Called when device disconnects"""
         self.lblStatus.setText(f'Disconnected "{mac_address}"')
-        #Disable the disconnect button
-        self.btnDisconnect.setEnabled(False)
+
+        #Remove the connection from the manager upon disconnection
+        smartdot = smartdotConnectionManager.get_smartdot(mac_address)
+        smartdotConnectionManager.remove_connection(mac_address, smartdot)
+        print(f"Connections: {smartdotConnectionManager.get_connections()}")
+
+        # Update disconnect list to reflect the disconnection
+        self.updateDisconnectList()
     
     def on_connection_failed(self, error_message):
         """Called when connection fails"""
@@ -207,6 +246,49 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
             btn = QtWidgets.QPushButton(f"Connect to {device}")
             layout.addWidget(btn)
             btn.clicked.connect(lambda _, d=device: self.connect_to_smartdot(d))
+
+    def updateDisconnectList(self):
+        """Update the list of disconnect buttons based on current connections"""
+        # Get current connections from the manager
+        connections = smartdotConnectionManager.get_connections()
+        
+        # Remove existing disconnect buttons
+        layout = self.wDisconnectDeviceList.layout()
+        if layout is not None:
+            for i in reversed(range(layout.count())):
+                widget = layout.itemAt(i).widget()
+                if widget is not None:
+                    widget.deleteLater()
+        
+        # Clear existing buttons
+        layout = self.wDisconnectDeviceList.layout()
+        if layout is None:
+            layout = QtWidgets.QVBoxLayout(self.wDisconnectDeviceList)
+        
+        # Create buttons for each connected device
+        for mac_address in connections:
+            btn = QtWidgets.QPushButton(mac_address)
+            layout.addWidget(btn)
+            btn.clicked.connect(lambda _, mac=mac_address: self.disconnect_from_smartdot(mac))
+    
+    def disconnect_from_smartdot(self, mac_address):
+        """Disconnect from a SmartDot by MAC address"""
+        # Get smartdot object from manager
+        smartdot = smartdotConnectionManager.get_smartdot(mac_address)
+        
+        if smartdot is not None:
+            # Call disconnect on the smartdot
+            smartdot.disconnect()
+            # Update status label
+            self.lblStatus.setText(f"Disconnected from {mac_address}")
+            # Remove connection from manager
+            smartdotConnectionManager.remove_connection(mac_address, smartdot)
+            # Update disconnect list to reflect the change
+            self.updateDisconnectList()
+            print(f"Disconnected from {mac_address}")
+            print(f"Connections: {smartdotConnectionManager.get_connections()}")
+        else:
+            self.lblStatus.setText(f"Device {mac_address} not found")
 
 
 if __name__ == "__main__":
