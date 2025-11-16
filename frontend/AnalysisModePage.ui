@@ -94,13 +94,13 @@
   <customwidget>
    <class>SmartDotGraph</class>
    <extends>QWidget</extends>
-   <header>SmartDotGraph</header>
+    <header>frontend.SmartDotGraph</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>MotorGraph</class>
    <extends>QWidget</extends>
-   <header>MotorGraph</header>
+    <header>frontend.MotorGraph</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -1,9 +1,10 @@
 from PyQt6 import QtWidgets
+import io
 from logs.logger_config import setup_logging
 from gpiozero import Device
 from gpiozero.pins.mock import MockFactory, MockPWMPin
 from gpiozero.pins.native import NativeFactory
-from HomePage import HomePage
+from frontend.HomePage import HomePage
 
 
 def is_raspberry_pi():
@@ -17,11 +18,11 @@ def is_raspberry_pi():
     return False
 
 
-if is_raspberry_pi :
-    #Device.pin_factory = MockFactory(pin_class=MockPWMPin)
-    pass
-else :
+if is_raspberry_pi():
     Device.pin_factory = NativeFactory()
+else:
+    # Use a mock pin factory off-device (e.g., macOS, dev machine)
+    Device.pin_factory = MockFactory(pin_class=MockPWMPin)
 
 # Initialize logging at application startup
 setup_logging()

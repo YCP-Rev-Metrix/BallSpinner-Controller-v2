@@ -3,7 +3,7 @@ import pyqtgraph as pg
 import numpy as np
 import sys
 
-from InputGraph import InputGraph
+from .InputGraph import InputGraph
 
 
 class SamplerWindow(QtWidgets.QWidget):

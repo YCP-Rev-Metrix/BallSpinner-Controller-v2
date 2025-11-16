@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>904</width>
-    <height>892</height>
+    <height>864</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,7 +31,7 @@
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>4</number>
       </property>
       <widget class="QWidget" name="pageFrontPage">
        <layout class="QGridLayout" name="gridLayout">
@@ -58,7 +58,7 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="AnalysisModePage">
+      <widget class="QWidget" name="pageAnalysisModePage">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
          <horstretch>0</horstretch>
@@ -67,7 +67,7 @@
        </property>
        <layout class="QGridLayout" name="gridLayout_analysis">
         <item row="0" column="0">
-         <widget class="AnalysisModePage" name="AnlaysisModePage" native="true"/>
+         <widget class="AnalysisModePage" name="AnalysisModePage" native="true"/>
         </item>
        </layout>
       </widget>
@@ -130,42 +130,42 @@
   </action>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>SmartDotTestPage</class>
-   <extends>QWidget</extends>
-   <header>SmartDotTestPage</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>AnalysisModePage</class>
-   <extends>QWidget</extends>
-   <header>AnalysisModePage</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>DiagnosticModePage</class>
-   <extends>QWidget</extends>
-   <header>DiagnosticModePage</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>CloudTest</class>
-   <extends>QWidget</extends>
-   <header>CloudTest</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>ShotModePage</class>
-   <extends>QWidget</extends>
-   <header>ShotModePage</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>FrontPage</class>
-   <extends>QWidget</extends>
-   <header>FrontPage</header>
-   <container>1</container>
-  </customwidget>
+    <customwidget>
+     <class>SmartDotTestPage</class>
+     <extends>QWidget</extends>
+     <header>frontend.SmartDotTestPage</header>
+     <container>1</container>
+    </customwidget>
+    <customwidget>
+     <class>AnalysisModePage</class>
+     <extends>QWidget</extends>
+     <header>frontend.AnalysisModePage</header>
+     <container>1</container>
+    </customwidget>
+    <customwidget>
+     <class>DiagnosticModePage</class>
+     <extends>QWidget</extends>
+     <header>frontend.DiagnosticModePage</header>
+     <container>1</container>
+    </customwidget>
+    <customwidget>
+     <class>CloudTest</class>
+     <extends>QWidget</extends>
+     <header>frontend.CloudTest</header>
+     <container>1</container>
+    </customwidget>
+    <customwidget>
+     <class>ShotModePage</class>
+     <extends>QWidget</extends>
+     <header>frontend.ShotModePage</header>
+     <container>1</container>
+    </customwidget>
+    <customwidget>
+     <class>FrontPage</class>
+     <extends>QWidget</extends>
+     <header>frontend.FrontPage</header>
+     <container>1</container>
+    </customwidget>
  </customwidgets>
  <resources/>
  <connections/>

@@ -60,13 +60,13 @@
   <customwidget>
    <class>SmartDotGraph</class>
    <extends>QWidget</extends>
-   <header>SmartDotGraph</header>
+    <header>frontend.SmartDotGraph</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>SmartDotConnectWidget</class>
    <extends>QWidget</extends>
-   <header>SmartDotConnectWidget</header>
+    <header>frontend.SmartDotConnectWidget</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

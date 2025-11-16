@@ -1,15 +1,16 @@
 from PyQt6 import QtWidgets, QtCore, uic
-from InputGraph import InputGraph
+import os
+from .InputGraph import InputGraph
 from PyQt6.QtCore import pyqtSignal
 
 
 class ShotModePage(QtWidgets.QWidget):
-    changePage = pyqtSignal(int, str)
+    changePage = pyqtSignal(int, object)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        # load the .ui file (name matches file in repo)
-        uic.loadUi('ShotModePage.ui', self)
+        # load the .ui file (module-relative path)
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'ShotModePage.ui'), self, package='frontend')
 
         # Grab the three InputGraph widgets created by the .ui file and store references
         # The object names come from the .ui: 'inputGraph_RPM', 'InputGraph_Tilt', 'InputGraph_Angle'
