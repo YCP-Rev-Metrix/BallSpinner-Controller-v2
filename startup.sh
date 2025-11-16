@@ -16,10 +16,10 @@ echo "spamming magic commands to fix bluetooth"
 rfkill list 
 sudo rfkill unblock bluetooth
 sudo hciconfig hci0 down
+# sleep 0.5
+# sudo hciconfig hic0 up
+# sudo hciconfig hci0 reset
 sleep 0.5
-sudo hciconfig hic0 up
-sudo hciconfig hci0 reset
-
 echo "Running bluetooth scan trick"
 chmod +x bluetoothctlscantrick.sh
 ./bluetoothctlscantrick.sh
