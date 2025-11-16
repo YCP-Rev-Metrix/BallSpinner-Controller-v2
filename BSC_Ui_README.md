@@ -28,7 +28,7 @@ The main UI file in the BSC is called *HomePage.ui*. This file contains an E-sto
 
 	self.[Page name] = self.findChild([Class of new page], '[name of page in HomePage.ui]')
 	
-Page navigation is handeled by the signal changePage connected to the method switch_to_page(self, index, data): (see tutorial)
+Page navigation is handeled by the signal changePage connected to the method `switch_to_page(self, index, data):`(see tutorial)
 
 index is the page you want to go to. The following is an example list of indexes. if you create a page, add its index to the list at the bottom of *HomePage.py*
 
@@ -40,9 +40,9 @@ index is the page you want to go to. The following is an example list of indexes
 	4 - Cloud Test 
 	5 - SmartDotTestPage (Currently not used, can be replaced)
 	
-data is used if additional data needs to be sent to another page.
+data is used if additional data needs to be sent to another page. Any object can be passed
 
-Use the match case in the switch_to_page() method for the index to call the approprate method for collecting data.
+Use the match case in the `switch_to_page()` method for the index to call the approprate method for collecting data.
 
 ###Creating your page
 
@@ -138,7 +138,9 @@ From there create your pages class, use the following code as a template
     def __init__(self, parent=None):
         super().__init__(parent)
         # load the .ui file (name matches file in repo)
-        uic.loadUi('[YourUiFile]', self)
+        uic.loadUi(os.path.join(os.path.dirname(__file__), '[YourUiFile]'), self, package='frontend')
+        
+    
         
         
 Add Relevant logic to page, more detail above
@@ -174,7 +176,7 @@ Make sure you create a main in your Python file to test that your page works
 		#previous page decalration
 		self.[YourNewPage].changePage.connect(self.switch_to_page)
 		#Any additional signal connections
-1. Add an entry to the match case in switch_to_page() with your new page and any incoming data it may need
+1. Add an entry to the match case in `switch_to_page()` with your new page and any incoming data it may need
 
 ###Step 4: Navigating to you new page
 
@@ -223,7 +225,7 @@ index is the page you want to go to. The following is an example list of indexes
 	
 data is used if additional data needs to be sent to another page.
 
-use the match case in the switch_to_page() method for the index to call the appropriate method for collecting data.
+use the match case in the `switch_to_page()` method for the index to call the appropriate method for collecting data.
 
 ###Creating your page
 
@@ -249,12 +251,12 @@ A page can be created either by using a .ui file or simply hardcoding it in Pyth
 1. If something needs to be accessed on the page make an accessor method. If you are unsure make one anyway
 2. Make a main method within your page for testing purposes
 
-	if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    window = [your class]()
-    window.show()
-    sys.exit(app.exec())
+		if __name__ == "__main__":
+	    import sys
+	    app = QtWidgets.QApplication(sys.argv)
+	    window = [your class]()
+	    window.show()
+	    sys.exit(app.exec())
 
 ###Importing Widgets
 In order to avoid recreating UI elements it is best practice to create a widget for it and import it within your page.
@@ -337,7 +339,7 @@ Make sure you create a main in your Python file to test that your page works
 6. then drag a widget into that page, you should see it inside the page you just made in the inspector
 7. Rename that widget to your new page name
 8. Left-click on the widget and select "promote to..."
-9. Enter the Python file you just created (excluding the .py) into both the class name and header file fields and click add
+9. Enter the Python file you just created (excluding the .py) into class name field and  frontend. that filename and header file field and then click add
 11. Select the option you just created in the promoted widgets box and click promote
 12. Once that is done save *HomePage.ui*
 
@@ -354,7 +356,7 @@ Make sure you create a main in your Python file to test that your page works
         #previous page declaration
         self.[YourNewPage].changePage.connect(self.switch_to_page)
         #Any additional signal connections
-1. Add an entry to the match case in switch_to_page() with your new page and any incoming data it may need
+1. Add an entry to the match case in `switch_to_page()` with your new page and any incoming data it may need
 
 ###Step 4: Navigating to your new page
 

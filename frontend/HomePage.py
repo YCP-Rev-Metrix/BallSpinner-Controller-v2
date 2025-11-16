@@ -4,12 +4,12 @@ from PyQt6 import QtWidgets, uic
 import os
 from PyQt6.QtGui import QAction
 
-from FrontPage import FrontPage
-from SmartDotTestPage import SmartDotTestPage
-from AnalysisModePage import AnalysisModePage
-from DiagnosticModePage import DiagnosticModePage
-from ShotModePage import ShotModePage
-from CloudTest import CloudTest
+from frontend.FrontPage import FrontPage
+from frontend.SmartDotTestPage import SmartDotTestPage
+from frontend.AnalysisModePage import AnalysisModePage
+from frontend.DiagnosticModePage import DiagnosticModePage
+from frontend.ShotModePage import ShotModePage
+from frontend.CloudTest import CloudTest
 
 class HomePage(QtWidgets.QMainWindow):
     def __init__(self):
