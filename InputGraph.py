@@ -2,6 +2,7 @@ from PyQt6 import QtWidgets, QtCore
 import pyqtgraph as pg
 import numpy as np
 import sys
+import time
 
 # Per-instance point storage (previously module-level globals) — removed globals below and
 # use self.xPoints / self.yPoints so multiple InputGraph instances operate independently.
@@ -14,8 +15,11 @@ class InputGraph(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout(self)
         # --- Plot Setup ---
         self.plot_widget = pg.PlotWidget()
-        self.plot_widget.setLabel('left', 'Y-Axis', units='units')
-        self.plot_widget.setLabel('bottom', 'X-Axis', units='units')
+        # store axis label texts so units can be changed later via accessors
+        self._y_label_text = 'Value'
+        self._x_label_text = 'Time'
+        self.plot_widget.setLabel('left', self._y_label_text, units='units')
+        self.plot_widget.setLabel('bottom', self._x_label_text, units='units')
         self.plot_widget.setTitle("Input Graph")
         self.plot_widget.showGrid(x=True, y=True)
         self.plot_widget.setMouseEnabled(x=False, y=False)
@@ -40,17 +44,10 @@ class InputGraph(QtWidgets.QWidget):
         # Controls: endpoint Y values and degree (wrapped in a container so we can hide/show)
         controls_hbox = QtWidgets.QHBoxLayout()
 
-        # Degree control
-        self.degree_label = QtWidgets.QLabel("Degree:")
-        self.degree_spin = QtWidgets.QSpinBox()
-        self.degree_spin.setRange(1, 50)
-        self.degree_spin.setValue(3)
-        self.degree_spin.valueChanged.connect(self.onDegreeChanged)
-        controls_hbox.addWidget(self.degree_label)
-        controls_hbox.addWidget(self.degree_spin)
+    # (degree control removed — spline degree is handled internally)
 
         # Start and End Y controls (float) constrained to [0,1]
-        self.start_y_label = QtWidgets.QLabel("Start Y:")
+        self.start_y_label = QtWidgets.QLabel("Start Value:")
         self.start_y_spin = QtWidgets.QDoubleSpinBox()
         self.start_y_spin.setRange(0.0, 1.0)
         self.start_y_spin.setSingleStep(0.01)
@@ -63,7 +60,7 @@ class InputGraph(QtWidgets.QWidget):
         endpoints_layout.addWidget(self.start_y_label)
         endpoints_layout.addWidget(self.start_y_spin)
 
-        self.end_y_label = QtWidgets.QLabel("End Y:")
+        self.end_y_label = QtWidgets.QLabel("End Value:")
         self.end_y_spin = QtWidgets.QDoubleSpinBox()
         self.end_y_spin.setRange(0.0, 1.0)
         self.end_y_spin.setSingleStep(0.01)
@@ -80,7 +77,7 @@ class InputGraph(QtWidgets.QWidget):
             self._endpoints_prev_height = None
 
         # Y mapping controls (output scaling/shifting)
-        self.ymin_label = QtWidgets.QLabel("Y min:")
+        self.ymin_label = QtWidgets.QLabel("Value min:")
         self.ymin_spin = QtWidgets.QDoubleSpinBox()
         self.ymin_spin.setRange(-10000.0, 10000.0)
         self.ymin_spin.setSingleStep(0.1)
@@ -89,7 +86,7 @@ class InputGraph(QtWidgets.QWidget):
         controls_hbox.addWidget(self.ymin_label)
         controls_hbox.addWidget(self.ymin_spin)
 
-        self.ymax_label = QtWidgets.QLabel("Y max:")
+        self.ymax_label = QtWidgets.QLabel("Value max:")
         self.ymax_spin = QtWidgets.QDoubleSpinBox()
         self.ymax_spin.setRange(-10000.0, 10000.0)
         self.ymax_spin.setSingleStep(0.1)
@@ -99,7 +96,7 @@ class InputGraph(QtWidgets.QWidget):
         controls_hbox.addWidget(self.ymax_spin)
 
         # X mapping controls (output scaling). Constrained to [0,10]
-        self.xmin_label = QtWidgets.QLabel("X min:")
+        self.xmin_label = QtWidgets.QLabel("Time min:")
         self.xmin_spin = QtWidgets.QDoubleSpinBox()
         self.xmin_spin.setRange(0.0, 10.0)
         self.xmin_spin.setSingleStep(0.1)
@@ -108,7 +105,7 @@ class InputGraph(QtWidgets.QWidget):
         controls_hbox.addWidget(self.xmin_label)
         controls_hbox.addWidget(self.xmin_spin)
 
-        self.xmax_label = QtWidgets.QLabel("X max:")
+        self.xmax_label = QtWidgets.QLabel("Time max:")
         self.xmax_spin = QtWidgets.QDoubleSpinBox()
         self.xmax_spin.setRange(0.0, 10.0)
         self.xmax_spin.setSingleStep(0.1)
@@ -139,6 +136,8 @@ class InputGraph(QtWidgets.QWidget):
         controls_vbox.addWidget(self.function_label_raw)
         controls_vbox.addWidget(self.function_label_display)
 
+        # (previously we displayed a compact numeric array here; removed per request)
+
         self.controls_container = QtWidgets.QWidget()
         self.controls_container.setLayout(controls_vbox)
         # remember current controls height for show/hide
@@ -150,13 +149,10 @@ class InputGraph(QtWidgets.QWidget):
         # store endpoints internally as raw values in [0,1]
         self.start_y = float(self.start_y_spin.value())
         self.end_y = float(self.end_y_spin.value())
-        # default endpoints (raw 0..1) used by reset; initialize to current values
-        try:
-            self._default_start_y = float(self.start_y)
-            self._default_end_y = float(self.end_y)
-        except Exception:
-            self._default_start_y = 0.0
-            self._default_end_y = 0.0
+        # default endpoints (raw 0..1) used by reset; initialize to zeros by default
+        # Callers may override via set_default_endpoints(...)
+        self._default_start_y = 0.0
+        self._default_end_y = 0.0
 
         # Initialize mapping attributes from spins
         self.xmin = float(self.xmin_spin.value())
@@ -212,17 +208,32 @@ class InputGraph(QtWidgets.QWidget):
         self.xPoints = []
         self.yPoints = []
 
-        # Create a ScatterPlotItem for markers so we can update markers without clearing the whole plot
-        self.marker_scatter = pg.ScatterPlotItem(pen=pg.mkPen(None), brush='r', size=8)
-        self.plot_widget.addItem(self.marker_scatter)
+        # Create two ScatterPlotItems for markers (left/right of piecewise split)
+        # so we can color them differently.
+        self.marker_scatter_left = pg.ScatterPlotItem(pen=pg.mkPen(None), brush='r', size=8)
+        self.marker_scatter_right = pg.ScatterPlotItem(pen=pg.mkPen(None), brush='b', size=8)
+        self.plot_widget.addItem(self.marker_scatter_left)
+        self.plot_widget.addItem(self.marker_scatter_right)
         # Separate scatter for the configured endpoints (mapped & scaled) so they
         # are visible even when no user points exist.
         self.endpoint_scatter = pg.ScatterPlotItem(pen=pg.mkPen('w'), brush='g', size=10, symbol='s')
         self.plot_widget.addItem(self.endpoint_scatter)
         # Track the plotted curve so we can remove it between generations
-        self.curve_plot = None
-        # Connect mouse click event
+        # support one or two plotted curves (non-piecewise: single; piecewise: two segments)
+        self.curve_plots = []
+        # (piecewise UI removed)
+
+        # flag used to suppress single-click handling when a double-click was just handled
+        self._suppress_next_click = False
+        # Connect mouse click event (single-clicks handled here)
         self.plot_widget.scene().sigMouseClicked.connect(self.onClick)
+
+        # Disable piecewise double-click behavior: do not install event filter for double-clicks
+        self._graphics_view = None
+
+        # Ensure widget starts in the reset state (apply defaults and clear points)
+        self.reset_view_and_clear()
+       
 
     def onClick(self, event):
 
@@ -250,10 +261,14 @@ class InputGraph(QtWidgets.QWidget):
                 break
 
         if remove_index is not None:
-            # Remove the clicked marker
-            self.xPoints.pop(remove_index)
-            self.yPoints.pop(remove_index)
-            # Update scatter and regenerate curve (mapped)
+            # Single-click on a marker: delete that marker
+            try:
+                self.xPoints.pop(remove_index)
+                self.yPoints.pop(remove_index)
+            except Exception:
+                pass
+
+            # Update visuals and regenerate curve
             self._update_markers_mapped()
             self.generate_and_plot_curve()
             return
@@ -270,9 +285,12 @@ class InputGraph(QtWidgets.QWidget):
 
         maxp = getattr(self, 'max_points', self.max_points_spin.value())
         if len(self.xPoints) >= maxp:
-            # drop oldest
-            self.xPoints.pop(0)
-            self.yPoints.pop(0)
+            # At maximum points: do not accept new inputs. Provide a short beep as feedback.
+            try:
+                QtWidgets.QApplication.beep()
+            except Exception:
+                pass
+            return
 
         # Store raw (0..1) values internally
         self.xPoints.append(x_raw)
@@ -291,18 +309,23 @@ class InputGraph(QtWidgets.QWidget):
         self.xPoints = []
         self.yPoints = []
         # recreate marker and endpoint scatters using helper
-        self.marker_scatter, self.endpoint_scatter = self._create_marker_scatter()
+        self.marker_scatter_left, self.marker_scatter_right, self.endpoint_scatter = self._create_marker_scatter()
+        # (removed old piecewise visual cleanup - piecewise UI is no longer used)
         if self.endpoint_scatter is not None and hasattr(self.endpoints_container, 'isVisible') and not self.endpoints_container.isVisible():
             self.endpoint_scatter.hide()
         # clear remembered curve
-        self.curve_plot = None
-        # clear stored polynomial and label
-        self._poly = None
-        self._poly_expr = ""
-        # update labels safely
+        # remove any plotted curves
+        try:
+            for it in list(getattr(self, 'curve_plots', [])):
+                try:
+                    self.plot_widget.removeItem(it)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        self.curve_plots = []
+        # update labels safely (polynomial fields removed)
         self._safe_set_label(self.function_label_raw, "raw f(u) = ")
-        self._poly_display = None
-        self._poly_display_expr = ""
         self._safe_set_label(self.function_label_display, "display f(x) = ")
 
     def onMaxPointsChanged(self, val):
@@ -322,11 +345,6 @@ class InputGraph(QtWidgets.QWidget):
         self.start_y = self._unmap_y(display_start)
         self.end_y = self._unmap_y(display_end)
         # regenerate curve with new endpoints
-        self.generate_and_plot_curve()
-
-    def onDegreeChanged(self, val):
-        """Called when the degree spinbox changes."""
-        self.degree = int(val)     
         self.generate_and_plot_curve()
 
     def onMappingChanged(self, _val=None):
@@ -399,15 +417,7 @@ class InputGraph(QtWidgets.QWidget):
         # Safely update displayed spin
         self._safe_set_spin_value(self.end_y_spin, self._map_y(raw))
 
-    def set_degree(self, value: int):
-        """Set polynomial degree programmatically."""
-        try:
-            self.degree_spin.setValue(int(value))
-        except Exception:
-            try:
-                self.degree = int(value)
-            except Exception:
-                pass
+    # degree setter removed (degree control removed)
 
     def set_max_points(self, value: int):
         """Programmatically set the maximum stored points."""
@@ -530,33 +540,7 @@ class InputGraph(QtWidgets.QWidget):
         ymax = getattr(self, 'ymax', 1.0)
         return ymin + float(y_raw) * (ymax - ymin)
 
-    def _poly_to_string(self, coeffs) -> str:
-        """Return a compact human-readable polynomial string from coefficient array.
-
-        coeffs: sequence from highest-degree to constant term.
-        """
-        try:
-            coeffs = [float(c) for c in coeffs]
-        except Exception:
-            return ""
-        terms = []
-        deg = len(coeffs) - 1
-        for i, c in enumerate(coeffs):
-            power = deg - i
-            if abs(c) < 1e-12:
-                continue
-            coeff_str = f"{c:.6g}"
-            if power == 0:
-                terms.append(f"{coeff_str}")
-            elif power == 1:
-                terms.append(f"{coeff_str}*x")
-            else:
-                terms.append(f"{coeff_str}*x**{power}")
-        if not terms:
-            return "0"
-        expr = " + ".join(terms)
-        expr = expr.replace("+ -", "- ")
-        return expr
+    
 
     def _unmap_x(self, x_mapped: float) -> float:
         """Inverse of _map_x: map displayed x back to raw [0,1].
@@ -619,11 +603,12 @@ class InputGraph(QtWidgets.QWidget):
             pass
 
     def _create_marker_scatter(self):
-        """Create marker and endpoint scatter items and add to the plot widget.
+        """Create left/right marker scatters and endpoint scatter and add to the plot.
 
-        Returns (marker_scatter, endpoint_scatter).
+        Returns (marker_scatter_left, marker_scatter_right, endpoint_scatter).
         """
-        ms = pg.ScatterPlotItem(pen=pg.mkPen(None), brush='r', size=8)
+        ms_left = pg.ScatterPlotItem(pen=pg.mkPen(None), brush='r', size=8)
+        ms_right = pg.ScatterPlotItem(pen=pg.mkPen(None), brush='b', size=8)
         es = None
         try:
             es = pg.ScatterPlotItem(pen=pg.mkPen('w'), brush='g', size=10, symbol='s')
@@ -633,18 +618,30 @@ class InputGraph(QtWidgets.QWidget):
             except Exception:
                 es = None
         try:
-            self.plot_widget.addItem(ms)
+            self.plot_widget.addItem(ms_left)
+            self.plot_widget.addItem(ms_right)
             if es is not None:
                 self.plot_widget.addItem(es)
         except Exception:
             pass
-        return ms, es
+        return ms_left, ms_right, es
+
+    def eventFilter(self, obj, event):
+        # Piecewise/double-click behavior disabled — pass through to default handler
+        return super().eventFilter(obj, event)
 
     def _update_markers_mapped(self):
         """Update marker scatter using mapped coordinates."""
         mapped_x = [self._map_x(x) for x in self.xPoints]
         mapped_y = [self._map_y(y) for y in self.yPoints]
-        self.marker_scatter.setData(x=mapped_x, y=mapped_y)
+        # No piecewise behavior: show all markers in the single (left) scatter
+        try:
+            if getattr(self, 'marker_scatter_left', None) is not None:
+                self.marker_scatter_left.setData(x=mapped_x, y=mapped_y)
+            if getattr(self, 'marker_scatter_right', None) is not None:
+                self.marker_scatter_right.setData(x=[], y=[])
+        except Exception:
+            pass
         # Also show the configured endpoints as scaled/mapped markers at x= xmin/xmax
         try:
             start_mx = self._map_x(0.0)
@@ -665,6 +662,7 @@ class InputGraph(QtWidgets.QWidget):
                 self.endpoint_scatter.setData(x=[], y=[])
             except Exception:
                 pass
+        # (removed leftover piecewise visual hiding — not used anymore)
 
     def hide_controls(self):
         """Hide the graphical controls container (max points, start/end Y)."""
@@ -698,32 +696,26 @@ class InputGraph(QtWidgets.QWidget):
         
 
     def generate_and_plot_curve(self):
-        """Fit a polynomial through the stored points plus endpoints and plot it.
-        Removes any previously plotted curve before drawing the new one.
+        """Fit and plot the curve for the current set of points.
+
+        The method builds combined points including configured endpoints,
+        generates a Hermite-style spline per interval, samples and plots it,
+        and stores callables/interval structures used by the public accessors.
+    The plotted curve(s) are stored in `self.curve_plots` for later removal.
         """
-        # Build point set: include clicked points and use configured endpoints
+        # Build combined points (raw domain u in [0,1]) including endpoints
         pts = list(zip(self.xPoints, self.yPoints))
-        # Use configured start/end values (fallback to 0.0)
-        start_y = float(getattr(self, 'start_y', float(getattr(self, 'start_y_spin', 0.0).value() if hasattr(self, 'start_y_spin') else 0.0)))
-        end_y = float(getattr(self, 'end_y', float(getattr(self, 'end_y_spin', 0.0).value() if hasattr(self, 'end_y_spin') else 0.0)))
+        start_y = float(getattr(self, 'start_y', 0.0))
+        end_y = float(getattr(self, 'end_y', 0.0))
         pts.append((0.0, start_y))
         pts.append((1.0, end_y))
-
-        # If no points, remove existing curve and return
-        if len(pts) == 0:
-            if self.curve_plot is not None:
-                try:
-                    self.plot_widget.removeItem(self.curve_plot)
-                except Exception:
-                    pass
-                self.curve_plot = None
-            return
-
-        # Deduplicate by x (round to avoid float tiny differences)
+        # Deduplicate by x (rounded) and validate, ensuring unique x-values
+        # Deduplicate by x (rounded) and validate
         dedup = {}
         for x, y in pts:
             key = round(float(x), 12)
             if key in dedup and abs(dedup[key] - float(y)) > 1e-8:
+                # conflicting y for same x -> abort
                 return
             dedup[key] = float(y)
 
@@ -731,94 +723,283 @@ class InputGraph(QtWidgets.QWidget):
         ys = np.array([dedup[x] for x in xs])
 
         if xs.size < 2:
-            # not enough distinct x values
-            if self.curve_plot is not None:
-                try:
-                    self.plot_widget.removeItem(self.curve_plot)
-                except Exception:
-                    pass
-                self.curve_plot = None
+            # nothing to fit
+            # remove any existing curves
+            try:
+                for it in list(getattr(self, 'curve_plots', [])):
+                    try:
+                        self.plot_widget.removeItem(it)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            self.curve_plots = []
+            # clear labels (polynomial/piecewise fields removed)
+            try:
+                self.function_label_raw.setText("raw f(u) = ")
+                self.function_label_display.setText("display f(x) = ")
+            except Exception:
+                pass
+            # array label removed
             return
 
-        # Use requested degree but cap at (n-1) where n is number of distinct x's
+        # degree requested by user, capped per-segment later
         try:
             requested_deg = int(self.degree_spin.value()) if hasattr(self, 'degree_spin') else (xs.size - 1)
         except Exception:
             requested_deg = xs.size - 1
 
-        max_deg = max(1, xs.size - 1)
-        if requested_deg > max_deg:
-            # cap the degree to the maximum supported by the data
+        # convenience mapping params
+        xmin = float(getattr(self, 'xmin', 0.0))
+        xmax = float(getattr(self, 'xmax', 1.0))
+        ymin = float(getattr(self, 'ymin', 0.0))
+        ymax = float(getattr(self, 'ymax', 1.0))
+
+        # remove old plotted curves
+        try:
+            for it in list(getattr(self, 'curve_plots', [])):
+                try:
+                    self.plot_widget.removeItem(it)
+                except Exception:
+                    pass
+        except Exception:
             pass
-        deg = min(requested_deg, max_deg)
+        self.curve_plots = []
 
-        coeffs = np.polyfit(xs, ys, deg)
-        poly = np.poly1d(coeffs)
+        # Helper: construct a cubic Hermite spline (per-interval) and plot it.
+        def hermite_fit_and_plot(x_vals, y_vals, color='b'):
+            """Build monotonic cubic Hermite coefficients per interval and plot.
 
-        # store polynomial for accessor
-        try:
-            self._poly = poly
-        except Exception:
-            self._poly = None
+            Returns a tuple: (callable_raw, raw_intervals, display_intervals, disp_expr_str)
+            - callable_raw(u) evaluates raw-domain spline at u in [0,1]
+            - raw_intervals: list of [x0, h_raw, a,b,c,d] per interval (coeffs in local u)
+            - display_intervals: list of [x0_disp, h_disp, a_disp,b_disp,c_disp,d_disp]
+            - disp_expr_str: empty string (placeholder for compatibility)
+            """
+            if x_vals.size < 2:
+                return None, [], [], ""
+            # ensure sorted
+            order = np.argsort(x_vals)
+            x = np.asarray(x_vals)[order]
+            y = np.asarray(y_vals)[order]
+            n = x.size
+            h = np.diff(x)
+            delta = np.diff(y) / h
 
-        # Build a readable expression and display it in the controls label
-        try:
-            expr = self._poly_to_string(coeffs)
-            self._poly_expr = expr
-            # update raw-domain label (u in [0,1])
-            try:
-                self.function_label_raw.setText(f"raw f(u) = {expr}")
-            except Exception:
-                pass
-        except Exception:
-            self._poly_expr = ""
-        # Also compute a display-domain polynomial (scaled/shifted to plot coordinates)
-        try:
-            xmin = float(getattr(self, 'xmin', 0.0))
-            xmax = float(getattr(self, 'xmax', 1.0))
-            ymin = float(getattr(self, 'ymin', 0.0))
-            ymax = float(getattr(self, 'ymax', 1.0))
+            # compute tangents m at nodes
+            m = np.zeros(n, dtype=float)
+            if n == 2:
+                m[0] = m[1] = delta[0]
+            else:
+                m[0] = delta[0]
+                m[-1] = delta[-1]
+                for i in range(1, n - 1):
+                    if delta[i - 1] == 0.0 or delta[i] == 0.0 or (delta[i - 1] < 0) != (delta[i] < 0):
+                        m[i] = 0.0
+                    else:
+                        # average slopes weighted by interval lengths
+                        m[i] = (h[i] * delta[i - 1] + h[i - 1] * delta[i]) / (h[i - 1] + h[i])
+
+            # per-interval Hermite cubic coefficients in local u (0..1):
+            # S(u) = a + b*u + c*u^2 + d*u^3, where u = (t - x_i)/h_i
+            raw_intervals = []
+            for i in range(n - 1):
+                x0 = float(x[i])
+                h_i = float(h[i])
+                y0 = float(y[i])
+                y1 = float(y[i + 1])
+                m0 = float(m[i])
+                m1 = float(m[i + 1])
+                a = y0
+                b = m0 * h_i
+                c = -3 * y0 + 3 * y1 - 2 * m0 * h_i - m1 * h_i
+                d = 2 * y0 - 2 * y1 + m0 * h_i + m1 * h_i
+                raw_intervals.append([x0, h_i, a, b, c, d])
+
+            # build display-domain intervals
             scale_x = (xmax - xmin) if (xmax - xmin) != 0 else 1.0
             scale_y = (ymax - ymin) if (ymax - ymin) != 0 else 1.0
-            # sample many points in display X range, compute mapped y and fit same-degree polynomial
-            sample_x = np.linspace(xmin, xmax, max(301, deg * 50))
-            # convert display x to raw u in [0,1]
-            u = (sample_x - xmin) / scale_x
-            y_display_vals = ymin + scale_y * poly(u)
-            disp_coeffs = np.polyfit(sample_x, y_display_vals, deg)
-            disp_poly = np.poly1d(disp_coeffs)
-            self._poly_display = disp_poly
-            self._poly_display_expr = self._poly_to_string(disp_coeffs)
+            display_intervals = []
+            for (x0, h_i, a, b, c, d) in raw_intervals:
+                x0_disp = float(xmin + x0 * scale_x)
+                h_disp = float(h_i * scale_x)
+                a_disp = float(ymin + scale_y * a)
+                b_disp = float(scale_y * b)
+                c_disp = float(scale_y * c)
+                d_disp = float(scale_y * d)
+                display_intervals.append([x0_disp, h_disp, a_disp, b_disp, c_disp, d_disp])
+
+            # Plot by sampling each interval
             try:
-                # Update the display-domain label to show the scaled/shifted function
-                self.function_label_display.setText(f"display f(x) = {self._poly_display_expr}")
+                for (x0, h_i, a, b, c, d) in raw_intervals:
+                    us = np.linspace(0.0, 1.0, 200)
+                    vals = a + b * us + c * us ** 2 + d * us ** 3
+                    vals = np.clip(vals, 0.0, 1.0)
+                    xs_plot = [self._map_x(x0 + u * h_i) for u in us]
+                    ys_plot = [self._map_y(v) for v in vals]
+                    try:
+                        line = self.plot_widget.plot(xs_plot, ys_plot, pen=pg.mkPen(color, width=2))
+                        self.curve_plots.append(line)
+                    except Exception:
+                        pass
             except Exception:
                 pass
+
+            # callable raw evaluator
+            def raw_eval(u_query):
+                # u_query in [0,1]
+                uq = float(u_query)
+                if uq <= x[0]:
+                    return float(y[0])
+                if uq >= x[-1]:
+                    return float(y[-1])
+                # find interval index
+                idx = np.searchsorted(x, uq) - 1
+                if idx < 0:
+                    idx = 0
+                if idx >= len(raw_intervals):
+                    idx = len(raw_intervals) - 1
+                x0_i, h_i, a, b, c, d = raw_intervals[idx]
+                local_u = (uq - x0_i) / h_i if h_i != 0 else 0.0
+                local_u = np.clip(local_u, 0.0, 1.0)
+                return float(a + b * local_u + c * local_u ** 2 + d * local_u ** 3)
+
+            return raw_eval, raw_intervals, display_intervals, ""
+
+        # Fit a single Hermite-style spline on the full domain and plot it.
+        try:
+            hermite_fit_and_plot(xs, ys, color='b')
         except Exception:
-            self._poly_display = None
-            self._poly_display_expr = ""
-        # Polynomial computed (coeffs available in variable 'coeffs')
+            pass
+        # clear legacy labels
+        try:
+            self._safe_set_label(self.function_label_raw, "")
+            self._safe_set_label(self.function_label_display, "")
+        except Exception:
+            pass
 
-        # Prepare curve in raw coordinates (0..1), then map to display coordinates
-        x_plot = np.linspace(0.0, 1.0, 500)
-        y_plot = poly(x_plot)
-        # Clip raw y to [0,1] so polynomial stays within expected input domain
-        y_plot = np.clip(y_plot, 0.0, 1.0)
+    # Removed get_spline_evaluator to expose only a sampling API. The
+    # sample_spline_display method below constructs the same Hermite-style
+    # coefficients internally and returns sampled Y values in display units.
 
-        # Map curve into display coordinates for plotting
-        mapped_x_plot = [self._map_x(xx) for xx in x_plot]
-        mapped_y_plot = [self._map_y(yy) for yy in y_plot]
+    def sample_spline_display(self, dx: float):
+        """Sample the current plotted spline across the display-domain X range
+        [xmin, xmax] at increments of dx (display units). Returns a numpy array
+        of Y values (display units) sampled at x = xmin, xmin+dx, ..., <= xmax.
 
-        # Remove previous curve if present
-        if self.curve_plot is not None:
+        This method builds the Hermite-style coefficients internally (same
+        algorithm used when plotting) and evaluates the spline at each sample
+        point. If fewer than two effective points exist, it returns a constant
+        array equal to the mapped start endpoint.
+        """
+        try:
+            dxv = float(dx)
+        except Exception:
+            return np.array([])
+        if dxv <= 0:
+            return np.array([])
+        xmin = float(getattr(self, 'xmin', 0.0))
+        xmax = float(getattr(self, 'xmax', 1.0))
+        if xmax < xmin:
+            return np.array([])
+
+        # assemble raw pts including endpoints
+        pts = list(zip(self.xPoints, self.yPoints))
+        start_y = float(getattr(self, 'start_y', 0.0))
+        end_y = float(getattr(self, 'end_y', 0.0))
+        pts.append((0.0, start_y))
+        pts.append((1.0, end_y))
+
+        # deduplicate
+        dedup = {}
+        for x, y in pts:
+            key = round(float(x), 12)
+            if key in dedup and abs(dedup[key] - float(y)) > 1e-8:
+                # conflict: return constant array of mapped start
+                xs = np.arange(xmin, xmax + dxv * 0.5, dxv)
+                return np.full(xs.shape, float(self._map_y(start_y)))
+            dedup[key] = float(y)
+
+        xs_raw = np.array(sorted(dedup.keys()))
+        ys_raw = np.array([dedup[x] for x in xs_raw])
+
+        # generate sample Xs in display domain
+        xs = np.arange(xmin, xmax + dxv * 0.5, dxv)
+        if xs.size == 0:
+            return np.array([])
+
+        if xs_raw.size < 2:
+            # not enough points to build spline: return constant mapped start
+            return np.full(xs.shape, float(self._map_y(start_y)))
+
+        # compute Hermite tangents and per-interval coefficients
+        order = np.argsort(xs_raw)
+        x = np.asarray(xs_raw)[order]
+        y = np.asarray(ys_raw)[order]
+        n = x.size
+        h = np.diff(x)
+        # protect against zero-length intervals
+        delta = np.zeros_like(h)
+        try:
+            delta = np.diff(y) / h
+        except Exception:
+            # fall back to zeros
+            delta = np.zeros_like(h)
+
+        m = np.zeros(n, dtype=float)
+        if n == 2:
+            m[0] = m[1] = delta[0]
+        else:
+            m[0] = delta[0]
+            m[-1] = delta[-1]
+            for i in range(1, n - 1):
+                if delta[i - 1] == 0.0 or delta[i] == 0.0 or (delta[i - 1] < 0) != (delta[i] < 0):
+                    m[i] = 0.0
+                else:
+                    denom = (h[i - 1] + h[i]) if (h[i - 1] + h[i]) != 0 else 1.0
+                    m[i] = (h[i] * delta[i - 1] + h[i - 1] * delta[i]) / denom
+
+        raw_intervals = []
+        for i in range(n - 1):
+            x0 = float(x[i])
+            h_i = float(h[i])
+            y0 = float(y[i])
+            y1 = float(y[i + 1])
+            m0 = float(m[i])
+            m1 = float(m[i + 1])
+            a = y0
+            b = m0 * h_i
+            c = -3 * y0 + 3 * y1 - 2 * m0 * h_i - m1 * h_i
+            d = 2 * y0 - 2 * y1 + m0 * h_i + m1 * h_i
+            raw_intervals.append([x0, h_i, a, b, c, d])
+
+        # raw evaluator
+        def raw_eval(u_query):
+            uq = float(u_query)
+            if uq <= x[0]:
+                return float(y[0])
+            if uq >= x[-1]:
+                return float(y[-1])
+            idx = np.searchsorted(x, uq) - 1
+            if idx < 0:
+                idx = 0
+            if idx >= len(raw_intervals):
+                idx = len(raw_intervals) - 1
+            x0_i, h_i, a, b, c, d = raw_intervals[idx]
+            local_u = (uq - x0_i) / h_i if h_i != 0 else 0.0
+            local_u = np.clip(local_u, 0.0, 1.0)
+            return float(a + b * local_u + c * local_u ** 2 + d * local_u ** 3)
+
+        ys = np.empty(xs.shape, dtype=float)
+        for i, xv in enumerate(xs):
             try:
-                self.plot_widget.removeItem(self.curve_plot)
+                raw_u = self._unmap_x(float(xv))
+                raw_y = raw_eval(raw_u)
+                ys[i] = float(self._map_y(raw_y))
             except Exception:
-                pass
-            self.curve_plot = None
+                ys[i] = float(self._map_y(start_y))
 
-        # Plot and remember the plotted curve item (mapped coordinates)
-        self.curve_plot = self.plot_widget.plot(mapped_x_plot, mapped_y_plot, pen=pg.mkPen('b', width=2))
+        return ys
 
     def plotSineFunction(self):
         # Generate and plot the curve (same behavior as clicking)
@@ -896,17 +1077,52 @@ class InputGraph(QtWidgets.QWidget):
         try:
             # Reset configured start/end Y endpoints to their saved defaults and
             # update the spinboxes and plot. This preserves mapping bounds.
-            default_start = float(getattr(self, '_default_start_y', 0.0))
-            default_end = float(getattr(self, '_default_end_y', 0.0))
-            self.start_y = default_start
-            self.end_y = default_end
-            # Use helpers to update endpoint spinboxes safely
-            self._safe_block(self.start_y_spin, True)
-            self._safe_block(self.end_y_spin, True)
-            self._safe_set_spin_value(self.start_y_spin, self._map_y(self.start_y))
-            self._safe_set_spin_value(self.end_y_spin, self._map_y(self.end_y))
-            self._safe_block(self.start_y_spin, False)
-            self._safe_block(self.end_y_spin, False)
+            # Desired display-default for endpoints is 0.0 (display units)
+            desired_display = 0.0
+
+            # Compute raw defaults corresponding to display 0.0 using current mapping
+            raw_for_display0 = self._unmap_y(desired_display)
+            # clamp to [0,1]
+            raw_for_display0 = max(0.0, min(1.0, float(raw_for_display0)))
+
+            # Update stored defaults and current endpoint raw values
+            self._default_start_y = raw_for_display0
+            self._default_end_y = raw_for_display0
+            self.start_y = raw_for_display0
+            self.end_y = raw_for_display0
+
+            # Safely set the spinboxes to show 0.0 in display units even if their
+            # current allowed range would not include 0. We temporarily expand the
+            # spin range to include 0, set the value, then restore the original range.
+            try:
+                # remember original ranges
+                orig_start_range = (self.start_y_spin.minimum(), self.start_y_spin.maximum())
+                orig_end_range = (self.end_y_spin.minimum(), self.end_y_spin.maximum())
+                # set ranges to include desired_display
+                mn = min(orig_start_range[0], desired_display)
+                mx = max(orig_start_range[1], desired_display)
+                self._safe_set_spin_range(self.start_y_spin, mn, mx)
+                mn2 = min(orig_end_range[0], desired_display)
+                mx2 = max(orig_end_range[1], desired_display)
+                self._safe_set_spin_range(self.end_y_spin, mn2, mx2)
+
+                self._safe_block(self.start_y_spin, True)
+                self._safe_block(self.end_y_spin, True)
+                self._safe_set_spin_value(self.start_y_spin, desired_display)
+                self._safe_set_spin_value(self.end_y_spin, desired_display)
+                self._safe_block(self.start_y_spin, False)
+                self._safe_block(self.end_y_spin, False)
+
+                # restore original ranges
+                self._safe_set_spin_range(self.start_y_spin, orig_start_range[0], orig_start_range[1])
+                self._safe_set_spin_range(self.end_y_spin, orig_end_range[0], orig_end_range[1])
+            except Exception:
+                # fallback: set mapped values from raw defaults
+                try:
+                    self._safe_set_spin_value(self.start_y_spin, self._map_y(self.start_y))
+                    self._safe_set_spin_value(self.end_y_spin, self._map_y(self.end_y))
+                except Exception:
+                    pass
 
             # Update endpoint markers and regenerate the curve (which will include endpoints)
             try:
@@ -920,22 +1136,48 @@ class InputGraph(QtWidgets.QWidget):
         except Exception:
             pass
 
-    # Accessors for polynomial
-    def get_polynomial(self):
-        """Return the last computed numpy.poly1d polynomial (in raw [0..1] domain) or None."""
-        return getattr(self, '_poly', None)
+    # Polynomial/piecewise accessors removed — use get_spline_function_display or
+    # sample_spline_display for programmatic evaluation of the plotted curve.
 
-    def get_polynomial_string(self) -> str:
-        """Return the last computed polynomial expression string (human-readable) or empty string."""
-        return getattr(self, '_poly_expr', "")
+    
 
-    def get_polynomial_display(self):
-        """Return the last computed numpy.poly1d polynomial in display coordinates (x in [xmin,xmax]) or None."""
-        return getattr(self, '_poly_display', None)
+    # --- Axis units accessors -------------------------------------------------
+    def set_x_units(self, units: str):
+        """Set the X-axis units string shown on the bottom axis label.
 
-    def get_polynomial_display_string(self) -> str:
-        """Return the last computed display-domain polynomial expression string or empty string."""
-        return getattr(self, '_poly_display_expr', "")
+        units: any object convertible to str (use empty string to clear).
+        """
+        try:
+            u = "" if units is None else str(units)
+        except Exception:
+            u = ""
+        self.x_units = u
+        try:
+            lbl = getattr(self, '_x_label_text', 'X-Axis')
+            self.plot_widget.setLabel('bottom', lbl, units=u)
+        except Exception:
+            pass
+
+    def get_x_units(self) -> str:
+        """Return the current X-axis units string (may be empty)."""
+        return getattr(self, 'x_units', '')
+
+    def set_y_units(self, units: str):
+        """Set the Y-axis units string shown on the left axis label."""
+        try:
+            u = "" if units is None else str(units)
+        except Exception:
+            u = ""
+        self.y_units = u
+        try:
+            lbl = getattr(self, '_y_label_text', 'Y-Axis')
+            self.plot_widget.setLabel('left', lbl, units=u)
+        except Exception:
+            pass
+
+    def get_y_units(self) -> str:
+        """Return the current Y-axis units string (may be empty)."""
+        return getattr(self, 'y_units', '')
 
     def set_graph_title(self, title: str):
         """Set the plot title shown above the graph.
