@@ -31,7 +31,11 @@ class SmartDotConnectionManager:
             return True
         else:
             return False
-
+    def disconnect_all(self):
+        for smartdot in self.smartdots:
+            smartdot.disconnect()
+        self.connections = []
+        self.smartdots = []
     def get_connections(self):
         return self.connections
     def get_smartdots(self):

@@ -10,6 +10,7 @@ from frontend.AnalysisModePage import AnalysisModePage
 from frontend.DiagnosticModePage import DiagnosticModePage
 from frontend.ShotModePage import ShotModePage
 from frontend.CloudTest import CloudTest
+from globals import smartdotConnectionManager
 
 class HomePage(QtWidgets.QMainWindow):
     def __init__(self):
@@ -88,10 +89,18 @@ class HomePage(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         """Signal background threads to stop when the window is closing."""
+
+        print("Closing the application")
+
         try:
             self._stop_event.set()
         except Exception:
             pass
+
+        #Disconnect all connections to SmartDots
+        smartdotConnectionManager.disconnect_all()
+        print("Disconnected from all SmartDots")
+        print("SmartDots list should be empty: ", smartdotConnectionManager.get_smartdots())
         super().closeEvent(event)
 
 """
