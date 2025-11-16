@@ -111,9 +111,9 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.chkLight.setChecked(False)
     #to change code outside of updateDataBetter
     def limitViewBox(self):
-        try:
+        if( len(self.accelerometerTime)>0 and len(self.gyroscopeTime)>0 and len(self.magnetometerTime)>0 and len(self.lightTime)>0):
             last = max(self.accelerometerTime[-1], self.gyroscopeTime[-1], self.magnetometerTime[-1], self.lightTime[-1])
-        except Exception:
+        else:
             last = 0
         match self.cbolimitView.currentText():
             case 'Scroll':
