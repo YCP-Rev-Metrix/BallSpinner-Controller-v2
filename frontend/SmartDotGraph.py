@@ -283,7 +283,10 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.drawGyroscope()
         self.drawMagnetometer()
         self.drawLight()
-        last = max(acclerometerTime[-1], gyroscoperTime[-1], magnometerTime[-1], lightTime[-1])
+        if( len(self.accelerometerTime)>0 and len(self.gyroscopeTime)>0 and len(self.magnetometerTime)>0 and len(self.lightTime)>0):
+            last = max(self.accelerometerTime[-1], self.gyroscopeTime[-1], self.magnetometerTime[-1], self.lightTime[-1])
+        else:
+            last = 0
         self.limit_view_change(last)
     def updateAccelerometer(self, time, x, y, z):
         # store latest accelerometer arrays for click lookup
