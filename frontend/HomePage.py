@@ -1,9 +1,10 @@
 import platform
 from PyQt6 import QtWidgets, uic
+import os
 from PyQt6.QtGui import QAction
 
-from FrontPage import FrontPage
-from SmartDotTestPage import SmartDotTestPage
+from .FrontPage import FrontPage
+from .SmartDotTestPage import SmartDotTestPage
 
 
 
@@ -14,8 +15,8 @@ class HomePage(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         
-        # Load the UI file.
-        uic.loadUi('HomePage.ui', self)
+        # Load the UI file (module-relative path).
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'HomePage.ui'), self, package='frontend')
 
         self.EStop = self.findChild(QtWidgets.QPushButton, 'btnEStop')
         self.EStop.setStyleSheet("background-color: red; font-weight: bold; font-size: 16px;")

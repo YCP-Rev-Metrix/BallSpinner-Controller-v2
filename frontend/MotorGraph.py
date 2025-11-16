@@ -1,6 +1,7 @@
 from ctypes import cast
 from unittest import case
 from PyQt6 import QtWidgets, uic
+import os
 import pyqtgraph as pg
 import numpy as np
 
@@ -11,7 +12,7 @@ class MotorGraph(QtWidgets.QWidget):
         super().__init__(parent)
         
         # Load the UI file.
-        uic.loadUi('MotorGraph.ui', self)
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'MotorGraph.ui'), self, package='frontend')
 
         # Get references to UI elements
         self.graph = self.findChild(pg.PlotWidget, 'graphSmartDot')

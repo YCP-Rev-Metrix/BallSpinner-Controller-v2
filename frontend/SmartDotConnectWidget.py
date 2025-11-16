@@ -1,4 +1,5 @@
 from PyQt6 import QtWidgets, QtCore, uic
+import os
 from PyQt6.QtCore import pyqtSignal, QThread
 import utils
 if utils.is_raspberry_pi():
@@ -63,8 +64,8 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        # load the .ui file (name matches file in repo)
-        uic.loadUi('SmartDotConnectWidget.ui', self)
+        # load the .ui file (module-relative path)
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'SmartDotConnectWidget.ui'), self, package='frontend')
 
         # Grab the connect button and status label created by the .ui file
         self.btnConnect = self.findChild(QtWidgets.QPushButton, 'btnConnect')

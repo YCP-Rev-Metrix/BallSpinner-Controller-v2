@@ -1,8 +1,8 @@
 from PyQt6 import QtWidgets, QtCore, uic
 from PyQt6.QtCore import Qt, QTimer
 import numpy as np
-from SmartDotGraph import SmartDotGraph
-from SmartDotConnectWidget import SmartDotConnectWidget
+from .SmartDotGraph import SmartDotGraph
+from .SmartDotConnectWidget import SmartDotConnectWidget
 import math
 import utils
 if utils.is_raspberry_pi():
@@ -17,8 +17,9 @@ class SmartDotTestPage(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        # load the .ui file (name matches file in repo)
-        uic.loadUi('SmartDotTestPage.ui', self)
+        # load the .ui file (module-relative path)
+        import os
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'SmartDotTestPage.ui'), self, package='frontend')
 
         # Find the embedded SmartDotGraph widget created by the .ui (named SmartDotGraphContainer)
         self.SmartDotGraph = self.findChild(SmartDotGraph, 'smartDotGraph')

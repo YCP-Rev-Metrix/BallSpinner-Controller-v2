@@ -1,4 +1,5 @@
 from PyQt6 import QtWidgets, uic
+import os
 from PyQt6.QtCore import pyqtSignal
 
 class FrontPage(QtWidgets.QWidget):
@@ -6,8 +7,8 @@ class FrontPage(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        # load the .ui file (name matches file in repo)
-        uic.loadUi('FrontPage.ui', self)
+        # load the .ui file (module-relative path)
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'FrontPage.ui'), self, package='frontend')
 
         self.btnDiagnostics = self.findChild(QtWidgets.QPushButton, 'btnDiagnostic')
         self.btnShotMode = self.findChild(QtWidgets.QPushButton, 'btnShot')

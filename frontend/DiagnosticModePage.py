@@ -30,8 +30,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
         else :
             Motor = SimMotor(26)
 
-        # Load the UI file.
-        uic.loadUi('DiagnosticModePage.ui', self)
+        # Load the UI file (module-relative path).
+        import os
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'DiagnosticModePage.ui'), self, package='frontend')
         #Buttons
         btnStart = self.findChild(QtWidgets.QPushButton, 'btnStart')
         btnStop = self.findChild(QtWidgets.QPushButton, 'btnStop')
