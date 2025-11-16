@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>904</width>
-    <height>892</height>
+    <height>864</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,7 +31,7 @@
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>4</number>
       </property>
       <widget class="QWidget" name="pageFrontPage">
        <layout class="QGridLayout" name="gridLayout">
@@ -58,7 +58,7 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="AnalysisModePage">
+      <widget class="QWidget" name="pageAnalysisModePage">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
          <horstretch>0</horstretch>
@@ -67,7 +67,7 @@
        </property>
        <layout class="QGridLayout" name="gridLayout_analysis">
         <item row="0" column="0">
-         <widget class="AnalysisModePage" name="AnlaysisModePage" native="true"/>
+         <widget class="AnalysisModePage" name="AnalysisModePage" native="true"/>
         </item>
        </layout>
       </widget>

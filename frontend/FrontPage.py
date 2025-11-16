@@ -3,7 +3,7 @@ import os
 from PyQt6.QtCore import pyqtSignal
 
 class FrontPage(QtWidgets.QWidget):
-    changePage = pyqtSignal(int, str)
+    changePage = pyqtSignal(int, object)
 
     def __init__(self, parent=None):
         super().__init__(parent)
