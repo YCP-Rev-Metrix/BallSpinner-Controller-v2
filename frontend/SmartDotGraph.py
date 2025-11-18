@@ -73,72 +73,18 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.magnetometerZ = np.array([0.0])
         self.lightTime = np.array([0.0])
         self.lightValue = np.array([0.0])
-        # vertical cursor and markers
-        self.vline = pg.InfiniteLine(
-            angle=90,
-            movable=False,
-            pen=pg.mkPen(color=(255,0,255), width=1, style=pg.QtCore.Qt.PenStyle.DotLine)
-        )
-        self.vline.setZValue(1000)
-
-        # markers for accelerometer (x,y,z)
-        self.marker_acc_x = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,0))
-        self.marker_acc_x.setZValue(200)
-        self.marker_acc_y = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,170,0))
-        self.marker_acc_y.setZValue(200)
-        self.marker_acc_z = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,0,255))
-        self.marker_acc_z.setZValue(200)
-
-        # markers for gyroscope (x,y,z)
-        self.marker_gyro_x = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,255,255))
-        self.marker_gyro_x.setZValue(200)
-        self.marker_gyro_y = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,255))
-        self.marker_gyro_y.setZValue(200)
-        self.marker_gyro_z = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,255,0))
-        self.marker_gyro_z.setZValue(200)
-
-        # markers for magnetometer (x,y,z)
-        self.marker_mag_x = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,128,128))
-        self.marker_mag_x.setZValue(200)
-        self.marker_mag_y = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(128,0,0))
-        self.marker_mag_y.setZValue(200)
-        self.marker_mag_z = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(128,0,128))
-        self.marker_mag_z.setZValue(200)
-
-        # marker for light
-        self.marker_light = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(200,200,200))
-        self.marker_light.setZValue(200)
-
-        # add to view/plot (try viewbox for cursor)
-        try:
-            vb = self.graph.getPlotItem().getViewBox()
-            vb.addItem(self.vline)
-        except Exception:
-            self.graph.addItem(self.vline, ignoreBounds=True)
-        try:
-            plotItem = self.graph.getPlotItem()
-            plotItem.addItem(self.marker_acc_x)
-            plotItem.addItem(self.marker_acc_y)
-            plotItem.addItem(self.marker_acc_z)
-            plotItem.addItem(self.marker_gyro_x)
-            plotItem.addItem(self.marker_gyro_y)
-            plotItem.addItem(self.marker_gyro_z)
-            plotItem.addItem(self.marker_mag_x)
-            plotItem.addItem(self.marker_mag_y)
-            plotItem.addItem(self.marker_mag_z)
-            plotItem.addItem(self.marker_light)
-        except Exception:
-            # fallback
-            self.graph.addItem(self.marker_acc_x)
-            self.graph.addItem(self.marker_acc_y)
-            self.graph.addItem(self.marker_acc_z)
-            self.graph.addItem(self.marker_gyro_x)
-            self.graph.addItem(self.marker_gyro_y)
-            self.graph.addItem(self.marker_gyro_z)
-            self.graph.addItem(self.marker_mag_x)
-            self.graph.addItem(self.marker_mag_y)
-            self.graph.addItem(self.marker_mag_z)
-            self.graph.addItem(self.marker_light)
+        # Cursor and markers will be created on first click (lazy)
+        self.vline = None
+        self.marker_acc_x = None
+        self.marker_acc_y = None
+        self.marker_acc_z = None
+        self.marker_gyro_x = None
+        self.marker_gyro_y = None
+        self.marker_gyro_z = None
+        self.marker_mag_x = None
+        self.marker_mag_y = None
+        self.marker_mag_z = None
+        self.marker_light = None
         self.select_all()
         self.limitViewBox()
 
@@ -270,12 +216,58 @@ class SmartDotGraph(QtWidgets.QWidget):
                         self.lblAccelerometer.setText(
                             f"Accelerometer @ t={t:.3f} (idx={idx}): x={ax_html}, y={ay_html}, z={az_html}"
                         )
-                    # move cursor to exact clicked x and set accelerometer markers
+                    # ensure cursor exists and set it to exact clicked x; create markers lazily
                     try:
+                        if self.vline is None:
+                            self.vline = pg.InfiniteLine(
+                                angle=90,
+                                movable=False,
+                                pen=pg.mkPen(color=(255,0,255), width=1, style=pg.QtCore.Qt.PenStyle.DotLine)
+                            )
+                            self.vline.setZValue(1000)
+                            try:
+                                vb.addItem(self.vline)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.vline, ignoreBounds=True)
+                                except Exception:
+                                    pass
                         self.vline.setPos(x_click)
                     except Exception:
                         pass
                     try:
+                        plotItem = self.graph.getPlotItem()
+                        if self.marker_acc_x is None:
+                            self.marker_acc_x = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,0))
+                            self.marker_acc_x.setZValue(200)
+                            try:
+                                plotItem.addItem(self.marker_acc_x)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.marker_acc_x)
+                                except Exception:
+                                    pass
+                        if self.marker_acc_y is None:
+                            self.marker_acc_y = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,170,0))
+                            self.marker_acc_y.setZValue(200)
+                            try:
+                                plotItem.addItem(self.marker_acc_y)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.marker_acc_y)
+                                except Exception:
+                                    pass
+                        if self.marker_acc_z is None:
+                            self.marker_acc_z = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,0,255))
+                            self.marker_acc_z.setZValue(200)
+                            try:
+                                plotItem.addItem(self.marker_acc_z)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.marker_acc_z)
+                                except Exception:
+                                    pass
+
                         if ax is not None:
                             self.marker_acc_x.setData(x=[t], y=[ax])
                         else:
@@ -307,12 +299,58 @@ class SmartDotGraph(QtWidgets.QWidget):
                         self.lblGyroscopeData.setText(
                             f"Gyroscope @ t={t:.3f} (idx={idx}): x={gx_html}, y={gy_html}, z={gz_html}"
                         )
-                    # move cursor to exact clicked x and set gyroscope markers
+                    # ensure cursor exists and set it to exact clicked x; create gyro markers lazily
                     try:
+                        if self.vline is None:
+                            self.vline = pg.InfiniteLine(
+                                angle=90,
+                                movable=False,
+                                pen=pg.mkPen(color=(255,0,255), width=1, style=pg.QtCore.Qt.PenStyle.DotLine)
+                            )
+                            self.vline.setZValue(1000)
+                            try:
+                                vb.addItem(self.vline)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.vline, ignoreBounds=True)
+                                except Exception:
+                                    pass
                         self.vline.setPos(x_click)
                     except Exception:
                         pass
                     try:
+                        plotItem = self.graph.getPlotItem()
+                        if self.marker_gyro_x is None:
+                            self.marker_gyro_x = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,255,255))
+                            self.marker_gyro_x.setZValue(200)
+                            try:
+                                plotItem.addItem(self.marker_gyro_x)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.marker_gyro_x)
+                                except Exception:
+                                    pass
+                        if self.marker_gyro_y is None:
+                            self.marker_gyro_y = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,255))
+                            self.marker_gyro_y.setZValue(200)
+                            try:
+                                plotItem.addItem(self.marker_gyro_y)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.marker_gyro_y)
+                                except Exception:
+                                    pass
+                        if self.marker_gyro_z is None:
+                            self.marker_gyro_z = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,255,0))
+                            self.marker_gyro_z.setZValue(200)
+                            try:
+                                plotItem.addItem(self.marker_gyro_z)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.marker_gyro_z)
+                                except Exception:
+                                    pass
+
                         if gx is not None:
                             self.marker_gyro_x.setData(x=[t], y=[gx])
                         else:
@@ -344,12 +382,58 @@ class SmartDotGraph(QtWidgets.QWidget):
                         self.lblMagnomaterData.setText(
                             f"Magnetometer @ t={t:.3f} (idx={idx}): x={mx_html}, y={my_html}, z={mz_html}"
                         )
-                    # move cursor to exact clicked x and set magnetometer markers
+                    # ensure cursor exists and set it to exact clicked x; create magnetometer markers lazily
                     try:
+                        if self.vline is None:
+                            self.vline = pg.InfiniteLine(
+                                angle=90,
+                                movable=False,
+                                pen=pg.mkPen(color=(255,0,255), width=1, style=pg.QtCore.Qt.PenStyle.DotLine)
+                            )
+                            self.vline.setZValue(1000)
+                            try:
+                                vb.addItem(self.vline)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.vline, ignoreBounds=True)
+                                except Exception:
+                                    pass
                         self.vline.setPos(x_click)
                     except Exception:
                         pass
                     try:
+                        plotItem = self.graph.getPlotItem()
+                        if self.marker_mag_x is None:
+                            self.marker_mag_x = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,128,128))
+                            self.marker_mag_x.setZValue(200)
+                            try:
+                                plotItem.addItem(self.marker_mag_x)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.marker_mag_x)
+                                except Exception:
+                                    pass
+                        if self.marker_mag_y is None:
+                            self.marker_mag_y = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(128,0,0))
+                            self.marker_mag_y.setZValue(200)
+                            try:
+                                plotItem.addItem(self.marker_mag_y)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.marker_mag_y)
+                                except Exception:
+                                    pass
+                        if self.marker_mag_z is None:
+                            self.marker_mag_z = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(128,0,128))
+                            self.marker_mag_z.setZValue(200)
+                            try:
+                                plotItem.addItem(self.marker_mag_z)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.marker_mag_z)
+                                except Exception:
+                                    pass
+
                         if mx is not None:
                             self.marker_mag_x.setData(x=[t], y=[mx])
                         else:
@@ -377,12 +461,37 @@ class SmartDotGraph(QtWidgets.QWidget):
                         self.lblLightData.setText(
                             f"Light @ t={t:.3f} (idx={idx}): value={lv_html}"
                         )
-                    # move cursor to exact clicked x and set light marker
+                    # ensure cursor exists and set it to exact clicked x; create light marker lazily
                     try:
+                        if self.vline is None:
+                            self.vline = pg.InfiniteLine(
+                                angle=90,
+                                movable=False,
+                                pen=pg.mkPen(color=(255,0,255), width=1, style=pg.QtCore.Qt.PenStyle.DotLine)
+                            )
+                            self.vline.setZValue(1000)
+                            try:
+                                vb.addItem(self.vline)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.vline, ignoreBounds=True)
+                                except Exception:
+                                    pass
                         self.vline.setPos(x_click)
                     except Exception:
                         pass
                     try:
+                        plotItem = self.graph.getPlotItem()
+                        if self.marker_light is None:
+                            self.marker_light = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(200,200,200))
+                            self.marker_light.setZValue(200)
+                            try:
+                                plotItem.addItem(self.marker_light)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.marker_light)
+                                except Exception:
+                                    pass
                         if lv is not None:
                             self.marker_light.setData(x=[t], y=[lv])
                         else:
@@ -431,33 +540,97 @@ class SmartDotGraph(QtWidgets.QWidget):
         # re-add cursor and markers so they persist after clear()
         try:
             vb = self.graph.getPlotItem().getViewBox()
-            vb.addItem(self.vline)
             plotItem = self.graph.getPlotItem()
-            plotItem.addItem(self.marker_acc_x)
-            plotItem.addItem(self.marker_acc_y)
-            plotItem.addItem(self.marker_acc_z)
-            plotItem.addItem(self.marker_gyro_x)
-            plotItem.addItem(self.marker_gyro_y)
-            plotItem.addItem(self.marker_gyro_z)
-            plotItem.addItem(self.marker_mag_x)
-            plotItem.addItem(self.marker_mag_y)
-            plotItem.addItem(self.marker_mag_z)
-            plotItem.addItem(self.marker_light)
+            if self.vline is not None:
+                try:
+                    vb.addItem(self.vline)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.vline, ignoreBounds=True)
+                    except Exception:
+                        pass
+            if self.marker_acc_x is not None:
+                try:
+                    plotItem.addItem(self.marker_acc_x)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.marker_acc_x)
+                    except Exception:
+                        pass
+            if self.marker_acc_y is not None:
+                try:
+                    plotItem.addItem(self.marker_acc_y)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.marker_acc_y)
+                    except Exception:
+                        pass
+            if self.marker_acc_z is not None:
+                try:
+                    plotItem.addItem(self.marker_acc_z)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.marker_acc_z)
+                    except Exception:
+                        pass
+            if self.marker_gyro_x is not None:
+                try:
+                    plotItem.addItem(self.marker_gyro_x)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.marker_gyro_x)
+                    except Exception:
+                        pass
+            if self.marker_gyro_y is not None:
+                try:
+                    plotItem.addItem(self.marker_gyro_y)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.marker_gyro_y)
+                    except Exception:
+                        pass
+            if self.marker_gyro_z is not None:
+                try:
+                    plotItem.addItem(self.marker_gyro_z)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.marker_gyro_z)
+                    except Exception:
+                        pass
+            if self.marker_mag_x is not None:
+                try:
+                    plotItem.addItem(self.marker_mag_x)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.marker_mag_x)
+                    except Exception:
+                        pass
+            if self.marker_mag_y is not None:
+                try:
+                    plotItem.addItem(self.marker_mag_y)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.marker_mag_y)
+                    except Exception:
+                        pass
+            if self.marker_mag_z is not None:
+                try:
+                    plotItem.addItem(self.marker_mag_z)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.marker_mag_z)
+                    except Exception:
+                        pass
+            if self.marker_light is not None:
+                try:
+                    plotItem.addItem(self.marker_light)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.marker_light)
+                    except Exception:
+                        pass
         except Exception:
-            try:
-                self.graph.addItem(self.vline, ignoreBounds=True)
-                self.graph.addItem(self.marker_acc_x)
-                self.graph.addItem(self.marker_acc_y)
-                self.graph.addItem(self.marker_acc_z)
-                self.graph.addItem(self.marker_gyro_x)
-                self.graph.addItem(self.marker_gyro_y)
-                self.graph.addItem(self.marker_gyro_z)
-                self.graph.addItem(self.marker_mag_x)
-                self.graph.addItem(self.marker_mag_y)
-                self.graph.addItem(self.marker_mag_z)
-                self.graph.addItem(self.marker_light)
-            except Exception:
-                pass
+            pass
     def updateAccelerometer(self, time, x, y, z):
         # store latest accelerometer arrays for click lookup
         self.accelerometerTime = np.asarray(time)

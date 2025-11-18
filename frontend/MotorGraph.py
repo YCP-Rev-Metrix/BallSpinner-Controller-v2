@@ -70,55 +70,16 @@ class MotorGraph(QtWidgets.QWidget):
         # motor time (single reference for motor series) used for click mapping
         self.MotorTime = np.array([0.0])
 
-        # Add a vertical cursor line and markers for each series (initially empty)
-        # vertical cursor: bright magenta, thin dotted line, very high z to appear above plots
-        self.vline = pg.InfiniteLine(
-            angle=90,
-            movable=False,
-            pen=pg.mkPen(color=(255,0,255), width=1, style=pg.QtCore.Qt.PenStyle.DotLine)
-        )
-        self.vline.setZValue(1000)
-        # Motor series markers (Spin, Tilt, Angle)
-        self.marker_spin = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(255,0,0), pen=pg.mkPen(None))
-        self.marker_spin.setZValue(200)
-        self.marker_tilt = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(0,170,0), pen=pg.mkPen(None))
-        self.marker_tilt.setZValue(200)
-        self.marker_angle = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(0,0,255), pen=pg.mkPen(None))
-        self.marker_angle.setZValue(200)
-        # Data series markers (smaller)
-        self.marker_spin_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,0), pen=pg.mkPen(None))
-        self.marker_spin_data.setZValue(200)
-        self.marker_tilt_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,170,0), pen=pg.mkPen(None))
-        self.marker_tilt_data.setZValue(200)
-        self.marker_angle_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,0,255), pen=pg.mkPen(None))
-        self.marker_angle_data.setZValue(200)
+        # Cursor and markers will be created on first click (lazy)
 
-        # add items to plot so they're present (they will be re-added after clears)
-        try:
-            vb = self.graph.getPlotItem().getViewBox()
-            vb.addItem(self.vline)
-        except Exception:
-            # fallback to PlotWidget.addItem
-            self.graph.addItem(self.vline, ignoreBounds=True)
-        # add markers to the PlotItem
-        try:
-            plotItem = self.graph.getPlotItem()
-            plotItem.addItem(self.marker_spin)
-            plotItem.addItem(self.marker_tilt)
-            plotItem.addItem(self.marker_angle)
-            plotItem.addItem(self.marker_spin_data)
-            plotItem.addItem(self.marker_tilt_data)
-            plotItem.addItem(self.marker_angle_data)
-        except Exception:
-            # fallback
-            self.graph.addItem(self.marker_spin)
-            self.graph.addItem(self.marker_tilt)
-            self.graph.addItem(self.marker_angle)
-            self.graph.addItem(self.marker_spin_data)
-            self.graph.addItem(self.marker_tilt_data)
-            self.graph.addItem(self.marker_angle_data)
-
-
+        # Cursor and markers will be created on first click (lazy)
+        self.vline = None
+        self.marker_spin = None
+        self.marker_tilt = None
+        self.marker_angle = None
+        self.marker_spin_data = None
+        self.marker_tilt_data = None
+        self.marker_angle_data = None
 
         #Select/Deselect All buttons
         self.btnSelectAll.clicked.connect(self.select_all)
@@ -248,12 +209,62 @@ class MotorGraph(QtWidgets.QWidget):
                             f"Motor Data @ t={t:.3f} (idx={idx}): Spin={spin_html}, Tilt={tilt_html}, Angle={angle_html}"
                         )
                     # move vertical cursor to the exact clicked x coordinate
+                    # create vline on first click if needed, then position it at exact clicked x
                     try:
+                        if self.vline is None:
+                            self.vline = pg.InfiniteLine(
+                                angle=90,
+                                movable=False,
+                                pen=pg.mkPen(color=(255,0,255), width=1, style=pg.QtCore.Qt.PenStyle.DotLine)
+                            )
+                            self.vline.setZValue(1000)
+                            try:
+                                vb.addItem(self.vline)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.vline, ignoreBounds=True)
+                                except Exception:
+                                    pass
+                        else:
+                            self.vline.setPos(x_click)
+                        # ensure cursor is set to exact click
                         self.vline.setPos(x_click)
                     except Exception:
                         pass
-                    # set markers for motor series (if values available)
+                    # create markers on first click if needed, then set their positions (snap to nearest t)
                     try:
+                        plotItem = self.graph.getPlotItem()
+                        if self.marker_spin is None:
+                            self.marker_spin = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(255,0,0), pen=pg.mkPen(None))
+                            self.marker_spin.setZValue(200)
+                            try:
+                                plotItem.addItem(self.marker_spin)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.marker_spin)
+                                except Exception:
+                                    pass
+                        if self.marker_tilt is None:
+                            self.marker_tilt = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(0,170,0), pen=pg.mkPen(None))
+                            self.marker_tilt.setZValue(200)
+                            try:
+                                plotItem.addItem(self.marker_tilt)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.marker_tilt)
+                                except Exception:
+                                    pass
+                        if self.marker_angle is None:
+                            self.marker_angle = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(0,0,255), pen=pg.mkPen(None))
+                            self.marker_angle.setZValue(200)
+                            try:
+                                plotItem.addItem(self.marker_angle)
+                            except Exception:
+                                try:
+                                    self.graph.addItem(self.marker_angle)
+                                except Exception:
+                                    pass
+
                         if spin is not None:
                             self.marker_spin.setData(x=[t], y=[spin])
                         else:
@@ -290,25 +301,69 @@ class MotorGraph(QtWidgets.QWidget):
                     try:
                         # if motor cursor wasn't placed above, snap it to this data time
                         try:
-                            # set vline to the exact clicked x coordinate (don't snap to index)
+                            # ensure vline exists and set to exact clicked x
+                            if self.vline is None:
+                                self.vline = pg.InfiniteLine(
+                                    angle=90,
+                                    movable=False,
+                                    pen=pg.mkPen(color=(255,0,255), width=1, style=pg.QtCore.Qt.PenStyle.DotLine)
+                                )
+                                self.vline.setZValue(1000)
+                                try:
+                                    vb.addItem(self.vline)
+                                except Exception:
+                                    try:
+                                        self.graph.addItem(self.vline, ignoreBounds=True)
+                                    except Exception:
+                                        pass
                             self.vline.setPos(x_click)
+
+                            plotItem = self.graph.getPlotItem()
+                            if self.marker_spin_data is None:
+                                self.marker_spin_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,0), pen=pg.mkPen(None))
+                                self.marker_spin_data.setZValue(200)
+                                try:
+                                    plotItem.addItem(self.marker_spin_data)
+                                except Exception:
+                                    try:
+                                        self.graph.addItem(self.marker_spin_data)
+                                    except Exception:
+                                        pass
+                            if self.marker_tilt_data is None:
+                                self.marker_tilt_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,170,0), pen=pg.mkPen(None))
+                                self.marker_tilt_data.setZValue(200)
+                                try:
+                                    plotItem.addItem(self.marker_tilt_data)
+                                except Exception:
+                                    try:
+                                        self.graph.addItem(self.marker_tilt_data)
+                                    except Exception:
+                                        pass
+                            if self.marker_angle_data is None:
+                                self.marker_angle_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,0,255), pen=pg.mkPen(None))
+                                self.marker_angle_data.setZValue(200)
+                                try:
+                                    plotItem.addItem(self.marker_angle_data)
+                                except Exception:
+                                    try:
+                                        self.graph.addItem(self.marker_angle_data)
+                                    except Exception:
+                                        pass
+
+                            if spin_data is not None:
+                                self.marker_spin_data.setData(x=[t], y=[spin_data])
+                            else:
+                                self.marker_spin_data.setData(x=[], y=[])
+                            if tilt_data is not None:
+                                self.marker_tilt_data.setData(x=[t], y=[tilt_data])
+                            else:
+                                self.marker_tilt_data.setData(x=[], y=[])
+                            if angle_data is not None:
+                                self.marker_angle_data.setData(x=[t], y=[angle_data])
+                            else:
+                                self.marker_angle_data.setData(x=[], y=[])
                         except Exception:
-                            try:
-                                self.vline.setPos(x_click)
-                            except Exception:
-                                pass
-                        if spin_data is not None:
-                            self.marker_spin_data.setData(x=[t], y=[spin_data])
-                        else:
-                            self.marker_spin_data.setData(x=[], y=[])
-                        if tilt_data is not None:
-                            self.marker_tilt_data.setData(x=[t], y=[tilt_data])
-                        else:
-                            self.marker_tilt_data.setData(x=[], y=[])
-                        if angle_data is not None:
-                            self.marker_angle_data.setData(x=[t], y=[angle_data])
-                        else:
-                            self.marker_angle_data.setData(x=[], y=[])
+                            pass
                     except Exception:
                         pass
 
@@ -363,25 +418,65 @@ class MotorGraph(QtWidgets.QWidget):
         # Re-add cursor and markers so they persist after clear()
         try:
             vb = self.graph.getPlotItem().getViewBox()
-            vb.addItem(self.vline)
             plotItem = self.graph.getPlotItem()
-            plotItem.addItem(self.marker_spin)
-            plotItem.addItem(self.marker_tilt)
-            plotItem.addItem(self.marker_angle)
-            plotItem.addItem(self.marker_spin_data)
-            plotItem.addItem(self.marker_tilt_data)
-            plotItem.addItem(self.marker_angle_data)
+            if self.vline is not None:
+                try:
+                    vb.addItem(self.vline)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.vline, ignoreBounds=True)
+                    except Exception:
+                        pass
+            if self.marker_spin is not None:
+                try:
+                    plotItem.addItem(self.marker_spin)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.marker_spin)
+                    except Exception:
+                        pass
+            if self.marker_tilt is not None:
+                try:
+                    plotItem.addItem(self.marker_tilt)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.marker_tilt)
+                    except Exception:
+                        pass
+            if self.marker_angle is not None:
+                try:
+                    plotItem.addItem(self.marker_angle)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.marker_angle)
+                    except Exception:
+                        pass
+            if self.marker_spin_data is not None:
+                try:
+                    plotItem.addItem(self.marker_spin_data)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.marker_spin_data)
+                    except Exception:
+                        pass
+            if self.marker_tilt_data is not None:
+                try:
+                    plotItem.addItem(self.marker_tilt_data)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.marker_tilt_data)
+                    except Exception:
+                        pass
+            if self.marker_angle_data is not None:
+                try:
+                    plotItem.addItem(self.marker_angle_data)
+                except Exception:
+                    try:
+                        self.graph.addItem(self.marker_angle_data)
+                    except Exception:
+                        pass
         except Exception:
-            try:
-                self.graph.addItem(self.vline, ignoreBounds=True)
-                self.graph.addItem(self.marker_spin)
-                self.graph.addItem(self.marker_tilt)
-                self.graph.addItem(self.marker_angle)
-                self.graph.addItem(self.marker_spin_data)
-                self.graph.addItem(self.marker_tilt_data)
-                self.graph.addItem(self.marker_angle_data)
-            except Exception:
-                pass
+            pass
 
     def updateDataDiagnostic(self, Spin_time, Spin_array, angle_time, angle_array, tilt_time, tilt_array, DataTime, SpinDataArray, TiltDataArray, AngleDataArray):
         """Update the graph with new Diagnostic data."""
