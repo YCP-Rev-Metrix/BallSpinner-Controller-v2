@@ -32,7 +32,9 @@ class ShotViewPage(QtWidgets.QWidget):
 
         self.motorGraph = self.findChild(MotorGraph, 'MotorGraph')
         self.SmartDotGraph = self.findChild(SmartDotGraph, 'SmartDotGraph')
-        self.pushButton = self.findChild(QtWidgets.QPushButton, 'pushButton')
+        self.btnAnalyze = self.findChild(QtWidgets.QPushButton, 'btnAnalyze')
+        self.btnAnalyze.clicked.connect(lambda: self.changePage.emit(3, "SampleText"))  # Go back to Home Page
+        self.btnAnalyze.setEnabled(False)  # Disabled during shot view
 
         self.scriptSpin = np.array([])
         self.scriptTilt = np.array([])
@@ -62,6 +64,8 @@ class ShotViewPage(QtWidgets.QWidget):
         # Expose the nested StartShotView as a public method on the instance
  
     def StartShotView(self, Data):
+        self.btnAnalyze.setEnabled(False)  # Disabled during shot view
+
         self.scriptSpin = Data.spin
         self.scriptTilt = Data.tilt
         self.scriptAngle = Data.angle
@@ -197,6 +201,7 @@ class ShotViewPage(QtWidgets.QWidget):
                 ))
             print("Submitted SmartDot data to DataController")
         print("Shot View Ended")
+        self.btnAnalyze.setEnabled(True)  # Enable Analyze button after shot view
         
 
             

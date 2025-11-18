@@ -72,26 +72,32 @@ class HomePage(QtWidgets.QMainWindow):
         match index:
             case 0: #Front Page
                 #No Data Expected
+                self.window().setWindowTitle("Ball Spinner Controller - Home")
                 pass
             case 1: #Diagnostic Page
+                self.window().setWindowTitle("Ball Spinner Controller - Diagnostic Mode")
                 self.diagnosticPage.reset()
                 #No Data Expected
                 pass
             case 2: #Shot Mode Page
+                self.window().setWindowTitle("Ball Spinner Controller - Shot Mode")
                 self.shotModePage.reset()
                 #No Data Expected
                 pass
             case 3: #Analysis Mode Page
                 #No Data Expected
+                self.window().setWindowTitle("Ball Spinner Controller - Analysis Mode")
                 self.analysisModePage.loadData()
                 pass
             case 4: #Cloud Test Page
+                self.window().setWindowTitle("Ball Spinner Controller - Cloud Test")
                 #No Data Expected
                 pass
             case 5: #SmartDot Test Page
                 #No Data Expected
                 pass
             case 6: #Shot View Page
+                self.window().setWindowTitle("Ball Spinner Controller - Shot View")
                 if(isinstance(data, MotorData)):
                     print(data.dt)
                     self.shotViewPage.StartShotView(data)

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>904</width>
+    <width>757</width>
     <height>892</height>
    </rect>
   </property>
@@ -33,13 +33,6 @@
       </sizepolicy>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
-      <item>
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Analysis</string>
-        </property>
-       </widget>
-      </item>
       <item>
        <widget class="QPushButton" name="pushButton">
         <property name="text">
@@ -94,13 +87,13 @@
   <customwidget>
    <class>SmartDotGraph</class>
    <extends>QWidget</extends>
-    <header>frontend.SmartDotGraph</header>
+   <header>frontend.SmartDotGraph</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>MotorGraph</class>
    <extends>QWidget</extends>
-    <header>frontend.MotorGraph</header>
+   <header>frontend.MotorGraph</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

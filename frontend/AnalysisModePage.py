@@ -3,6 +3,8 @@ from PyQt6 import QtWidgets, uic
 import os
 from PyQt6.QtCore import Qt, QTimer
 import numpy as np
+
+from .MotorGraph import MotorGraph
 from .SmartDotGraph import SmartDotGraph
 import math
 from PyQt6.QtCore import pyqtSignal
@@ -20,11 +22,12 @@ class AnalysisModePage(QtWidgets.QWidget):
         # Load the UI file (module-relative path).
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'AnalysisModePage.ui'), self, package='frontend')
         self.smartDotGraph = self.findChild(SmartDotGraph, 'SmartDotGraph')
-        self.motorGraph = self.findChild(SmartDotGraph, 'MotorGraph')
+        self.motorGraph = self.findChild(MotorGraph, 'MotorGraph')
+
 
     def loadData(self):
-        # Load SmartDot data from BSC data controller
         dc = bsc.get_data_controller()
+        # Load SmartDot data from BSC data controller
         smartdot_data = dc.smartdot_data
 
         time_accel = []
@@ -70,13 +73,39 @@ class AnalysisModePage(QtWidgets.QWidget):
             time_mag, mag_x, mag_y, mag_z,
             time_light, light
         )
+        # Load Motor data from BSC data controller
+        motor_data = dc.shot_script_data.get_shot_script_data_entries()
+       
+        time_motor = []
+        motor_rpm = []
+        motor_angleDeg = []
+        motor_tiltDeg = []
 
-      
+        for data in motor_data:
+            time_motor.append(data.time)
+            motor_rpm.append(data.rpm)
+            motor_angleDeg.append(data.angleDeg)
+            motor_tiltDeg.append(data.tiltDeg)
+
+        #TODO: Add Diagnostic Support
+
+        #Get encoder values
+        time_encoder = []
+        encoder_rpm = []
+        encoder_angle = []
+        encoder_tilt = []
+
+        #TODO: Get store encoder data if we are using encoders, using 0.0 as temp
+        time_encoder = [0.0]
+        encoder_rpm = [0.0]
+        encoder_angle = [0.0]
+        encoder_tilt = [0.0]
+
+        
     
-
-
-
-
+        # Update Motor graph
+        self.motorGraph.updateDataBetter(time_motor, motor_rpm, motor_angleDeg, motor_tiltDeg, time_encoder, encoder_rpm, encoder_angle, encoder_tilt)
+        
 
 
 if __name__ == '__main__':

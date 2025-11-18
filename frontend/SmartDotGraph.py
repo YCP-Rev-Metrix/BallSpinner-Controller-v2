@@ -74,6 +74,7 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.lightTime = np.array([0.0])
         self.lightValue = np.array([0.0])
         self.select_all()
+        self.limitViewBox()
 
 
         #Select/Deselect All buttons
