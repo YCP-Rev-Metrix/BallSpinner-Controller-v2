@@ -74,9 +74,11 @@ class HomePage(QtWidgets.QMainWindow):
                 #No Data Expected
                 pass
             case 1: #Diagnostic Page
+                self.diagnosticPage.reset()
                 #No Data Expected
                 pass
             case 2: #Shot Mode Page
+                self.shotModePage.reset()
                 #No Data Expected
                 pass
             case 3: #Analysis Mode Page

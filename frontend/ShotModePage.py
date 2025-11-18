@@ -175,6 +175,13 @@ class ShotModePage(QtWidgets.QWidget):
             print("No SmartDot connected, disabling Start Shot button.")
         print("SmartDot list:",bsc.smartdotConnectionManager.get_connections())
 
+    def reset(self):
+        self.graph_rpm.reset_view_and_clear()
+        self.graph_tilt.reset_view_and_clear()
+        self.graph_angle.reset_view_and_clear()
+        self.sliderTime.setValue(0)
+
+
 if __name__ == '__main__':
     import sys
     app = QtWidgets.QApplication(sys.argv)

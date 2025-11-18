@@ -127,6 +127,12 @@ class DiagnosticModePage(QtWidgets.QWidget):
         # expose EStop publicly so other modules can call: instance.EStop()
         self.EStop = EStop
 
+        def reset():
+            self.active = False
+            clear_graphs()
+            self.spinDial.setValue(0)
+            self.tiltDial.setValue(0)
+            self.angleDial.setValue(0)
 
         def _Generator():
             global spinArray, tiltArray, angleArray, xArray
