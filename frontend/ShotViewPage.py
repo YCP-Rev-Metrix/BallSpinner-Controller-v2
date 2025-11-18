@@ -13,7 +13,7 @@ from PyQt6.QtCore import Qt, QTimer
 from frontend.SmartDotGraph import SmartDotGraph
 from frontend.MotorGraph import MotorGraph
 
-from BSC import BSC, MotorData
+from BSC import bsc, MotorData
 
 
 class ShotViewPage(QtWidgets.QWidget):
@@ -38,18 +38,15 @@ class ShotViewPage(QtWidgets.QWidget):
         self.scriptAngle = np.array([])
 
         self.SmartDot = None
-        self.ConnectionManager = BSC().smartdotConnectionManager
-        """
-            if self.ConnectionManager.is_connected():
-            self.SmartDot = self.ConnectionManager.get_connected_device()
-            print("SmartDot connected:", self.SmartDot)
-        """
-        try:
-            self.SmartDot = self.ConnectionManager.get_smartdots()[0]
-            print("SmartDot connected:", self.SmartDot)
-        except Exception as e:
-            print("Error connecting to SmartDot:", e)
+        self.ConnectionManager = bsc.smartdotConnectionManager
 
+        if(len(self.ConnectionManager.get_smartdots()) > 0):
+            try:
+                self.SmartDot = self.ConnectionManager.get_connections()[0]
+                print("SmartDot connected:", self.SmartDot)
+            except Exception as e:
+                print("Error connecting to SmartDot:", e)
+        
 
         self.displayedSpin = np.array([])
         self.displayedTilt = np.array([])
@@ -79,9 +76,21 @@ class ShotViewPage(QtWidgets.QWidget):
         self.displayedTime = np.array([])
         self.ElapsedTime = 0.0
         self.count = 0
+        if(len(self.ConnectionManager.get_smartdots()) > 0):
+            try:
+                self.SmartDot = self.ConnectionManager.get_smartdots()[0]
+                print("SmartDot connected:", self.SmartDot)
+            except Exception as e:
+                print("Error connecting to SmartDot:", e)
 
         print("Starting Shot View with interval (ms):", self.dt_ms)
         print("Max Time (sec):", self.MaxTime)
+
+        if (self.SmartDot):
+            print("Using SmartDot in Shot View")
+            self.SmartDot.startCollecting()
+        else:
+            print("No SmartDot connected in Shot View")
 
         self.timer.setInterval(self.dt_ms)
         # connect to UpdateShotView without passing ms; UpdateShotView will use seconds
@@ -113,8 +122,14 @@ class ShotViewPage(QtWidgets.QWidget):
                                                 self.SmartDot.lt_time, self.SmartDot.lt_value)
         self.count += 1
         if(self.ElapsedTime >= self.MaxTime):
-            self.timer.stop()
+            self.EndShotView()
             return
+    def EndShotView(self):
+        self.timer.stop()
+        if self.SmartDot:
+            self.SmartDot.stopCollecting()
+        print("Shot View Ended")
+        
             
 
 

@@ -10,6 +10,8 @@ from backend.models.DataController import DataController
 from frontend.SmartDotConnectWidget import SmartDotConnectWidget
 import datetime as dt
 
+from backend.smartdot.iSmartDot import iSmartDot
+
 
 
 class ShotModePage(QtWidgets.QWidget):
@@ -60,7 +62,7 @@ class ShotModePage(QtWidgets.QWidget):
         self.graph_angle.set_y_units("°")
 
         self.SmartDotConnectWidget = self.findChild(SmartDotConnectWidget, 'SmartDotConnectWidget')
-        self.SmartDotConnectWidget.signalSmartDotConnected.connect(lambda : self.CheckButtons() )
+        self.SmartDotConnectWidget.signalSmartDotConnected.connect(self.CheckButtons)
 
 
         self.sliderTime = self.findChild(QtWidgets.QSlider, 'sliderTime')
@@ -103,12 +105,13 @@ class ShotModePage(QtWidgets.QWidget):
         self.graph_angle.set_bounds(0,1 + 0.02 * value,-90,90)
 
     def CheckButtons(self):
-        connectionManager = bsc.smartdotConnectionManager
-        list = connectionManager.get_smartdots()
-        if(list is not None and len(list) > 0):
+        if(bsc.smartdotConnectionManager.get_connections):
             self.btnStartShot.setEnabled(True)
+            print("SmartDot connected, enabling Start Shot button.")
         else:
             self.btnStartShot.setEnabled(False)
+            print("No SmartDot connected, disabling Start Shot button.")
+        print("SmartDot list:",bsc.smartdotConnectionManager.get_connections())
 
 if __name__ == '__main__':
     import sys
