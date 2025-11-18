@@ -1,16 +1,20 @@
 from PyQt6 import QtWidgets, QtCore, uic
-from InputGraph import InputGraph
+import os
+from .InputGraph import InputGraph
+from PyQt6.QtCore import pyqtSignal
 
 
 class ShotModePage(QtWidgets.QWidget):
+    changePage = pyqtSignal(int, object)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        # load the .ui file (name matches file in repo)
-        uic.loadUi('ShotModePage.ui', self)
+        # load the .ui file (module-relative path)
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'ShotModePage.ui'), self, package='frontend')
 
         # Grab the three InputGraph widgets created by the .ui file and store references
         # The object names come from the .ui: 'inputGraph_RPM', 'InputGraph_Tilt', 'InputGraph_Angle'
+
         self.graph_rpm = self.findChild(InputGraph, 'inputGraph_RPM')
         self.graph_tilt = self.findChild(InputGraph, 'InputGraph_Tilt')
         self.graph_angle = self.findChild(InputGraph, 'InputGraph_Angle')
@@ -23,17 +27,30 @@ class ShotModePage(QtWidgets.QWidget):
         self.graph_tilt.hide_controls()
         self.graph_angle.hide_controls()
 
-        self.graph_rpm.set_bounds(0,1,0,400)
+        self.graph_rpm.set_bounds(0,1,0,600)
         self.graph_tilt.set_bounds(0,1,-45,45)
         self.graph_angle.set_bounds(0,1,-90,90)
 
-        self.graph_rpm.set_default_endpoints(0,0)
-        self.graph_angle.set_default_endpoints(0,0)
-        self.graph_tilt.set_default_endpoints(0,0)
+        self.graph_rpm.set_default_endpoints(0,0,True)
+        self.graph_angle.set_default_endpoints(0,0,True)
+        self.graph_tilt.set_default_endpoints(0,0,True)
 
-        self.graph_rpm.set_max_points(3)
+        self.graph_rpm.set_max_points(10)
         self.graph_tilt.set_max_points(3)
         self.graph_angle.set_max_points(3)
+
+        self.graph_rpm.reset_view_and_clear()
+        self.graph_tilt.reset_view_and_clear()
+        self.graph_angle.reset_view_and_clear()
+
+        self.graph_rpm.set_x_units("sec")
+        self.graph_tilt.set_x_units("sec")
+        self.graph_angle.set_x_units("sec")
+
+        self.graph_rpm.set_y_units("RPM")
+        self.graph_tilt.set_y_units("°")
+        self.graph_angle.set_y_units("°")
+
 
 
         self.sliderTime = self.findChild(QtWidgets.QSlider, 'sliderTime')
@@ -50,14 +67,14 @@ class ShotModePage(QtWidgets.QWidget):
     def start_shot(self):
         print("Shot started!")
         # Todo implement shot logic here based on graph settings and duration.
-        print(self.graph_rpm.get_polynomial_display())
-        print(self.graph_tilt.get_polynomial_display())
-        print(self.graph_angle.get_polynomial_display())
+        print(self.graph_rpm.sample_spline_display(0.1))
+        print(self.graph_tilt.sample_spline_display(0.1))
+        print(self.graph_angle.sample_spline_display(0.1))
 
     def update_shot_duration_label(self, value):
         # value comes from QSlider.value() (int)
         self.lblShotDuration.setText(f"Shot Duration: {1 + 0.02 * value:.2f} sec")
-        self.graph_rpm.set_bounds(0,1 + 0.02 * value,0,400)
+        self.graph_rpm.set_bounds(0,1 + 0.02 * value,0,600)
         self.graph_tilt.set_bounds(0,1 + 0.02 * value,-45,45)
         self.graph_angle.set_bounds(0,1 + 0.02 * value,-90,90)
         

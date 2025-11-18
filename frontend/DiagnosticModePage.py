@@ -8,6 +8,7 @@ import time
 import os
 import io
 import utils
+from PyQt6.QtCore import pyqtSignal
 
 
 spinArray = np.array([0.0])
@@ -17,6 +18,8 @@ xArray = np.array([0.0])
 
 
 class DiagnosticModePage(QtWidgets.QWidget):
+    changePage = pyqtSignal(int, object)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         
@@ -27,12 +30,14 @@ class DiagnosticModePage(QtWidgets.QWidget):
         else :
             Motor = SimMotor(26)
 
-        # Load the UI file.
-        uic.loadUi('DiagnosticModePage.ui', self)
+        # Load the UI file (module-relative path).
+        import os
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'DiagnosticModePage.ui'), self, package='frontend')
         #Buttons
         btnStart = self.findChild(QtWidgets.QPushButton, 'btnStart')
         btnStop = self.findChild(QtWidgets.QPushButton, 'btnStop')
         btnClear = self.findChild(QtWidgets.QPushButton, 'btnClear')
+
 
         
 
@@ -98,6 +103,16 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.set_active = set_active
         
         self._stop_event = threading.Event()
+
+        def EStop():
+            Motor.stop()
+            clear_graphs()
+            btnStart.setEnabled(True)
+            btnStop.setEnabled(False)
+            self.set_active(False)
+        # expose EStop publicly so other modules can call: instance.EStop()
+        self.EStop = EStop
+
 
         def _Generator():
             global spinArray, tiltArray, angleArray, xArray

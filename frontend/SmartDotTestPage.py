@@ -1,29 +1,36 @@
 from PyQt6 import QtWidgets, QtCore, uic
 from PyQt6.QtCore import Qt, QTimer
 import numpy as np
-from SmartDotGraph import SmartDotGraph
-from SmartDotConnectWidget import SmartDotConnectWidget
+from .SmartDotGraph import SmartDotGraph
+from .SmartDotConnectWidget import SmartDotConnectWidget
 import math
 import utils
 if utils.is_raspberry_pi():
     from backend.smartdot.MetaMotionS import MetaMotion
 else:
     from backend.smartdot.SimSmartDot import SimSmartDot
+from PyQt6.QtCore import pyqtSignal
 
 
 class SmartDotTestPage(QtWidgets.QWidget):
-    
+    changePage = pyqtSignal(int, object)
+
     def __init__(self, parent=None):
         super().__init__(parent)
-        # load the .ui file (name matches file in repo)
-        uic.loadUi('SmartDotTestPage.ui', self)
+        # load the .ui file (module-relative path)
+        import os
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'SmartDotTestPage.ui'), self, package='frontend')
 
         # Find the embedded SmartDotGraph widget created by the .ui (named SmartDotGraphContainer)
         self.SmartDotGraph = self.findChild(SmartDotGraph, 'smartDotGraph')
         self.btnDisconnect = self.findChild(QtWidgets.QPushButton, 'btnDisconnect')
         self.btnDisconnect.clicked.connect(self.disconnectSmartDot)
         self.smartdotConnectWidget = self.findChild(SmartDotConnectWidget, 'SmartDotConnect')
+        # self.smartdotConnectWidget.start_scan()
         self.smartdotConnectWidget.signalSmartDotConnected.connect(self.connectSmartDot)
+        self.smartdotConnectWidget.signalDeviceDisconnected.connect(self.on_device_disconnected)
+
+        
 
         self.SmartDot = None  # Placeholder for the connected SmartDot device
 
@@ -52,6 +59,8 @@ class SmartDotTestPage(QtWidgets.QWidget):
         # Wire Start/Stop buttons from the UI
         self.btnStart = self.findChild(QtWidgets.QPushButton, 'btnStart')
         self.btnStop = self.findChild(QtWidgets.QPushButton, 'btnStop')
+
+       
         if self.btnStart:
             self.btnStart.clicked.connect(self.start_updates)
         if self.btnStop:
@@ -59,18 +68,41 @@ class SmartDotTestPage(QtWidgets.QWidget):
 
         # Set initial button states
         if self.btnStart:
-            self.btnStart.setEnabled(True)
+            self.btnStart.setEnabled(False)
         if self.btnStop:
             self.btnStop.setEnabled(False)
 
     def disconnectSmartDot(self):
-        print("Disconnecting SmartDot...")
+        self.btnStart.setEnabled(False)
         # Here you would add the actual disconnection code
         if self.SmartDot:
+            print("Disconnecting SmartDot...")
             self.SmartDot.disconnect()
+    
+    def on_device_disconnected(self, mac_address):
+        """Called when device disconnects"""
+        print(f"Device disconnected: {mac_address}")
+        # Disable the disconnect button
+        if self.btnDisconnect:
+            self.btnDisconnect.setEnabled(False)
+        # Disable start/stop buttons since device is disconnected
+        if self.btnStart:
+            self.btnStart.setEnabled(False)
+        if self.btnStop:
+            self.btnStop.setEnabled(False)
+        # Stop timer if running
+        if self._timer.isActive():
+            self._timer.stop()
+        self.active = False
+        # Clear the SmartDot reference
+        self.SmartDot = None
+    
     def connectSmartDot(self, device):
         print("Connecting SmartDot...")
         self.SmartDot = device
+        self.btnStart.setEnabled(True)
+        print(f"SmartDot: {self.SmartDot}")
+        print(f"Smart dot type: {type(self.SmartDot)}")
         # Here you would add the actual connection code
         
 

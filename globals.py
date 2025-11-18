@@ -1,0 +1,3 @@
+from backend.smartdot.SmartDotConnectionManager import SmartDotConnectionManager
+
+smartdotConnectionManager = SmartDotConnectionManager()
