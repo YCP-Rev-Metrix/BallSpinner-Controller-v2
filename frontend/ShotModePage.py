@@ -1,5 +1,7 @@
 from PyQt6 import QtWidgets, QtCore, uic
 import os
+
+from backend.models.ShotScriptData import ShotScriptDataInstance
 from .InputGraph import InputGraph
 from PyQt6.QtCore import pyqtSignal
 
@@ -70,16 +72,34 @@ class ShotModePage(QtWidgets.QWidget):
         # connect button to start shot action
         self.btnStartShot = self.findChild(QtWidgets.QPushButton, 'btnStartShot')
         self.btnStartShot.clicked.connect(self.start_shot)
+
     def start_shot(self):
         #When we start a shot, we need to create a new session data object and its associated data controller
         bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Test Session", isShotMode=True))
         bsc.set_data_controller(DataController(bsc.get_session()))
-        print(bsc.get_session())
-        print(bsc.get_data_controller())
 
-        print(self.graph_rpm.sample_spline_display(0.1))
-        print(self.graph_tilt.sample_spline_display(0.1))
-        print(self.graph_angle.sample_spline_display(0.1))
+        #Access the data controller's ShotModeData and add the three motors 
+        sample_interval = 0.1
+        rpm_array = self.graph_rpm.sample_spline_display(sample_interval)
+        tilt_array = self.graph_tilt.sample_spline_display(sample_interval)
+        angle_array = self.graph_angle.sample_spline_display(sample_interval)
+
+        data_controller: DataController = bsc.get_data_controller()
+        for i in range(0,len(rpm_array)):
+            data_controller.add_shot_script_data(ShotScriptDataInstance(
+                sessionData=bsc.get_session(),
+                time=i*sample_interval,
+                rpm=rpm_array[i],
+                angleDeg=angle_array[i],
+                tiltDeg=tilt_array[i]
+            ))
+
+        # print(bsc.get_session())
+        # print(bsc.get_data_controller())
+
+        # print(self.graph_rpm.sample_spline_display(sample_interval))
+        # print(self.graph_tilt.sample_spline_display(sample_interval))
+        # print(self.graph_angle.sample_spline_display(sample_interval))
 
     def update_shot_duration_label(self, value):
         # value comes from QSlider.value() (int)
