@@ -5,6 +5,7 @@ from PyQt6.QtCore import pyqtSignal
 from backend.cloud_api.CloudAPI import CloudAPI
 import datetime as dt
 
+from BSC import bsc
 
 class CloudTest(QtWidgets.QWidget):
     changePage = pyqtSignal(int, str)
@@ -17,8 +18,15 @@ class CloudTest(QtWidgets.QWidget):
         # Connect button signals to their respective functions
         self.pushButton.clicked.connect(self.ask_cloud_for_6)
         self.pushButton_2.clicked.connect(self.clear_label)
+        self.pushButton_3.clicked.connect(self.get_sessions)
+        self.pushButton_4.clicked.connect(self.post_smart_dot_data)
+        self.pushButton_5.clicked.connect(self.get_smart_dot_data)
+        self.pushButton_6.clicked.connect(self.get_diagnostic_data)
+        self.pushButton_7.clicked.connect(self.post_diagnostic_data)
+        self.pushButton_8.clicked.connect(self.post_shot_script_data)
+        self.pushButton_9.clicked.connect(self.get_shot_script_data)
     
-        self.cloud_api = CloudAPI()
+        self.cloud_api = bsc.get_cloud_api()
 
     def ask_cloud_for_6(self):
         """Handle the 'Ask Cloud for 6' button click"""
@@ -44,8 +52,43 @@ class CloudTest(QtWidgets.QWidget):
         # Clear the label text
         self.label.setText("Response")
         print("Label cleared")
+    
+    def get_sessions(self):
+        """Handle the 'Get Sessions' button click"""
+        #Get all sessions in the time range
+        result = self.cloud_api.get_sessions_in_time_range(0,0)
+        print("Get Sessions clicked")
+        print(result)
 
 
+    def post_smart_dot_data(self):
+        """Handle the 'Post Smart Dot Data' button click"""
+        print("Post Smart Dot Data clicked")
+    
+    def get_smart_dot_data(self):
+        """Handle the 'Get Smart Dot Data' button click"""
+        print("get diagnostic data")
+        result = self.cloud_api.get_all_diagnostic_script_data_by_session(1)
+        print(result)
+    
+    def get_diagnostic_data(self):
+        """Handle the 'Get Diagnostic Data' button click"""
+        print("Get Diagnostic Data clicked")
+        result = self.cloud_api.get_all_diagnostic_script_data_by_session(1)
+        print(result)
+    
+    def post_diagnostic_data(self):
+        """Handle the 'Post Diagnostic Data' button click"""
+        print("Post Diagnostic Data clicked")
+        result = self.cloud_api.post_diagnostic_script_data(bsc.get_data_controller().get_diagnostic_script_data(), 1)
+        print(result)
+
+
+    def post_shot_script_data(self):
+        pass
+    
+    def get_shot_script_data(self):
+        pass
 if __name__ == '__main__':
     # Standard boilerplate for a PyQt application
     import sys

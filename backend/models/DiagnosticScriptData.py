@@ -12,10 +12,13 @@ class DiagnosticScriptDataInstance:
 
 class DiagnosticScriptData:
     def __init__(self):
-        self.diagnostic_script_data_entries = []  
+        self.diagnostic_script_data_entries : DiagnosticScriptDataInstance = []  
 
     def add_diagnostic_script_data(self, diagnosticScriptData: DiagnosticScriptDataInstance):
         self.diagnostic_script_data_entries.append(diagnosticScriptData)
 
+    def get_diagnostic_script_data(self):
+        return self.diagnostic_script_data_entries
+                
     def __str__(self):
         return f"DiagnosticScriptData(diagnostic_script_data_entries={self.diagnostic_script_data_entries})"
