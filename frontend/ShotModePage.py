@@ -1,7 +1,6 @@
 from PyQt6 import QtWidgets, QtCore, uic
 import os
 
-from backend.models.ShotScriptData import ShotScriptDataInstance
 from .InputGraph import InputGraph
 from PyQt6.QtCore import pyqtSignal
 from backend.drivers.ShotScript import ShotScript
@@ -12,6 +11,8 @@ import time
 from BSC import bsc
 from backend.models.SessionData import SessionData
 from backend.models.DataController import DataController
+from backend.models.ShotScriptData import ShotScriptDataInstance
+
 import datetime as dt
 
 
@@ -116,7 +117,7 @@ class ShotModePage(QtWidgets.QWidget):
         finally:
             self.shot_script.stop_motors()'''
         #When we start a shot, we need to create a new session data object and its associated data controller
-        bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Test Session", isShotMode=True))
+        bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Shot Session", isShotMode=True))
         bsc.set_data_controller(DataController(bsc.get_session()))
 
         #Access the data controller's ShotModeData and add the three motors 
