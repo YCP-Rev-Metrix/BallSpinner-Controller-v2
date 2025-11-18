@@ -1,8 +1,8 @@
 from PyQt6 import QtWidgets, QtCore, uic
 from PyQt6.QtCore import Qt, QTimer
 import numpy as np
-from .SmartDotGraph import SmartDotGraph
-from .SmartDotConnectWidget import SmartDotConnectWidget
+from frontend.SmartDotGraph import SmartDotGraph
+from frontend.SmartDotConnectWidget import SmartDotConnectWidget
 import math
 import utils
 if utils.is_raspberry_pi():
@@ -23,8 +23,10 @@ class SmartDotTestPage(QtWidgets.QWidget):
 
         # Find the embedded SmartDotGraph widget created by the .ui (named SmartDotGraphContainer)
         self.SmartDotGraph = self.findChild(SmartDotGraph, 'smartDotGraph')
+        """
         self.btnDisconnect = self.findChild(QtWidgets.QPushButton, 'btnDisconnect')
         self.btnDisconnect.clicked.connect(self.disconnectSmartDot)
+        """
         self.smartdotConnectWidget = self.findChild(SmartDotConnectWidget, 'SmartDotConnect')
         # self.smartdotConnectWidget.start_scan()
         self.smartdotConnectWidget.signalSmartDotConnected.connect(self.connectSmartDot)

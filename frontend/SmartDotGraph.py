@@ -73,6 +73,8 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.magnetometerZ = np.array([0.0])
         self.lightTime = np.array([0.0])
         self.lightValue = np.array([0.0])
+        self.select_all()
+        self.limitViewBox()
 
 
         #Select/Deselect All buttons
@@ -111,9 +113,9 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.chkLight.setChecked(False)
     #to change code outside of updateDataBetter
     def limitViewBox(self):
-        try:
+        if( len(self.accelerometerTime)>0 and len(self.gyroscopeTime)>0 and len(self.magnetometerTime)>0 and len(self.lightTime)>0):
             last = max(self.accelerometerTime[-1], self.gyroscopeTime[-1], self.magnetometerTime[-1], self.lightTime[-1])
-        except Exception:
+        else:
             last = 0
         match self.cbolimitView.currentText():
             case 'Scroll':
@@ -283,7 +285,10 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.drawGyroscope()
         self.drawMagnetometer()
         self.drawLight()
-        last = max(acclerometerTime[-1], gyroscoperTime[-1], magnometerTime[-1], lightTime[-1])
+        if( len(self.accelerometerTime)>0 and len(self.gyroscopeTime)>0 and len(self.magnetometerTime)>0 and len(self.lightTime)>0):
+            last = max(self.accelerometerTime[-1], self.gyroscopeTime[-1], self.magnetometerTime[-1], self.lightTime[-1])
+        else:
+            last = 0
         self.limit_view_change(last)
     def updateAccelerometer(self, time, x, y, z):
         # store latest accelerometer arrays for click lookup

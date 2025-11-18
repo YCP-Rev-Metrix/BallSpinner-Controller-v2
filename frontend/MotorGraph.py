@@ -85,6 +85,8 @@ class MotorGraph(QtWidgets.QWidget):
         self.chkSpinData.stateChanged.connect(self.updateGraph)
         self.chkTiltData.stateChanged.connect(self.updateGraph)
         self.chkAngleData.stateChanged.connect(self.updateGraph)
+        self.select_all()
+        self.limitViewBox()
 
     def select_all(self):
         self.chkAngle.setChecked(True)

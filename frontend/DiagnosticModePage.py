@@ -1,6 +1,6 @@
 from PyQt6 import QtWidgets, uic
-from backend.motors.BDCMotor import BDCMotor
-from backend.motors.SimMotor import SimMotor
+from backend.Motors.BDCMotor import BDCMotor
+from backend.Motors.SimMotor import SimMotor
 from backend.drivers.DiagnosticScript import DiagnosticScript
 import pyqtgraph as pg
 import numpy as np
@@ -147,6 +147,12 @@ class DiagnosticModePage(QtWidgets.QWidget):
         # expose EStop publicly so other modules can call: instance.EStop()
         self.EStop = EStop
 
+        def reset():
+            self.active = False
+            clear_graphs()
+            self.spinDial.setValue(0)
+            self.tiltDial.setValue(0)
+            self.angleDial.setValue(0)
         def add_diag_data_instance_to_data_controller(time: float, motor_id: int, instruction: float):
             session = bsc.get_session()
             dc: DataController = bsc.get_data_controller()

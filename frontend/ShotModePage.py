@@ -4,16 +4,20 @@ import os
 from .InputGraph import InputGraph
 from PyQt6.QtCore import pyqtSignal
 from backend.drivers.ShotScript import ShotScript
-from backend.motors.SimMotor import SimMotor
+from backend.Motors.SimMotor import SimMotor
 import time
 
 #Database related imports
-from BSC import bsc
+from BSC import bsc, MotorData
 from backend.models.SessionData import SessionData
 from backend.models.DataController import DataController
+from frontend.SmartDotConnectWidget import SmartDotConnectWidget
 from backend.models.ShotScriptData import ShotScriptDataInstance
 
 import datetime as dt
+
+from backend.smartdot.iSmartDot import iSmartDot
+
 
 
 class ShotModePage(QtWidgets.QWidget):
@@ -68,6 +72,8 @@ class ShotModePage(QtWidgets.QWidget):
         self.graph_tilt.set_y_units("°")
         self.graph_angle.set_y_units("°")
 
+        self.SmartDotConnectWidget = self.findChild(SmartDotConnectWidget, 'SmartDotConnectWidget')
+        self.SmartDotConnectWidget.signalSmartDotConnected.connect(self.CheckButtons)
 
 
         self.sliderTime = self.findChild(QtWidgets.QSlider, 'sliderTime')
@@ -80,6 +86,7 @@ class ShotModePage(QtWidgets.QWidget):
 
         # connect button to start shot action
         self.btnStartShot = self.findChild(QtWidgets.QPushButton, 'btnStartShot')
+        self.CheckButtons()
         self.btnStartShot.clicked.connect(self.start_shot)
 
     def start_shot(self):
@@ -144,13 +151,36 @@ class ShotModePage(QtWidgets.QWidget):
         # print(self.graph_tilt.sample_spline_display(sample_interval))
         # print(self.graph_angle.sample_spline_display(sample_interval))
 
+        self.GraphsData = MotorData(
+            dt=sample_interval,
+            length=1 + 0.02 * self.sliderTime.value(),
+            spin=rpm_array,
+            tilt=tilt_array,
+            angle=angle_array
+        )
+        self.changePage.emit(6, self.GraphsData)
+
     def update_shot_duration_label(self, value):
         # value comes from QSlider.value() (int)
         self.lblShotDuration.setText(f"Shot Duration: {1 + 0.02 * value:.2f} sec")
         self.graph_rpm.set_bounds(0,1 + 0.02 * value,0,600)
         self.graph_tilt.set_bounds(0,1 + 0.02 * value,-45,45)
         self.graph_angle.set_bounds(0,1 + 0.02 * value,-90,90)
-        
+
+    def CheckButtons(self):
+        if(bsc.smartdotConnectionManager.get_connections):
+            self.btnStartShot.setEnabled(True)
+            print("SmartDot connected, enabling Start Shot button.")
+        else:
+            self.btnStartShot.setEnabled(False)
+            print("No SmartDot connected, disabling Start Shot button.")
+        print("SmartDot list:",bsc.smartdotConnectionManager.get_connections())
+
+    def reset(self):
+        self.graph_rpm.reset_view_and_clear()
+        self.graph_tilt.reset_view_and_clear()
+        self.graph_angle.reset_view_and_clear()
+        self.sliderTime.setValue(0)
 
 
 if __name__ == '__main__':

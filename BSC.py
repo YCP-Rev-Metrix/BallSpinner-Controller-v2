@@ -3,7 +3,15 @@ from backend.smartdot.SmartDotConnectionManager import SmartDotConnectionManager
 from backend.cloud_api.CloudAPI import CloudAPI
 # from backend.models.SessionData import SessionData
 
+class MotorData:
+    def __init__(self, dt, length, spin, tilt, angle):
+        self.spin = spin
+        self.tilt = tilt
+        self.angle = angle
+        self.dt = dt
+        self.length = length
 
+        
 class BSC:
     def __init__(self):
         self.smartdotConnectionManager = SmartDotConnectionManager()
