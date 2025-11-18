@@ -7,6 +7,7 @@ import threading
 import time
 import os
 import io
+from backend.models.SmartDotData import SmartDotDataInstance
 import utils
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtCore import Qt, QTimer
@@ -128,8 +129,76 @@ class ShotViewPage(QtWidgets.QWidget):
         self.timer.stop()
         if self.SmartDot:
             self.SmartDot.stopCollecting()
+            #Get datacontroller
+            dc = bsc.get_data_controller()
+            for i in range(0,len(self.SmartDot.xl_time)):
+                dc.add_smartdot_data(SmartDotDataInstance(
+                    sessionData=bsc.get_session(),
+                    time=self.SmartDot.xl_time[i],
+                    data_selector=0, #Accelerometer
+                    accelerometer_x=self.SmartDot.xl_x[i],
+                    accelerometer_y=self.SmartDot.xl_y[i],
+                    accelerometer_z=self.SmartDot.xl_z[i],
+                    gyroscope_x=-1,
+                    gyroscope_y=-1,
+                    gyroscope_z=-1,
+                    magnetometer_x=-1,
+                    magnetometer_y=-1,
+                    magnetometer_z=-1,
+                    light=-1
+                ))
+            for i in range(0,len(self.SmartDot.gy_time)):
+                dc.add_smartdot_data(SmartDotDataInstance(
+                    sessionData=bsc.get_session(),
+                    time=self.SmartDot.gy_time[i],
+                    data_selector=1, #Gyroscope
+                    accelerometer_x=-1,
+                    accelerometer_y=-1,
+                    accelerometer_z=-1,
+                    gyroscope_x=self.SmartDot.gy_x[i],
+                    gyroscope_y=self.SmartDot.gy_y[i],
+                    gyroscope_z=self.SmartDot.gy_z[i],
+                    magnetometer_x=-1,
+                    magnetometer_y=-1,
+                    magnetometer_z=-1,
+                    light=-1
+                ))
+            for i in range(0,len(self.SmartDot.mg_time)):
+                dc.add_smartdot_data(SmartDotDataInstance(
+                    sessionData=bsc.get_session(),
+                    time=self.SmartDot.mg_time[i],
+                    data_selector=2, #Magnetometer
+                    accelerometer_x=-1,
+                    accelerometer_y=-1,
+                    accelerometer_z=-1,
+                    gyroscope_x=-1,
+                    gyroscope_y=-1,
+                    gyroscope_z=-1,
+                    magnetometer_x=self.SmartDot.mg_x[i],
+                    magnetometer_y=self.SmartDot.mg_y[i],
+                    magnetometer_z=self.SmartDot.mg_z[i],
+                    light=-1
+                ))
+            for i in range(0,len(self.SmartDot.lt_time)):
+                dc.add_smartdot_data(SmartDotDataInstance(
+                    sessionData=bsc.get_session(),
+                    time=self.SmartDot.lt_time[i],
+                    data_selector=3, #Light
+                    accelerometer_x=-1,
+                    accelerometer_y=-1,
+                    accelerometer_z=-1,
+                    gyroscope_x=-1,
+                    gyroscope_y=-1,
+                    gyroscope_z=-1,
+                    magnetometer_x=-1,
+                    magnetometer_y=-1,
+                    magnetometer_z=-1,
+                    light=self.SmartDot.lt_value[i]
+                ))
+            print("Submitted SmartDot data to DataController")
         print("Shot View Ended")
         
+
             
 
 

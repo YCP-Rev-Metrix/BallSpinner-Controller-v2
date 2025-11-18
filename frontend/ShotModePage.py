@@ -5,7 +5,7 @@ from backend.models.ShotScriptData import ShotScriptDataInstance
 from .InputGraph import InputGraph
 from PyQt6.QtCore import pyqtSignal
 from backend.drivers.ShotScript import ShotScript
-from backend.motors.SimMotor import SimMotor
+from backend.Motors.SimMotor import SimMotor
 import time
 
 #Database related imports
@@ -151,11 +151,11 @@ class ShotModePage(QtWidgets.QWidget):
         # print(self.graph_angle.sample_spline_display(sample_interval))
 
         self.GraphsData = MotorData(
-            dt=0.02,
+            dt=sample_interval,
             length=1 + 0.02 * self.sliderTime.value(),
-            spin=self.graph_rpm.sample_spline_display(0.02),
-            tilt=self.graph_tilt.sample_spline_display(0.02),
-            angle=self.graph_angle.sample_spline_display(0.02)
+            spin=rpm_array,
+            tilt=tilt_array,
+            angle=angle_array
         )
         self.changePage.emit(6, self.GraphsData)
 

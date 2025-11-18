@@ -81,6 +81,7 @@ class HomePage(QtWidgets.QMainWindow):
                 pass
             case 3: #Analysis Mode Page
                 #No Data Expected
+                self.analysisModePage.loadData()
                 pass
             case 4: #Cloud Test Page
                 #No Data Expected
