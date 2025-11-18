@@ -10,7 +10,7 @@ from frontend.AnalysisModePage import AnalysisModePage
 from frontend.DiagnosticModePage import DiagnosticModePage
 from frontend.ShotModePage import ShotModePage
 from frontend.CloudTest import CloudTest
-from globals import smartdotConnectionManager
+from BSC import bsc
 
 class HomePage(QtWidgets.QMainWindow):
     def __init__(self):
@@ -98,9 +98,9 @@ class HomePage(QtWidgets.QMainWindow):
             pass
 
         #Disconnect all connections to SmartDots
-        smartdotConnectionManager.disconnect_all()
+        bsc.get_smartdotConnectionManager().disconnect_all()
         print("Disconnected from all SmartDots")
-        print("SmartDots list should be empty: ", smartdotConnectionManager.get_smartdots())
+        print("SmartDots list should be empty: ", bsc.get_smartdotConnectionManager().get_smartdots())
         super().closeEvent(event)
 
 """

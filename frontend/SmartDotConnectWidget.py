@@ -15,7 +15,7 @@ else:
 from backend.smartdot.SubprocessScan import ProcessRunner
 import ast
 
-from globals import smartdotConnectionManager
+from BSC import bsc
 
 
 class ConnectionWorker(QThread):
@@ -120,7 +120,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
             self.smartdot = SimSmartDot()
             self.setDeviceList(["SI:MU:LA:TE:DD:OT"])
 
-        print(smartdotConnectionManager)
+        print(bsc.get_smartdotConnectionManager())
         
         # Update disconnect list to show any existing connections
         self.updateDisconnectList()
@@ -178,7 +178,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         is_simulated = (text == "SI:MU:LA:TE:DD:OT" or not utils.is_raspberry_pi())
 
         #Check if we are already connected to this SmartDot
-        for i in smartdotConnectionManager.get_connections():
+        for i in bsc.get_smartdotConnectionManager().get_connections():
             if i == text:
                 self.lblStatus.setText(f"Already connected to {text}")
                 return
@@ -201,8 +201,8 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         self.signalSmartDotConnected.emit(self.smartdot)
 
         #Add the connection to the manager upon successful connection
-        smartdotConnectionManager.add_connection(self.smartdot._MAC_ADDRESS, self.smartdot)
-        print(f"Connections: {smartdotConnectionManager.get_connections()}")
+        bsc.get_smartdotConnectionManager().add_connection(self.smartdot._MAC_ADDRESS, self.smartdot)
+        print(f"Connections: {bsc.get_smartdotConnectionManager().get_connections()}")
         
         # Update disconnect list to show the new connection
         self.updateDisconnectList()
@@ -216,9 +216,9 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         self.lblStatus.setText(f'Disconnected "{mac_address}"')
 
         #Remove the connection from the manager upon disconnection
-        smartdot = smartdotConnectionManager.get_smartdot(mac_address)
-        smartdotConnectionManager.remove_connection(mac_address, smartdot)
-        print(f"Connections: {smartdotConnectionManager.get_connections()}")
+        smartdot = bsc.get_smartdotConnectionManager().get_smartdot(mac_address)
+        bsc.get_smartdotConnectionManager().remove_connection(mac_address, smartdot)
+        print(f"Connections: {bsc.get_smartdotConnectionManager().get_connections()}")
 
         # Update disconnect list to reflect the disconnection
         self.updateDisconnectList()
@@ -251,7 +251,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
     def updateDisconnectList(self):
         """Update the list of disconnect buttons based on current connections"""
         # Get current connections from the manager
-        connections = smartdotConnectionManager.get_connections()
+        connections = bsc.get_smartdotConnectionManager().get_connections()
         
         # Remove existing disconnect buttons
         layout = self.wDisconnectDeviceList.layout()
@@ -275,7 +275,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
     def disconnect_from_smartdot(self, mac_address):
         """Disconnect from a SmartDot by MAC address"""
         # Get smartdot object from manager
-        smartdot = smartdotConnectionManager.get_smartdot(mac_address)
+        smartdot = bsc.get_smartdotConnectionManager().get_smartdot(mac_address)
         
         if smartdot is not None:
             # Call disconnect on the smartdot
@@ -283,11 +283,11 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
             # Update status label
             self.lblStatus.setText(f"Disconnected from {mac_address}")
             # Remove connection from manager
-            smartdotConnectionManager.remove_connection(mac_address, smartdot)
+            bsc.get_smartdotConnectionManager().remove_connection(mac_address, smartdot)
             # Update disconnect list to reflect the change
             self.updateDisconnectList()
             print(f"Disconnected from {mac_address}")
-            print(f"Connections: {smartdotConnectionManager.get_connections()}")
+            print(f"Connections: {bsc.get_smartdotConnectionManager().get_connections()}")
         else:
             self.lblStatus.setText(f"Device {mac_address} not found")
 
