@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 echo "this is our startup script!"
 
 

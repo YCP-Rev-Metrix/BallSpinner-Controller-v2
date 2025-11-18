@@ -1,0 +1,30 @@
+from .SessionData import SessionData
+
+class EncoderDataInstance:
+    def __init__(self, sessionData: SessionData, time: float, pulses: float, motor_id: int):
+        self.sessionData = sessionData
+        self.time = time
+        self.pulses = pulses
+        self.motor_id = motor_id
+
+    def get_session_data(self):
+        return self.sessionData
+
+    def get_time(self):
+        return self.time
+
+    def get_pulses(self):
+        return self.pulses
+
+    def get_motor_id(self):
+        return self.motor_id
+
+class EncoderData:
+    def __init__(self):
+        self.encoder_data_entries = []
+
+    def add_encoder_data(self, encoder_data: EncoderDataInstance):
+        self.encoder_data_entries.append(encoder_data)
+
+    def get_encoder_data_entries(self):
+        return self.encoder_data_entries

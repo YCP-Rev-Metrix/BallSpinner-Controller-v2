@@ -3,6 +3,12 @@ import os
 from .InputGraph import InputGraph
 from PyQt6.QtCore import pyqtSignal
 
+#Database related imports
+from BSC import bsc
+from backend.models.SessionData import SessionData
+from backend.models.DataController import DataController
+import datetime as dt
+
 
 class ShotModePage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
@@ -65,8 +71,12 @@ class ShotModePage(QtWidgets.QWidget):
         self.btnStartShot = self.findChild(QtWidgets.QPushButton, 'btnStartShot')
         self.btnStartShot.clicked.connect(self.start_shot)
     def start_shot(self):
-        print("Shot started!")
-        # Todo implement shot logic here based on graph settings and duration.
+        #When we start a shot, we need to create a new session data object and its associated data controller
+        bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Test Session", isShotMode=True))
+        bsc.set_data_controller(DataController(bsc.get_session()))
+        print(bsc.get_session())
+        print(bsc.get_data_controller())
+
         print(self.graph_rpm.sample_spline_display(0.1))
         print(self.graph_tilt.sample_spline_display(0.1))
         print(self.graph_angle.sample_spline_display(0.1))
