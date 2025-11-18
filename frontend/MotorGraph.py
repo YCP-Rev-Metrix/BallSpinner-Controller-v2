@@ -55,7 +55,9 @@ class MotorGraph(QtWidgets.QWidget):
         legend.setColumnCount(3)
 
         # initalize storage for plot data
-        self.MotorTime = np.array([0.0])
+        self.SpinTime = np.array([0.0])
+        self.TiltTime = np.array([0.0])
+        self.AngleTime = np.array([0.0])
         self.SpinArray = np.array([0.0])
         self.TiltArray = np.array([0.0])
         self.AngleArray = np.array([0.0])
@@ -64,6 +66,57 @@ class MotorGraph(QtWidgets.QWidget):
         self.SpinDataArray = np.array([0.0])
         self.TiltDataArray = np.array([0.0])
         self.AngleDataArray = np.array([0.0])
+
+        # motor time (single reference for motor series) used for click mapping
+        self.MotorTime = np.array([0.0])
+
+        # Add a vertical cursor line and markers for each series (initially empty)
+        # vertical cursor: bright magenta, thin dotted line, very high z to appear above plots
+        self.vline = pg.InfiniteLine(
+            angle=90,
+            movable=False,
+            pen=pg.mkPen(color=(255,0,255), width=1, style=pg.QtCore.Qt.PenStyle.DotLine)
+        )
+        self.vline.setZValue(1000)
+        # Motor series markers (Spin, Tilt, Angle)
+        self.marker_spin = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(255,0,0), pen=pg.mkPen(None))
+        self.marker_spin.setZValue(200)
+        self.marker_tilt = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(0,170,0), pen=pg.mkPen(None))
+        self.marker_tilt.setZValue(200)
+        self.marker_angle = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(0,0,255), pen=pg.mkPen(None))
+        self.marker_angle.setZValue(200)
+        # Data series markers (smaller)
+        self.marker_spin_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,0), pen=pg.mkPen(None))
+        self.marker_spin_data.setZValue(200)
+        self.marker_tilt_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,170,0), pen=pg.mkPen(None))
+        self.marker_tilt_data.setZValue(200)
+        self.marker_angle_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,0,255), pen=pg.mkPen(None))
+        self.marker_angle_data.setZValue(200)
+
+        # add items to plot so they're present (they will be re-added after clears)
+        try:
+            vb = self.graph.getPlotItem().getViewBox()
+            vb.addItem(self.vline)
+        except Exception:
+            # fallback to PlotWidget.addItem
+            self.graph.addItem(self.vline, ignoreBounds=True)
+        # add markers to the PlotItem
+        try:
+            plotItem = self.graph.getPlotItem()
+            plotItem.addItem(self.marker_spin)
+            plotItem.addItem(self.marker_tilt)
+            plotItem.addItem(self.marker_angle)
+            plotItem.addItem(self.marker_spin_data)
+            plotItem.addItem(self.marker_tilt_data)
+            plotItem.addItem(self.marker_angle_data)
+        except Exception:
+            # fallback
+            self.graph.addItem(self.marker_spin)
+            self.graph.addItem(self.marker_tilt)
+            self.graph.addItem(self.marker_angle)
+            self.graph.addItem(self.marker_spin_data)
+            self.graph.addItem(self.marker_tilt_data)
+            self.graph.addItem(self.marker_angle_data)
 
 
 
@@ -105,7 +158,7 @@ class MotorGraph(QtWidgets.QWidget):
     #to change code outside of updateDataBetter
     def limitViewBox(self):
         try:
-            last = max(self.MotorTime[-1], self.DataTime[-1])
+            last = max(self.SpinTime[-1], self.TiltTime[-1], self.AngleTime[-1], self.DataTime[-1])
         except Exception:
             last = 0
         match self.cbolimitView.currentText():
@@ -134,7 +187,6 @@ class MotorGraph(QtWidgets.QWidget):
                 self.graph.enableAutoRange(axis='x')
     def setRange(self):
         self.graph.setXRange(self.dsbMinXValue.value(), self.dsbMaxXValue.value())
-
     def limit_view_change(self,last):
         match self.cbolimitView.currentText():
             case 'Scroll':
@@ -178,14 +230,14 @@ class MotorGraph(QtWidgets.QWidget):
                 ta = np.asarray(time_arr)
                 return int(np.argmin(np.abs(ta - val)))
 
-            # Motor Data
-            if self.MotorTime is not None and len(self.MotorTime) > 0:
-                idx = _nearest(self.MotorTime, x_click)
+            # Motor Data - use SpinTime as canonical motor-time reference
+            if self.SpinTime is not None and len(self.SpinTime) > 0:
+                idx = _nearest(self.SpinTime, x_click)
                 if idx is not None:
-                    t = float(np.asarray(self.MotorTime)[idx])
-                    spin = float(np.asarray(self.SpinArray)[idx]) if self.SpinArray is not None else None
-                    tilt = float(np.asarray(self.TiltArray)[idx]) if self.TiltArray is not None else None
-                    angle = float(np.asarray(self.AngleArray)[idx]) if self.AngleArray is not None else None
+                    t = float(np.asarray(self.SpinTime)[idx])
+                    spin = float(np.asarray(self.SpinArray)[idx]) if (self.SpinArray is not None and len(self.SpinArray) > idx) else None
+                    tilt = float(np.asarray(self.TiltArray)[idx]) if (self.TiltArray is not None and len(self.TiltArray) > idx) else None
+                    angle = float(np.asarray(self.AngleArray)[idx]) if (self.AngleArray is not None and len(self.AngleArray) > idx) else None
                     # Update label 
                     if self.lblMotorData is not None:
                         # colors match plotting pens: spin=red, tilt=green, angle=blue
@@ -195,15 +247,36 @@ class MotorGraph(QtWidgets.QWidget):
                         self.lblMotorData.setText(
                             f"Motor Data @ t={t:.3f} (idx={idx}): Spin={spin_html}, Tilt={tilt_html}, Angle={angle_html}"
                         )
+                    # move vertical cursor to the exact clicked x coordinate
+                    try:
+                        self.vline.setPos(x_click)
+                    except Exception:
+                        pass
+                    # set markers for motor series (if values available)
+                    try:
+                        if spin is not None:
+                            self.marker_spin.setData(x=[t], y=[spin])
+                        else:
+                            self.marker_spin.setData(x=[], y=[])
+                        if tilt is not None:
+                            self.marker_tilt.setData(x=[t], y=[tilt])
+                        else:
+                            self.marker_tilt.setData(x=[], y=[])
+                        if angle is not None:
+                            self.marker_angle.setData(x=[t], y=[angle])
+                        else:
+                            self.marker_angle.setData(x=[], y=[])
+                    except Exception:
+                        pass
 
             # Encoder Data
             if self.DataTime is not None and len(self.DataTime) > 0:
                 idx = _nearest(self.DataTime, x_click)
                 if idx is not None:
                     t = float(np.asarray(self.DataTime)[idx])
-                    spin_data = float(np.asarray(self.SpinDataArray)[idx]) if self.SpinDataArray is not None else None
-                    tilt_data = float(np.asarray(self.TiltDataArray)[idx]) if self.TiltDataArray is not None else None
-                    angle_data = float(np.asarray(self.AngleDataArray)[idx]) if self.AngleDataArray is not None else None
+                    spin_data = float(np.asarray(self.SpinDataArray)[idx]) if (self.SpinDataArray is not None and len(self.SpinDataArray) > idx) else None
+                    tilt_data = float(np.asarray(self.TiltDataArray)[idx]) if (self.TiltDataArray is not None and len(self.TiltDataArray) > idx) else None
+                    angle_data = float(np.asarray(self.AngleDataArray)[idx]) if (self.AngleDataArray is not None and len(self.AngleDataArray) > idx) else None
                     # Update label 
                     if self.lblEncoderData is not None:
                         # colors match plotting pens: spin=red, tilt=green, angle=blue
@@ -213,6 +286,31 @@ class MotorGraph(QtWidgets.QWidget):
                         self.lblEncoderData.setText(
                             f"Encoder Data @ t={t:.3f} (idx={idx}): Spin={spin_html}, Tilt={tilt_html}, Angle={angle_html}"
                         )
+                    # place data-series markers at the data-time location
+                    try:
+                        # if motor cursor wasn't placed above, snap it to this data time
+                        try:
+                            # set vline to the exact clicked x coordinate (don't snap to index)
+                            self.vline.setPos(x_click)
+                        except Exception:
+                            try:
+                                self.vline.setPos(x_click)
+                            except Exception:
+                                pass
+                        if spin_data is not None:
+                            self.marker_spin_data.setData(x=[t], y=[spin_data])
+                        else:
+                            self.marker_spin_data.setData(x=[], y=[])
+                        if tilt_data is not None:
+                            self.marker_tilt_data.setData(x=[t], y=[tilt_data])
+                        else:
+                            self.marker_tilt_data.setData(x=[], y=[])
+                        if angle_data is not None:
+                            self.marker_angle_data.setData(x=[t], y=[angle_data])
+                        else:
+                            self.marker_angle_data.setData(x=[], y=[])
+                    except Exception:
+                        pass
 
         except Exception as e:
             # Fallback: print the exception to help debugging
@@ -223,7 +321,9 @@ class MotorGraph(QtWidgets.QWidget):
                          ,DataTime, SpinDataArray, TiltDataArray, AngleDataArray):
         """Update the graph with new Smart Dot sensor data."""
         # Store data for click mapping
-        self.MotorTime = MotorTime
+        self.SpinTime = MotorTime
+        self.TiltTime = MotorTime
+        self.AngleTime = MotorTime
         self.SpinArray = SpinArray
         self.TiltArray = TiltArray
         self.AngleArray = AngleArray
@@ -241,13 +341,13 @@ class MotorGraph(QtWidgets.QWidget):
         last = 0
         if self.chkSpin.isChecked():
             pen_spin = pg.mkPen(color=(255, 0, 0), width=2)  # Red pen for Spin
-            self.graph.plot(self.MotorTime, self.SpinArray, pen=pen_spin, name="Spin")
+            self.graph.plot(self.SpinTime, self.SpinArray, pen=pen_spin, name="Spin")
         if self.chkTilt.isChecked():
             pen_tilt = pg.mkPen(color=(0, 170, 0), width=2)  # Green pen for Tilt
-            self.graph.plot(self.MotorTime, self.TiltArray, pen=pen_tilt, name="Tilt")
+            self.graph.plot(self.TiltTime, self.TiltArray, pen=pen_tilt, name="Tilt")
         if self.chkAngle.isChecked():
             pen_angle = pg.mkPen(color=(0, 0, 255), width=2)  # Blue pen for Angle
-            self.graph.plot(self.MotorTime, self.AngleArray, pen=pen_angle, name="Angle")
+            self.graph.plot(self.AngleTime, self.AngleArray, pen=pen_angle, name="Angle")
         if self.chkSpinData.isChecked():
             pen_spin_data = pg.mkPen(color=(255, 0, 0), width=1, style=pg.QtCore.Qt.PenStyle.DashLine)  # Red dashed pen for Spin Data
             self.graph.plot(self.DataTime, self.SpinDataArray, pen=pen_spin_data, name="Spin Data")
@@ -258,11 +358,51 @@ class MotorGraph(QtWidgets.QWidget):
             pen_angle_data = pg.mkPen(color=(0, 0, 255), width=1, style=pg.QtCore.Qt.PenStyle.DashLine)  # Blue dashed pen for Angle Data
             self.graph.plot(self.DataTime, self.AngleDataArray, pen=pen_angle_data, name="Angle Data")
         # Adjust view based on limit view setting
-        last = max(self.MotorTime[-1], self.DataTime[-1])
+        last = max(self.SpinTime[-1], self.TiltTime[-1], self.AngleTime[-1], self.DataTime[-1])
         self.limit_view_change(last)
+        # Re-add cursor and markers so they persist after clear()
+        try:
+            vb = self.graph.getPlotItem().getViewBox()
+            vb.addItem(self.vline)
+            plotItem = self.graph.getPlotItem()
+            plotItem.addItem(self.marker_spin)
+            plotItem.addItem(self.marker_tilt)
+            plotItem.addItem(self.marker_angle)
+            plotItem.addItem(self.marker_spin_data)
+            plotItem.addItem(self.marker_tilt_data)
+            plotItem.addItem(self.marker_angle_data)
+        except Exception:
+            try:
+                self.graph.addItem(self.vline, ignoreBounds=True)
+                self.graph.addItem(self.marker_spin)
+                self.graph.addItem(self.marker_tilt)
+                self.graph.addItem(self.marker_angle)
+                self.graph.addItem(self.marker_spin_data)
+                self.graph.addItem(self.marker_tilt_data)
+                self.graph.addItem(self.marker_angle_data)
+            except Exception:
+                pass
 
+    def updateDataDiagnostic(self, Spin_time, Spin_array, angle_time, angle_array, tilt_time, tilt_array, DataTime, SpinDataArray, TiltDataArray, AngleDataArray):
+        """Update the graph with new Diagnostic data."""
+        # Store data for click mapping
+        self.SpinTime = Spin_time
+        self.SpinArray = Spin_array
+        self.AngleTime = angle_time
+        self.AngleArray = angle_array
+        self.TiltTime = tilt_time
+        self.TiltArray = tilt_array
+
+        self.DataTime = DataTime
+        self.SpinDataArray = SpinDataArray
+        self.TiltDataArray = TiltDataArray
+        self.AngleDataArray = AngleDataArray
+
+        # Plot data based on checkbox states
+        self.updateGraph()
         
-        
+    def setView(self,viewIndex:int):
+        self.cbolimitView.setCurrentIndex(viewIndex)
     
 
 if __name__ == '__main__':

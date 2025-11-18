@@ -73,6 +73,72 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.magnetometerZ = np.array([0.0])
         self.lightTime = np.array([0.0])
         self.lightValue = np.array([0.0])
+        # vertical cursor and markers
+        self.vline = pg.InfiniteLine(
+            angle=90,
+            movable=False,
+            pen=pg.mkPen(color=(255,0,255), width=1, style=pg.QtCore.Qt.PenStyle.DotLine)
+        )
+        self.vline.setZValue(1000)
+
+        # markers for accelerometer (x,y,z)
+        self.marker_acc_x = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,0))
+        self.marker_acc_x.setZValue(200)
+        self.marker_acc_y = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,170,0))
+        self.marker_acc_y.setZValue(200)
+        self.marker_acc_z = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,0,255))
+        self.marker_acc_z.setZValue(200)
+
+        # markers for gyroscope (x,y,z)
+        self.marker_gyro_x = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,255,255))
+        self.marker_gyro_x.setZValue(200)
+        self.marker_gyro_y = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,255))
+        self.marker_gyro_y.setZValue(200)
+        self.marker_gyro_z = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,255,0))
+        self.marker_gyro_z.setZValue(200)
+
+        # markers for magnetometer (x,y,z)
+        self.marker_mag_x = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,128,128))
+        self.marker_mag_x.setZValue(200)
+        self.marker_mag_y = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(128,0,0))
+        self.marker_mag_y.setZValue(200)
+        self.marker_mag_z = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(128,0,128))
+        self.marker_mag_z.setZValue(200)
+
+        # marker for light
+        self.marker_light = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(200,200,200))
+        self.marker_light.setZValue(200)
+
+        # add to view/plot (try viewbox for cursor)
+        try:
+            vb = self.graph.getPlotItem().getViewBox()
+            vb.addItem(self.vline)
+        except Exception:
+            self.graph.addItem(self.vline, ignoreBounds=True)
+        try:
+            plotItem = self.graph.getPlotItem()
+            plotItem.addItem(self.marker_acc_x)
+            plotItem.addItem(self.marker_acc_y)
+            plotItem.addItem(self.marker_acc_z)
+            plotItem.addItem(self.marker_gyro_x)
+            plotItem.addItem(self.marker_gyro_y)
+            plotItem.addItem(self.marker_gyro_z)
+            plotItem.addItem(self.marker_mag_x)
+            plotItem.addItem(self.marker_mag_y)
+            plotItem.addItem(self.marker_mag_z)
+            plotItem.addItem(self.marker_light)
+        except Exception:
+            # fallback
+            self.graph.addItem(self.marker_acc_x)
+            self.graph.addItem(self.marker_acc_y)
+            self.graph.addItem(self.marker_acc_z)
+            self.graph.addItem(self.marker_gyro_x)
+            self.graph.addItem(self.marker_gyro_y)
+            self.graph.addItem(self.marker_gyro_z)
+            self.graph.addItem(self.marker_mag_x)
+            self.graph.addItem(self.marker_mag_y)
+            self.graph.addItem(self.marker_mag_z)
+            self.graph.addItem(self.marker_light)
         self.select_all()
         self.limitViewBox()
 
@@ -204,6 +270,26 @@ class SmartDotGraph(QtWidgets.QWidget):
                         self.lblAccelerometer.setText(
                             f"Accelerometer @ t={t:.3f} (idx={idx}): x={ax_html}, y={ay_html}, z={az_html}"
                         )
+                    # move cursor to exact clicked x and set accelerometer markers
+                    try:
+                        self.vline.setPos(x_click)
+                    except Exception:
+                        pass
+                    try:
+                        if ax is not None:
+                            self.marker_acc_x.setData(x=[t], y=[ax])
+                        else:
+                            self.marker_acc_x.setData(x=[], y=[])
+                        if ay is not None:
+                            self.marker_acc_y.setData(x=[t], y=[ay])
+                        else:
+                            self.marker_acc_y.setData(x=[], y=[])
+                        if az is not None:
+                            self.marker_acc_z.setData(x=[t], y=[az])
+                        else:
+                            self.marker_acc_z.setData(x=[], y=[])
+                    except Exception:
+                        pass
 
             # Gyroscope
             if self.gyroscopeTime is not None and len(self.gyroscopeTime) > 0:
@@ -221,6 +307,26 @@ class SmartDotGraph(QtWidgets.QWidget):
                         self.lblGyroscopeData.setText(
                             f"Gyroscope @ t={t:.3f} (idx={idx}): x={gx_html}, y={gy_html}, z={gz_html}"
                         )
+                    # move cursor to exact clicked x and set gyroscope markers
+                    try:
+                        self.vline.setPos(x_click)
+                    except Exception:
+                        pass
+                    try:
+                        if gx is not None:
+                            self.marker_gyro_x.setData(x=[t], y=[gx])
+                        else:
+                            self.marker_gyro_x.setData(x=[], y=[])
+                        if gy is not None:
+                            self.marker_gyro_y.setData(x=[t], y=[gy])
+                        else:
+                            self.marker_gyro_y.setData(x=[], y=[])
+                        if gz is not None:
+                            self.marker_gyro_z.setData(x=[t], y=[gz])
+                        else:
+                            self.marker_gyro_z.setData(x=[], y=[])
+                    except Exception:
+                        pass
 
             # Magnetometer
             if self.magnetometerTime is not None and len(self.magnetometerTime) > 0:
@@ -238,6 +344,26 @@ class SmartDotGraph(QtWidgets.QWidget):
                         self.lblMagnomaterData.setText(
                             f"Magnetometer @ t={t:.3f} (idx={idx}): x={mx_html}, y={my_html}, z={mz_html}"
                         )
+                    # move cursor to exact clicked x and set magnetometer markers
+                    try:
+                        self.vline.setPos(x_click)
+                    except Exception:
+                        pass
+                    try:
+                        if mx is not None:
+                            self.marker_mag_x.setData(x=[t], y=[mx])
+                        else:
+                            self.marker_mag_x.setData(x=[], y=[])
+                        if my is not None:
+                            self.marker_mag_y.setData(x=[t], y=[my])
+                        else:
+                            self.marker_mag_y.setData(x=[], y=[])
+                        if mz is not None:
+                            self.marker_mag_z.setData(x=[t], y=[mz])
+                        else:
+                            self.marker_mag_z.setData(x=[], y=[])
+                    except Exception:
+                        pass
 
             # Light
             if self.lightTime is not None and len(self.lightTime) > 0:
@@ -251,6 +377,18 @@ class SmartDotGraph(QtWidgets.QWidget):
                         self.lblLightData.setText(
                             f"Light @ t={t:.3f} (idx={idx}): value={lv_html}"
                         )
+                    # move cursor to exact clicked x and set light marker
+                    try:
+                        self.vline.setPos(x_click)
+                    except Exception:
+                        pass
+                    try:
+                        if lv is not None:
+                            self.marker_light.setData(x=[t], y=[lv])
+                        else:
+                            self.marker_light.setData(x=[], y=[])
+                    except Exception:
+                        pass
 
         except Exception as e:
             # Fallback: print the exception to help debugging
@@ -290,6 +428,36 @@ class SmartDotGraph(QtWidgets.QWidget):
         else:
             last = 0
         self.limit_view_change(last)
+        # re-add cursor and markers so they persist after clear()
+        try:
+            vb = self.graph.getPlotItem().getViewBox()
+            vb.addItem(self.vline)
+            plotItem = self.graph.getPlotItem()
+            plotItem.addItem(self.marker_acc_x)
+            plotItem.addItem(self.marker_acc_y)
+            plotItem.addItem(self.marker_acc_z)
+            plotItem.addItem(self.marker_gyro_x)
+            plotItem.addItem(self.marker_gyro_y)
+            plotItem.addItem(self.marker_gyro_z)
+            plotItem.addItem(self.marker_mag_x)
+            plotItem.addItem(self.marker_mag_y)
+            plotItem.addItem(self.marker_mag_z)
+            plotItem.addItem(self.marker_light)
+        except Exception:
+            try:
+                self.graph.addItem(self.vline, ignoreBounds=True)
+                self.graph.addItem(self.marker_acc_x)
+                self.graph.addItem(self.marker_acc_y)
+                self.graph.addItem(self.marker_acc_z)
+                self.graph.addItem(self.marker_gyro_x)
+                self.graph.addItem(self.marker_gyro_y)
+                self.graph.addItem(self.marker_gyro_z)
+                self.graph.addItem(self.marker_mag_x)
+                self.graph.addItem(self.marker_mag_y)
+                self.graph.addItem(self.marker_mag_z)
+                self.graph.addItem(self.marker_light)
+            except Exception:
+                pass
     def updateAccelerometer(self, time, x, y, z):
         # store latest accelerometer arrays for click lookup
         self.accelerometerTime = np.asarray(time)
@@ -412,6 +580,10 @@ class SmartDotGraph(QtWidgets.QWidget):
     def drawLight(self) :
         if self.chkLight.isChecked():
             self.graph.plot(self.lightTime, self.lightValue, pen=pg.mkPen(color='w', width=2), name='Light')
+    def setView(self, viewIndex: int):
+        self.cbolimitView.setCurrentIndex(viewIndex)
+
+
 
 if __name__ == '__main__':
     # Standard boilerplate for a PyQt application

@@ -23,6 +23,8 @@ class AnalysisModePage(QtWidgets.QWidget):
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'AnalysisModePage.ui'), self, package='frontend')
         self.smartDotGraph = self.findChild(SmartDotGraph, 'SmartDotGraph')
         self.motorGraph = self.findChild(MotorGraph, 'MotorGraph')
+        self.smartDotGraph.setView(0)  # Set SmartDotGraph to show all data
+        self.motorGraph.setView(0)     # Set MotorGraph to show all data
 
 
     def loadData(self):
@@ -87,7 +89,7 @@ class AnalysisModePage(QtWidgets.QWidget):
             motor_angleDeg.append(data.angleDeg)
             motor_tiltDeg.append(data.tiltDeg)
 
-        #TODO: Add Diagnostic Support
+
 
         #Get encoder values
         time_encoder = []
@@ -102,9 +104,32 @@ class AnalysisModePage(QtWidgets.QWidget):
         encoder_tilt = [0.0]
 
         
-    
+            #TODO: Add Diagnostic Support
+        if time_motor == []:
+            diag_data = dc.diagnostic_data.get_diagnostic_data_entries()
+            time_rpm = []
+            time_angle = []
+            time_tilt = []
+            for data in diag_data:
+                match data.motor_id:
+                    case 0:
+                        time_rpm.append(data.time)
+                        motor_rpm.append(data.instruction)
+                    case 1:
+                        time_angle.append(data.time)
+                        motor_angleDeg.append(data.instruction)
+                    case 2:
+                        time_tilt.append(data.time)
+                        motor_tiltDeg.append(data.instruction)
+                    case _:
+                        pass
+            # Update Motor graph
+            self.motorGraph.updateDataDiagnostic(time_rpm, motor_rpm, time_angle, motor_angleDeg, time_tilt, motor_tiltDeg
+                                                 ,time_encoder, encoder_rpm, encoder_angle, encoder_tilt
+                                                 ,[],[],[],[])
+        else:
         # Update Motor graph
-        self.motorGraph.updateDataBetter(time_motor, motor_rpm, motor_angleDeg, motor_tiltDeg, time_encoder, encoder_rpm, encoder_angle, encoder_tilt)
+            self.motorGraph.updateDataBetter(time_motor, motor_rpm, motor_angleDeg, motor_tiltDeg, time_encoder, encoder_rpm, encoder_angle, encoder_tilt)
         
 
 
