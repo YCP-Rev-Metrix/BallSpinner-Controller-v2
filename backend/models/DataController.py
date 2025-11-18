@@ -19,6 +19,12 @@ class DataController:
 
     def get_diagnostic_script_data(self,) -> DiagnosticScriptData:
         return self.diagnostic_script_data.get_diagnostic_script_data()
+    
+    def get_shot_script_data(self) -> ShotScriptData:
+        return self.shot_script_data.get_shot_script_data_entries()
+
+    def get_smartdot_data(self) -> SmartDotData:
+        return self.smartdot_data.get_data_entries()
 
     def add_smartdot_data(self, smartDotData: SmartDotDataInstance):
         self.smartdot_data.add_new_data(smartDotData)

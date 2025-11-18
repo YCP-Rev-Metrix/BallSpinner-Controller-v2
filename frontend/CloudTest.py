@@ -1,8 +1,6 @@
 from PyQt6 import QtWidgets, uic
 import os
 from PyQt6.QtCore import pyqtSignal
-#from backend.cloud_api.CloudAPI import api_get_test_data
-from backend.cloud_api.CloudAPI import CloudAPI
 import datetime as dt
 
 from BSC import bsc
@@ -64,11 +62,13 @@ class CloudTest(QtWidgets.QWidget):
     def post_smart_dot_data(self):
         """Handle the 'Post Smart Dot Data' button click"""
         print("Post Smart Dot Data clicked")
+        result = self.cloud_api.post_smartdot_data(bsc.get_data_controller().get_smartdot_data(),1)
+        print(result)
     
     def get_smart_dot_data(self):
         """Handle the 'Get Smart Dot Data' button click"""
         print("get diagnostic data")
-        result = self.cloud_api.get_all_diagnostic_script_data_by_session(1)
+        result = self.cloud_api.get_smartdot_data(1)
         print(result)
     
     def get_diagnostic_data(self):
@@ -85,10 +85,18 @@ class CloudTest(QtWidgets.QWidget):
 
 
     def post_shot_script_data(self):
-        pass
+        """Handle the 'Post Shot Script Data' button click"""
+        print("Post Shot Script Data clicked")
+        result = self.cloud_api.post_shot_script_data(bsc.get_data_controller().get_shot_script_data(), 1)
+        print(result)
     
     def get_shot_script_data(self):
-        pass
+        """Handle the 'Get Shot Script Data' button click"""
+        print("Get Shot Script Data clicked")
+        result = self.cloud_api.get_shot_script_data_by_session(1)
+        print(result)
+
+
 if __name__ == '__main__':
     # Standard boilerplate for a PyQt application
     import sys

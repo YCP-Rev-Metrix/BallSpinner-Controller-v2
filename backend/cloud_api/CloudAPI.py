@@ -1,5 +1,6 @@
 import requests
 import json
+from backend.models.ShotScriptData import ShotScriptData
 from logs.logger_config import get_logger
 from .iCloud import iCloud
 # Get logger for this module
@@ -7,6 +8,8 @@ logger = get_logger(__name__)
 import datetime as dt
 from backend.models.SessionData import SessionData
 from backend.models.DiagnosticScriptData import DiagnosticScriptData
+from backend.models.ShotScriptData import ShotScriptData
+from backend.models.SmartDotData import SmartDotData
 
 from .APIUtils import APIUtils
 
@@ -98,9 +101,12 @@ class CloudAPI(iCloud):
         Args:
             session_id: Session ID
         """
-        pass
+        logger.info(f"Getting Shot Script data for sesionId: {session_id}")
+        url = "https://api.revmetrix.io/api/gets/GetAllPiShotsBySession"
+        result = APIUtils.make_get_request(url=url, url_params={"sessionId": session_id})
+        print(result)
 
-    def post_shot_script_data(self, shot_script_data, session_id):
+    def post_shot_script_data(self, shot_script_data: ShotScriptData, session_id):
         """
         Post shot script data to the cloud API.
         
@@ -108,37 +114,74 @@ class CloudAPI(iCloud):
             shot_script_data: ShotScriptData instance
             session_id: Session ID
         """
-        pass
 
-    def submit_shot_mode_data(self, session_data, smartdot_data, shot_script_data, encoder_data):
-            """
-            Submit shot mode data to the cloud API.
-            
-            Args:
-                session_data: SessionData instance
-                smartdot_data: SmartDotData instance
-                shot_script_data: ShotScriptData instance
-                encoder_data: EncoderData instance
-            """
-            logger.info("submit_shot_mode_data called - stub implementation")
-            # TODO: Implement shot mode data submission
-            pass
-        
-    def submit_diagnostic_mode_data(self, session_data, smartdot_data, diagnostic_script_data, encoder_data):
+        logger.info(f"Posting shot script data for the current session: {session_id}")
+
+        #Convert the list into dictionary format for the api
+        data = []
+        for i in shot_script_data:
+            data.append({
+                "id": 0,
+                "sessionId": session_id,
+                "time": i.time,
+                "rpm": i.rpm,
+                "angleDegrees": i.angleDeg,
+                "tiltDegrees": i.tiltDeg
+            })
+        url = "https://api.revmetrix.io/api/posts/PostPiShot"
+        result = APIUtils.make_post_request(url=url, data=data)
+        print(result)
+
+
+
+  
+
+    def get_smartdot_data(self, session_id):   
         """
-        Submit diagnostic mode data to the cloud API.
+        Get smartdot data by session.
         
         Args:
-            session_data: SessionData instance
-            smartdot_data: SmartDotData instance
-            diagnostic_script_data: DiagnosticScriptData instance
-            encoder_data: EncoderData instance
+            session_id: Session ID
+        
         """
-        logger.info("submit_diagnostic_mode_data called - stub implementation")
-        # TODO: Implement diagnostic mode data submission
-        pass
+        logger.info(f"Getting Smartdot data for sessionId: {session_id}")
+        url = "https://api.revmetrix.io/api/gets/GetAllPiSmartDotDataBySession"
+        result = APIUtils.make_get_request(url, url_params={"sessionId": session_id})
+        print(result)
 
+    def post_smartdot_data(self, smart_dot_data: SmartDotData, session_id):
+        """
+        Post smartdot data to the cloud API.
+        
+        Args:
+            session_id: Session ID
+        """
+        logger.info(f"Posting Smartdot data for sessionId: {session_id}")
+        url = "https://api.revmetrix.io/api/posts/PostPiSmartDotData"
 
+        #Gather the smartdot data from the data controller.
+        data = []
+        for i in smart_dot_data:
+            data.append(
+                  {
+                    "id": 0,
+                    "sessionId": session_id,
+                    "time": i.time,
+                    "dataSelector": i.data_selector,
+                    "xL_X": i.accelerometer_x,
+                    "xL_Y": i.accelerometer_y,
+                    "xL_Z": i.accelerometer_z,
+                    "gY_X": i.gyroscope_x,
+                    "gY_Y": i.gyroscope_y,
+                    "gY_Z": i.gyroscope_z,
+                    "mG_X": i.magnetometer_x,
+                    "mG_Y": i.magnetometer_y,
+                    "mG_Z": i.magnetometer_z,
+                    "lt": i.light
+                }
+            )
+        result = APIUtils.make_post_request(url=url, data=data)
+        print(result)
 
 
 if __name__ == "__main__":

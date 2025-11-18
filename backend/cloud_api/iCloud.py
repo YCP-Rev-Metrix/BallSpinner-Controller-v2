@@ -76,6 +76,27 @@ class iCloud(ABC):
             session_id: Session ID
         """
         pass
+
+    @abstractmethod
+    def post_smartdot_data(self, session_id):
+        """
+        Post smartdot data to the cloud API.
+        
+        Args:
+            session_id: Session ID
+        """
+        pass
+
+    @abstractmethod
+    def get_smartdot_data(self, session_id):   
+        """
+        Get smartdot data by session.
+        
+        Args:
+            session_id: Session ID
+        """
+        pass
+
     # @abstractmethod
     # def get_all_encoder_data_by_session(self, session_id):
     #     """
