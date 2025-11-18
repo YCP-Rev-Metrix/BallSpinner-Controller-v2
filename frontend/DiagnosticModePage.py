@@ -1,6 +1,7 @@
 from PyQt6 import QtWidgets, uic
-from backend.Motors.BDCMotor import BDCMotor
-from backend.Motors.SimMotor import SimMotor
+from backend.motors.BDCMotor import BDCMotor
+from backend.motors.SimMotor import SimMotor
+from backend.drivers.DiagnosticScript import DiagnosticScript
 import pyqtgraph as pg
 import numpy as np
 import threading
@@ -24,15 +25,25 @@ class DiagnosticModePage(QtWidgets.QWidget):
         super().__init__(parent)
         
 
-        # check if pi, if not then run sim motor
+        # Check if pi, if not then run sim motor
+        '''commenting out motor stuff to test diagnostic
         if utils.is_raspberry_pi():
             Motor = BDCMotor(26)
         else :
             Motor = SimMotor(26)
+            '''
 
         # Load the UI file (module-relative path).
         import os
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'DiagnosticModePage.ui'), self, package='frontend')
+
+        # Initialize diagnostic script object with fake motors (switch when BSC object works)
+        sim_motor1 = SimMotor(1)
+        sim_motor2 = SimMotor(2)
+        sim_motor3 = SimMotor(3)
+        self.diagnostic_script = DiagnosticScript(sim_motor1, sim_motor2, sim_motor3)
+        self.diagnostic_script.start_motors([1,2,3])
+
         #Buttons
         btnStart = self.findChild(QtWidgets.QPushButton, 'btnStart')
         btnStop = self.findChild(QtWidgets.QPushButton, 'btnStop')
@@ -98,14 +109,17 @@ class DiagnosticModePage(QtWidgets.QWidget):
         # public setter used by HomePage.on_tab_changed
         def set_active(v: bool):
             self.active = bool(v)
-            if self.active: Motor.start()
-            else : Motor.stop()
+            if self.active: #Motor.start() UNCOMMENT WHEN MOTOR WORKING AGAIN
+                self.diagnostic_script.start_motors([1,2,3])
+            else : #Motor.stop() SAME
+                self.diagnostic_script.stop_motors([1,2,3])
         self.set_active = set_active
         
         self._stop_event = threading.Event()
 
         def EStop():
-            Motor.stop()
+            #Motor.stop() uncomment when motor works
+            self.diagnostic_script.stop_motors([1,2,3])
             clear_graphs()
             btnStart.setEnabled(True)
             btnStop.setEnabled(False)
@@ -128,7 +142,14 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 angleArray= np.append(angleArray,  45* 0.01 *self.angleDial.value()) #`max angle 45 degrees`
                 xArray= np.append(xArray, xArray[-1]+0.25)
 
-                Motor.changeSpeed(spinArray[-1])
+                if(spinArray[-1]!=spinArray[-2]):
+                    self.diagnostic_script.change_speed(0, spinArray[-1])
+                if(tiltArray[-1]!=tiltArray[-2]):
+                    self.diagnostic_script.change_speed(1, tiltArray[-1])
+                if(angleArray[-1]!=angleArray[-2]):
+                    self.diagnostic_script.change_speed(2, angleArray[-1])
+                    
+
                 spinGraph.setXRange(max(0, xArray[-1]-3), xArray[-1])
                 tiltGraph.setXRange(max(0, xArray[-1]-3), xArray[-1])
                 angleGraph.setXRange(max(0, xArray[-1]-3), xArray[-1])

@@ -1,7 +1,12 @@
 from PyQt6 import QtWidgets, QtCore, uic
 import os
+
+from backend.models.ShotScriptData import ShotScriptDataInstance
 from .InputGraph import InputGraph
 from PyQt6.QtCore import pyqtSignal
+from backend.drivers.ShotScript import ShotScript
+from backend.motors.SimMotor import SimMotor
+import time
 
 #Database related imports
 from BSC import bsc, MotorData
@@ -22,6 +27,11 @@ class ShotModePage(QtWidgets.QWidget):
         # load the .ui file (module-relative path)
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'ShotModePage.ui'), self, package='frontend')
 
+        # Initialize shot script object with motors (currently sim, change to BSC motor reference or some motor object instantiated in BSC global class)
+        sim_motor1 = SimMotor(1)
+        sim_motor2 = SimMotor(2)
+        sim_motor3 = SimMotor(3)
+        self.shot_script = ShotScript(sim_motor1, sim_motor2, sim_motor3)
         # Grab the three InputGraph widgets created by the .ui file and store references
         # The object names come from the .ui: 'inputGraph_RPM', 'InputGraph_Tilt', 'InputGraph_Angle'
 
@@ -77,16 +87,68 @@ class ShotModePage(QtWidgets.QWidget):
         self.btnStartShot = self.findChild(QtWidgets.QPushButton, 'btnStartShot')
         self.CheckButtons()
         self.btnStartShot.clicked.connect(self.start_shot)
-    def start_shot(self):
-        #When we start a shot, we need to create a new session data object and its associated data controller
-        bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Test Session", isShotMode=True))
-        bsc.set_data_controller(DataController(bsc.get_session()))
-        print(bsc.get_session())
-        print(bsc.get_data_controller())
 
+    def start_shot(self):
+        print("Shot started!")
+        # Todo implement shot logic here based on graph settings and duration.
         print(self.graph_rpm.sample_spline_display(0.1))
         print(self.graph_tilt.sample_spline_display(0.1))
         print(self.graph_angle.sample_spline_display(0.1))
+        # Assume we have some method or data structure to get the current motor values.
+        # For this example, let's get hypothetical current values for each motor:
+        '''all of the code below this comment in this function is experimental just for testing my script
+
+        motor_rpm = self.graph_rpm.sample_spline_display(0.025)  # Get the RPM graph value(s)
+        motor_tilt = self.graph_tilt.sample_spline_display(0.025)  # Get the Tilt graph value(s)
+        motor_angle = self.graph_angle.sample_spline_display(0.025)  # Get the Angle graph value(s)
+        runtime = 0
+        '''
+        # Call shot_script.start_motors before the while loop with the correct motor values
+        self.shot_script.start_motors([0, 1, 2])
+        '''
+        i = 0
+        try:
+            for Time in motor_rpm:
+                # In the loop, set the speed of each motor to the motor value itself
+                new_rpm = motor_rpm[i]
+                new_tilt = motor_tilt[i]
+                new_angle = motor_angle[i]
+                
+                self.shot_script.change_speed([new_rpm, new_tilt, new_angle])
+                # To prevent freezing, typically you'd have a QEventLoop or sleep, omitted for brevity
+                runtime += 0.025
+                i += 1
+                time.sleep(0.024)
+            # After the while loop, call stop_motors
+        finally:
+            self.shot_script.stop_motors()'''
+        #When we start a shot, we need to create a new session data object and its associated data controller
+        bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Test Session", isShotMode=True))
+        bsc.set_data_controller(DataController(bsc.get_session()))
+
+        #Access the data controller's ShotModeData and add the three motors 
+        sample_interval = 0.025
+        rpm_array = self.graph_rpm.sample_spline_display(sample_interval)
+        tilt_array = self.graph_tilt.sample_spline_display(sample_interval)
+        angle_array = self.graph_angle.sample_spline_display(sample_interval)
+
+        data_controller: DataController = bsc.get_data_controller()
+        for i in range(0,len(rpm_array)):
+            data_controller.add_shot_script_data(ShotScriptDataInstance(
+                sessionData=bsc.get_session(),
+                time=i*sample_interval,
+                rpm=rpm_array[i],
+                angleDeg=angle_array[i],
+                tiltDeg=tilt_array[i]
+            ))
+            self.shot_script.change_speed([rpm_array[i],angle_array[i],tilt_array[i]])
+
+        # print(bsc.get_session())
+        print(bsc.get_data_controller())
+
+        # print(self.graph_rpm.sample_spline_display(sample_interval))
+        # print(self.graph_tilt.sample_spline_display(sample_interval))
+        # print(self.graph_angle.sample_spline_display(sample_interval))
 
         self.GraphsData = MotorData(
             dt=0.02,

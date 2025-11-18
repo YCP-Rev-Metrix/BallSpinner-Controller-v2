@@ -4,6 +4,7 @@ from .SessionData import SessionData
 from .ShotScriptData import ShotScriptData, ShotScriptDataInstance
 from .EncoderData import EncoderData, EncoderDataInstance
 from BSC import bsc
+
 class DataController:
     def __init__(self, session_data: SessionData):
         self.session_data = session_data

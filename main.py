@@ -30,6 +30,7 @@ setup_logging()
 #Device.pin_factory = MockFactory(pin_class=MockPWMPin)
 
 if __name__ == '__main__':
+    #bsc = BallSpinnerController() #Create the BallSpinnerController instance
     app = QtWidgets.QApplication([])
     app.setStyle("MacOS")
     window = HomePage()

@@ -7,6 +7,8 @@ MID_THR = 1500
 MAX_THR = 2000
 STEP = 2   # ~2 per-mille
 FREQ = 50
+#ARM_TIME_S = 0.15
+#pi = pigpio.pi()
 ARM_TIME_S = 3.0
 
 
@@ -91,6 +93,18 @@ class BDCMotor(iMotor):
 
     # ---------------- MOTOR CONTROL ----------------
     def start(self, rpm=1):
+        ''' #COMMENTED OUT FOR NOW, RESOLVE LATER WHEN BLDC MOTOR SPINNING (WAIT FOR GABE)
+        if not self.pi.connected:
+            sys.stderr.write(
+                "pigpio daemon not running.\n"
+                "Start it with:  sudo systemctl start pigpiod\n"
+                "Or enable it:  sudo systemctl enable --now pigpiod\n"
+            )
+            sys.exit(1)
+        else :
+            self.arm(self)
+            #time.sleep(2)        #test with no sleep
+        '''
         self.arm()
         time.sleep(.5)
 

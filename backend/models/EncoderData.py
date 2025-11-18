@@ -19,6 +19,9 @@ class EncoderDataInstance:
     def get_motor_id(self):
         return self.motor_id
 
+    def __str__(self):
+        return f"EncoderDataInstance(sessionData={self.sessionData}, time={self.time}, pulses={self.pulses}, motor_id={self.motor_id})"
+
 class EncoderData:
     def __init__(self):
         self.encoder_data_entries = []
@@ -28,3 +31,6 @@ class EncoderData:
 
     def get_encoder_data_entries(self):
         return self.encoder_data_entries
+
+    def __str__(self):
+        return f"EncoderData(encoder_data_entries={self.encoder_data_entries})"
