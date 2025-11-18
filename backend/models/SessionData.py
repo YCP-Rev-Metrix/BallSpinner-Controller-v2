@@ -1,7 +1,7 @@
 import datetime
 
 class SessionData:
-    def __init__(self, id: int,timeStamp: datetime.datetime, name: str, isShotMode: bool):
+    def __init__(self, id: int, timeStamp: datetime.datetime, name: str, isShotMode: bool):
 
         if id is None:
             self.id = -1

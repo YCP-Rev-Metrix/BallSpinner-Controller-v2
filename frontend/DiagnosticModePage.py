@@ -11,10 +11,20 @@ import io
 import utils
 from PyQt6.QtCore import pyqtSignal
 
+#Database related imports
+from BSC import bsc
+from backend.models.SessionData import SessionData
+from backend.models.DataController import DataController
+from backend.models.DiagnosticScriptData import DiagnosticScriptDataInstance
+
+import datetime as dt
+
 
 spinArray = np.array([0.0])
 tiltArray = np.array([0.0])
 angleArray = np.array([0.0])
+
+#X is the time array
 xArray = np.array([0.0])
 
 
@@ -98,21 +108,31 @@ class DiagnosticModePage(QtWidgets.QWidget):
 
         def toggle_Buttons():
             if not self.active:
+                #This is the start function
                 btnStart.setEnabled(False)
                 btnStop.setEnabled(True)
                 self.set_active(True)
+                self.diagnostic_script.start_motors([1,2,3])
+
+                #Initialize the Session
+                bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Test Session", isShotMode=True))
+                bsc.set_data_controller(DataController(bsc.get_session()))
             else:
+                #This is the stop function
                 btnStart.setEnabled(True)
                 btnStop.setEnabled(False)
                 self.set_active(False)
+                self.diagnostic_script.stop_motors([1,2,3])
+
 
         # public setter used by HomePage.on_tab_changed
         def set_active(v: bool):
             self.active = bool(v)
-            if self.active: #Motor.start() UNCOMMENT WHEN MOTOR WORKING AGAIN
-                self.diagnostic_script.start_motors([1,2,3])
-            else : #Motor.stop() SAME
-                self.diagnostic_script.stop_motors([1,2,3])
+            # if self.active: #Motor.start() UNCOMMENT WHEN MOTOR WORKING AGAIN
+            #This is Brandon. I moved stuff to toggle_buttons instead. You might want to use your motorstart in there instead of here
+
+                
+          
         self.set_active = set_active
         
         self._stop_event = threading.Event()
@@ -133,8 +153,19 @@ class DiagnosticModePage(QtWidgets.QWidget):
             self.spinDial.setValue(0)
             self.tiltDial.setValue(0)
             self.angleDial.setValue(0)
+        def add_diag_data_instance_to_data_controller(time: float, motor_id: int, instruction: float):
+            session = bsc.get_session()
+            dc: DataController = bsc.get_data_controller()
+            data = DiagnosticScriptDataInstance(
+                sessionData=session,
+                time=time,
+                motor_id=motor_id,
+                instruction=instruction
+            )
+            dc.add_diagnostic_script_data(data)
 
         def _Generator():
+            #XArray is the time array
             global spinArray, tiltArray, angleArray, xArray
             while not self._stop_event.is_set():
 
@@ -148,11 +179,15 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 angleArray= np.append(angleArray,  45* 0.01 *self.angleDial.value()) #`max angle 45 degrees`
                 xArray= np.append(xArray, xArray[-1]+0.25)
 
+                #These if statements add changes in motor values to the Diagnostic Script and DataController.
                 if(spinArray[-1]!=spinArray[-2]):
+                    add_diag_data_instance_to_data_controller(xArray[-1], 0, spinArray[-1])
                     self.diagnostic_script.change_speed(0, spinArray[-1])
                 if(tiltArray[-1]!=tiltArray[-2]):
+                    add_diag_data_instance_to_data_controller(xArray[-1], 1, tiltArray[-1])
                     self.diagnostic_script.change_speed(1, tiltArray[-1])
                 if(angleArray[-1]!=angleArray[-2]):
+                    add_diag_data_instance_to_data_controller(xArray[-1], 2, angleArray[-1])
                     self.diagnostic_script.change_speed(2, angleArray[-1])
                     
 

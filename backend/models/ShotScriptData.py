@@ -43,6 +43,6 @@ class ShotScriptData:
         #Build data string
         s = ""
         for i in self.shot_script_data_entries:
-            s += f"{i.__str__()} \n" 
+            s += f"{i.__str__()}," 
 
-        return f"ShotScriptDatas: \n {s}"
+        return f"ShotScriptDatas: {s}"

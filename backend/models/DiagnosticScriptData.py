@@ -8,7 +8,7 @@ class DiagnosticScriptDataInstance:
         self.instruction = instruction
 
     def __str__(self):
-        return f"DiagnosticScriptDataInstance(time={self.time}, sessionData={self.sessionData}, motor_id={self.motor_id}, instruction={self.instruction})"
+        return f"DiagnosticScriptDataInstance(time={self.time}, sessionData={self.sessionData.get_id()}, motor_id={self.motor_id}, instruction={self.instruction})"
 
 class DiagnosticScriptData:
     def __init__(self):
