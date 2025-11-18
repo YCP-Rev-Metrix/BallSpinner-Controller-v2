@@ -97,7 +97,7 @@ class ShotModePage(QtWidgets.QWidget):
         runtime = 0
         '''
         # Call shot_script.start_motors before the while loop with the correct motor values
-        self.shot_script.start_motors([motor_rpm[0], motor_tilt[0], motor_angle[0]])
+        self.shot_script.start_motors([0, 1, 2])
         '''
         i = 0
         try:
@@ -134,7 +134,7 @@ class ShotModePage(QtWidgets.QWidget):
                 angleDeg=angle_array[i],
                 tiltDeg=tilt_array[i]
             ))
-            self.shot_script.change_speed(rpm_array[i],angleDeg[i],tiltDeg[i])
+            self.shot_script.change_speed([rpm_array[i],angle_array[i],tilt_array[i]])
 
         # print(bsc.get_session())
         print(bsc.get_data_controller())
