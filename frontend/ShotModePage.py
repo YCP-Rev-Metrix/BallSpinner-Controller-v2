@@ -7,6 +7,7 @@ from PyQt6.QtCore import pyqtSignal
 from BSC import bsc, MotorData
 from backend.models.SessionData import SessionData
 from backend.models.DataController import DataController
+from frontend.SmartDotConnectWidget import SmartDotConnectWidget
 import datetime as dt
 
 
@@ -58,6 +59,8 @@ class ShotModePage(QtWidgets.QWidget):
         self.graph_tilt.set_y_units("°")
         self.graph_angle.set_y_units("°")
 
+        self.SmartDotConnectWidget = self.findChild(SmartDotConnectWidget, 'SmartDotConnectWidget')
+        self.SmartDotConnectWidget.signalSmartDotConnected.connect(lambda : self.CheckButtons() )
 
 
         self.sliderTime = self.findChild(QtWidgets.QSlider, 'sliderTime')
@@ -70,6 +73,7 @@ class ShotModePage(QtWidgets.QWidget):
 
         # connect button to start shot action
         self.btnStartShot = self.findChild(QtWidgets.QPushButton, 'btnStartShot')
+        self.CheckButtons()
         self.btnStartShot.clicked.connect(self.start_shot)
     def start_shot(self):
         #When we start a shot, we need to create a new session data object and its associated data controller
@@ -97,8 +101,14 @@ class ShotModePage(QtWidgets.QWidget):
         self.graph_rpm.set_bounds(0,1 + 0.02 * value,0,600)
         self.graph_tilt.set_bounds(0,1 + 0.02 * value,-45,45)
         self.graph_angle.set_bounds(0,1 + 0.02 * value,-90,90)
-        
 
+    def CheckButtons(self):
+        connectionManager = bsc.smartdotConnectionManager
+        list = connectionManager.get_smartdots()
+        if(list is not None and len(list) > 0):
+            self.btnStartShot.setEnabled(True)
+        else:
+            self.btnStartShot.setEnabled(False)
 
 if __name__ == '__main__':
     import sys
