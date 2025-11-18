@@ -30,8 +30,8 @@ setup_logging()
 #Device.pin_factory = MockFactory(pin_class=MockPWMPin)
 
 if __name__ == '__main__':
-    bsc = BallSpinnerController() #Create the BallSpinnerController instance
+    #bsc = BallSpinnerController() #Create the BallSpinnerController instance
     app = QtWidgets.QApplication([])
-    window = HomePage(bsc)
+    window = HomePage()
     window.show()
     QtWidgets.QApplication.exec()

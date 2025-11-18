@@ -2,7 +2,9 @@ from PyQt6 import QtWidgets, QtCore, uic
 import os
 from .InputGraph import InputGraph
 from PyQt6.QtCore import pyqtSignal
-
+from backend.drivers.ShotScript import ShotScript
+from backend.motors.SimMotor import SimMotor
+import time
 
 class ShotModePage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
@@ -12,6 +14,11 @@ class ShotModePage(QtWidgets.QWidget):
         # load the .ui file (module-relative path)
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'ShotModePage.ui'), self, package='frontend')
 
+        # Initialize shot script object with motors (currently sim, change to BSC motor reference or some motor object instantiated in BSC global class)
+        sim_motor1 = SimMotor(1)
+        sim_motor2 = SimMotor(2)
+        sim_motor3 = SimMotor(3)
+        self.shot_script = ShotScript(sim_motor1, sim_motor2, sim_motor3)
         # Grab the three InputGraph widgets created by the .ui file and store references
         # The object names come from the .ui: 'inputGraph_RPM', 'InputGraph_Tilt', 'InputGraph_Angle'
 
@@ -70,6 +77,33 @@ class ShotModePage(QtWidgets.QWidget):
         print(self.graph_rpm.sample_spline_display(0.1))
         print(self.graph_tilt.sample_spline_display(0.1))
         print(self.graph_angle.sample_spline_display(0.1))
+        # Assume we have some method or data structure to get the current motor values.
+        # For this example, let's get hypothetical current values for each motor:
+        '''all of the code below this comment in this function is experimental just for testing my script'''
+
+        motor_rpm = self.graph_rpm.sample_spline_display(0.025)  # Get the RPM graph value(s)
+        motor_tilt = self.graph_tilt.sample_spline_display(0.025)  # Get the Tilt graph value(s)
+        motor_angle = self.graph_angle.sample_spline_display(0.025)  # Get the Angle graph value(s)
+        runtime = 0
+        
+        # Call shot_script.start_motors before the while loop with the correct motor values
+        self.shot_script.start_motors([motor_rpm[0], motor_tilt[0], motor_angle[0]])
+        i = 0
+        try:
+            for Time in motor_rpm:
+                # In the loop, set the speed of each motor to the motor value itself
+                new_rpm = motor_rpm[i]
+                new_tilt = motor_tilt[i]
+                new_angle = motor_angle[i]
+                
+                self.shot_script.change_speed([new_rpm, new_tilt, new_angle])
+                # To prevent freezing, typically you'd have a QEventLoop or sleep, omitted for brevity
+                runtime += 0.025
+                i += 1
+                time.sleep(0.024)
+            # After the while loop, call stop_motors
+        finally:
+            self.shot_script.stop_motors()
 
     def update_shot_duration_label(self, value):
         # value comes from QSlider.value() (int)
