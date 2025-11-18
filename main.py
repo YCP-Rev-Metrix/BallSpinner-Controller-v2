@@ -31,6 +31,8 @@ setup_logging()
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])
+    app.setStyle("MacOS")
     window = HomePage()
     window.show()
+
     QtWidgets.QApplication.exec()

@@ -1,8 +1,8 @@
 from PyQt6 import QtWidgets, QtCore, uic
 from PyQt6.QtCore import Qt, QTimer
 import numpy as np
-from .SmartDotGraph import SmartDotGraph
-from .SmartDotConnectWidget import SmartDotConnectWidget
+from frontend.SmartDotGraph import SmartDotGraph
+from frontend.SmartDotConnectWidget import SmartDotConnectWidget
 import math
 import utils
 if utils.is_raspberry_pi():
