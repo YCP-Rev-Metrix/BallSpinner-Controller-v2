@@ -23,3 +23,6 @@ class SessionData:
 
     def get_is_shot_mode(self):
         return self.isShotMode
+
+    def __str__(self):
+        return f"SessionData(id={self.id}, timeStamp={self.timeStamp}, name={self.name}, isShotMode={self.isShotMode})"

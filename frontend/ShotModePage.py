@@ -1,10 +1,19 @@
 from PyQt6 import QtWidgets, QtCore, uic
 import os
+
+from backend.models.ShotScriptData import ShotScriptDataInstance
 from .InputGraph import InputGraph
 from PyQt6.QtCore import pyqtSignal
 from backend.drivers.ShotScript import ShotScript
 from backend.motors.SimMotor import SimMotor
 import time
+
+#Database related imports
+from BSC import bsc
+from backend.models.SessionData import SessionData
+from backend.models.DataController import DataController
+import datetime as dt
+
 
 class ShotModePage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
@@ -71,6 +80,7 @@ class ShotModePage(QtWidgets.QWidget):
         # connect button to start shot action
         self.btnStartShot = self.findChild(QtWidgets.QPushButton, 'btnStartShot')
         self.btnStartShot.clicked.connect(self.start_shot)
+
     def start_shot(self):
         print("Shot started!")
         # Todo implement shot logic here based on graph settings and duration.
@@ -79,15 +89,16 @@ class ShotModePage(QtWidgets.QWidget):
         print(self.graph_angle.sample_spline_display(0.1))
         # Assume we have some method or data structure to get the current motor values.
         # For this example, let's get hypothetical current values for each motor:
-        '''all of the code below this comment in this function is experimental just for testing my script'''
+        '''all of the code below this comment in this function is experimental just for testing my script
 
         motor_rpm = self.graph_rpm.sample_spline_display(0.025)  # Get the RPM graph value(s)
         motor_tilt = self.graph_tilt.sample_spline_display(0.025)  # Get the Tilt graph value(s)
         motor_angle = self.graph_angle.sample_spline_display(0.025)  # Get the Angle graph value(s)
         runtime = 0
-        
+        '''
         # Call shot_script.start_motors before the while loop with the correct motor values
         self.shot_script.start_motors([motor_rpm[0], motor_tilt[0], motor_angle[0]])
+        '''
         i = 0
         try:
             for Time in motor_rpm:
@@ -103,7 +114,34 @@ class ShotModePage(QtWidgets.QWidget):
                 time.sleep(0.024)
             # After the while loop, call stop_motors
         finally:
-            self.shot_script.stop_motors()
+            self.shot_script.stop_motors()'''
+        #When we start a shot, we need to create a new session data object and its associated data controller
+        bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Test Session", isShotMode=True))
+        bsc.set_data_controller(DataController(bsc.get_session()))
+
+        #Access the data controller's ShotModeData and add the three motors 
+        sample_interval = 0.025
+        rpm_array = self.graph_rpm.sample_spline_display(sample_interval)
+        tilt_array = self.graph_tilt.sample_spline_display(sample_interval)
+        angle_array = self.graph_angle.sample_spline_display(sample_interval)
+
+        data_controller: DataController = bsc.get_data_controller()
+        for i in range(0,len(rpm_array)):
+            data_controller.add_shot_script_data(ShotScriptDataInstance(
+                sessionData=bsc.get_session(),
+                time=i*sample_interval,
+                rpm=rpm_array[i],
+                angleDeg=angle_array[i],
+                tiltDeg=tilt_array[i]
+            ))
+            self.shot_script.change_speed(rpm_array[i],angleDeg[i],tiltDeg[i])
+
+        # print(bsc.get_session())
+        print(bsc.get_data_controller())
+
+        # print(self.graph_rpm.sample_spline_display(sample_interval))
+        # print(self.graph_tilt.sample_spline_display(sample_interval))
+        # print(self.graph_angle.sample_spline_display(sample_interval))
 
     def update_shot_duration_label(self, value):
         # value comes from QSlider.value() (int)
