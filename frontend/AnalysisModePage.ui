@@ -34,37 +34,37 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="btnSave">
         <property name="text">
-         <string>Coming soon</string>
+         <string>Save</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_3">
+       <widget class="QPushButton" name="btnOp1">
         <property name="text">
-         <string>insert button text here</string>
+         <string>Analysis Operation 1</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_2">
+       <widget class="QPushButton" name="btnOp2">
         <property name="text">
-         <string>PlaceHolder</string>
+         <string>Analysis Operation 2</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_4">
+       <widget class="QPushButton" name="btnOp3">
         <property name="text">
-         <string>are we gonna use all of these buttons</string>
+         <string>Analysis Operation 3</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_5">
+       <widget class="QPushButton" name="btnOp4">
         <property name="text">
-         <string>Who knows</string>
+         <string>Analysis Operation 4</string>
         </property>
        </widget>
       </item>
