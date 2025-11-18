@@ -4,7 +4,7 @@ import os
 from .InputGraph import InputGraph
 from PyQt6.QtCore import pyqtSignal
 from backend.drivers.ShotScript import ShotScript
-from backend.Motors.SimMotor import SimMotor
+from backend.motors.SimMotor import SimMotor
 import time
 
 #Database related imports

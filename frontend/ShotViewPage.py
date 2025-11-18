@@ -1,6 +1,6 @@
 from PyQt6 import QtWidgets, uic
-from backend.Motors.BDCMotor import BDCMotor
-from backend.Motors.SimMotor import SimMotor
+from backend.motors.BDCMotor import BDCMotor
+from backend.motors.SimMotor import SimMotor
 import pyqtgraph as pg
 import numpy as np
 import threading
