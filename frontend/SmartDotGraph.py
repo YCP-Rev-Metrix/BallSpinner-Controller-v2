@@ -73,6 +73,7 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.magnetometerZ = np.array([0.0])
         self.lightTime = np.array([0.0])
         self.lightValue = np.array([0.0])
+        self.select_all()
 
 
         #Select/Deselect All buttons

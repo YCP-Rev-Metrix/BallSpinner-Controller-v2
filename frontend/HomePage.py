@@ -10,7 +10,9 @@ from frontend.AnalysisModePage import AnalysisModePage
 from frontend.DiagnosticModePage import DiagnosticModePage
 from frontend.ShotModePage import ShotModePage
 from frontend.CloudTest import CloudTest
+from frontend.ShotViewPage import ShotViewPage
 from BSC import bsc
+from BSC import MotorData
 
 class HomePage(QtWidgets.QMainWindow):
     def __init__(self):
@@ -32,6 +34,7 @@ class HomePage(QtWidgets.QMainWindow):
         self.analysisModePage = self.findChild(AnalysisModePage, 'AnalysisModePage')
         self.cloudTestPage = self.findChild(CloudTest, 'CloudTestPage')
         self.smartDotTestPage = self.findChild(SmartDotTestPage, 'SmartDotTestPage')
+        self.shotViewPage = self.findChild(ShotViewPage, 'ShotViewPage')
 
         # connect page change signals 
         self.frontPage.changePage.connect(self.switch_to_page) #100% Nescessary
@@ -40,6 +43,7 @@ class HomePage(QtWidgets.QMainWindow):
         self.analysisModePage.changePage.connect(self.switch_to_page)
         self.cloudTestPage.changePage.connect(self.switch_to_page)
         self.smartDotTestPage.changePage.connect(self.switch_to_page)
+        self.shotViewPage.changePage.connect(self.switch_to_page)
 
 
         # connect E-Stop button to diagnostic page E-Stop function
@@ -84,6 +88,11 @@ class HomePage(QtWidgets.QMainWindow):
             case 5: #SmartDot Test Page
                 #No Data Expected
                 pass
+            case 6: #Shot View Page
+                if(isinstance(data, MotorData)):
+                    print(data.dt)
+                    self.shotViewPage.StartShotView(data)
+                pass
             case _:
                 pass
 
@@ -111,5 +120,6 @@ Order of pages in stackedWidget:
 3 - AnalysisModePage
 4 - Cloud Test 
 5 - SmartDotTestPage (Currently not used, can be replaced)
+6 - ShotViewPage
 """
         

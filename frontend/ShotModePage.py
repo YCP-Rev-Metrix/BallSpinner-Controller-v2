@@ -4,10 +4,11 @@ from .InputGraph import InputGraph
 from PyQt6.QtCore import pyqtSignal
 
 #Database related imports
-from BSC import bsc
+from BSC import bsc, MotorData
 from backend.models.SessionData import SessionData
 from backend.models.DataController import DataController
 import datetime as dt
+
 
 
 class ShotModePage(QtWidgets.QWidget):
@@ -80,6 +81,15 @@ class ShotModePage(QtWidgets.QWidget):
         print(self.graph_rpm.sample_spline_display(0.1))
         print(self.graph_tilt.sample_spline_display(0.1))
         print(self.graph_angle.sample_spline_display(0.1))
+
+        self.GraphsData = MotorData(
+            dt=0.02,
+            length=1 + 0.02 * self.sliderTime.value(),
+            spin=self.graph_rpm.sample_spline_display(0.02),
+            tilt=self.graph_tilt.sample_spline_display(0.02),
+            angle=self.graph_angle.sample_spline_display(0.02)
+        )
+        self.changePage.emit(6, self.GraphsData)
 
     def update_shot_duration_label(self, value):
         # value comes from QSlider.value() (int)
