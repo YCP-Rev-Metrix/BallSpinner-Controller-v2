@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>757</width>
+    <height>892</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <widget class="QWidget" name="widget" native="true">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QWidget" name="widget_4" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="InputGraph" name="inputGraph_RPM" native="true"/>
+         </item>
+         <item>
+          <widget class="InputGraph" name="InputGraph_Angle" native="true"/>
+         </item>
+         <item>
+          <widget class="InputGraph" name="InputGraph_Tilt" native="true"/>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="widget_5" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QPushButton" name="btnStartShot">
+           <property name="text">
+            <string>Enter Shot</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSlider" name="sliderTime">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="lblShotDuration">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="SmartDotConnectWidget" name="SmartDotConnectWidget" native="true"/>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>InputGraph</class>
+   <extends>QWidget</extends>
+   <header>frontend.InputGraph</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SmartDotConnectWidget</class>
+   <extends>QWidget</extends>
+   <header>frontend.SmartDotConnectWidget</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>904</width>
+    <height>864</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QPushButton" name="btnEStop">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="text">
+       <string>     E-STOP     </string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QStackedWidget" name="stackedWidget">
+      <property name="currentIndex">
+       <number>6</number>
+      </property>
+      <widget class="QWidget" name="pageFrontPage">
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="FrontPage" name="FrontPage" native="true"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pageDiagnosticMode">
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <widget class="DiagnosticModePage" name="DiagnosticModePage" native="true"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pageShotMode">
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <layout class="QGridLayout" name="gridLayout_3">
+          <item row="0" column="0">
+           <widget class="ShotModePage" name="ShotModePage" native="true"/>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pageAnalysisModePage">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_analysis">
+        <item row="0" column="0">
+         <widget class="AnalysisModePage" name="AnalysisModePage" native="true"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pageCloudTest">
+       <layout class="QGridLayout" name="gridLayout_cloud">
+        <item row="0" column="0">
+         <widget class="CloudTest" name="CloudTestPage" native="true"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pageSmartDotTest">
+       <layout class="QGridLayout" name="gridLayout_4">
+        <item row="0" column="0">
+         <widget class="SmartDotTestPage" name="SmartDotTestPage" native="true"/>
+        </item>
+       </layout>
+      </widget>
+    <widget class="QWidget" name="pageShotViewPage">
+     <layout class="QGridLayout" name="gridLayout_shotview">
+      <item row="0" column="0">
+       <widget class="ShotViewPage" name="ShotViewPage" native="true"/>
+      </item>
+     </layout>
+    </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>904</width>
+     <height>33</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuNavigation">
+    <property name="title">
+     <string>Navigation</string>
+    </property>
+    <addaction name="actionHome"/>
+    <addaction name="actionCloud_Test"/>
+   </widget>
+   <addaction name="menuNavigation"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionHome">
+   <property name="text">
+    <string>Home</string>
+   </property>
+  </action>
+  <action name="actionDiagnostic_Mode">
+   <property name="text">
+    <string>Diagnostic Mode</string>
+   </property>
+  </action>
+  <action name="actionAnalysis_Mode">
+   <property name="text">
+    <string>Analysis Mode</string>
+   </property>
+  </action>
+  <action name="actionCloud_Test">
+   <property name="text">
+    <string>Cloud Test</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>SmartDotTestPage</class>
+   <extends>QWidget</extends>
+   <header>frontend.SmartDotTestPage</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>AnalysisModePage</class>
+   <extends>QWidget</extends>
+   <header>frontend.AnalysisModePage</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>DiagnosticModePage</class>
+   <extends>QWidget</extends>
+   <header>frontend.DiagnosticModePage</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CloudTest</class>
+   <extends>QWidget</extends>
+   <header>frontend.CloudTest</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ShotModePage</class>
+   <extends>QWidget</extends>
+   <header>frontend.ShotModePage</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>FrontPage</class>
+   <extends>QWidget</extends>
+   <header>frontend.FrontPage</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ShotViewPage</class>
+   <extends>QWidget</extends>
+   <header>frontend.ShotViewPage</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

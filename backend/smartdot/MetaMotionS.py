@@ -1,4 +1,4 @@
-from iSmartDot import iSmartDot
+from .iSmartDot import iSmartDot
 from mbientlab.metawear import MetaWear, libmetawear, parse_value
 from mbientlab.metawear.cbindings import *
 from mbientlab.warble import * 
@@ -9,6 +9,10 @@ from datetime import datetime
 import ctypes
 import struct
 import time
+import queue
+import math
+import subprocess
+import threading
 class MetaMotion(iSmartDot):
 
     XL_availSampleRate = [12.5, 25, 50, 100, 200, 400, 800]
@@ -24,56 +28,111 @@ class MetaMotion(iSmartDot):
     LT_availSampleRate = [.5, 1, 2, 5, 10, 20]
     LT_availRange = [600, 1300, 8000, 16000, 32000, 64000]
     
-    def __init__(self, MAC_Address="", autoConnect=True, is_local=False):
+    def __init__(self, MAC_Address="", autoConnect=True, is_local=False, disconnect_callback=None):
+        super().__init__()
+        self.connected = False
         self._MAC_ADDRESS = MAC_Address
+        self.disconnect_callback = disconnect_callback
+        
         if autoConnect:
-            self.connect(MAC_Address)
+            self.connected =self.connect(MAC_Address)
 
         #temp rig to create a different data capture method for local mode HMI
         self.data_arr= [None,None,None,None]
 
-    def connect(self, MAC_Address) -> bool:
+    def connect(self, MAC_Address, retry_count=0, status_callback=None) -> bool:
     #print("Attempting to connect to device")
     #print(MAC_Address)
-    #try:
-        self.device = MetaWear(MAC_Address)
-        self.device.connect()
-        #set connection parameters 7.5ms connection interval, 0 Slave interval, 6s timeout
-        libmetawear.mbl_mw_settings_set_connection_parameters(self.device.board, 7.5, 7.5, 0, 6000)
-        
-        #setup event loops
-        self.accelCallback = FnVoid_VoidP_DataP(self.accelDataHandler)
-        self.magCallback = FnVoid_VoidP_DataP(self.magDataHandler)
-        self.gyroCallback = FnVoid_VoidP_DataP(self.gyroDataHandler)
-        self.lightCallback = FnVoid_VoidP_DataP(self.lightDataHandler)
+        try:
+            self.device = MetaWear(MAC_Address)
+            
+            # Run the blocking connect() call in a separate thread
+            connection_result = {'success': False, 'error': None}
+            connection_event = threading.Event()
+            
+            def connect_thread():
+                try:
+                    self.device.connect()
+                    connection_result['success'] = True
+                except Exception as e:
+                    connection_result['error'] = e
+                finally:
+                    connection_event.set()
+            
+            # Start the connection thread
+            connect_thread_obj = threading.Thread(target=connect_thread, daemon=True)
+            connect_thread_obj.start()
+            
+            # Wait for connection to complete (this allows the UI to remain responsive)
+            # The thread will set the event when done
+            connection_event.wait()
+            
+            # Check if connection was successful
+            if not connection_result['success']:
+                # Re-raise the exception from the thread so it can be caught by the outer exception handler
+                if connection_result['error']:
+                    raise connection_result['error']
+                else:
+                    raise Exception("Connection failed")
 
-        #I2C Reading setup
-        self.XL_ODR_Callback = FnVoid_VoidP_DataP(self.i2c_data_handler)
-        #0x68 is bmi270 i2c addr. 0x40 is odr register addr.
-        self.XL_ODR_parameters= I2cReadParameters(device_addr= 0x68, register_addr= 0x40)
+
+            #set connection parameters 7.5ms connection interval, 0 Slave interval, 6s timeout
+            libmetawear.mbl_mw_settings_set_connection_parameters(self.device.board, 7.5, 7.5, 0, 6000)
+            
+            #setup event loops
+            self.accelCallback = FnVoid_VoidP_DataP(self.accelDataHandler)
+            self.magCallback = FnVoid_VoidP_DataP(self.magDataHandler)
+            self.gyroCallback = FnVoid_VoidP_DataP(self.gyroDataHandler)
+            self.lightCallback = FnVoid_VoidP_DataP(self.lightDataHandler)
+
+            #I2C Reading setup
+            self.XL_ODR_Callback = FnVoid_VoidP_DataP(self.i2c_data_handler)
+            #0x68 is bmi270 i2c addr. 0x40 is odr register addr.
+            self.XL_ODR_parameters= I2cReadParameters(device_addr= 0x68, register_addr= 0x40)
 
 
-        #set configurabe settings for each sensor's Rate and Range
-        self.XL_availSampleRate = MetaMotion.XL_availSampleRate
-        self.XL_availRange = MetaMotion.XL_availRange
-        self.GY_availSampleRate = MetaMotion.GY_availSampleRate
-        self.GY_availRange = MetaMotion.GY_availRange
-        self.MG_availSampleRate = MetaMotion.MG_availSampleRate
-        self.MG_availRange = MetaMotion.MG_availRange
-        self.LT_availRange = MetaMotion.LT_availRange
-        self.LT_availSampleRate = MetaMotion.LT_availSampleRate
+            #set configurabe settings for each sensor's Rate and Range
+            self.XL_availSampleRate = MetaMotion.XL_availSampleRate
+            self.XL_availRange = MetaMotion.XL_availRange
+            self.GY_availSampleRate = MetaMotion.GY_availSampleRate
+            self.GY_availRange = MetaMotion.GY_availRange
+            self.MG_availSampleRate = MetaMotion.MG_availSampleRate
+            self.MG_availRange = MetaMotion.MG_availRange
+            self.LT_availRange = MetaMotion.LT_availRange
+            self.LT_availSampleRate = MetaMotion.LT_availSampleRate
 
-        
-        #self.setSampleRanges(XL=100, GY=100, MG=10)
+            
+            #self.setSampleRanges(XL=100, GY=100, MG=10)
 
-        self.XL_Range = 2
-        self.GY_Range = 2
-        
-        self.MG_SampleRate = 10
+            self.XL_Range = 2
+            self.GY_Range = 2
+            
+            self.MG_SampleRate = 10
 
-        self.turnOnBlueLED()
-        print("Connected to device")
-        return True
+            self.turnOnBlueLED()
+            print("Connected to device")
+
+
+            #connect the onDisconnect callback
+            self.device.on_disconnect = lambda status: self.disconnect_print()
+
+            
+            return True
+        except Exception as e:
+            print(e)
+            if "Timed out" in str(e) and retry_count == 0:
+                #Restart bluetooth and try again real quick :P (only retry once)
+                print("You timed out - retrying connection...")
+                # Call status callback if provided to notify UI of retry
+                if status_callback:
+                    status_callback("Connection failed, retrying...")
+                subprocess.run(["sudo", "systemctl", "restart", "bluetooth"])
+                time.sleep(1)
+                # Retry with incremented retry_count to prevent infinite loops
+                return self.connect(MAC_Address, retry_count=1, status_callback=status_callback)
+            # Re-raise the exception if it's not a timeout or if we've already retried
+            raise
+
 
     def accelDataHandler(self, ctx, data): 
         #Parse data into Cartesian Values
@@ -106,13 +165,18 @@ class MetaMotion(iSmartDot):
         # else:
         time_val = time.time() - self.xl_start_time
         #print(f"{time.time()} - {self.xl_start_time} = {time_val}")
-        self.data_arr[0] ={
+        self.data_arr[0]= {
             'timestamp':time_val,
             'x':parsedData.x, 
             'y':parsedData.y, 
             'z':parsedData.z
         }
-        # print(f"XL: {self.data_arr[0]}")
+        self.xl_time.append(time_val)
+        self.xl_x.append(parsedData.x)
+        self.xl_y.append(parsedData.y)
+        self.xl_z.append(parsedData.z)
+        #print(self.xl_time)
+        # print(f"XL: {self.data_arr}")
     def magDataHandler(self, ctx, data):
         #Parse data into Cartesian Values
         parsedData = parse_value(data)
@@ -122,26 +186,7 @@ class MetaMotion(iSmartDot):
             self.prevMagEpoch = data.contents.epoch
         
         timeStamp = (data.contents.epoch - self.prevMagEpoch)/1000 #Epoch is given in ms
-        # if not self.is_local_mode:
-        #     #Pack Sample Count into 3 Byte Big Endian Int
-        #     self.MagSampleCount += 1
-        #     sampleCountInBytes = struct.pack('>I',self.MagSampleCount )[1:4]
-            
-        #     # Pack Timestamp, and x,y,z into 4 Byte Little Endian Floats
-        #     timeStampInBytes : bytearray = struct.pack("<f", timeStamp)
-        #     xValInBytes : bytearray = struct.pack('<f', parsedData.x) 
-        #     yValInBytes : bytearray = struct.pack('<f', parsedData.y)
-        #     zValInBytes : bytearray = struct.pack('<f', parsedData.z)
-
-        #     mess = sampleCountInBytes + timeStampInBytes + xValInBytes + yValInBytes + zValInBytes
-            
-        #     try: # Check if TCP connection is set up, if not, just print xyz values in terminal
-        #         self.magDataSig(mess)
-        #         #print("Encoded Data " + xValInBytes.hex() + ' ' + yValInBytes.hex() + ' ' + zValInBytes.hex())
-        #     except Exception as e:
-        #         print(f"Unexpected error in MGDataHandler: {e}")
-        #         print(parsedData)
-        # else:
+       
         time_val = time.time() - self.mg_start_time
         self.data_arr[1] ={
             'timestamp':time_val,
@@ -150,6 +195,10 @@ class MetaMotion(iSmartDot):
             'z':parsedData.z
         }
         # print(f"MG: {self.data_arr[1]}")
+        self.mg_time.append(time_val)
+        self.mg_x.append(parsedData.x)
+        self.mg_y.append(parsedData.y)
+        self.mg_z.append(parsedData.z)
 
     def gyroDataHandler(self, ctx, data):
         #Parse data into Cartesian Values
@@ -160,26 +209,7 @@ class MetaMotion(iSmartDot):
             self.prevGyroEpoch = data.contents.epoch
 
         timeStamp = (data.contents.epoch - self.prevGyroEpoch)/1000 #Epoch is given in ms
-        # if not self.is_local_mode:
-        #     #Pack Sample Count into 3 Byte Big Endian Int
-        #     self.GyroSampleCount+=1
-        #     sampleCountInBytes = struct.pack('>I',self.GyroSampleCount )[1:4]
-            
-        #     # Pack Timestamp, and x,y,z into 4 Byte Little Endian Floats
-        #     timeStampInBytes : bytearray = struct.pack("<f", timeStamp)
-        #     xValInBytes : bytearray = struct.pack('<f', parsedData.x) 
-        #     yValInBytes : bytearray = struct.pack('<f', parsedData.y)
-        #     zValInBytes : bytearray = struct.pack('<f', parsedData.z)
-
-        #     mess = sampleCountInBytes + timeStampInBytes + xValInBytes + yValInBytes + zValInBytes
-            
-        #     try: # Check if TCP connection is set up, if not, just print in terminal
-        #         self.gyroDataSig(mess)
-        #     # print("Encoded Data " + xValInBytes.hex() + ' ' + yValInBytes.hex() + ' ' + zValInBytes.hex())
-        #     except Exception as e:
-        #         print(parsedData)
-        #         print(e)
-        # else:
+       
         time_val = time.time() - self.gy_start_time
         self.data_arr[2] ={
             'timestamp':time_val,
@@ -188,6 +218,10 @@ class MetaMotion(iSmartDot):
             'z':parsedData.z
         }            
         # print(f"GY: {self.data_arr[2]}")
+        self.gy_time.append(time_val)
+        self.gy_x.append(parsedData.x)
+        self.gy_y.append(parsedData.y)
+        self.gy_z.append(parsedData.z)
 
     def lightDataHandler(self, ctx, data):
         parsedData = parse_value(data)
@@ -214,6 +248,8 @@ class MetaMotion(iSmartDot):
             'z':0
         }               
         # print(f"LT: {self.data_arr[3]}")
+        self.lt_time.append(time_val)
+        self.lt_value.append(parsedData)
 
     def startMag(self):  
         libmetawear.mbl_mw_mag_bmm150_stop(self.device.board)
@@ -236,12 +272,17 @@ class MetaMotion(iSmartDot):
     def disconnect(self):
         self.turnOffLED()
         self.device.disconnect()
-      
+
+    def disconnect_print(self):
+        print("The MetaMotion Device is Disconnected")
+        # Call disconnect callback if provided to notify UI
+        if self.disconnect_callback:
+            self.disconnect_callback(self._MAC_ADDRESS)
     # Define a callback function to handle data
     def i2c_data_handler(self, ctx, data):
         data_obj = data.contents
-        print(f"Raw Data: {data_obj}")
-        print("Datadata%s -> %s &  %s" % (self.device.address, parse_value(data), data.contents))
+        # print(f"Raw Data: {data_obj}")
+        # print("Datadata%s -> %s &  %s" % (self.device.address, parse_value(data), data.contents))
         #print("ur problem here bro")DatadataC8:30:26:28:92:4A -> [] &  {epoch : 1742670940955, extra : 4108379404, value : 4098885936, type_id : 4, length : 0}
     
     def startAccel(self):
@@ -431,7 +472,17 @@ class MetaMotion(iSmartDot):
             LTDataRates = tuple(LTDataRates.keys())
             self.LT_SampleRate = LTDataRates[dataRate]
             self.LT_IntRate = LTIntegrationTime[dataRate]
-
+    def startCollecting(self):
+        self.setSampleRates(25,25,4,1)
+        self.startAccel()
+        self.startMag()
+        self.startGyro()
+        self.startLight()
+    def stopCollecting(self):
+        self.stopAccel()
+        self.stopMag()
+        self.stopGyro()
+        self.stopLight()
 if __name__ == "__main__":
     smartdot = MetaMotion(MAC_Address="D0:F2:9D:CA:87:53")
     # smartdot.setSampleRanges()
