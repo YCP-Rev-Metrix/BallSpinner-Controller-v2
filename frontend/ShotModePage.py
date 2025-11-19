@@ -137,7 +137,7 @@ class ShotModePage(QtWidgets.QWidget):
             self.shot_script.change_speed([rpm_array[i],angle_array[i],tilt_array[i]])
 
         # print(bsc.get_session())
-        print(bsc.get_data_controller())
+        # print(bsc.get_data_controller())
 
         # print(self.graph_rpm.sample_spline_display(sample_interval))
         # print(self.graph_tilt.sample_spline_display(sample_interval))
