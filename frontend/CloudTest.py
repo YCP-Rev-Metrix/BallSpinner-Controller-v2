@@ -106,9 +106,9 @@ class CloudTest(QtWidgets.QWidget):
         print("Post Encoder Data clicked")
 
         artificial_encoder_data = [
-                                    EncoderDataInstance(sessionData=None, time=0.0, pulses=100, motor_id=1),
-                                    EncoderDataInstance(sessionData=None, time=0.1, pulses=200, motor_id=2),
-                                    EncoderDataInstance(sessionData=None, time=0.2, pulses=300, motor_id=3)
+                                    EncoderDataInstance(time=0.0, pulses=100, motor_id=1),
+                                    EncoderDataInstance(time=0.1, pulses=200, motor_id=2),
+                                    EncoderDataInstance(time=0.2, pulses=300, motor_id=3)
                                   ]
         # result = self.cloud_api.post_encoder_data(bsc.get_data_controller().get_encoder_data(), 1)
         result = self.cloud_api.post_encoder_data(artificial_encoder_data, 1)
@@ -120,9 +120,9 @@ class CloudTest(QtWidgets.QWidget):
     def post_heat_data(self):
         print("Post Heat Data clicked")
         artificial_heat_data = [
-                                HeatDataInstance(sessionData=None, time=0.0, value=100, motor_id=1),
-                                HeatDataInstance(sessionData=None, time=0.1, value=200, motor_id=2),
-                                HeatDataInstance(sessionData=None, time=0.2, value=300, motor_id=3)
+                                HeatDataInstance(time=0.0, value=100, motor_id=1),
+                                HeatDataInstance(time=0.1, value=200, motor_id=2),
+                                HeatDataInstance(time=0.2, value=300, motor_id=3)
                               ]
     
         # result = self.cloud_api.post_heat_data(bsc.get_data_controller().get_heat_data(), 1)

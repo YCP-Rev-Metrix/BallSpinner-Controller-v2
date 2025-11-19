@@ -1,15 +1,9 @@
-from .SessionData import SessionData
-
 class ShotScriptDataInstance:
-    def __init__(self, sessionData: SessionData, time: float, rpm: float, angleDeg: float, tiltDeg: float):
-        self.sessionData = sessionData
+    def __init__(self, time: float, rpm: float, angleDeg: float, tiltDeg: float):
         self.time = time
         self.rpm = rpm
         self.angleDeg = angleDeg
         self.tiltDeg = tiltDeg
-
-    def get_session_data(self):
-        return self.sessionData
 
     def get_time(self):
         return self.time
@@ -24,7 +18,7 @@ class ShotScriptDataInstance:
         return self.tiltDeg
 
     def __str__(self):
-        return f"\nShotScriptDataInstance(sessionData={self.sessionData}, time={self.time}, rpm={self.rpm}, angleDeg={self.angleDeg}, tiltDeg={self.tiltDeg})"
+        return f"\nShotScriptDataInstance(time={self.time}, rpm={self.rpm}, angleDeg={self.angleDeg}, tiltDeg={self.tiltDeg})"
 
 
 class ShotScriptData:

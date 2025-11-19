@@ -154,10 +154,8 @@ class DiagnosticModePage(QtWidgets.QWidget):
             self.tiltDial.setValue(0)
             self.angleDial.setValue(0)
         def add_diag_data_instance_to_data_controller(time: float, motor_id: int, instruction: float):
-            session = bsc.get_session()
             dc: DataController = bsc.get_data_controller()
             data = DiagnosticScriptDataInstance(
-                sessionData=session,
                 time=time,
                 motor_id=motor_id,
                 instruction=instruction

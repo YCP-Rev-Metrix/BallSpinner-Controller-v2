@@ -137,7 +137,6 @@ class ShotViewPage(QtWidgets.QWidget):
             dc = bsc.get_data_controller()
             for i in range(0,len(self.SmartDot.xl_time)):
                 dc.add_smartdot_data(SmartDotDataInstance(
-                    sessionData=bsc.get_session(),
                     time=self.SmartDot.xl_time[i],
                     data_selector=0, #Accelerometer
                     accelerometer_x=self.SmartDot.xl_x[i],
@@ -153,7 +152,6 @@ class ShotViewPage(QtWidgets.QWidget):
                 ))
             for i in range(0,len(self.SmartDot.gy_time)):
                 dc.add_smartdot_data(SmartDotDataInstance(
-                    sessionData=bsc.get_session(),
                     time=self.SmartDot.gy_time[i],
                     data_selector=1, #Gyroscope
                     accelerometer_x=-1,
@@ -169,7 +167,6 @@ class ShotViewPage(QtWidgets.QWidget):
                 ))
             for i in range(0,len(self.SmartDot.mg_time)):
                 dc.add_smartdot_data(SmartDotDataInstance(
-                    sessionData=bsc.get_session(),
                     time=self.SmartDot.mg_time[i],
                     data_selector=2, #Magnetometer
                     accelerometer_x=-1,
@@ -185,7 +182,6 @@ class ShotViewPage(QtWidgets.QWidget):
                 ))
             for i in range(0,len(self.SmartDot.lt_time)):
                 dc.add_smartdot_data(SmartDotDataInstance(
-                    sessionData=bsc.get_session(),
                     time=self.SmartDot.lt_time[i],
                     data_selector=3, #Light
                     accelerometer_x=-1,

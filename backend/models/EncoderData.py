@@ -1,14 +1,8 @@
-from .SessionData import SessionData
-
 class EncoderDataInstance:
-    def __init__(self, sessionData: SessionData, time: float, pulses: float, motor_id: int):
-        self.sessionData = sessionData
+    def __init__(self, time: float, pulses: float, motor_id: int):
         self.time = time
         self.pulses = pulses
         self.motor_id = motor_id
-
-    def get_session_data(self):
-        return self.sessionData
 
     def get_time(self):
         return self.time
@@ -20,7 +14,7 @@ class EncoderDataInstance:
         return self.motor_id
 
     def __str__(self):
-        return f"EncoderDataInstance(sessionData={self.sessionData}, time={self.time}, pulses={self.pulses}, motor_id={self.motor_id})"
+        return f"EncoderDataInstance(time={self.time}, pulses={self.pulses}, motor_id={self.motor_id})"
 
 class EncoderData:
     def __init__(self):
