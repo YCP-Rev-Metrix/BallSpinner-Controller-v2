@@ -9,8 +9,8 @@ import os
 import io
 from backend.models.SmartDotData import SmartDotDataInstance
 import utils
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import pyqtSignal, Qt, QTimer
+#Database related imports
 from frontend.SmartDotGraph import SmartDotGraph
 from frontend.MotorGraph import MotorGraph
 
