@@ -4,7 +4,7 @@ from PyQt6.QtCore import pyqtSignal
 import datetime as dt
 from backend.models.EncoderData import EncoderDataInstance
 from backend.models.HeatData import HeatDataInstance
-
+from backend.models.SessionData import SessionData
 from BSC import bsc
 
 class CloudTest(QtWidgets.QWidget):
@@ -29,7 +29,8 @@ class CloudTest(QtWidgets.QWidget):
         self.pushButton_11.clicked.connect(self.get_encoder_data)
         self.pushButton_12.clicked.connect(self.post_heat_data)
         self.pushButton_13.clicked.connect(self.get_heat_data)
-    
+        self.pushButton_14.clicked.connect(self.submit_all_data)
+        self.pushButton_15.clicked.connect(self.load_session_data_from_cloud)
         self.cloud_api = bsc.get_cloud_api()
 
     def ask_cloud_for_6(self):
@@ -132,6 +133,16 @@ class CloudTest(QtWidgets.QWidget):
         print("Get Heat Data clicked")
         result = self.cloud_api.get_heat_data(1)
         print(result)
+
+    def submit_all_data(self):
+        print("Submit All Data clicked")
+        bsc.get_data_controller().submit_session_data()
+        print("All data submitted")
+
+    def load_session_data_from_cloud(self):
+        print("Load Session Data from Cloud clicked")
+        bsc.get_data_controller().load_session_data_from_cloud(SessionData(id=10, timeStamp=dt.datetime.now().isoformat(), name="Test Session", isShotMode=True))
+        print("Session data loaded from cloud")
 
 if __name__ == '__main__':
     # Standard boilerplate for a PyQt application

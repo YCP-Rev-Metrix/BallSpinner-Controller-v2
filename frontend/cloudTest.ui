@@ -121,6 +121,20 @@
       </property>
      </widget>
     </item>
+    <item>
+     <widget class="QPushButton" name="pushButton_14">
+      <property name="text">
+       <string>Submit All Data!</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pushButton_15">
+      <property name="text">
+       <string>Load Session Data from Cloud</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
  </widget>

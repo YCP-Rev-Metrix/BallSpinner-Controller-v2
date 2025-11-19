@@ -40,9 +40,16 @@ class CloudAPI(iCloud):
         Args:
             session_data: SessionData instance
         """
-        logger.info("post_session_data called - stub implementation")
+        logger.info("post_session_data called")
+        data = []
+        data.append({
+            "id": session_data.id,
+            "timeStamp": session_data.timeStamp,
+            "name": session_data.name,
+            "isShotMode": session_data.isShotMode
+        })
         url = "https://api.revmetrix.io/api/posts/PostPiSessions"
-        result = APIUtils.make_post_request(url, session_data)
+        result = APIUtils.make_post_request(url, data=data)
         return result
     
 
@@ -54,7 +61,7 @@ class CloudAPI(iCloud):
             start_time: Start time
             end_time: End time
         """
-        logger.info("get_sessions_in_time_range called - stub implementation")
+        logger.info("get_sessions_in_time_range called")
         url = "https://api.revmetrix.io/api/gets/GetAllPiSessions"
         result = APIUtils.make_post_request(url, {"start_time": start_time, "end_time": end_time})
         return result
