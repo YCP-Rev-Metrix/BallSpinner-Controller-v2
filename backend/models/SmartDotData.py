@@ -32,6 +32,8 @@ class SmartDotData:
     def __init__(self):
         self.data_entries = []
 
+    def get_data_entries(self):
+        return self.data_entries
     def add_new_data(self, smartDotData: SmartDotDataInstance):
         self.data_entries.append(smartDotData)
 
