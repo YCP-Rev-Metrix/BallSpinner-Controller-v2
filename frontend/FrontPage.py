@@ -13,7 +13,7 @@ class FrontPage(QtWidgets.QWidget):
 
         self.btnDiagnostics = self.findChild(QtWidgets.QPushButton, 'btnDiagnostic')
         self.btnShotMode = self.findChild(QtWidgets.QPushButton, 'btnShot')
-        self.btnAnalysis = self.findChild(QtWidgets.QPushButton, 'btnAnalysis')
+        self.btnData = self.findChild(QtWidgets.QPushButton, 'btnAnalysis')
 
         """
          self.label = self.findChild(QtWidgets.QLabel, 'label')
@@ -23,7 +23,7 @@ class FrontPage(QtWidgets.QWidget):
 
         self.btnDiagnostics.clicked.connect(lambda: self.changePage.emit(1, "Diagnostics"))
         self.btnShotMode.clicked.connect(lambda: self.changePage.emit(2, "Shot Mode"))
-        self.btnAnalysis.clicked.connect(lambda: self.changePage.emit(3, "Analysis"))  # Updated to match page name
+        self.btnData.clicked.connect(lambda: self.changePage.emit(7, "Data"))  # Updated to match page name
 
 
 

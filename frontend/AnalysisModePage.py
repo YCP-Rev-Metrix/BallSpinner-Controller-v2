@@ -160,7 +160,7 @@ class AnalysisModePage(QtWidgets.QWidget):
         encoder_tilt = [0.0]
 
         
-            #TODO: Add Diagnostic Support
+            
         if time_motor == []:
             diag_data = dc.diagnostic_data.get_diagnostic_data_entries()
             time_rpm = []

@@ -106,7 +106,90 @@ class ShotViewPage(QtWidgets.QWidget):
             pass
         self.timer.timeout.connect(self.UpdateShotView)
         self.timer.start()
+    
+    def StartShotView(self):
+        Controller = bsc.get_data_controller()
+        self.btnAnalyze.setEnabled(False)  # Disabled during shot view
+        self.scriptSpin = []
+        self.scriptTilt = []
+        self.scriptAngle = []
+        motor_data = Controller.shot_script_data.get_shot_script_data_entries()
+        if len(motor_data) >0:
+            
+            for data in motor_data:
+                self.scriptSpin.append(data.rpm)
+                self.scriptTilt.append(data.angleDeg)
+                self.scriptAngle.append(data.tiltDeg)
+            
+            #TODO: Find Max Time and dt from data
+            self.MaxTime = motor_data[-1].time  # assuming motor_data is sorted by time
+            self.dt = motor_data[1].time - motor_data[0].time  # interval in seconds
+            self.dt_ms = int(self.dt * 1000)
+        else:
+            #Pase diagnostic data if no shot script data
+            """
+            diag_data = Controller.diagnostic_data.get_diagnostic_data_entries()
+            #TODO: Make Continusous data from diagnostic if no shot script data
+            self.MaxTime = diag_data[-1].time  # assuming motor_data is sorted by time
+            self.dt = 0.25  # TODO: Find a useful dt from diag data
+            # check data at 0.25s intervals
+            self.scriptSpin.append(0.0)
+            self.scriptTilt.append(0.0)
+            self.scriptAngle.append(0.0)
+            for i in np.arange(0.25, self.MaxTime, self.dt):
+                # find closest diag data for each motor
+                spin_val = 0.0
+                tilt_val = 0.0
+                angle_val = 0.0
+                for data in diag_data:
+                    if abs(data.time - i) < self.dt / 2:
+                        match data.motor_id:
+                            case 0:
+                                spin_val = data.instruction
+                            case 1:
+                                angle_val = data.instruction
+                            case 2:
+                                tilt_val = data.instruction
+                            case _:
+                                pass
+                self.scriptSpin.append(spin_val)
+                self.scriptTilt.append(tilt_val)
+                self.scriptAngle.append(angle_val)
+                """
 
+
+        # reset displayed data and counters
+        self.displayedSpin = np.array([])
+        self.displayedTilt = np.array([])
+        self.displayedAngle = np.array([])
+        self.displayedTime = np.array([])
+        self.ElapsedTime = 0.0
+        self.count = 0
+        if(len(self.ConnectionManager.get_smartdots()) > 0):
+            try:
+                self.SmartDot = self.ConnectionManager.get_smartdots()[0]
+                print("SmartDot connected:", self.SmartDot)
+            except Exception as e:
+                print("Error connecting to SmartDot:", e)
+
+        print("Starting Shot View with interval (ms):", self.dt_ms)
+        print("Max Time (sec):", self.MaxTime)
+
+        if (self.SmartDot):
+            print("Using SmartDot in Shot View")
+            self.SmartDot.startCollecting()
+        else:
+            print("No SmartDot connected in Shot View")
+
+        self.timer.setInterval(self.dt_ms)
+        # connect to UpdateShotView without passing ms; UpdateShotView will use seconds
+        try:
+            # disconnect previous connections if any
+            self.timer.timeout.disconnect()
+        except Exception:
+            pass
+        self.timer.timeout.connect(self.UpdateShotView)
+        self.timer.start()
         
 
 

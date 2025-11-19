@@ -4,6 +4,7 @@ from PyQt6 import QtWidgets, uic
 import os
 from PyQt6.QtGui import QAction
 
+from frontend.DataViewPage import DataViewPage
 from frontend.FrontPage import FrontPage
 from frontend.SmartDotTestPage import SmartDotTestPage
 from frontend.AnalysisModePage import AnalysisModePage
@@ -35,6 +36,7 @@ class HomePage(QtWidgets.QMainWindow):
         self.cloudTestPage = self.findChild(CloudTest, 'CloudTestPage')
         self.smartDotTestPage = self.findChild(SmartDotTestPage, 'SmartDotTestPage')
         self.shotViewPage = self.findChild(ShotViewPage, 'ShotViewPage')
+        self.dataViewPage = self.findChild(DataViewPage, 'DataViewPage')
 
         # connect page change signals 
         self.frontPage.changePage.connect(self.switch_to_page) #100% Nescessary
@@ -44,6 +46,7 @@ class HomePage(QtWidgets.QMainWindow):
         self.cloudTestPage.changePage.connect(self.switch_to_page)
         self.smartDotTestPage.changePage.connect(self.switch_to_page)
         self.shotViewPage.changePage.connect(self.switch_to_page)
+        self.dataViewPage.changePage.connect(self.switch_to_page)
 
 
         # connect E-Stop button to diagnostic page E-Stop function
@@ -100,8 +103,12 @@ class HomePage(QtWidgets.QMainWindow):
                 self.window().setWindowTitle("Ball Spinner Controller - Shot View")
                 if(isinstance(data, MotorData)):
                     print(data.dt)
-                    self.shotViewPage.StartShotView(data)
+                    self.shotViewPage.StartShotView()
                 pass
+            case 7: #Data View Page
+                #No Data Expected
+                self.window().setWindowTitle("Ball Spinner Controller - Data View")
+                pass 
             case _:
                 pass
 
@@ -130,5 +137,6 @@ Order of pages in stackedWidget:
 4 - Cloud Test 
 5 - SmartDotTestPage (Currently not used, can be replaced)
 6 - ShotViewPage
+7 - DataViewPage
 """
         
