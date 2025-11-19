@@ -97,6 +97,43 @@ class iCloud(ABC):
         """
         pass
 
+    @abstractmethod
+    def post_encoder_data(self, encoder_data, session_id):
+        """
+        Post encoder data to the cloud API.
+        
+        Args:
+            session_id: Session ID
+        """
+        pass
+    @abstractmethod
+    def get_encoder_data(self, session_id):
+        """
+        Get encoder data by session.
+        
+        Args:
+            session_id: Session ID
+        """
+        pass
+    @abstractmethod
+    def post_heat_data(self, heat_data, session_id):
+        """
+        Post heat data to the cloud API.
+        
+        Args:
+            session_id: Session ID
+        """
+        pass
+    @abstractmethod
+    def get_heat_data(self, session_id):
+        """
+        Get heat data by session.
+        
+        Args:
+            session_id: Session ID
+        """
+        pass
+
     # @abstractmethod
     # def get_all_encoder_data_by_session(self, session_id):
     #     """

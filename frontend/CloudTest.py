@@ -2,6 +2,8 @@ from PyQt6 import QtWidgets, uic
 import os
 from PyQt6.QtCore import pyqtSignal
 import datetime as dt
+from backend.models.EncoderData import EncoderDataInstance
+from backend.models.HeatData import HeatDataInstance
 
 from BSC import bsc
 
@@ -23,6 +25,10 @@ class CloudTest(QtWidgets.QWidget):
         self.pushButton_7.clicked.connect(self.post_diagnostic_data)
         self.pushButton_8.clicked.connect(self.post_shot_script_data)
         self.pushButton_9.clicked.connect(self.get_shot_script_data)
+        self.pushButton_10.clicked.connect(self.post_encoder_data)
+        self.pushButton_11.clicked.connect(self.get_encoder_data)
+        self.pushButton_12.clicked.connect(self.post_heat_data)
+        self.pushButton_13.clicked.connect(self.get_heat_data)
     
         self.cloud_api = bsc.get_cloud_api()
 
@@ -96,6 +102,36 @@ class CloudTest(QtWidgets.QWidget):
         result = self.cloud_api.get_shot_script_data_by_session(1)
         print(result)
 
+    def post_encoder_data(self):
+        print("Post Encoder Data clicked")
+
+        artificial_encoder_data = [
+                                    EncoderDataInstance(sessionData=None, time=0.0, pulses=100, motor_id=1),
+                                    EncoderDataInstance(sessionData=None, time=0.1, pulses=200, motor_id=2),
+                                    EncoderDataInstance(sessionData=None, time=0.2, pulses=300, motor_id=3)
+                                  ]
+        # result = self.cloud_api.post_encoder_data(bsc.get_data_controller().get_encoder_data(), 1)
+        result = self.cloud_api.post_encoder_data(artificial_encoder_data, 1)
+        print(result)
+    def get_encoder_data(self):
+        print("Get Encoder Data clicked")
+        result = self.cloud_api.get_encoder_data(1)
+        print(result)
+    def post_heat_data(self):
+        print("Post Heat Data clicked")
+        artificial_heat_data = [
+                                HeatDataInstance(sessionData=None, time=0.0, value=100, motor_id=1),
+                                HeatDataInstance(sessionData=None, time=0.1, value=200, motor_id=2),
+                                HeatDataInstance(sessionData=None, time=0.2, value=300, motor_id=3)
+                              ]
+    
+        # result = self.cloud_api.post_heat_data(bsc.get_data_controller().get_heat_data(), 1)
+        result = self.cloud_api.post_heat_data(artificial_heat_data, 1)
+        print(result)
+    def get_heat_data(self):
+        print("Get Heat Data clicked")
+        result = self.cloud_api.get_heat_data(1)
+        print(result)
 
 if __name__ == '__main__':
     # Standard boilerplate for a PyQt application

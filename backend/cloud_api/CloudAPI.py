@@ -10,6 +10,8 @@ from backend.models.SessionData import SessionData
 from backend.models.DiagnosticScriptData import DiagnosticScriptData
 from backend.models.ShotScriptData import ShotScriptData
 from backend.models.SmartDotData import SmartDotData
+from backend.models.EncoderData import EncoderData
+from backend.models.HeatData import HeatData
 
 from .APIUtils import APIUtils
 
@@ -183,6 +185,48 @@ class CloudAPI(iCloud):
         result = APIUtils.make_post_request(url=url, data=data)
         print(result)
 
+    def get_encoder_data(self, session_id):
+        logger.info(f"Getting encoder data by sessionId: {session_id}")
+        url = "https://api.revmetrix.io/api/gets/GetAllPiEncoderDataBySession"
+        result = APIUtils.make_get_request(url=url, url_params={"sessionId": session_id})
+        print(result)
+
+    def post_encoder_data(self, encoder_data: EncoderData, session_id):
+        logger.info(f"Posting encoder data by sessionId: {session_id}")
+        url = "https://api.revmetrix.io/api/posts/PostPiEncoderData"
+
+        data = []
+        for i in encoder_data:
+            data.append({
+                "id": 0,
+                "sessionId": session_id,
+                "time": i.time,
+                "pulses": i.pulses,
+                "motorId": i.motor_id
+            })
+        result = APIUtils.make_post_request(url=url, data=data)
+        print(result)
+
+    def get_heat_data(self, session_id):
+        logger.info(f"Getting Heat data by sessionId: {session_id}")
+        url = "https://api.revmetrix.io/api/gets/GetAllPiHeatDataBySession"
+        result = APIUtils.make_get_request(url=url, url_params={"sessionId": session_id})
+        print(result)
+
+    def post_heat_data(self, heat_data: HeatData, session_id):
+        logger.info(f"Posting heat data by sessionId: {session_id}")
+        url = "https://api.revmetrix.io/api/posts/PostPiHeatData"
+        data = []
+        for i in heat_data:
+            data.append({
+                "id": 0,
+                "sessionId": session_id,
+                "time": i.time,
+                "value": i.value,
+                "motorId": i.motor_id
+            })
+        result = APIUtils.make_post_request(url=url, data=data)
+        print(result)
 
 if __name__ == "__main__":
     

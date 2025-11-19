@@ -3,9 +3,10 @@ from .DiagnosticScriptData import DiagnosticScriptData, DiagnosticScriptDataInst
 from .SessionData import SessionData
 from .ShotScriptData import ShotScriptData, ShotScriptDataInstance
 from .EncoderData import EncoderData, EncoderDataInstance
+from .HeatData import HeatData, HeatDataInstance
+
 from BSC import bsc
 import logging
-
 logger = logging.getLogger(__name__)
 
 class DataController:
@@ -15,6 +16,7 @@ class DataController:
         self.diagnostic_script_data = DiagnosticScriptData()
         self.shot_script_data = ShotScriptData()
         self.encoder_data = EncoderData()
+        self.heat_data = HeatData()
         self.cloud_api = bsc.get_cloud_api()
 
     def get_diagnostic_script_data(self,) -> DiagnosticScriptData:
@@ -42,13 +44,23 @@ class DataController:
         self.encoder_data.add_encoder_data(encoderData)
         logger.info(f"Added encoder data: {encoderData}")
 
+    def add_heat_data(self, heatData: HeatDataInstance):
+        self.heat_data.add_heat_data(heatData)
+        logger.info(f"Added heat data: {heatData}")
+
+    def get_heat_data(self) -> HeatData:
+        return self.heat_data.get_heat_data_entries()
+        
+    def get_encoder_data(self) -> EncoderData:
+        return self.encoder_data.get_encoder_data_entries()
+
     def submit_session_data(self):
         if self.session_data.isShotMode:
-            self.cloud_api.submit_shot_mode_data(self.session_data, self.smartdot_data, self.shot_script_data, self.encoder_data)
-            logger.info(f"Submitted shot mode data: {self.session_data}, {self.smartdot_data}, {self.shot_script_data}, {self.encoder_data}")
+            self.cloud_api.submit_shot_mode_data(self.session_data, self.smartdot_data, self.shot_script_data, self.encoder_data, self.heat_data)
+            logger.info(f"Submitted shot mode data: {self.session_data}, {self.smartdot_data}, {self.shot_script_data}, {self.encoder_data}, {self.heat_data}")
         else:
-            self.cloud_api.submit_diagnostic_mode_data(self.session_data, self.smartdot_data, self.diagnostic_script_data, self.encoder_data)
-            logger.info(f"Submitted diagnostic mode data: {self.session_data}, {self.smartdot_data}, {self.diagnostic_script_data}, {self.encoder_data}")
+            self.cloud_api.submit_diagnostic_mode_data(self.session_data, self.smartdot_data, self.diagnostic_script_data, self.encoder_data, self.heat_data)
+            logger.info(f"Submitted diagnostic mode data: {self.session_data}, {self.smartdot_data}, {self.diagnostic_script_data}, {self.encoder_data}, {self.heat_data}")
 
     def __str__(self):
         return f"DataController(session_data={self.session_data}\n, smartdot_data={self.smartdot_data}\n, diagnostic_script_data={self.diagnostic_script_data}\n, shot_script_data={self.shot_script_data}\n, encoder_data={self.encoder_data}\n)"
