@@ -15,5 +15,5 @@ shiboken6==6.10.0
 urllib3==2.5.0
 wheel==0.45.1
 
-qdarktheme
+pyqtdarktheme
 
