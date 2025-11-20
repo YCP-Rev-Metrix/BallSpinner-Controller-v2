@@ -1,5 +1,6 @@
 from PyQt6 import QtWidgets, uic
-from backend.motors.BDCMotor import BDCMotor
+from backend.drivers.ShotScript import ShotScript
+from backend.motors.USBBDCMotor import USBBDCMotor
 from backend.motors.SimMotor import SimMotor
 import pyqtgraph as pg
 import numpy as np
@@ -19,10 +20,13 @@ from BSC import bsc, MotorData
 
 class ShotViewPage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
-
+    motor1 = USBBDCMotor()
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        sim_motor2 = SimMotor(2)
+        sim_motor3 = SimMotor(3)
+        self.shot_script = ShotScript(self.motor1, sim_motor2, sim_motor3)
 
         # Load the UI file (module-relative path).
 
@@ -62,9 +66,11 @@ class ShotViewPage(QtWidgets.QWidget):
 
         self.timer = QTimer(self)
         # Expose the nested StartShotView as a public method on the instance
+        
  
     def StartShotView(self, Data):
         self.btnAnalyze.setEnabled(False)  # Disabled during shot view
+        self.shot_script.start_motors([0, 1, 2])
 
         self.scriptSpin = Data.spin
         self.scriptTilt = Data.tilt
@@ -129,6 +135,8 @@ class ShotViewPage(QtWidgets.QWidget):
         if(self.ElapsedTime >= self.MaxTime):
             self.EndShotView()
             return
+        self.shot_script.change_speed([self.scriptSpin[self.count],self.scriptTilt[self.count],self.scriptAngle[self.count]])
+
     def EndShotView(self):
         self.timer.stop()
         if self.SmartDot:

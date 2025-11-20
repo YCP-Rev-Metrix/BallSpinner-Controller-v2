@@ -33,6 +33,6 @@ class DiagnosticScript:
     def change_speed(self, motorID, value):
             try:
                 self.motors[motorID].changeSpeed(float(value))
-                logger.info(f"Changed speed of motor {motorID + 1} to {value}")
+                # logger.info(f"Changed speed of motor {motorID + 1} to {value}")
             except Exception as e:
                 logger.error(f"Error changing speed of motor {motorID + 1}: {e}")

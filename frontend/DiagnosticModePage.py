@@ -1,5 +1,5 @@
 from PyQt6 import QtWidgets, uic
-from backend.motors.BDCMotor import BDCMotor
+from backend.motors.USBBDCMotor import USBBDCMotor
 from backend.motors.SimMotor import SimMotor
 from backend.drivers.DiagnosticScript import DiagnosticScript
 import pyqtgraph as pg
@@ -48,10 +48,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'DiagnosticModePage.ui'), self, package='frontend')
 
         # Initialize diagnostic script object with fake motors (switch when BSC object works)
-        sim_motor1 = SimMotor(1)
+        motor1 = USBBDCMotor()
         sim_motor2 = SimMotor(2)
         sim_motor3 = SimMotor(3)
-        self.diagnostic_script = DiagnosticScript(sim_motor1, sim_motor2, sim_motor3)
+        self.diagnostic_script = DiagnosticScript(motor1, sim_motor2, sim_motor3)
         self.diagnostic_script.start_motors([1,2,3])
 
         #Buttons
@@ -180,9 +180,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 xArray= np.append(xArray, xArray[-1]+0.25)
 
                 #These if statements add changes in motor values to the Diagnostic Script and DataController.
+                self.diagnostic_script.change_speed(0, spinArray[-1])
                 if(spinArray[-1]!=spinArray[-2]):
                     add_diag_data_instance_to_data_controller(xArray[-1], 0, spinArray[-1])
-                    self.diagnostic_script.change_speed(0, spinArray[-1])
                 if(tiltArray[-1]!=tiltArray[-2]):
                     add_diag_data_instance_to_data_controller(xArray[-1], 1, tiltArray[-1])
                     self.diagnostic_script.change_speed(1, tiltArray[-1])
@@ -200,7 +200,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 self.tiltCurve.setData(xArray, tiltArray)
                 self.angleCurve.setData(xArray, angleArray)
 
-                time.sleep(0.25) # 4x a second
+                time.sleep(0.05) # 20x a second
         def clear_graphs():
             global spinArray, tiltArray, angleArray, xArray
             spinArray = np.array([0.0])

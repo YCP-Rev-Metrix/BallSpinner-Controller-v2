@@ -1,11 +1,112 @@
+'''import time #THIS PORTION IS NOT WORKING
+import serial
+import pyvesc
+from pyvesc import VESCMessage, encode, decode
+from pyvesc.VESC.messages import SetDutyCycle 
+
+PORT = "/dev/ttyACM0"
+BAUD = 115200
+
+def send_duty(frac, seconds):
+    frac = max(-1.0, min(1.0, frac))
+    duty_int = int(frac * 1e5)
+    msg = SetDutyCycle(duty_int)
+    pkt = pyvesc.encode(msg)
+    t_end = time.time() + seconds
+    while time.time() < t_end:
+        ser.write(pkt)
+        time.sleep(0.02)  # 50 Hz
+
+with serial.Serial(PORT, BAUD, timeout=0.05) as ser:
+    time.sleep(1.0)
+
+    print("5% duty...")
+    send_duty(0.05, 2.0)
+
+    print("20% duty...")
+    send_duty(0.20, 2.0)
+
+    print("Stop...")
+    send_duty(0.0, 1.0)
+
+print("Done.")
+'''
+
+
+
+
+#THE BELOW PORTION IS WORKING, COMMENTED OUT FOR FURTHER TESTING
+'''
+#!/usr/bin/env python3
+import time
+import serial
+from pyvesc import encode
+from pyvesc.VESC.messages import SetDutyCycle
+
+PORT = "/dev/ttyACM0"   # or /dev/ttyUSB0
+BAUD = 115200
+
+DUTY_RAW = 5000     # 5% duty = 0.05 * 100000
+DUTY_SMALL = 0.05
+RUN_TIME = 4      # seconds
+
+
+print(f"Opening {PORT}...")
+with serial.Serial(PORT, BAUD, timeout=0.05) as ser:
+    print("Connected.")
+
+    # Stop motor first
+    ser.write(encode(SetDutyCycle(0)))
+    time.sleep(0.2)
+
+    print("Running at 5% duty for 4 seconds...")
+
+    ser.write(encode(SetDutyCycle(0.01)))
+    time.sleep(4)
+    ser.write(encode(SetDutyCycle(0.02)))
+    time.sleep(0.25)
+    ser.write(encode(SetDutyCycle(0.03)))
+    time.sleep(0.25)
+    ser.write(encode(SetDutyCycle(0.04)))
+    time.sleep(0.25)
+    ser.write(encode(SetDutyCycle(0.05)))
+    time.sleep(0.25)
+
+
+    start = time.time()
+    while time.time() - start < RUN_TIME:
+        ser.write(encode(SetDutyCycle(DUTY_SMALL)))
+        time.sleep(0.05)  # keep alive
+
+    print("Moving to 10% duty for 4 seconds...")
+
+    start = time.time()
+    while time.time() - start < RUN_TIME:
+        ser.write(encode(SetDutyCycle(DUTY_SMALL*2)))
+        time.sleep(0.05)  # keep alive
+
+
+    print("Moving to 30% duty for 4 seconds...")
+
+    
+    start = time.time()
+    while time.time() - start < 4:
+        ser.write(encode(SetDutyCycle(DUTY_SMALL*6)))
+        time.sleep(0.05)  # keep alive
+
+    print("Stopping motor...")
+    for i in range(10):
+        ser.write(encode(SetDutyCycle(0)))
+        time.sleep(0.05)
+
+print("Done.")
+'''
 import time
 import serial
 import struct
 
 from pyvesc import encode
 from pyvesc.VESC.messages import SetDutyCycle
-
-from .iMotor import iMotor
 
 PORT = "/dev/ttyACM0"   # or "/dev/ttyUSB0"
 BAUD = 115200
@@ -15,7 +116,6 @@ RUN_TIME = 10      # seconds
 
 COMM_GET_VALUES = 4  # VESC command id for "get values"
 
-STEP = 2
 
 # ---------- VESC packet helpers (no pyvesc for GetValues) ----------
 
@@ -160,76 +260,9 @@ def read_mc_values(ser: serial.Serial, timeout: float = 0.2):
 
     return None
 
-class USBBDCMotor(iMotor):
-    motorID = 0
-    currSpeed = 0.0
-    targetSpeed = 0.0
-    targetPower = 0.0
-    GPIO_Pin = 0
-    motor = None
-    ser = serial.Serial(PORT, BAUD, timeout = 0.05)
-
-    def __init__(self):
-        # ser = serial.Serial(PORT, BAUD, timeout = 0.05)
-        self.ser.write(encode(SetDutyCycle(0.0)))
-        pass
-
-    # ---------------- CONNECT / DISCONNECT ----------------
-    def connect(self):
-        pass
-
-    def disconnect(self):
-        pass
-
-    def clamp(self, x, lo, hi):
-        return max(lo, min(x, hi))
-
-    def start(self):
-        pass
-
-    def stop(self):
-        self.targetSpeed = 0.0
-        self.rampDown()
-
-    def changeSpeed(self, dutyCycle: float):
-        self.targetSpeed = self.clamp(dutyCycle, 0, 600) # Clamp to bounds of graph (in case weird values)
-        '''
-        if(self.currSpeed<self.targetSpeed):
-            self.rampUp()
-        else:
-            self.rampDown()
-        '''
-        self.targetSpeed +=50
-        self.ser.write(encode(SetDutyCycle(self.targetSpeed *0.000043333333)))
-        self.currSpeed = self.targetSpeed
-
-    def getCurrentSpeed(self):
-        return self.currSpeed #IMPLEMENT ENCODER HERE IF WANTED.
-
-    def rampUp(self):
-        while self.currSpeed < self.targetSpeed:
-            self.currSpeed += STEP
-            if self.currSpeed > self.targetSpeed:
-                self.currSpeed = self.targetSpeed
-
-            # Scale input x (0-600) to a range 0-2.6 for SetDutyCycle (which is a tiny eenie weenie bit over 600, like 605 but whatever)
-            self.ser.write(encode(SetDutyCycle(self.currSpeed *0.000043333333)))
-            time.sleep(0.02)
-
-    def rampDown(self):
-        while self.currSpeed > self.targetSpeed:
-            self.currSpeed -= STEP
-            if self.currSpeed < self.targetSpeed:
-                self.currSpeed = self.targetSpeed
-
-            # Scale input x (0-600) to a range 0-2.6 for SetDutyCycle (which is a tiny eenie weenie bit over 600, like 605 but whatever)
-            self.ser.write(encode(SetDutyCycle(self.currSpeed *0.000043333333)))
-            time.sleep(0.02)
-        self.ser.write(encode(SetDutyCycle(self.currSpeed *0.000043333333)))
-
 
 # ---------- Main program ----------
-'''
+
 print(f"Opening {PORT}...")
 with serial.Serial(PORT, BAUD, timeout=0.05) as ser:
     print("Connected.")
@@ -273,4 +306,3 @@ with serial.Serial(PORT, BAUD, timeout=0.05) as ser:
         time.sleep(0.05)
 
 print("Done.")
-'''

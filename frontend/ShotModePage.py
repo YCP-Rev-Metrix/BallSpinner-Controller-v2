@@ -5,6 +5,7 @@ from .InputGraph import InputGraph
 from PyQt6.QtCore import pyqtSignal
 from backend.drivers.ShotScript import ShotScript
 from backend.motors.SimMotor import SimMotor
+from backend.motors.USBBDCMotor import USBBDCMotor
 import time
 
 #Database related imports
@@ -22,17 +23,16 @@ from backend.smartdot.iSmartDot import iSmartDot
 
 class ShotModePage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
-
+    # motor1 = USBBDCMotor() # first motor instantiation
     def __init__(self, parent=None):
         super().__init__(parent)
         # load the .ui file (module-relative path)
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'ShotModePage.ui'), self, package='frontend')
 
         # Initialize shot script object with motors (currently sim, change to BSC motor reference or some motor object instantiated in BSC global class)
-        sim_motor1 = SimMotor(1)
-        sim_motor2 = SimMotor(2)
+        '''sim_motor2 = SimMotor(2)
         sim_motor3 = SimMotor(3)
-        self.shot_script = ShotScript(sim_motor1, sim_motor2, sim_motor3)
+        self.shot_script = ShotScript(self.motor1, sim_motor2, sim_motor3)'''
         # Grab the three InputGraph widgets created by the .ui file and store references
         # The object names come from the .ui: 'inputGraph_RPM', 'InputGraph_Tilt', 'InputGraph_Angle'
 
@@ -105,7 +105,7 @@ class ShotModePage(QtWidgets.QWidget):
         runtime = 0
         '''
         # Call shot_script.start_motors before the while loop with the correct motor values
-        self.shot_script.start_motors([0, 1, 2])
+        # self.shot_script.start_motors([0, 1, 2])
         '''
         i = 0
         try:
@@ -142,7 +142,6 @@ class ShotModePage(QtWidgets.QWidget):
                 angleDeg=angle_array[i],
                 tiltDeg=tilt_array[i]
             ))
-            self.shot_script.change_speed([rpm_array[i],angle_array[i],tilt_array[i]])
 
         # print(bsc.get_session())
         print(bsc.get_data_controller())
