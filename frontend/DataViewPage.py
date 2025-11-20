@@ -43,7 +43,7 @@ class DataViewPage(QtWidgets.QWidget):
         # Connect button signals to their respective functions
         
         self.btnSearch.clicked.connect(
-            lambda: self.refresh_data(int(self.dateStart.dateTime().toString("yyyyMMdd")), int(self.dateEnd.dateTime().toString("yyyyMMdd")))
+            lambda: self.refresh_data(self.dateStart.dateTime().toString("yyyyMMddhhmmss"), self.dateEnd.dateTime().toString("yyyyMMddhhmmss"))
             # lambda: print(int(self.dateStart.dateTime().toString("yyyyMMdd")))
             )
         
@@ -163,6 +163,8 @@ class DataViewPage(QtWidgets.QWidget):
         print(start_time, end_time)
         # clear the persistent model and refill it; proxy filters this model
         self.model.clear()
+        print(f"Getting sessions in time range: {start_time} to {end_time}")
+        print(f"Type of start_time: {type(start_time)}, Type of end_time: {type(end_time)}")
         result = self.cloud_api.get_sessions_in_time_range(start_time, end_time)
         if result['status_code'] == 200:
             sessions = result['data']
