@@ -1,7 +1,7 @@
 from PyQt6 import QtWidgets, uic
 from backend.drivers.ShotScript import ShotScript
-from backend.motors.USBBDCMotor import USBBDCMotor
-from backend.motors.SimMotor import SimMotor
+#from backend.motors.USBBDCMotor import USBBDCMotor
+#from backend.motors.SimMotor import SimMotor
 import pyqtgraph as pg
 import numpy as np
 import threading
@@ -20,13 +20,15 @@ from BSC import bsc, MotorData
 
 class ShotViewPage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
-    motor1 = USBBDCMotor()
+    #motor1 = USBBDCMotor()
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        sim_motor2 = SimMotor(2)
-        sim_motor3 = SimMotor(3)
-        self.shot_script = ShotScript(self.motor1, sim_motor2, sim_motor3)
+        #sim_motor2 = SimMotor(2)
+        #sim_motor3 = SimMotor(3)
+        #self.shot_script = ShotScript(self.motor1, sim_motor2, sim_motor3)
+        self.shot_script = ShotScript(bsc.motor1, bsc.motor2, bsc.motor3)
+
 
         # Load the UI file (module-relative path).
 

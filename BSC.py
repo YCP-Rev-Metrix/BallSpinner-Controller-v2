@@ -2,6 +2,12 @@ from backend.smartdot.SmartDotConnectionManager import SmartDotConnectionManager
 # from backend.models.DataController import DataController
 from backend.cloud_api.CloudAPI import CloudAPI
 # from backend.models.SessionData import SessionData
+import utils
+from backend.motors.SimMotor import SimMotor
+if utils.is_raspberry_pi_5():
+    from backend.motors.USBBDCMotor import USBBDCMotor
+    #from backend.motors.StepMotor import StepMotor #uncomment when stepper works
+
 
 class MotorData:
     def __init__(self, dt, length, spin, tilt, angle):
@@ -18,6 +24,14 @@ class BSC:
         self.cloud_api = CloudAPI()
         self.session = None
         self.data_controller = None
+        if utils.is_raspberry_pi():
+            self.motor1 = USBBDCMotor()
+            # self.motor2 = StepMotor(26) #Uncomment when step working
+            self.motor2 = SimMotor(2)
+        else:
+            self.motor1 = SimMotor(2)
+            self.motor2 = SimMotor(2)
+        self.motor3 = SimMotor(3)
 
     def get_smartdotConnectionManager(self):
         return self.smartdotConnectionManager
