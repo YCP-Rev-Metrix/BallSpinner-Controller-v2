@@ -18,4 +18,7 @@ class DiagnosticScriptData:
         return self.diagnostic_script_data_entries
                 
     def __str__(self):
-        return f"DiagnosticScriptData(diagnostic_script_data_entries={self.diagnostic_script_data_entries})"
+        s = "" #Build data string
+        for i in self.diagnostic_script_data_entries:
+            s += f"{i.__str__()},"
+        return f"DiagnosticScriptData: {s}"
