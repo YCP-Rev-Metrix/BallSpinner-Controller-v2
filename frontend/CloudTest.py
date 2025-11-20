@@ -136,7 +136,8 @@ class CloudTest(QtWidgets.QWidget):
 
     def load_session_data_from_cloud(self):
         print("Load Session Data from Cloud clicked")
-        bsc.get_data_controller().load_session_data_from_cloud(SessionData(id=30, timeStamp=dt.datetime.now().isoformat(), name="Diagnostic Session", isShotMode=False))
+        session_id = self.spinBox_sessionId.value()
+        bsc.get_data_controller().load_session_data_from_cloud(SessionData(id=session_id, timeStamp=dt.datetime.now().isoformat(), name="Diagnostic Session", isShotMode=False))
         print("Session data loaded from cloud")
 
 if __name__ == '__main__':
