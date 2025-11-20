@@ -90,48 +90,49 @@ class AnalysisModePage(QtWidgets.QWidget):
         # Load SmartDot data from BSC data controller
         smartdot_data = dc.smartdot_data
 
-        time_accel = []
-        accel_x = []
-        accel_y = []
-        accel_z = []
-        time_gyro = []
-        gyro_x = []
-        gyro_y = []
-        gyro_z = []
-        time_mag = []
-        mag_x = []
-        mag_y = []
-        mag_z = []
-        time_light = []
-        light = []
-        
-        
+        self.time_accel = []
+        self.accel_x = []
+        self.accel_y = []
+        self.accel_z = []
+        self.time_gyro = []
+        self.gyro_x = []
+        self.gyro_y = []
+        self.gyro_z = []
+        self.time_mag = []
+        self.mag_x = []
+        self.mag_y = []
+        self.mag_z = []
+        self.time_light = []
+        self.light = []
+
         for data in smartdot_data.data_entries:
+            print(f"SmartDot Data - Time: {data.time}, Selector: {data.data_selector}, AccelX: {data.accelerometer_x}, AccelY: {data.accelerometer_y}, AccelZ: {data.accelerometer_z}, GyroX: {data.gyroscope_x}, GyroY: {data.gyroscope_y}, GyroZ: {data.gyroscope_z}, MagX: {data.magnetometer_x}, MagY: {data.magnetometer_y}, MagZ: {data.magnetometer_z}, Light: {data.light}")
             if data.data_selector == 0:  # Accelerometer
-                time_accel.append(data.time)
-                accel_x.append(data.accelerometer_x)
-                accel_y.append(data.accelerometer_y)
-                accel_z.append(data.accelerometer_z)
+                self.time_accel.append(data.time)
+                self.accel_x.append(data.accelerometer_x)
+                self.accel_y.append(data.accelerometer_y)
+                self.accel_z.append(data.accelerometer_z)
             elif data.data_selector == 1:  # Gyroscope
-                time_gyro.append(data.time)
-                gyro_x.append(data.gyroscope_x)
-                gyro_y.append(data.gyroscope_y)
-                gyro_z.append(data.gyroscope_z)
+                self.time_gyro.append(data.time)
+                self.gyro_x.append(data.gyroscope_x)
+                self.gyro_y.append(data.gyroscope_y)
+                self.gyro_z.append(data.gyroscope_z)
             elif data.data_selector == 2:  # Magnetometer
-                time_mag.append(data.time)
-                mag_x.append(data.magnetometer_x)
-                mag_y.append(data.magnetometer_y)
-                mag_z.append(data.magnetometer_z)
+                self.time_mag.append(data.time)
+                self.mag_x.append(data.magnetometer_x)
+                self.mag_y.append(data.magnetometer_y)
+                self.mag_z.append(data.magnetometer_z)
             elif data.data_selector == 3:  # Light
-                time_light.append(data.time)
-                light.append(data.light)
+                self.time_light.append(data.time)
+                self.light.append(data.light)
+        
 
         # Update SmartDot graph
         self.smartDotGraph.updateDataBetter(
-            time_accel, accel_x, accel_y, accel_z,
-            time_gyro, gyro_x, gyro_y, gyro_z,
-            time_mag, mag_x, mag_y, mag_z,
-            time_light, light
+            self.time_accel, self.accel_x, self.accel_y, self.accel_z,
+            self.time_gyro, self.gyro_x, self.gyro_y, self.gyro_z,
+            self.time_mag, self.mag_x, self.mag_y, self.mag_z,
+            self.time_light, self.light
         )
         # Load Motor data from BSC data controller
         if hasattr(dc, 'shot_script_data'):

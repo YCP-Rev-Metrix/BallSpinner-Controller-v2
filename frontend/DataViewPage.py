@@ -184,8 +184,24 @@ class DataViewPage(QtWidgets.QWidget):
         pass
     def load_data(self):
         #TODO: Implement data loading logic, turn session into Datacontroller with proper data
-        #self.tableview.sele
-        bsc.set_session(SessionData(id=31, timeStamp=dt.datetime.now().isoformat(), name="Diagnostic Session", isShotMode=True))
+        sel = self.tableview.selectionModel().selectedRows()
+        if not sel:
+            return -1
+        rowidx = self.proxy.mapToSource(sel[0])
+        session_id_index = self.model.index(rowidx.row(), 0)  # Assuming first column is session ID
+        session_id = int(self.model.data(session_id_index))
+        timeStamp_index = self.model.index(rowidx.row(), 1)  # Assuming second column is timestamp
+        timeStamp_str = self.model.data(timeStamp_index)
+        name_index = self.model.index(rowidx.row(), 2)  # Assuming third column
+        name_str = self.model.data(name_index)
+        isShotMode_index = self.model.index(rowidx.row(), 3)  # Assuming
+        isShotMode_str = self.model.data(isShotMode_index)
+        isShotMode = isShotMode_str.strip().lower() in ('true', '1', 'yes')
+
+
+
+
+        bsc.set_session(SessionData(id=session_id, timeStamp=timeStamp_str, name=name_str, isShotMode=isShotMode))
         bsc.set_data_controller(DataController(bsc.get_session()))
         bsc.get_data_controller().load_session_data_from_cloud(bsc.get_session())
 
