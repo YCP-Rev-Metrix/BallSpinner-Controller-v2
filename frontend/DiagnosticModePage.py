@@ -1,6 +1,6 @@
 from PyQt6 import QtWidgets, uic
-from backend.motors.USBBDCMotor import USBBDCMotor
-from backend.motors.SimMotor import SimMotor
+#from backend.motors.USBBDCMotor import USBBDCMotor
+#from backend.motors.SimMotor import SimMotor
 from backend.drivers.DiagnosticScript import DiagnosticScript
 import pyqtgraph as pg
 import numpy as np
@@ -48,10 +48,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'DiagnosticModePage.ui'), self, package='frontend')
 
         # Initialize diagnostic script object with fake motors (switch when BSC object works)
-        motor1 = USBBDCMotor()
+        '''motor1 = USBBDCMotor()
         sim_motor2 = SimMotor(2)
-        sim_motor3 = SimMotor(3)
-        self.diagnostic_script = DiagnosticScript(motor1, sim_motor2, sim_motor3)
+        sim_motor3 = SimMotor(3)'''
+        self.diagnostic_script = DiagnosticScript(bsc.motor1, bsc.motor2, bsc.motor3)
         self.diagnostic_script.start_motors([1,2,3])
 
         #Buttons
