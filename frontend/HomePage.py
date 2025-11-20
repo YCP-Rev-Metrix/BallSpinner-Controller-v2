@@ -124,6 +124,8 @@ class HomePage(QtWidgets.QMainWindow):
         bsc.get_smartdotConnectionManager().disconnect_all()
         print("Disconnected from all SmartDots")
         print("SmartDots list should be empty: ", bsc.get_smartdotConnectionManager().get_smartdots())
+
+        bsc.disconnect_all_motors()
         super().closeEvent(event)
 
 """

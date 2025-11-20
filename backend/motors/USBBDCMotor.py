@@ -204,6 +204,7 @@ class USBBDCMotor(iMotor):
         self.targetSpeed +=50
         self.ser.write(encode(SetDutyCycle(self.targetSpeed *0.000043333333)))
         self.currSpeed = self.targetSpeed
+        self.getCurrentSpeed()
 
     def getCurrentSpeed(self):
         '''send_get_values(ser)
@@ -211,8 +212,8 @@ class USBBDCMotor(iMotor):
         if vals is not None:
             
             return vals["rpm"]/2.0 #Encoder implement, maybe working'''
-        send_get_values(ser)
-        vals = read_mc_values(ser)
+        send_get_values(self.ser)
+        vals = read_mc_values(self.ser)
         if vals is not None:
             erpm = vals["rpm"]
 

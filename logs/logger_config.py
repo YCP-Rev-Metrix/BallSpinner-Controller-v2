@@ -51,14 +51,14 @@ def setup_logging():
     debug_handler.setFormatter(detailed_formatter)
     
     # Console handler for immediate feedback
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    console_handler.setFormatter(simple_formatter)
+    # console_handler = logging.StreamHandler()
+    # console_handler.setLevel(logging.INFO)
+    # console_handler.setFormatter(simple_formatter)
     
     # Add handlers to root logger
-    root_logger.addHandler(info_handler)
-    root_logger.addHandler(debug_handler)
-    root_logger.addHandler(console_handler)
+    # root_logger.addHandler(info_handler)
+    # root_logger.addHandler(debug_handler)
+    # root_logger.addHandler(console_handler)
     
     return root_logger
 

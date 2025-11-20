@@ -28,7 +28,7 @@ class BSC:
         if utils.is_raspberry_pi_5():
             self.motor1 = USBBDCMotor() # UNCOMMENT AFTER STEPPER
             #self.motor1 = SimMotor(1)
-            self.motor2 = StepMotor(26) #Uncomment when step working
+            self.motor2 = StepMotor(23) #Uncomment when step working
             #self.motor2 = SimMotor(2)
         else:
             self.motor1 = SimMotor(2)
@@ -52,6 +52,11 @@ class BSC:
         
     def set_data_controller(self, data_controller):
         self.data_controller = data_controller
+
+    def disconnect_all_motors(self):
+        self.motor1.disconnect()
+        self.motor2.disconnect()
+        self.motor3.disconnect(3)
 
 
 bsc = BSC()

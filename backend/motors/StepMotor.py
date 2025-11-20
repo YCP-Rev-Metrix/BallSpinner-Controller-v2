@@ -43,19 +43,41 @@ class StepMotor():
     motor_times = [0.0]
     count = 0
     h = lgpio.gpiochip_open(0)
+    connected = True
+    t = threading.Thread()#target=run_movement_chain, daemon=True)
 
     def stop(self):
-        pass
+        self.t.join()  # Wait for the thread to finish before continuing
+        lgpio.gpio_write(self.h, STEP_PIN, 0)
+        lgpio.gpio_write(self.h, DIR_PIN, 0)
+        lgpio.gpiochip_close(self.h)
+        self.connected = False
+        print("GPIO released")
+
+    def disconnect(self):
+        # Close the gpiochip handle to release resources.
+        if(self.connected):
+            self.stop()
     
     def __init__(self, GPIO_Pin=None):
         self.GPIO_Pin = GPIO_Pin
-        #h = lgpio.gpiochip_open(0)
+        if not (self.connected):
+            self.h = lgpio.gpiochip_open(0)
+            self.connected = True
         lgpio.gpio_claim_output(self.h, STEP_PIN, 0)
         lgpio.gpio_claim_output(self.h, DIR_PIN, 0)
         self.movement_in_progress = False  # Track if a movement is currently running
         self.movement_lock = threading.Lock()  # Lock for thread safety
 
     def start(self, rpm=1):
+        if not (self.connected):
+            self.connected = True
+            self.h = lgpio.gpiochip_open(0)
+            lgpio.gpio_claim_output(self.h, STEP_PIN, 0)
+            lgpio.gpio_claim_output(self.h, DIR_PIN, 0)
+            self.movement_in_progress = False  # Track if a movement is currently running
+            self.movement_lock = threading.Lock()  # Lock for thread safety
+
         self.count = 0  # Reset counter for new sequence
         self.movement_in_progress = False
         # Don't move here - wait for first changeSpeed call
@@ -161,9 +183,10 @@ class StepMotor():
             finally:
                 with self.movement_lock:
                     self.movement_in_progress = False
-        
-        t = threading.Thread(target=run_movement_chain, daemon=True)
-        t.start()
+
+        self.t = threading.Thread(target=run_movement_chain, daemon=True)
+
+        self.t.start()
 
     def getCurrentSpeed(self):
         return self.currSpeed
