@@ -12,6 +12,7 @@ from backend.models.ShotScriptData import ShotScriptData
 from backend.models.SmartDotData import SmartDotData
 from backend.models.EncoderData import EncoderData
 from backend.models.HeatData import HeatData
+from PyQt6.QtCore import QEventLoop
 
 from .APIUtils import APIUtils
 
@@ -22,7 +23,30 @@ class CloudAPI(iCloud):
     def get_test_data(self):
         logger.info("Starting API test data request")
         url = "https://api.revmetrix.io/api/gets/Test"
-        result = APIUtils.make_get_request(url)
+        
+        # Create async worker
+        worker = APIUtils.make_get_request_async(url)
+        
+        # Create event loop and result storage
+        loop = QEventLoop()
+        result = None
+        
+        def on_finished(data):
+            nonlocal result
+            result = data
+            loop.quit()
+        
+        def on_error(error_data):
+            nonlocal result
+            result = error_data
+            loop.quit()
+        
+        # Connect signals
+        worker.finished.connect(on_finished)
+        worker.error.connect(on_error)
+        
+        # Wait for result
+        loop.exec()
         
         if 'error' in result:
             logger.error(f"API request failed: {result['error']}")
@@ -50,7 +74,31 @@ class CloudAPI(iCloud):
             "isShotMode": session_data.isShotMode
         })
         url = "https://api.revmetrix.io/api/posts/PostPiSessions"
-        result = APIUtils.make_post_request(url, data=data)
+        
+        # Create async worker
+        worker = APIUtils.make_post_request_async(url, data=data)
+        
+        # Create event loop and result storage
+        loop = QEventLoop()
+        result = None
+        
+        def on_finished(data):
+            nonlocal result
+            result = data
+            loop.quit()
+        
+        def on_error(error_data):
+            nonlocal result
+            result = error_data
+            loop.quit()
+        
+        # Connect signals
+        worker.finished.connect(on_finished)
+        worker.error.connect(on_error)
+        
+        # Wait for result
+        loop.exec()
+        
         return result
     
 
@@ -64,7 +112,31 @@ class CloudAPI(iCloud):
         """
         logger.info("get_sessions_in_time_range called")
         url = "https://api.revmetrix.io/api/gets/GetAllPiSessions"
-        result = APIUtils.make_post_request(url, {"start_time": start_time, "end_time": end_time})
+        
+        # Create async worker (this endpoint uses POST)
+        worker = APIUtils.make_post_request_async(url, {"start_time": start_time, "end_time": end_time})
+        
+        # Create event loop and result storage
+        loop = QEventLoop()
+        result = None
+        
+        def on_finished(data):
+            nonlocal result
+            result = data
+            loop.quit()
+        
+        def on_error(error_data):
+            nonlocal result
+            result = error_data
+            loop.quit()
+        
+        # Connect signals
+        worker.finished.connect(on_finished)
+        worker.error.connect(on_error)
+        
+        # Wait for result
+        loop.exec()
+        
         return result
 
     def get_diagnostic_script_data_by_session(self, session_id):
@@ -76,7 +148,31 @@ class CloudAPI(iCloud):
         """
         logger.info(f"Getting all Diagnostic Script Data by sessionID: {session_id}")
         url = "https://api.revmetrix.io/api/gets/GetAllPiDiagnosticScriptBySession"
-        result = APIUtils.make_get_request(url, url_params={"sessionId": session_id})
+        
+        # Create async worker
+        worker = APIUtils.make_get_request_async(url, url_params={"sessionId": session_id})
+        
+        # Create event loop and result storage
+        loop = QEventLoop()
+        result = None
+        
+        def on_finished(data):
+            nonlocal result
+            result = data
+            loop.quit()
+        
+        def on_error(error_data):
+            nonlocal result
+            result = error_data
+            loop.quit()
+        
+        # Connect signals
+        worker.finished.connect(on_finished)
+        worker.error.connect(on_error)
+        
+        # Wait for result
+        loop.exec()
+        
         return result
 
     def post_diagnostic_script_data(self, diagnostic_script_data_list: DiagnosticScriptData, session_id):
@@ -101,7 +197,30 @@ class CloudAPI(iCloud):
                 "instruction": i.instruction
             })
         
-        result = APIUtils.make_post_request(url, data=data)
+        # Create async worker
+        worker = APIUtils.make_post_request_async(url, data=data)
+        
+        # Create event loop and result storage
+        loop = QEventLoop()
+        result = None
+        
+        def on_finished(data):
+            nonlocal result
+            result = data
+            loop.quit()
+        
+        def on_error(error_data):
+            nonlocal result
+            result = error_data
+            loop.quit()
+        
+        # Connect signals
+        worker.finished.connect(on_finished)
+        worker.error.connect(on_error)
+        
+        # Wait for result
+        loop.exec()
+        
         return result
 
     def get_shot_script_data_by_session(self, session_id):
@@ -113,7 +232,31 @@ class CloudAPI(iCloud):
         """
         logger.info(f"Getting Shot Script data for sesionId: {session_id}")
         url = "https://api.revmetrix.io/api/gets/GetAllPiShotsBySession"
-        result = APIUtils.make_get_request(url=url, url_params={"sessionId": session_id})
+        
+        # Create async worker
+        worker = APIUtils.make_get_request_async(url=url, url_params={"sessionId": session_id})
+        
+        # Create event loop and result storage
+        loop = QEventLoop()
+        result = None
+        
+        def on_finished(data):
+            nonlocal result
+            result = data
+            loop.quit()
+        
+        def on_error(error_data):
+            nonlocal result
+            result = error_data
+            loop.quit()
+        
+        # Connect signals
+        worker.finished.connect(on_finished)
+        worker.error.connect(on_error)
+        
+        # Wait for result
+        loop.exec()
+        
         print(result)
         return result
 
@@ -140,7 +283,31 @@ class CloudAPI(iCloud):
                 "tiltDegrees": i.tiltDeg
             })
         url = "https://api.revmetrix.io/api/posts/PostPiShot"
-        result = APIUtils.make_post_request(url=url, data=data)
+        
+        # Create async worker
+        worker = APIUtils.make_post_request_async(url=url, data=data)
+        
+        # Create event loop and result storage
+        loop = QEventLoop()
+        result = None
+        
+        def on_finished(data):
+            nonlocal result
+            result = data
+            loop.quit()
+        
+        def on_error(error_data):
+            nonlocal result
+            result = error_data
+            loop.quit()
+        
+        # Connect signals
+        worker.finished.connect(on_finished)
+        worker.error.connect(on_error)
+        
+        # Wait for result
+        loop.exec()
+        
         print(result)
         return result
 
@@ -157,7 +324,31 @@ class CloudAPI(iCloud):
         """
         logger.info(f"Getting Smartdot data for sessionId: {session_id}")
         url = "https://api.revmetrix.io/api/gets/GetAllPiSmartDotDataBySession"
-        result = APIUtils.make_get_request(url, url_params={"sessionId": session_id})
+        
+        # Create async worker
+        worker = APIUtils.make_get_request_async(url, url_params={"sessionId": session_id})
+        
+        # Create event loop and result storage
+        loop = QEventLoop()
+        result = None
+        
+        def on_finished(data):
+            nonlocal result
+            result = data
+            loop.quit()
+        
+        def on_error(error_data):
+            nonlocal result
+            result = error_data
+            loop.quit()
+        
+        # Connect signals
+        worker.finished.connect(on_finished)
+        worker.error.connect(on_error)
+        
+        # Wait for result
+        loop.exec()
+        
         print(result)
         return result
 
@@ -192,14 +383,62 @@ class CloudAPI(iCloud):
                     "lt": i.light
                 }
             )
-        result = APIUtils.make_post_request(url=url, data=data)
+        
+        # Create async worker
+        worker = APIUtils.make_post_request_async(url=url, data=data)
+        
+        # Create event loop and result storage
+        loop = QEventLoop()
+        result = None
+        
+        def on_finished(data):
+            nonlocal result
+            result = data
+            loop.quit()
+        
+        def on_error(error_data):
+            nonlocal result
+            result = error_data
+            loop.quit()
+        
+        # Connect signals
+        worker.finished.connect(on_finished)
+        worker.error.connect(on_error)
+        
+        # Wait for result
+        loop.exec()
+        
         print(result)
         return result
 
     def get_encoder_data(self, session_id):
         logger.info(f"Getting encoder data by sessionId: {session_id}")
         url = "https://api.revmetrix.io/api/gets/GetAllPiEncoderDataBySession"
-        result = APIUtils.make_get_request(url=url, url_params={"sessionId": session_id})
+        
+        # Create async worker
+        worker = APIUtils.make_get_request_async(url=url, url_params={"sessionId": session_id})
+        
+        # Create event loop and result storage
+        loop = QEventLoop()
+        result = None
+        
+        def on_finished(data):
+            nonlocal result
+            result = data
+            loop.quit()
+        
+        def on_error(error_data):
+            nonlocal result
+            result = error_data
+            loop.quit()
+        
+        # Connect signals
+        worker.finished.connect(on_finished)
+        worker.error.connect(on_error)
+        
+        # Wait for result
+        loop.exec()
+        
         print(result)
         return result
     def post_encoder_data(self, encoder_data: EncoderData, session_id):
@@ -215,13 +454,61 @@ class CloudAPI(iCloud):
                 "pulses": i.pulses,
                 "motorId": i.motor_id
             })
-        result = APIUtils.make_post_request(url=url, data=data)
+        
+        # Create async worker
+        worker = APIUtils.make_post_request_async(url=url, data=data)
+        
+        # Create event loop and result storage
+        loop = QEventLoop()
+        result = None
+        
+        def on_finished(data):
+            nonlocal result
+            result = data
+            loop.quit()
+        
+        def on_error(error_data):
+            nonlocal result
+            result = error_data
+            loop.quit()
+        
+        # Connect signals
+        worker.finished.connect(on_finished)
+        worker.error.connect(on_error)
+        
+        # Wait for result
+        loop.exec()
+        
         print(result)
         return result
     def get_heat_data(self, session_id):
         logger.info(f"Getting Heat data by sessionId: {session_id}")
         url = "https://api.revmetrix.io/api/gets/GetAllPiHeatDataBySession"
-        result = APIUtils.make_get_request(url=url, url_params={"sessionId": session_id})
+        
+        # Create async worker
+        worker = APIUtils.make_get_request_async(url=url, url_params={"sessionId": session_id})
+        
+        # Create event loop and result storage
+        loop = QEventLoop()
+        result = None
+        
+        def on_finished(data):
+            nonlocal result
+            result = data
+            loop.quit()
+        
+        def on_error(error_data):
+            nonlocal result
+            result = error_data
+            loop.quit()
+        
+        # Connect signals
+        worker.finished.connect(on_finished)
+        worker.error.connect(on_error)
+        
+        # Wait for result
+        loop.exec()
+        
         print(result)
         return result
     def post_heat_data(self, heat_data: HeatData, session_id):
@@ -236,7 +523,31 @@ class CloudAPI(iCloud):
                 "value": i.value,
                 "motorId": i.motor_id
             })
-        result = APIUtils.make_post_request(url=url, data=data)
+        
+        # Create async worker
+        worker = APIUtils.make_post_request_async(url=url, data=data)
+        
+        # Create event loop and result storage
+        loop = QEventLoop()
+        result = None
+        
+        def on_finished(data):
+            nonlocal result
+            result = data
+            loop.quit()
+        
+        def on_error(error_data):
+            nonlocal result
+            result = error_data
+            loop.quit()
+        
+        # Connect signals
+        worker.finished.connect(on_finished)
+        worker.error.connect(on_error)
+        
+        # Wait for result
+        loop.exec()
+        
         print(result)
         return result
 if __name__ == "__main__":
