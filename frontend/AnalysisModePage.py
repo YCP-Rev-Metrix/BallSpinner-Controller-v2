@@ -149,6 +149,7 @@ class AnalysisModePage(QtWidgets.QWidget):
             motor_rpm.append(data.rpm)
             motor_angleDeg.append(data.angleDeg)
             motor_tiltDeg.append(data.tiltDeg)
+            print(f"Motor Data - Time: {data.time}, RPM: {data.rpm}, AngleDeg: {data.angleDeg}, TiltDeg: {data.tiltDeg}")
 
 
 
@@ -165,9 +166,13 @@ class AnalysisModePage(QtWidgets.QWidget):
         encoder_tilt = [0.0]
 
         
-            
+        # If no shot script data, try to load from diagnostic data
         if time_motor == []:
-            diag_data = dc.diagnostic_data.get_diagnostic_data_entries()
+            try:
+                diag_data = dc.diagnostic_data.get_diagnostic_data_entries()
+            except Exception as e:
+                print("Error loading diagnostic data:", e)
+                diag_data = []
             time_rpm = []
             time_angle = []
             time_tilt = []
@@ -186,8 +191,7 @@ class AnalysisModePage(QtWidgets.QWidget):
                         pass
             # Update Motor graph
             self.motorGraph.updateDataDiagnostic(time_rpm, motor_rpm, time_angle, motor_angleDeg, time_tilt, motor_tiltDeg
-                                                 ,time_encoder, encoder_rpm, encoder_angle, encoder_tilt
-                                                 ,[],[],[],[])
+                                                 ,time_encoder, encoder_rpm, encoder_angle, encoder_tilt)
         else:
         # Update Motor graph
             self.motorGraph.updateDataBetter(time_motor, motor_rpm, motor_angleDeg, motor_tiltDeg, time_encoder, encoder_rpm, encoder_angle, encoder_tilt)
