@@ -56,8 +56,8 @@ class DataViewPage(QtWidgets.QWidget):
 
 
         #Set Up dates 
-        self.dateStart.setDateTime(QDateTime.currentDateTime().addDays(-7))  # Default to one week ago
-        self.dateEnd.setDateTime(QDateTime.currentDateTime())  # Default to now
+        self.dateStart.setDateTime(QDateTime.currentDateTime().addDays(-7).addSecs(-7200))  # Default to one week  and 2 hrs ago
+        self.dateEnd.setDateTime(QDateTime.currentDateTime().addSecs(7200))  # Default to 2 hrs from now
         
         # Set up the table model
         self.tableview.setSortingEnabled(True)
