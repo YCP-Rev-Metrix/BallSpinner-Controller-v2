@@ -135,6 +135,20 @@
       </property>
      </widget>
     </item>
+    <item>
+     <widget class="QProgressBar" name="progressBar">
+      <property name="value">
+       <number>0</number>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pushButton_16">
+      <property name="text">
+       <string>Increment Progress</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
  </widget>
