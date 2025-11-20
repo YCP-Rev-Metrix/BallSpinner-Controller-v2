@@ -78,6 +78,8 @@ class AnalysisModePage(QtWidgets.QWidget):
         result = dialog.exec()
         if result == QtWidgets.QDialog.DialogCode.Accepted:
             print("User accepted the dialog.")
+            session_name = dialog.getSessionName()
+            print(f"Session Name: {session_name}")
             # Handle acceptance (e.g., save data)
         else:
             print("User rejected the dialog.")
