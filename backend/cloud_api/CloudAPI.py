@@ -19,6 +19,7 @@ from .APIUtils import APIUtils
 class CloudAPI(iCloud):
     def __init__(self) -> None:
          super().__init__()
+         self._active_workers = []  # Store workers to prevent garbage collection
          
     def get_test_data(self):
         logger.info("Starting API test data request")
@@ -26,6 +27,9 @@ class CloudAPI(iCloud):
         
         # Create async worker
         worker = APIUtils.make_get_request_async(url)
+        
+        # Store worker reference to prevent garbage collection
+        self._active_workers.append(worker)
         
         # Create event loop and result storage
         loop = QEventLoop()
@@ -47,6 +51,12 @@ class CloudAPI(iCloud):
         
         # Wait for result
         loop.exec()
+        
+        # Wait for thread to finish completely
+        worker.wait()
+        
+        # Clean up worker reference
+        self._active_workers.remove(worker)
         
         if 'error' in result:
             logger.error(f"API request failed: {result['error']}")
@@ -78,6 +88,9 @@ class CloudAPI(iCloud):
         # Create async worker
         worker = APIUtils.make_post_request_async(url, data=data)
         
+        # Store worker reference to prevent garbage collection
+        self._active_workers.append(worker)
+        
         # Create event loop and result storage
         loop = QEventLoop()
         result = None
@@ -98,6 +111,12 @@ class CloudAPI(iCloud):
         
         # Wait for result
         loop.exec()
+        
+        # Wait for thread to finish completely
+        worker.wait()
+        
+        # Clean up worker reference
+        self._active_workers.remove(worker)
         
         return result
     
@@ -116,6 +135,9 @@ class CloudAPI(iCloud):
         # Create async worker (this endpoint uses POST)
         worker = APIUtils.make_post_request_async(url, {"start_time": start_time, "end_time": end_time})
         
+        # Store worker reference to prevent garbage collection
+        self._active_workers.append(worker)
+        
         # Create event loop and result storage
         loop = QEventLoop()
         result = None
@@ -136,6 +158,12 @@ class CloudAPI(iCloud):
         
         # Wait for result
         loop.exec()
+        
+        # Wait for thread to finish completely
+        worker.wait()
+        
+        # Clean up worker reference
+        self._active_workers.remove(worker)
         
         return result
 
@@ -152,6 +180,9 @@ class CloudAPI(iCloud):
         # Create async worker
         worker = APIUtils.make_get_request_async(url, url_params={"sessionId": session_id})
         
+        # Store worker reference to prevent garbage collection
+        self._active_workers.append(worker)
+        
         # Create event loop and result storage
         loop = QEventLoop()
         result = None
@@ -172,6 +203,12 @@ class CloudAPI(iCloud):
         
         # Wait for result
         loop.exec()
+        
+        # Wait for thread to finish completely
+        worker.wait()
+        
+        # Clean up worker reference
+        self._active_workers.remove(worker)
         
         return result
 
@@ -200,6 +237,9 @@ class CloudAPI(iCloud):
         # Create async worker
         worker = APIUtils.make_post_request_async(url, data=data)
         
+        # Store worker reference to prevent garbage collection
+        self._active_workers.append(worker)
+        
         # Create event loop and result storage
         loop = QEventLoop()
         result = None
@@ -220,6 +260,12 @@ class CloudAPI(iCloud):
         
         # Wait for result
         loop.exec()
+        
+        # Wait for thread to finish completely
+        worker.wait()
+        
+        # Clean up worker reference
+        self._active_workers.remove(worker)
         
         return result
 
@@ -236,6 +282,9 @@ class CloudAPI(iCloud):
         # Create async worker
         worker = APIUtils.make_get_request_async(url=url, url_params={"sessionId": session_id})
         
+        # Store worker reference to prevent garbage collection
+        self._active_workers.append(worker)
+        
         # Create event loop and result storage
         loop = QEventLoop()
         result = None
@@ -256,6 +305,12 @@ class CloudAPI(iCloud):
         
         # Wait for result
         loop.exec()
+        
+        # Wait for thread to finish completely
+        worker.wait()
+        
+        # Clean up worker reference
+        self._active_workers.remove(worker)
         
         print(result)
         return result
@@ -287,6 +342,9 @@ class CloudAPI(iCloud):
         # Create async worker
         worker = APIUtils.make_post_request_async(url=url, data=data)
         
+        # Store worker reference to prevent garbage collection
+        self._active_workers.append(worker)
+        
         # Create event loop and result storage
         loop = QEventLoop()
         result = None
@@ -307,6 +365,12 @@ class CloudAPI(iCloud):
         
         # Wait for result
         loop.exec()
+        
+        # Wait for thread to finish completely
+        worker.wait()
+        
+        # Clean up worker reference
+        self._active_workers.remove(worker)
         
         print(result)
         return result
@@ -328,6 +392,9 @@ class CloudAPI(iCloud):
         # Create async worker
         worker = APIUtils.make_get_request_async(url, url_params={"sessionId": session_id})
         
+        # Store worker reference to prevent garbage collection
+        self._active_workers.append(worker)
+        
         # Create event loop and result storage
         loop = QEventLoop()
         result = None
@@ -348,6 +415,12 @@ class CloudAPI(iCloud):
         
         # Wait for result
         loop.exec()
+        
+        # Wait for thread to finish completely
+        worker.wait()
+        
+        # Clean up worker reference
+        self._active_workers.remove(worker)
         
         print(result)
         return result
@@ -387,6 +460,9 @@ class CloudAPI(iCloud):
         # Create async worker
         worker = APIUtils.make_post_request_async(url=url, data=data)
         
+        # Store worker reference to prevent garbage collection
+        self._active_workers.append(worker)
+        
         # Create event loop and result storage
         loop = QEventLoop()
         result = None
@@ -407,6 +483,12 @@ class CloudAPI(iCloud):
         
         # Wait for result
         loop.exec()
+        
+        # Wait for thread to finish completely
+        worker.wait()
+        
+        # Clean up worker reference
+        self._active_workers.remove(worker)
         
         print(result)
         return result
@@ -418,6 +500,9 @@ class CloudAPI(iCloud):
         # Create async worker
         worker = APIUtils.make_get_request_async(url=url, url_params={"sessionId": session_id})
         
+        # Store worker reference to prevent garbage collection
+        self._active_workers.append(worker)
+        
         # Create event loop and result storage
         loop = QEventLoop()
         result = None
@@ -438,6 +523,12 @@ class CloudAPI(iCloud):
         
         # Wait for result
         loop.exec()
+        
+        # Wait for thread to finish completely
+        worker.wait()
+        
+        # Clean up worker reference
+        self._active_workers.remove(worker)
         
         print(result)
         return result
@@ -458,6 +549,9 @@ class CloudAPI(iCloud):
         # Create async worker
         worker = APIUtils.make_post_request_async(url=url, data=data)
         
+        # Store worker reference to prevent garbage collection
+        self._active_workers.append(worker)
+        
         # Create event loop and result storage
         loop = QEventLoop()
         result = None
@@ -478,6 +572,12 @@ class CloudAPI(iCloud):
         
         # Wait for result
         loop.exec()
+        
+        # Wait for thread to finish completely
+        worker.wait()
+        
+        # Clean up worker reference
+        self._active_workers.remove(worker)
         
         print(result)
         return result
@@ -488,6 +588,9 @@ class CloudAPI(iCloud):
         # Create async worker
         worker = APIUtils.make_get_request_async(url=url, url_params={"sessionId": session_id})
         
+        # Store worker reference to prevent garbage collection
+        self._active_workers.append(worker)
+        
         # Create event loop and result storage
         loop = QEventLoop()
         result = None
@@ -508,6 +611,12 @@ class CloudAPI(iCloud):
         
         # Wait for result
         loop.exec()
+        
+        # Wait for thread to finish completely
+        worker.wait()
+        
+        # Clean up worker reference
+        self._active_workers.remove(worker)
         
         print(result)
         return result
@@ -527,6 +636,9 @@ class CloudAPI(iCloud):
         # Create async worker
         worker = APIUtils.make_post_request_async(url=url, data=data)
         
+        # Store worker reference to prevent garbage collection
+        self._active_workers.append(worker)
+        
         # Create event loop and result storage
         loop = QEventLoop()
         result = None
@@ -547,6 +659,12 @@ class CloudAPI(iCloud):
         
         # Wait for result
         loop.exec()
+        
+        # Wait for thread to finish completely
+        worker.wait()
+        
+        # Clean up worker reference
+        self._active_workers.remove(worker)
         
         print(result)
         return result
