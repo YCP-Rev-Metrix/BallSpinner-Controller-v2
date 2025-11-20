@@ -136,7 +136,6 @@ class ShotModePage(QtWidgets.QWidget):
         data_controller: DataController = bsc.get_data_controller()
         for i in range(0,len(rpm_array)):
             data_controller.add_shot_script_data(ShotScriptDataInstance(
-                sessionData=bsc.get_session(),
                 time=i*sample_interval,
                 rpm=rpm_array[i],
                 angleDeg=angle_array[i],

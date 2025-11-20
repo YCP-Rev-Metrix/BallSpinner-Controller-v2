@@ -1,7 +1,5 @@
-from .SessionData import SessionData
 class SmartDotDataInstance:
-    def __init__(self, sessionData: SessionData, time, data_selector, accelerometer_x, accelerometer_y, accelerometer_z, gyroscope_x, gyroscope_y, gyroscope_z, magnetometer_x, magnetometer_y, magnetometer_z, light):
-        self.sessionData = sessionData
+    def __init__(self, time, data_selector, accelerometer_x, accelerometer_y, accelerometer_z, gyroscope_x, gyroscope_y, gyroscope_z, magnetometer_x, magnetometer_y, magnetometer_z, light):
         self.time = time
         self.data_selector = data_selector
         self.accelerometer_x = accelerometer_x
@@ -26,7 +24,7 @@ class SmartDotDataInstance:
     #         return self.light
 
     def __str__(self):
-        return f"SmartDotDataInstance(sessionData={self.sessionData}, time={self.time}, data_selector={self.data_selector}, accelerometer_x={self.accelerometer_x}, accelerometer_y={self.accelerometer_y}, accelerometer_z={self.accelerometer_z}, gyroscope_x={self.gyroscope_x}, gyroscope_y={self.gyroscope_y}, gyroscope_z={self.gyroscope_z}, magnetometer_x={self.magnetometer_x}, magnetometer_y={self.magnetometer_y}, magnetometer_z={self.magnetometer_z}, light={self.light})"
+        return f"SmartDotDataInstance(time={self.time}, data_selector={self.data_selector}, accelerometer_x={self.accelerometer_x}, accelerometer_y={self.accelerometer_y}, accelerometer_z={self.accelerometer_z}, gyroscope_x={self.gyroscope_x}, gyroscope_y={self.gyroscope_y}, gyroscope_z={self.gyroscope_z}, magnetometer_x={self.magnetometer_x}, magnetometer_y={self.magnetometer_y}, magnetometer_z={self.magnetometer_z}, light={self.light})"
 
 class SmartDotData:
     def __init__(self):
@@ -38,5 +36,8 @@ class SmartDotData:
         self.data_entries.append(smartDotData)
 
     def __str__(self):
-        return f"SmartDotData(data_entries={self.data_entries})"
+        s = ""
+        for i in self.data_entries:
+            s += f"{i.__str__()},"
+        return f"SmartDotData: {s}"
 
