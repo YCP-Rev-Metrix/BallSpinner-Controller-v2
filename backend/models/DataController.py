@@ -62,20 +62,40 @@ class DataController:
 
         if self.session_data.isShotMode:
             #Submit the shot script data to the cloud API
-            self.cloud_api.post_shot_script_data(self.shot_script_data.get_shot_script_data_entries(), session_id)
+            shot_script_data = self.get_shot_script_data()
+            if shot_script_data:
+                self.cloud_api.post_shot_script_data(shot_script_data, session_id)
+            else:
+                logger.warning(f"No Shot Script Data found for this Shot Session {self.session_data}")
         else:
             #Submit the diagnostic script data to the cloud API
-            self.cloud_api.post_diagnostic_script_data(self.diagnostic_script_data.get_diagnostic_script_data(), session_id)
+            diagnostic_script_data = self.get_diagnostic_script_data()
+            if diagnostic_script_data:
+                self.cloud_api.post_diagnostic_script_data(diagnostic_script_data, session_id)
+            else:
+                logger.warning(f"No Diagnostic Script Data found for this Shot Session {self.session_data}")
         
         #Submit the smartdot data to the cloud API
-        self.cloud_api.post_smartdot_data(self.smartdot_data.get_data_entries(), session_id)
+        smartdot_data = self.get_smartdot_data()
+        if smartdot_data:
+            self.cloud_api.post_smartdot_data(smartdot_data, session_id)
+        else:
+            logger.warning(f"No SmartDot Data found for this Shot Session {self.session_data}")
 
 
         #Submit the encoder data to the cloud API
-        self.cloud_api.post_encoder_data(self.encoder_data.get_encoder_data_entries(), session_id)
+        encoder_data = self.get_encoder_data()
+        if encoder_data:
+            self.cloud_api.post_encoder_data(encoder_data, session_id)
+        else:
+            logger.warning(f"No Encoder Data found for this Shot Session {self.session_data}")
         
         #Submit the heat data to the cloud API
-        self.cloud_api.post_heat_data(self.heat_data.get_heat_data_entries(), session_id)
+        heat_data = self.get_heat_data()
+        if heat_data:
+            self.cloud_api.post_heat_data(heat_data, session_id)
+        else:
+            logger.warning(f"No Heat Data found for this Shot Session {self.session_data}")
 
 
     def load_session_data_from_cloud(self, session_data: SessionData):
@@ -83,28 +103,46 @@ class DataController:
         if session_data.isShotMode:
             #Load the shot script data from the cloud API
             ss_data = self.cloud_api.get_shot_script_data_by_session(session_data.id)
-            for i in ss_data:
-                self.shot_script_data.add_shot_script_data(ShotScriptDataInstance(time=i['time'], rpm=i['rpm'], angleDeg=i['angleDegrees'], tiltDeg=i['tiltDegrees']))
+            print(f"Shot Script Data: {ss_data}")
+            if ss_data:
+                for i in ss_data['data']:
+                    self.shot_script_data.add_shot_script_data(ShotScriptDataInstance(time=i['time'], rpm=i['rpm'], angleDeg=i['angleDegrees'], tiltDeg=i['tiltDegrees']))
+            else:
+                logger.warning(f"No Shot Mode Data found for this Shot Session {session_data}")
         else:
             #Load the diagnostic script data from the cloud API
             ds_data = self.cloud_api.get_diagnostic_script_data_by_session(session_data.id)
-            for i in ds_data:
-                self.diagnostic_script_data.add_diagnostic_script_data(DiagnosticScriptDataInstance(time=i['time'], motor_id=i['motorID'], instruction=i['instruction']))
+            # print(f"Diagnostic Script Data: {ds_data}")
+            if ds_data:
+                for i in ds_data['data']:
+                    # print(f"Loading Diagnostic Script Data: {i}")
+                    self.diagnostic_script_data.add_diagnostic_script_data(DiagnosticScriptDataInstance(time=i['time'], motor_id=i['motorId'], instruction=i['instruction']))
+            else:
+                logger.warning(f"No Diagnostic Mode Data found for this Shot Session {session_data}")
 
         #load the smartdot data from the cloud API
         sd_data = self.cloud_api.get_smartdot_data(session_data.id)
-        for i in sd_data:
-            self.smartdot_data.add_smartdot_data(SmartDotDataInstance(time=i['time'], data_selector=i['dataSelector'], accelerometer_x=i['xL_X'], accelerometer_y=i['xL_Y'], accelerometer_z=i['xL_Z'], gyroscope_x=i['gY_X'], gyroscope_y=i['gY_Y'], gyroscope_z=i['gY_Z'], magnetometer_x=i['mG_X'], magnetometer_y=i['mG_Y'], magnetometer_z=i['mG_Z'], light=i['lt']))
+        if sd_data:
+            for i in sd_data['data']:
+                self.smartdot_data.add_new_data(SmartDotDataInstance(time=i['time'], data_selector=i['dataSelector'], accelerometer_x=i['xL_X'], accelerometer_y=i['xL_Y'], accelerometer_z=i['xL_Z'], gyroscope_x=i['gY_X'], gyroscope_y=i['gY_Y'], gyroscope_z=i['gY_Z'], magnetometer_x=i['mG_X'], magnetometer_y=i['mG_Y'], magnetometer_z=i['mG_Z'], light=i['lt']))
+            else:
+                logger.warning(f"No SmartDot Data found for this Shot Session {session_data}")
 
         #load the encoder data from the cloud API
         enc_data = self.cloud_api.get_encoder_data(session_data.id)
-        for i in enc_data:
-            self.encoder_data.add_encoder_data(EncoderDataInstance(time=i['time'], pulses=i['pulses'], motor_id=i['motorId']))
+        if enc_data:
+            for i in enc_data['data']:
+                self.encoder_data.add_encoder_data(EncoderDataInstance(time=i['time'], pulses=i['pulses'], motor_id=i['motorId']))
+        else:
+            logger.warning(f"No Encoder Data found for this Shot Session {session_data}")
 
         #load the heat data from the cloud API
         hd_data = self.cloud_api.get_heat_data(session_data.id)
-        for i in hd_data:
-            self.heat_data.add_heat_data(HeatDataInstance(time=i['time'], value=i['value'], motor_id=i['motorId']))
+        if hd_data:
+            for i in hd_data['data']:
+                self.heat_data.add_heat_data(HeatDataInstance(time=i['time'], motor_id=i['motorId'], value=i['value']))
+        else:
+            logger.warning(f"No Heat Data found for this Shot Session {session_data}")
 
         print(f"Data Controller loaded from cloud: {self}")
         

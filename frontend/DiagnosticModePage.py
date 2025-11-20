@@ -115,7 +115,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 self.diagnostic_script.start_motors([1,2,3])
 
                 #Initialize the Session
-                bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Test Session", isShotMode=True))
+                bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Diagnostic Session", isShotMode=False))
                 bsc.set_data_controller(DataController(bsc.get_session()))
             else:
                 #This is the stop function

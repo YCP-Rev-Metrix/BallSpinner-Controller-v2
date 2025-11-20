@@ -36,7 +36,7 @@ class iCloud(ABC):
         pass
 
     @abstractmethod
-    def get_all_diagnostic_script_data_by_session(self, session_id):
+    def get_diagnostic_script_data_by_session(self, session_id):
         """
         Get all diagnostic script data by session.
         

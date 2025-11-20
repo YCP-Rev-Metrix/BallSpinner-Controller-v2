@@ -37,13 +37,8 @@ class CloudTest(QtWidgets.QWidget):
         """Handle the 'Ask Cloud for 6' button click"""
         #Ask the cloud for the test data
         # status_code, data = self.cloud_api.api_get_test_data()
-        data = [
-            {"id": -1,
-            "timeStamp": dt.datetime.now().isoformat(),
-            "name": "Test Session",
-            "isShotMode": True,
-            }
-        ]
+        data = SessionData(id=-1,timeStamp=dt.datetime.now().isoformat(), name="Test Session", isShotMode=True)
+        
 
         result = self.cloud_api.post_session_data(data)
         print(result)
@@ -141,7 +136,7 @@ class CloudTest(QtWidgets.QWidget):
 
     def load_session_data_from_cloud(self):
         print("Load Session Data from Cloud clicked")
-        bsc.get_data_controller().load_session_data_from_cloud(SessionData(id=10, timeStamp=dt.datetime.now().isoformat(), name="Test Session", isShotMode=True))
+        bsc.get_data_controller().load_session_data_from_cloud(SessionData(id=14, timeStamp=dt.datetime.now().isoformat(), name="Diagnostic Session", isShotMode=True))
         print("Session data loaded from cloud")
 
 if __name__ == '__main__':

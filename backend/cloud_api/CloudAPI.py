@@ -33,7 +33,7 @@ class CloudAPI(iCloud):
             print(f"Data: {result['data']}")
             return result['status_code'], result['data']
 
-    def post_session_data(self, session_data):
+    def post_session_data(self, session_data: SessionData):
         """
         Submit session data to the cloud API.
         
@@ -41,9 +41,10 @@ class CloudAPI(iCloud):
             session_data: SessionData instance
         """
         logger.info("post_session_data called")
+        print(session_data.get_id())
         data = []
         data.append({
-            "id": session_data.id,
+            "id": session_data.get_id(),
             "timeStamp": session_data.timeStamp,
             "name": session_data.name,
             "isShotMode": session_data.isShotMode
@@ -66,7 +67,7 @@ class CloudAPI(iCloud):
         result = APIUtils.make_post_request(url, {"start_time": start_time, "end_time": end_time})
         return result
 
-    def get_all_diagnostic_script_data_by_session(self, session_id):
+    def get_diagnostic_script_data_by_session(self, session_id):
         """
         Get all diagnostic script data by session.
         
@@ -101,7 +102,7 @@ class CloudAPI(iCloud):
             })
         
         result = APIUtils.make_post_request(url, data=data)
-        pass
+        return result
 
     def get_shot_script_data_by_session(self, session_id):
         """
@@ -114,6 +115,7 @@ class CloudAPI(iCloud):
         url = "https://api.revmetrix.io/api/gets/GetAllPiShotsBySession"
         result = APIUtils.make_get_request(url=url, url_params={"sessionId": session_id})
         print(result)
+        return result
 
     def post_shot_script_data(self, shot_script_data: ShotScriptData, session_id):
         """
@@ -140,7 +142,7 @@ class CloudAPI(iCloud):
         url = "https://api.revmetrix.io/api/posts/PostPiShot"
         result = APIUtils.make_post_request(url=url, data=data)
         print(result)
-
+        return result
 
 
   
@@ -157,6 +159,7 @@ class CloudAPI(iCloud):
         url = "https://api.revmetrix.io/api/gets/GetAllPiSmartDotDataBySession"
         result = APIUtils.make_get_request(url, url_params={"sessionId": session_id})
         print(result)
+        return result
 
     def post_smartdot_data(self, smart_dot_data: SmartDotData, session_id):
         """
@@ -191,13 +194,14 @@ class CloudAPI(iCloud):
             )
         result = APIUtils.make_post_request(url=url, data=data)
         print(result)
+        return result
 
     def get_encoder_data(self, session_id):
         logger.info(f"Getting encoder data by sessionId: {session_id}")
         url = "https://api.revmetrix.io/api/gets/GetAllPiEncoderDataBySession"
         result = APIUtils.make_get_request(url=url, url_params={"sessionId": session_id})
         print(result)
-
+        return result
     def post_encoder_data(self, encoder_data: EncoderData, session_id):
         logger.info(f"Posting encoder data by sessionId: {session_id}")
         url = "https://api.revmetrix.io/api/posts/PostPiEncoderData"
@@ -213,13 +217,13 @@ class CloudAPI(iCloud):
             })
         result = APIUtils.make_post_request(url=url, data=data)
         print(result)
-
+        return result
     def get_heat_data(self, session_id):
         logger.info(f"Getting Heat data by sessionId: {session_id}")
         url = "https://api.revmetrix.io/api/gets/GetAllPiHeatDataBySession"
         result = APIUtils.make_get_request(url=url, url_params={"sessionId": session_id})
         print(result)
-
+        return result
     def post_heat_data(self, heat_data: HeatData, session_id):
         logger.info(f"Posting heat data by sessionId: {session_id}")
         url = "https://api.revmetrix.io/api/posts/PostPiHeatData"
@@ -234,7 +238,7 @@ class CloudAPI(iCloud):
             })
         result = APIUtils.make_post_request(url=url, data=data)
         print(result)
-
+        return result
 if __name__ == "__main__":
     
 
