@@ -51,9 +51,7 @@ class DataViewPage(QtWidgets.QWidget):
         self.btnAnalyze.clicked.connect(self.analyze_data)
         self.btnReplay.clicked.connect(self.replay_data)
 
-        #Disable buttons until a row is selected
-        self.btnAnalyze.setEnabled(False)
-        self.btnReplay.setEnabled(False)
+
 
         #Set Up dates 
         self.dateStart.setDateTime(QDateTime.currentDateTime().addDays(-7))  # Default to one week ago
