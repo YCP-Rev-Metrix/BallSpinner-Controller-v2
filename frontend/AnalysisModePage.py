@@ -9,7 +9,29 @@ from .SmartDotGraph import SmartDotGraph
 import math
 from PyQt6.QtCore import pyqtSignal
 from backend.models.SmartDotData import SmartDotDataInstance
+import pyqtgraph as pg
 from BSC import bsc
+
+
+class AnalysisDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None, type: str = None):
+        super().__init__(parent)
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'AnalysisDialog.ui'), self, package='frontend')
+        self.label = self.findChild(QtWidgets.QLabel, 'label')
+        self.label.setText(type)
+        self.buttonBox = self.findChild(QtWidgets.QDialogButtonBox, 'buttonBox')
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        self.graph = self.findChild(pg.PlotWidget, 'graph')
+        
+        self.setWindowTitle("Analysis Options")
+        self.setModal(True)
+        self.resize(800, 800)
+
+
+
+
+
 
 
 
@@ -23,7 +45,43 @@ class AnalysisModePage(QtWidgets.QWidget):
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'AnalysisModePage.ui'), self, package='frontend')
         self.smartDotGraph = self.findChild(SmartDotGraph, 'SmartDotGraph')
         self.motorGraph = self.findChild(MotorGraph, 'MotorGraph')
+        self.smartDotGraph.setView(0)  # Set SmartDotGraph to show all data
+        self.motorGraph.setView(0)     # Set MotorGraph to show all data
 
+        self.btnSave = self.findChild(QtWidgets.QPushButton, 'btnSave')
+        self.btnSave.clicked.connect(self.openPostDialog)
+
+        self.btnOp1 = self.findChild(QtWidgets.QPushButton, 'btnOp1')
+        self.btnOp2 = self.findChild(QtWidgets.QPushButton, 'btnOp2')
+        self.btnOp3 = self.findChild(QtWidgets.QPushButton, 'btnOp3')
+        self.btnOp4 = self.findChild(QtWidgets.QPushButton, 'btnOp4')
+
+        self.btnOp1.clicked.connect(lambda: self.openAnalysisDialog("Option 1 Analysis"))
+        self.btnOp2.clicked.connect(lambda: self.openAnalysisDialog("Option 2 Analysis"))
+        self.btnOp3.clicked.connect(lambda: self.openAnalysisDialog("Option 3 Analysis"))
+        self.btnOp4.clicked.connect(lambda: self.openAnalysisDialog("Option 4 Analysis"))
+
+    def openAnalysisDialog(self, type: str):
+        dialog = AnalysisDialog(self, type)
+        result = dialog.exec()
+        if result == QtWidgets.QDialog.DialogCode.Accepted:
+            print("User accepted the dialog.")
+            # Handle acceptance (e.g., proceed with analysis)
+        else:
+            print("User rejected the dialog.")
+            # Handle rejection (e.g., cancel operation)
+
+
+    def openPostDialog(self):
+        from .PostDialog import PostDialog
+        dialog = PostDialog(self)
+        result = dialog.exec()
+        if result == QtWidgets.QDialog.DialogCode.Accepted:
+            print("User accepted the dialog.")
+            # Handle acceptance (e.g., save data)
+        else:
+            print("User rejected the dialog.")
+            # Handle rejection (e.g., cancel operation)
 
     def loadData(self):
         dc = bsc.get_data_controller()
@@ -87,7 +145,7 @@ class AnalysisModePage(QtWidgets.QWidget):
             motor_angleDeg.append(data.angleDeg)
             motor_tiltDeg.append(data.tiltDeg)
 
-        #TODO: Add Diagnostic Support
+
 
         #Get encoder values
         time_encoder = []
@@ -102,9 +160,32 @@ class AnalysisModePage(QtWidgets.QWidget):
         encoder_tilt = [0.0]
 
         
-    
+            
+        if time_motor == []:
+            diag_data = dc.diagnostic_data.get_diagnostic_data_entries()
+            time_rpm = []
+            time_angle = []
+            time_tilt = []
+            for data in diag_data:
+                match data.motor_id:
+                    case 0:
+                        time_rpm.append(data.time)
+                        motor_rpm.append(data.instruction)
+                    case 1:
+                        time_angle.append(data.time)
+                        motor_angleDeg.append(data.instruction)
+                    case 2:
+                        time_tilt.append(data.time)
+                        motor_tiltDeg.append(data.instruction)
+                    case _:
+                        pass
+            # Update Motor graph
+            self.motorGraph.updateDataDiagnostic(time_rpm, motor_rpm, time_angle, motor_angleDeg, time_tilt, motor_tiltDeg
+                                                 ,time_encoder, encoder_rpm, encoder_angle, encoder_tilt
+                                                 ,[],[],[],[])
+        else:
         # Update Motor graph
-        self.motorGraph.updateDataBetter(time_motor, motor_rpm, motor_angleDeg, motor_tiltDeg, time_encoder, encoder_rpm, encoder_angle, encoder_tilt)
+            self.motorGraph.updateDataBetter(time_motor, motor_rpm, motor_angleDeg, motor_tiltDeg, time_encoder, encoder_rpm, encoder_angle, encoder_tilt)
         
 
 
