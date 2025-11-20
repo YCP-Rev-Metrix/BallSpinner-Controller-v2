@@ -56,7 +56,7 @@ class CloudTest(QtWidgets.QWidget):
     def get_sessions(self):
         """Handle the 'Get Sessions' button click"""
         #Get all sessions in the time range
-        result = self.cloud_api.get_sessions_in_time_range(0,0)
+        result = self.cloud_api.get_sessions_in_time_range(20251119,20251119)
         print("Get Sessions clicked")
         print(result)
 

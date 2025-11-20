@@ -101,9 +101,7 @@ class HomePage(QtWidgets.QMainWindow):
                 pass
             case 6: #Shot View Page
                 self.window().setWindowTitle("Ball Spinner Controller - Shot View")
-                if(isinstance(data, MotorData)):
-                    print(data.dt)
-                    self.shotViewPage.StartShotView()
+                self.shotViewPage.StartShotView()
                 pass
             case 7: #Data View Page
                 #No Data Expected

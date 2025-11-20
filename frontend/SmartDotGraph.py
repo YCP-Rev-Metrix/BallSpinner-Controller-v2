@@ -43,6 +43,20 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.dsbMinXValue.valueChanged.connect(self.setRange)
         self.dsbMaxXValue.valueChanged.connect(self.setRange)
         self.dsbLookBackSeconds.valueChanged.connect(self.limitViewBox)
+        # Redraw using updateDataBetter when any checkbox is toggled
+        try:
+            self.chkAccelerometer_X.toggled.connect(self._on_checkbox_toggled)
+            self.chkAccelerometer_Y.toggled.connect(self._on_checkbox_toggled)
+            self.chkAccelerometer_Z.toggled.connect(self._on_checkbox_toggled)
+            self.chkGyroscope_X.toggled.connect(self._on_checkbox_toggled)
+            self.chkGyroscope_Y.toggled.connect(self._on_checkbox_toggled)
+            self.chkGyroscope_Z.toggled.connect(self._on_checkbox_toggled)
+            self.chkMagnetometer_X.toggled.connect(self._on_checkbox_toggled)
+            self.chkMagnetometer_Y.toggled.connect(self._on_checkbox_toggled)
+            self.chkMagnetometer_Z.toggled.connect(self._on_checkbox_toggled)
+            self.chkLight.toggled.connect(self._on_checkbox_toggled)
+        except Exception:
+            pass
         # Hide limit view controls when not needed
         self.lblXMax.setVisible(False)
         self.lblXMin.setVisible(False)
@@ -112,6 +126,11 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.chkMagnetometer_Y.setChecked(True)
         self.chkMagnetometer_Z.setChecked(True)
         self.chkLight.setChecked(True)
+        # trigger redraw via updateDataBetter with current arrays
+        try:
+            self._on_checkbox_toggled(True)
+        except Exception:
+            pass
     def deselect_all(self):
         self.chkAccelerometer_X.setChecked(False)
         self.chkAccelerometer_Y.setChecked(False)
@@ -123,6 +142,11 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.chkMagnetometer_Y.setChecked(False)
         self.chkMagnetometer_Z.setChecked(False)
         self.chkLight.setChecked(False)
+        # trigger redraw via updateDataBetter with current arrays
+        try:
+            self._on_checkbox_toggled(False)
+        except Exception:
+            pass
     #to change code outside of updateDataBetter
     def limitViewBox(self):
         if( len(self.accelerometerTime)>0 and len(self.gyroscopeTime)>0 and len(self.magnetometerTime)>0 and len(self.lightTime)>0):
@@ -502,6 +526,23 @@ class SmartDotGraph(QtWidgets.QWidget):
         except Exception as e:
             # Fallback: print the exception to help debugging
             print("Error mapping graph click to data coords:", e)
+
+    def _on_checkbox_toggled(self, checked):
+        """Handler for any checkbox toggle: call updateDataBetter with stored arrays
+        so the plotting logic (which lives in updateDataBetter) re-runs using
+        the currently stored sensor arrays."""
+        try:
+            # Call updateDataBetter with the current arrays stored on the instance.
+            # This will clear & redraw plots according to the checkbox states.
+            self.updateDataBetter(
+                self.accelerometerTime, self.accelerometerX, self.accelerometerY, self.accelerometerZ,
+                self.gyroscopeTime, self.gyroscopeX, self.gyroscopeY, self.gyroscopeZ,
+                self.magnetometerTime, self.magnetometerX, self.magnetometerY, self.magnetometerZ,
+                self.lightTime, self.lightValue
+            )
+        except Exception:
+            # Swallow exceptions to avoid UI breakage from toggle handlers
+            pass
 
  
     def updateDataBetter(self,

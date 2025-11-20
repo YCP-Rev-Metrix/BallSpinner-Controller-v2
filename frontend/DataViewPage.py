@@ -7,6 +7,8 @@ from PyQt6.QtCore import pyqtSignal, QDateTime, QSortFilterProxyModel, Qt, QRegu
 from datetime import datetime, timezone
 import datetime as dt
 from BSC import bsc
+from backend.models.DataController import DataController
+from backend.models.SessionData import SessionData
 
 class DataViewPage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
@@ -54,8 +56,8 @@ class DataViewPage(QtWidgets.QWidget):
 
 
         #Set Up dates 
-        self.dateStart.setDateTime(QDateTime.currentDateTime().addDays(-7))  # Default to one week ago
-        self.dateEnd.setDateTime(QDateTime.currentDateTime())  # Default to now
+        self.dateStart.setDateTime(QDateTime.currentDateTime().addDays(-7).addSecs(-7200))  # Default to one week  and 2 hrs ago
+        self.dateEnd.setDateTime(QDateTime.currentDateTime().addSecs(7200))  # Default to 2 hrs from now
         
         # Set up the table model
         self.tableview.setSortingEnabled(True)
@@ -184,6 +186,27 @@ class DataViewPage(QtWidgets.QWidget):
         pass
     def load_data(self):
         #TODO: Implement data loading logic, turn session into Datacontroller with proper data
+        sel = self.tableview.selectionModel().selectedRows()
+        if not sel:
+            return -1
+        rowidx = self.proxy.mapToSource(sel[0])
+        session_id_index = self.model.index(rowidx.row(), 0)  # Assuming first column is session ID
+        session_id = int(self.model.data(session_id_index))
+        timeStamp_index = self.model.index(rowidx.row(), 1)  # Assuming second column is timestamp
+        timeStamp_str = self.model.data(timeStamp_index)
+        name_index = self.model.index(rowidx.row(), 2)  # Assuming third column
+        name_str = self.model.data(name_index)
+        isShotMode_index = self.model.index(rowidx.row(), 3)  # Assuming
+        isShotMode_str = self.model.data(isShotMode_index)
+        isShotMode = isShotMode_str.strip().lower() in ('true', '1', 'yes')
+
+
+
+
+        bsc.set_session(SessionData(id=session_id, timeStamp=timeStamp_str, name=name_str, isShotMode=isShotMode))
+        bsc.set_data_controller(DataController(bsc.get_session()))
+        bsc.get_data_controller().load_session_data_from_cloud(bsc.get_session())
+
         pass
     def analyze_data(self):
         print("Analyze Data Clicked")
@@ -192,6 +215,7 @@ class DataViewPage(QtWidgets.QWidget):
         pass
     def replay_data(self):
         print("Replay Data Clicked")
+        self.load_data()
         self.changePage.emit(6, bsc.get_data_controller())
         pass
 
