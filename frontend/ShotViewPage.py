@@ -121,6 +121,8 @@ class ShotViewPage(QtWidgets.QWidget):
         self.scriptSpin = []
         self.scriptTilt = []
         self.scriptAngle = []
+
+        self.shot_script.start_motors([0, 1, 2])
         
         if hasattr(Controller, 'shot_script_data'):
             motor_data = Controller.shot_script_data.get_shot_script_data_entries()
@@ -219,7 +221,7 @@ class ShotViewPage(QtWidgets.QWidget):
         self.displayedTilt = np.append(self.displayedTilt, self.scriptTilt[self.count])
         self.displayedAngle = np.append(self.displayedAngle, self.scriptAngle[self.count])
         self.motorGraph.updateDataBetter(self.displayedTime, self.displayedSpin, self.displayedTilt, self.displayedAngle,np.array([0.0]),np.array([0.0]),np.array([0.0]),np.array([0.0]))
-        print("Updating Shot View:", self.ElapsedTime, self.count)
+        # print("Updating Shot View:", self.ElapsedTime, self.count)
         if self.SmartDot:
             self.SmartDotGraph.updateDataBetter(self.SmartDot.xl_time,self.SmartDot.xl_x, self.SmartDot.xl_y, self.SmartDot.xl_z,
                                                 self.SmartDot.gy_time,self.SmartDot.gy_x, self.SmartDot.gy_y, self.SmartDot.gy_z,
@@ -298,6 +300,7 @@ class ShotViewPage(QtWidgets.QWidget):
                     light=self.SmartDot.lt_value[i]
                 ))
             print("Submitted SmartDot data to DataController")
+        bsc.disconnect_all_motors()
         print("Shot View Ended")
         self.btnAnalyze.setEnabled(True)  # Enable Analyze button after shot view
         

@@ -204,6 +204,7 @@ class USBBDCMotor(iMotor):
         self.targetSpeed +=50
         self.ser.write(encode(SetDutyCycle(self.targetSpeed *0.000043333333)))
         self.currSpeed = self.targetSpeed
+        self.getCurrentSpeed()
 
     def getCurrentSpeed(self):
         '''send_get_values(ser)
@@ -211,8 +212,8 @@ class USBBDCMotor(iMotor):
         if vals is not None:
             
             return vals["rpm"]/2.0 #Encoder implement, maybe working'''
-        send_get_values(ser)
-        vals = read_mc_values(ser)
+        send_get_values(self.ser)
+        vals = read_mc_values(self.ser)
         if vals is not None:
             erpm = vals["rpm"]
 
@@ -220,13 +221,7 @@ class USBBDCMotor(iMotor):
             mech_rpm = erpm / 2.0
 
 
-        logger.info(f"ERPM: {erpm:9.1f} |
-                RPM: {mech_rpm:9.1f} | 
-                I_motor: {vals['motor_current']:6.2f} A | 
-                V_in: {vals['v_in']:5.2f} V | 
-                Duty: {vals['duty_now']*100:5.1f}% | 
-                Fault: {vals['fault']}"
-            )
+        print(f"ERPM: {erpm:9.1f} | RPM: {mech_rpm:9.1f} | I_motor: {vals['motor_current']:6.2f} A | V_in: {vals['v_in']:5.2f} V | Duty: {vals['duty_now']*100:5.1f}% | Fault: {vals['fault']}")
 
     def rampUp(self):
         while self.currSpeed < self.targetSpeed:

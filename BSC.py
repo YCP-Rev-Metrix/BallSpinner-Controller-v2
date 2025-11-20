@@ -53,5 +53,10 @@ class BSC:
     def set_data_controller(self, data_controller):
         self.data_controller = data_controller
 
+    def disconnect_all_motors(self):
+        self.motor1.disconnect()
+        self.motor2.disconnect()
+        self.motor3.disconnect(3)
+
 
 bsc = BSC()
