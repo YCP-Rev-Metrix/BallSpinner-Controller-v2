@@ -28,7 +28,7 @@ class iMotor(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def changeSpeed(self, dutyCycle : float):
+    def changeSpeed(self, dutyCycle : float, isShotMode : bool):
         pass
 
     @abstractmethod

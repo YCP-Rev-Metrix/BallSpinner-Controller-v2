@@ -29,7 +29,7 @@ class SimMotor(iMotor):
     def stop(self):
         pass
 
-    def changeSpeed(self, dutyCycle : int):
+    def changeSpeed(self, dutyCycle : int, isShotMode: bool):
         #print("speed changed in motor object")
         self.currSpeed = dutyCycle
 

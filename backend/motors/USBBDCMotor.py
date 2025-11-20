@@ -191,7 +191,7 @@ class USBBDCMotor(iMotor):
         self.targetSpeed = 0.0
         self.rampDown()
 
-    def changeSpeed(self, dutyCycle: float):
+    def changeSpeed(self, dutyCycle: float, isShotMode: bool):
         self.targetSpeed = self.clamp(dutyCycle, 0, 600) # Clamp to bounds of graph (in case weird values)
         '''
         if(self.currSpeed<self.targetSpeed):
@@ -204,7 +204,11 @@ class USBBDCMotor(iMotor):
         self.currSpeed = self.targetSpeed
 
     def getCurrentSpeed(self):
-        return self.currSpeed #IMPLEMENT ENCODER HERE IF WANTED.
+        send_get_values(ser)
+        vals = read_mc_values(ser)
+        if vals is not None:
+            
+            return vals["rpm"]/2.0 #Encoder implement, maybe working
 
     def rampUp(self):
         while self.currSpeed < self.targetSpeed:

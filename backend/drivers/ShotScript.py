@@ -36,7 +36,7 @@ class ShotScript:
             return
         for i, motor in enumerate(self.motors):
             try:
-                motor.changeSpeed(float(values[i]))
+                motor.changeSpeed(float(values[i]), True)
                 logger.info(f"Changed speed of motor {i + 1} to {values[i]}")
             except Exception as e:
                 logger.error(f"Error changing speed of motor {i + 1}: {e}")

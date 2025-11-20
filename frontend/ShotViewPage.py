@@ -115,7 +115,16 @@ class ShotViewPage(QtWidgets.QWidget):
         self.timer.timeout.connect(self.UpdateShotView)
         self.timer.start()
 
+
+        time_values = []
+        t = 0.0
+        while t <= self.MaxTime:
+            time_values.append(round(t, 6))
+            t += 0.025
         
+        bsc.motor2.interpolate(self.scriptTilt)
+        bsc.motor2.set_motor_times_from_indices(time_values)
+
 
 
         
