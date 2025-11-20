@@ -42,10 +42,10 @@ class DataViewPage(QtWidgets.QWidget):
 
         # Connect button signals to their respective functions
         
-        self.btnSearch.clicked.connect(lambda: self.refresh_data(
-            int(self.dateStart.dateTime().toSecsSinceEpoch()),
-            int(self.dateEnd.dateTime().toSecsSinceEpoch())
-        ))
+        self.btnSearch.clicked.connect(
+            lambda: self.refresh_data(int(self.dateStart.dateTime().toString("yyyyMMdd")), int(self.dateEnd.dateTime().toString("yyyyMMdd")))
+            # lambda: print(int(self.dateStart.dateTime().toString("yyyyMMdd")))
+            )
         
         #self.btnSearch.clicked.connect(self.refresh_data)
         self.btnAnalyze.clicked.connect(self.analyze_data)
@@ -72,7 +72,53 @@ class DataViewPage(QtWidgets.QWidget):
         self.tableview.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
 
 
-        self.proxy = QSortFilterProxyModel(self)
+        # Use a custom proxy so we can combine text filtering with a session-type filter
+        class FilterProxy(QSortFilterProxyModel):
+            def __init__(self, parent=None):
+                super().__init__(parent)
+                self.sessionTypeFilter = None  # None = any, True = shot, False = diagnostic
+
+            def setSessionTypeFilter(self, value):
+                self.sessionTypeFilter = value
+                self.invalidateFilter()
+
+            def filterAcceptsRow(self, source_row, source_parent):
+                # First apply the base text filter behavior
+                if not super().filterAcceptsRow(source_row, source_parent):
+                    return False
+
+                # If no session-type filter is set, accept
+                if self.sessionTypeFilter is None:
+                    return True
+
+                model = self.sourceModel()
+                # Find the column that contains the isShotMode (or isShot) header
+                col = -1
+                for c in range(model.columnCount()):
+                    header = model.headerData(c, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole)
+                    if header in ('isShotMode', 'isShot'):
+                        col = c
+                        break
+
+                # If we couldn't find the column, don't filter it out
+                if col == -1:
+                    return True
+
+                index = model.index(source_row, col, source_parent)
+                data = str(model.data(index, Qt.ItemDataRole.DisplayRole)).strip().lower()
+                if data in ('true', '1', 'yes'):
+                    val = True
+                elif data in ('false', '0', 'no'):
+                    val = False
+                else:
+                    try:
+                        val = bool(int(data))
+                    except Exception:
+                        return True
+
+                return val == self.sessionTypeFilter
+
+        self.proxy = FilterProxy(self)
         self.proxy.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.proxy.setFilterKeyColumn(-1)  # search all columns
         # make sure we filter on the displayed text
@@ -81,6 +127,15 @@ class DataViewPage(QtWidgets.QWidget):
         self.textSearch.textChanged.connect(self.on_search_text_changed)
         self.proxy.setSourceModel(self.model)
         self.tableview.setModel(self.proxy)
+
+        # Ensure the combobox has the expected items (only add if not already present)
+        if self.cboSessionType.count() == 0:
+            self.cboSessionType.addItems(["All", "Diagnostic", "Shot"])
+
+        # Connect combobox changes to update the proxy filter
+        self.cboSessionType.currentTextChanged.connect(self.on_session_type_changed)
+        # Initialize proxy filter from current combobox value
+        self.on_session_type_changed(self.cboSessionType.currentText())
 
     def on_search_text_changed(self, text: str):
         # Escape the user input so regex metacharacters don't interfere,
@@ -93,7 +148,18 @@ class DataViewPage(QtWidgets.QWidget):
         self.proxy.setFilterRegularExpression(regex)
         self.proxy.invalidate()
 
-    def refresh_data(self, start_time: int = 0, end_time: int = 0):
+    def on_session_type_changed(self, text: str):
+        t = text.strip().lower() if text else 'all'
+        if t == 'all':
+            self.proxy.setSessionTypeFilter(None)
+        elif t.startswith('shot'):
+            self.proxy.setSessionTypeFilter(True)
+        elif t.startswith('diagnostic'):
+            self.proxy.setSessionTypeFilter(False)
+        else:
+            self.proxy.setSessionTypeFilter(None)
+
+    def refresh_data(self, start_time, end_time):
         print(start_time, end_time)
         # clear the persistent model and refill it; proxy filters this model
         self.model.clear()
@@ -108,10 +174,7 @@ class DataViewPage(QtWidgets.QWidget):
                 for session in sessions:
                     row = []
                     for key in headers:
-                        if key == "timeStamp":
-                            item = QStandardItem((QDateTime.fromSecsSinceEpoch(int(session[key])) if isinstance(session[key], (int, float)) or (isinstance(session[key], str) and session[key].isdigit()) else QDateTime.fromString(str(session[key]), Qt.DateFormat.ISODate)).toString(Qt.DateFormat.ISODate))
-                        else:
-                            item = QStandardItem(str(session[key]))
+                        item = QStandardItem(str(session[key]))
                         item.setEditable(False)
                         row.append(item)
                     self.model.appendRow(row)

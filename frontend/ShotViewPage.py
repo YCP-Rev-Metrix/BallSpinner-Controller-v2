@@ -127,7 +127,6 @@ class ShotViewPage(QtWidgets.QWidget):
             self.dt_ms = int(self.dt * 1000)
         else:
             #Pase diagnostic data if no shot script data
-            """
             diag_data = Controller.diagnostic_data.get_diagnostic_data_entries()
             #TODO: Make Continusous data from diagnostic if no shot script data
             self.MaxTime = diag_data[-1].time  # assuming motor_data is sorted by time
@@ -138,9 +137,9 @@ class ShotViewPage(QtWidgets.QWidget):
             self.scriptAngle.append(0.0)
             for i in np.arange(0.25, self.MaxTime, self.dt):
                 # find closest diag data for each motor
-                spin_val = 0.0
-                tilt_val = 0.0
-                angle_val = 0.0
+                spin_val = self.scriptSpin[-1]
+                tilt_val = self.scriptTilt[-1]
+                angle_val = self.scriptAngle[-1]
                 for data in diag_data:
                     if abs(data.time - i) < self.dt / 2:
                         match data.motor_id:
@@ -155,7 +154,6 @@ class ShotViewPage(QtWidgets.QWidget):
                 self.scriptSpin.append(spin_val)
                 self.scriptTilt.append(tilt_val)
                 self.scriptAngle.append(angle_val)
-                """
 
 
         # reset displayed data and counters

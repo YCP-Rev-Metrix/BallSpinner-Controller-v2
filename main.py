@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
     # Apply qdarktheme stylesheet and palette. These must run before any
     # widgets are instantiated or UI files are loaded.
-    app.setStyleSheet(qdarktheme.load_stylesheet("dark"))
+    #app.setStyleSheet(qdarktheme.load_stylesheet("dark"))
     app.setPalette(qdarktheme.load_palette("dark"))
 
     window = HomePage()
