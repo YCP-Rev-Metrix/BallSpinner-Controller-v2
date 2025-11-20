@@ -134,8 +134,11 @@ class AnalysisModePage(QtWidgets.QWidget):
             time_light, light
         )
         # Load Motor data from BSC data controller
-        motor_data = dc.shot_script_data.get_shot_script_data_entries()
-       
+        if hasattr(dc, 'shot_script_data'):
+            motor_data = dc.shot_script_data.get_shot_script_data_entries()
+        else:
+            motor_data = []
+
         time_motor = []
         motor_rpm = []
         motor_angleDeg = []

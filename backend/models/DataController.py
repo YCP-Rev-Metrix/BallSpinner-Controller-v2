@@ -97,7 +97,7 @@ class DataController:
         else:
             logger.warning(f"No Heat Data found for this Shot Session {self.session_data}")
 
-
+    #ALL DATA WITH SESSION, Not JUST SESSION METADATA
     def load_session_data_from_cloud(self, session_data: SessionData):
         #Load the correct script data from the cloud API
         if session_data.isShotMode:

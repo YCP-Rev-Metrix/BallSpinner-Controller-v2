@@ -113,9 +113,9 @@ class ShotViewPage(QtWidgets.QWidget):
         self.scriptSpin = []
         self.scriptTilt = []
         self.scriptAngle = []
-        motor_data = Controller.shot_script_data.get_shot_script_data_entries()
-        if len(motor_data) >0:
-            
+        
+        if hasattr(Controller, 'shot_script_data'):
+            motor_data = Controller.shot_script_data.get_shot_script_data_entries()
             for data in motor_data:
                 self.scriptSpin.append(data.rpm)
                 self.scriptTilt.append(data.angleDeg)
@@ -125,6 +125,8 @@ class ShotViewPage(QtWidgets.QWidget):
             self.MaxTime = motor_data[-1].time  # assuming motor_data is sorted by time
             self.dt = motor_data[1].time - motor_data[0].time  # interval in seconds
             self.dt_ms = int(self.dt * 1000)
+            print(len(self.scriptSpin), len(self.scriptTilt), len(self.scriptAngle))
+            print("Determined dt (s):", self.dt)
         else:
             #Pase diagnostic data if no shot script data
             diag_data = Controller.diagnostic_data.get_diagnostic_data_entries()
@@ -186,6 +188,7 @@ class ShotViewPage(QtWidgets.QWidget):
             self.timer.timeout.disconnect()
         except Exception:
             pass
+
         self.timer.timeout.connect(self.UpdateShotView)
         self.timer.start()
         
@@ -207,7 +210,7 @@ class ShotViewPage(QtWidgets.QWidget):
                                                 self.SmartDot.mg_time, self.SmartDot.mg_x, self.SmartDot.mg_y, self.SmartDot.mg_z,
                                                 self.SmartDot.lt_time, self.SmartDot.lt_value)
         self.count += 1
-        if(self.ElapsedTime >= self.MaxTime):
+        if(self.ElapsedTime >= self.MaxTime or self.count >= len(self.scriptSpin)):
             self.EndShotView()
             return
     def EndShotView(self):

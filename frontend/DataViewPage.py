@@ -7,6 +7,8 @@ from PyQt6.QtCore import pyqtSignal, QDateTime, QSortFilterProxyModel, Qt, QRegu
 from datetime import datetime, timezone
 import datetime as dt
 from BSC import bsc
+from backend.models.DataController import DataController
+from backend.models.SessionData import SessionData
 
 class DataViewPage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
@@ -43,7 +45,7 @@ class DataViewPage(QtWidgets.QWidget):
         # Connect button signals to their respective functions
         
         self.btnSearch.clicked.connect(
-            lambda: self.refresh_data(int(self.dateStart.dateTime().toString("yyyyMMdd")), int(self.dateEnd.dateTime().toString("yyyyMMdd")))
+            lambda: self.refresh_data(self.dateStart.dateTime().toString("yyyyMMddhhmmss"), self.dateEnd.dateTime().toString("yyyyMMddhhmmss"))
             # lambda: print(int(self.dateStart.dateTime().toString("yyyyMMdd")))
             )
         
@@ -182,6 +184,11 @@ class DataViewPage(QtWidgets.QWidget):
         pass
     def load_data(self):
         #TODO: Implement data loading logic, turn session into Datacontroller with proper data
+        #self.tableview.sele
+        bsc.set_session(SessionData(id=31, timeStamp=dt.datetime.now().isoformat(), name="Diagnostic Session", isShotMode=True))
+        bsc.set_data_controller(DataController(bsc.get_session()))
+        bsc.get_data_controller().load_session_data_from_cloud(bsc.get_session())
+
         pass
     def analyze_data(self):
         print("Analyze Data Clicked")
@@ -190,6 +197,7 @@ class DataViewPage(QtWidgets.QWidget):
         pass
     def replay_data(self):
         print("Replay Data Clicked")
+        self.load_data()
         self.changePage.emit(6, bsc.get_data_controller())
         pass
 
