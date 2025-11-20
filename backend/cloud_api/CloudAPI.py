@@ -64,6 +64,7 @@ class CloudAPI(iCloud):
         """
         logger.info("get_sessions_in_time_range called")
         url = "https://api.revmetrix.io/api/gets/GetAllPiSessions"
+        print(f"Getting sessions in time range: {start_time} to {end_time}")
         result = APIUtils.make_post_request(url, {"rangeStart": start_time, "rangeEnd": end_time})
         return result
 
@@ -173,6 +174,7 @@ class CloudAPI(iCloud):
 
         #Gather the smartdot data from the data controller.
         data = []
+        # print(f"Smartdot data: {smart_dot_data}")
         for i in smart_dot_data:
             data.append(
                   {

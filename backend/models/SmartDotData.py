@@ -36,5 +36,8 @@ class SmartDotData:
         self.data_entries.append(smartDotData)
 
     def __str__(self):
-        return f"SmartDotData(data_entries={self.data_entries})"
+        s = ""
+        for i in self.data_entries:
+            s += f"{i.__str__()},"
+        return f"SmartDotData: {s}"
 

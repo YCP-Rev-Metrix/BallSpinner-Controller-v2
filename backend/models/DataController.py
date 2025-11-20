@@ -19,6 +19,11 @@ class DataController:
         self.heat_data = HeatData()
         self.cloud_api = bsc.get_cloud_api()
 
+
+    def set_session_name(self, session_name: str):
+        self.session_data.name = session_name
+        logger.info(f"Set session name: {session_name}")
+
     def get_diagnostic_script_data(self,) -> DiagnosticScriptData:
         return self.diagnostic_script_data.get_diagnostic_script_data()
     
@@ -77,8 +82,11 @@ class DataController:
         
         #Submit the smartdot data to the cloud API
         smartdot_data = self.get_smartdot_data()
+        for i in smartdot_data:
+            print(f"JABGIAWBGOAWHG: {i.__str__()}")
         if smartdot_data:
-            self.cloud_api.post_smartdot_data(smartdot_data, session_id)
+            result = self.cloud_api.post_smartdot_data(smartdot_data, session_id)
+            print(f"JABGIAWBGOAWHGJABGIAWBGOAWHG: {result}")
         else:
             logger.warning(f"No SmartDot Data found for this Shot Session {self.session_data}")
 

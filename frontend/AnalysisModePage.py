@@ -80,6 +80,10 @@ class AnalysisModePage(QtWidgets.QWidget):
             print("User accepted the dialog.")
             session_name = dialog.getSessionName()
             print(f"Session Name: {session_name}")
+            bsc.get_data_controller().set_session_name(session_name)
+            print("Submitting data to cloud")
+            bsc.get_data_controller().submit_session_data()
+            print("Data submitted to cloud")
             # Handle acceptance (e.g., save data)
         else:
             print("User rejected the dialog.")
