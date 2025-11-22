@@ -15,12 +15,12 @@ from frontend.ShotViewPage import ShotViewPage
 from BSC import bsc
 from BSC import MotorData
 
-class HomePage(QtWidgets.QMainWindow):
+class BSCMainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
-        
+
         # Load the UI file (module-relative path).
-        uic.loadUi(os.path.join(os.path.dirname(__file__), 'HomePage.ui'), self, package='frontend')
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'BSCMainWindow.ui'), self, package='frontend')
 
         self.EStop = self.findChild(QtWidgets.QPushButton, 'btnEStop')
         self.EStop.setStyleSheet("background-color: red; font-weight: bold; font-size: 16px;")

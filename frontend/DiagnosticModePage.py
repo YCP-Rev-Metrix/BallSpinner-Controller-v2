@@ -99,7 +99,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         
         # Simulate generating data in a separate thread
         
-        # control flag: only update while active (set by HomePage)
+        # control flag: only update while active (set by BSCMainWindow)
         self.active = False
 
         btnStart.clicked.connect(lambda: toggle_Buttons())
@@ -125,7 +125,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 self.diagnostic_script.stop_motors([1,2,3])
 
 
-        # public setter used by HomePage.on_tab_changed
+        # public setter used by BSCMainWindow.on_tab_changed
         def set_active(v: bool):
             self.active = bool(v)
             # if self.active: #Motor.start() UNCOMMENT WHEN MOTOR WORKING AGAIN

@@ -13,7 +13,7 @@ from logs.logger_config import setup_logging
 from gpiozero import Device
 from gpiozero.pins.mock import MockFactory, MockPWMPin
 from gpiozero.pins.native import NativeFactory
-from frontend.HomePage import HomePage
+from frontend.BSCMainWindow import BSCMainWindow
 
 
 def is_raspberry_pi():
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     #app.setStyleSheet(qdarktheme.load_stylesheet("dark"))
     app.setPalette(qdarktheme.load_palette("dark"))
 
-    window = HomePage()
+    window = BSCMainWindow()
     window.show()
 
     QtWidgets.QApplication.exec()

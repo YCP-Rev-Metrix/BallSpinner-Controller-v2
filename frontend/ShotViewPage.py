@@ -118,31 +118,23 @@ class ShotViewPage(QtWidgets.QWidget):
     def StartShotView(self):
         Controller = bsc.get_data_controller()
         self.btnAnalyze.setEnabled(False)  # Disabled during shot view
-        self.scriptSpin = []
-        self.scriptTilt = []
-        self.scriptAngle = []
-
-        self.shot_script.start_motors([0, 1, 2])
-        
         if hasattr(Controller, 'shot_script_data'):
-            motor_data = Controller.shot_script_data.get_shot_script_data_entries()
-            for data in motor_data:
-                self.scriptSpin.append(data.rpm)
-                self.scriptTilt.append(data.angleDeg)
-                self.scriptAngle.append(data.tiltDeg)
-            
-            #TODO: Find Max Time and dt from data
-            self.MaxTime = motor_data[-1].time  # assuming motor_data is sorted by time
-            self.dt = motor_data[1].time - motor_data[0].time  # interval in seconds
+            motor_package = utils.PackageMotorData(self, bsc)
+            self.scriptSpin = motor_package.motor_rpm
+            self.scriptTilt = motor_package.motor_tiltDeg
+            self.scriptAngle = motor_package.motor_angleDeg
+            self.MaxTime = motor_package.time_rpm[-1]  # assuming motor_data is sorted by time
+            self.dt = motor_package.time_rpm[1] - motor_package.time_rpm[0]  # interval in seconds
             self.dt_ms = int(self.dt * 1000)
-            print(len(self.scriptSpin), len(self.scriptTilt), len(self.scriptAngle))
-            print("Determined dt (s):", self.dt)
         else:
-            #Pase diagnostic data if no shot script data
+            #Parse diagnostic data if no shot script data
+            self.scriptSpin = []
+            self.scriptTilt = []
+            self.scriptAngle = []
             diag_data = Controller.diagnostic_data.get_diagnostic_data_entries()
-            #TODO: Make Continusous data from diagnostic if no shot script data
             self.MaxTime = diag_data[-1].time  # assuming motor_data is sorted by time
-            self.dt = 0.25  # TODO: Find a useful dt from diag data
+            self.dt = 0.25  # TODO: make global constant for diagnostic data interval
+            self.dt_ms = int(self.dt * 1000)
             # check data at 0.25s intervals
             self.scriptSpin.append(0.0)
             self.scriptTilt.append(0.0)
@@ -166,13 +158,11 @@ class ShotViewPage(QtWidgets.QWidget):
                 self.scriptSpin.append(spin_val)
                 self.scriptTilt.append(tilt_val)
                 self.scriptAngle.append(angle_val)
-
-
+        self.shot_script.start_motors([0, 1, 2])
         time_values = []
         t = 0.0
-        while t <= self.MaxTime:
-            time_values.append(round(t, 6))
-            t += 0.025
+        time_values = np.arange(0.25, self.MaxTime, self.dt)
+         
         # reset displayed data and counters
         self.displayedSpin = np.array([])
         self.displayedTilt = np.array([])
@@ -300,7 +290,8 @@ class ShotViewPage(QtWidgets.QWidget):
                     light=self.SmartDot.lt_value[i]
                 ))
             print("Submitted SmartDot data to DataController")
-        bsc.disconnect_all_motors()
+        if(utils.is_raspberry_pi()):
+            bsc.disconnect_all_motors()
         print("Shot View Ended")
         self.btnAnalyze.setEnabled(True)  # Enable Analyze button after shot view
         
