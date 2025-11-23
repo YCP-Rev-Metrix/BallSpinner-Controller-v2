@@ -4,6 +4,7 @@ from PyQt6 import QtWidgets, uic
 import os
 import pyqtgraph as pg
 import numpy as np 
+from array import array
 
 # Module-level arrays used by the graph update. Kept as globals for minimal changes
 
@@ -73,20 +74,20 @@ class SmartDotGraph(QtWidgets.QWidget):
         legend.setColumnCount(2)
 
         # initalize storage for plot data
-        self.accelerometerTime = np.array([0.0])
-        self.accelerometerX = np.array([0.0])
-        self.accelerometerY = np.array([0.0])
-        self.accelerometerZ = np.array([0.0])
-        self.gyroscopeTime = np.array([0.0])
-        self.gyroscopeX = np.array([0.0])
-        self.gyroscopeY = np.array([0.0])
-        self.gyroscopeZ = np.array([0.0])
-        self.magnetometerTime = np.array([0.0])
-        self.magnetometerX = np.array([0.0])
-        self.magnetometerY = np.array([0.0])
-        self.magnetometerZ = np.array([0.0])
-        self.lightTime = np.array([0.0])
-        self.lightValue = np.array([0.0])
+        self.accelerometerTime = array('d', [0.0])
+        self.accelerometerX = array('f', [0.0])
+        self.accelerometerY = array('f', [0.0])
+        self.accelerometerZ = array('f', [0.0])
+        self.gyroscopeTime = array('d', [0.0])
+        self.gyroscopeX = array('f', [0.0])
+        self.gyroscopeY = array('f', [0.0])
+        self.gyroscopeZ = array('f', [0.0])
+        self.magnetometerTime = array('d', [0.0])
+        self.magnetometerX = array('f', [0.0])
+        self.magnetometerY = array('f', [0.0])
+        self.magnetometerZ = array('f', [0.0])
+        self.lightTime = array('d', [0.0])
+        self.lightValue = array('f', [0.0])
         # Cursor and markers will be created on first click (lazy)
         self.vline = None
         self.marker_acc_x = None

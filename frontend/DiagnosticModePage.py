@@ -9,6 +9,7 @@ import time
 import os
 import io
 import utils
+from array import array
 from PyQt6.QtCore import pyqtSignal
 
 #Database related imports
@@ -20,12 +21,12 @@ from backend.models.DiagnosticScriptData import DiagnosticScriptDataInstance
 import datetime as dt
 
 
-spinArray = np.array([0.0])
-tiltArray = np.array([0.0])
-angleArray = np.array([0.0])
+spinArray = array('f', [0.0])
+tiltArray = array('f', [0.0])
+angleArray = array('f', [0.0])
 
 #X is the time array
-timeArray = np.array([0.0])
+timeArray = array('d', [0.0])
 
 
 class DiagnosticModePage(QtWidgets.QWidget):
@@ -176,10 +177,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
                     time.sleep(0.25)
                     continue
 
-                spinArray= np.append(spinArray, self.spinDial.value()) #max rpm 400
-                tiltArray= np.append(tiltArray, self.tiltDial.value()) #max tilt 90 degrees
-                angleArray= np.append(angleArray,  self.angleDial.value()) #`max angle 45 degrees`
-                timeArray= np.append(timeArray, timeArray[-1]+0.25)
+                spinArray.append(self.spinDial.value()) #max rpm 400
+                tiltArray.append(self.tiltDial.value()) #max tilt 90 degrees
+                angleArray.append(self.angleDial.value()) #`max angle 45 degrees`
+                timeArray.append(timeArray[-1]+0.25)
                 #use labels to show current values
                 labelSpin.setText(f"Spin Rate: {self.spinDial.value():.2f} RPM")
                 labelTilt.setText(f"Tilt Angle: {self.tiltDial.value():.2f} Degrees")
@@ -202,6 +203,8 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 angleGraph.setXRange(max(0, timeArray[-1]-3), timeArray[-1])
 
                 # update the plotted curves
+                # convert to numpy arrays for plotting API
+                # plotting API accepts array.array directly
                 self.spinCurve.setData(timeArray, spinArray)
                 self.tiltCurve.setData(timeArray, tiltArray)
                 self.angleCurve.setData(timeArray, angleArray)
@@ -209,10 +212,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 time.sleep(0.05) # 20x a second
         def clear_graphs():
             global spinArray, tiltArray, angleArray, timeArray
-            spinArray = np.array([0.0])
-            tiltArray = np.array([0.0])
-            angleArray = np.array([0.0])
-            timeArray = np.array([0.0])
+            spinArray = array('f', [0.0])
+            tiltArray = array('f', [0.0])
+            angleArray = array('f', [0.0])
+            timeArray = array('d', [0.0])
             self.spinCurve.setData(timeArray, spinArray)
             self.tiltCurve.setData(timeArray, tiltArray)
             self.angleCurve.setData(timeArray, angleArray)

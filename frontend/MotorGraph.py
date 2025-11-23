@@ -4,6 +4,7 @@ from PyQt6 import QtWidgets, uic
 import os
 import pyqtgraph as pg
 import numpy as np
+from array import array
 
 # Module-level arrays used by the graph update. Kept as globals for minimal changes
 
@@ -55,20 +56,20 @@ class MotorGraph(QtWidgets.QWidget):
         legend.setColumnCount(3)
 
         # initalize storage for plot data
-        self.SpinTime = np.array([0.0])
-        self.TiltTime = np.array([0.0])
-        self.AngleTime = np.array([0.0])
-        self.SpinArray = np.array([0.0])
-        self.TiltArray = np.array([0.0])
-        self.AngleArray = np.array([0.0])
+        self.SpinTime = array('d', [0.0])
+        self.TiltTime = array('d', [0.0])
+        self.AngleTime = array('d', [0.0])
+        self.SpinArray = array('f', [0.0])
+        self.TiltArray = array('f', [0.0])
+        self.AngleArray = array('f', [0.0])
 
-        self.DataTime = np.array([0.0])
-        self.SpinDataArray = np.array([0.0])
-        self.TiltDataArray = np.array([0.0])
-        self.AngleDataArray = np.array([0.0])
+        self.DataTime = array('d', [0.0])
+        self.SpinDataArray = array('f', [0.0])
+        self.TiltDataArray = array('f', [0.0])
+        self.AngleDataArray = array('f', [0.0])
 
         # motor time (single reference for motor series) used for click mapping
-        self.MotorTime = np.array([0.0])
+        self.MotorTime = array('d', [0.0])
 
         # Cursor and markers will be created on first click (lazy)
 
@@ -511,13 +512,14 @@ if __name__ == '__main__':
     window.show()
 
     #put in some sample data
-    sampleTime = np.array([0,1,2,3,4,5,6,7,8,9,10])
-    sampleSpin = np.array([0,100,200,300,400,500,600,500,400,300,200])
-    sampleTilt = np.array([0,10,20,30,40,50,40,30,20,10,0])
-    sampleAngle = np.array([0,-20,-40,-60,-80,-90,-80,-60,-40,-20,0])
-    sampleSpinData = np.array([0,90,190,290,390,490,590,490,390,290,190])
-    sampleTiltData = np.array([0,15,25,35,45,55,45,35,25,15,5])
-    sampleAngleData = np.array([0,-25,-45,-65,-85,-95,-85,-65,-45,-25,5])
+    from array import array
+    sampleTime = array('d', [0,1,2,3,4,5,6,7,8,9,10])
+    sampleSpin = array('f', [0,100,200,300,400,500,600,500,400,300,200])
+    sampleTilt = array('f', [0,10,20,30,40,50,40,30,20,10,0])
+    sampleAngle = array('f', [0,-20,-40,-60,-80,-90,-80,-60,-40,-20,0])
+    sampleSpinData = array('f', [0,90,190,290,390,490,590,490,390,290,190])
+    sampleTiltData = array('f', [0,15,25,35,45,55,45,35,25,15,5])
+    sampleAngleData = array('f', [0,-25,-45,-65,-85,-95,-85,-65,-45,-25,5])
 
     window.updateDataBetter(sampleTime, sampleSpin, sampleTilt, sampleAngle,
                             sampleTime, sampleSpinData, sampleTiltData, sampleAngleData)

@@ -1,6 +1,7 @@
 from PyQt6 import QtWidgets, QtCore, uic
 from PyQt6.QtCore import Qt, QTimer
 import numpy as np
+from array import array
 from frontend.SmartDotGraph import SmartDotGraph
 from frontend.SmartDotConnectWidget import SmartDotConnectWidget
 import math
@@ -37,17 +38,17 @@ class SmartDotViewer(QtWidgets.QWidget):
         self.SmartDot = None  # Placeholder for the connected SmartDot device
 
         # Instance arrays to persist between timer callbacks
-        self.arrayGeneralTime = np.array([0.0])
-        self.arrayAccelerometer_X = np.array([0.0])
-        self.arrayAccelerometer_Y = np.array([0.0])
-        self.arrayAccelerometer_Z = np.array([0.0])
-        self.arrayGyroscope_X = np.array([0.0])
-        self.arrayGyroscope_Y = np.array([0.0])
-        self.arrayGyroscope_Z = np.array([0.0])
-        self.arrayMagnetometer_X = np.array([0.0])
-        self.arrayMagnetometer_Y = np.array([0.0])
-        self.arrayMagnetometer_Z = np.array([0.0])
-        self.arrayLight = np.array([0.0])
+        self.arrayGeneralTime = array('d', [0.0])
+        self.arrayAccelerometer_X = array('f', [0.0])
+        self.arrayAccelerometer_Y = array('f', [0.0])
+        self.arrayAccelerometer_Z = array('f', [0.0])
+        self.arrayGyroscope_X = array('f', [0.0])
+        self.arrayGyroscope_Y = array('f', [0.0])
+        self.arrayGyroscope_Z = array('f', [0.0])
+        self.arrayMagnetometer_X = array('f', [0.0])
+        self.arrayMagnetometer_Y = array('f', [0.0])
+        self.arrayMagnetometer_Z = array('f', [0.0])
+        self.arrayLight = array('f', [0.0])
 
         # Timer interval (ms) 
         self.timer_interval_ms = 15  # default milliseconds 

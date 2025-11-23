@@ -4,6 +4,7 @@ from backend.drivers.ShotScript import ShotScript
 #from backend.motors.SimMotor import SimMotor
 import pyqtgraph as pg
 import numpy as np
+from array import array
 import threading
 import time
 import os
@@ -42,9 +43,9 @@ class ShotViewPage(QtWidgets.QWidget):
         self.btnAnalyze.clicked.connect(lambda: self.changePage.emit(3, "SampleText"))  # Go back to Home Page
         self.btnAnalyze.setEnabled(False)  # Disabled during shot view
 
-        self.scriptSpin = np.array([])
-        self.scriptTilt = np.array([])
-        self.scriptAngle = np.array([])
+        self.scriptSpin = array('f')
+        self.scriptTilt = array('f')
+        self.scriptAngle = array('f')
 
         self.SmartDot = None
         self.ConnectionManager = bsc.smartdotConnectionManager
@@ -57,10 +58,10 @@ class ShotViewPage(QtWidgets.QWidget):
                 print("Error connecting to SmartDot:", e)
         
 
-        self.displayedSpin = np.array([])
-        self.displayedTilt = np.array([])
-        self.displayedAngle = np.array([])
-        self.displayedTime = np.array([])
+        self.displayedSpin = array('f')
+        self.displayedTilt = array('f')
+        self.displayedAngle = array('f')
+        self.displayedTime = array('d')
         self.ElapsedTime = 0.0
         self.count = 0
         self.MaxTime = 0.0
@@ -74,19 +75,20 @@ class ShotViewPage(QtWidgets.QWidget):
         self.btnAnalyze.setEnabled(False)  # Disabled during shot view
         self.shot_script.start_motors([0, 1, 2])
 
-        self.scriptSpin = Data.spin
-        self.scriptTilt = Data.tilt
-        self.scriptAngle = Data.angle
+        # Data.spin/tilt/angle may be lists or numpy arrays; convert to array.array for storage
+        self.scriptSpin = array('f', list(Data.spin))
+        self.scriptTilt = array('f', list(Data.tilt))
+        self.scriptAngle = array('f', list(Data.angle))
         self.MaxTime = Data.length 
         # Keep seconds and milliseconds explicitly
         self.dt = float(Data.dt)            # interval in seconds
         self.dt_ms = int(self.dt * 1000)   # interval in milliseconds for QTimer
 
         # reset displayed data and counters
-        self.displayedSpin = np.array([])
-        self.displayedTilt = np.array([])
-        self.displayedAngle = np.array([])
-        self.displayedTime = np.array([])
+        self.displayedSpin = array('f')
+        self.displayedTilt = array('f')
+        self.displayedAngle = array('f')
+        self.displayedTime = array('d')
         self.ElapsedTime = 0.0
         self.count = 0
         if(len(self.ConnectionManager.get_smartdots()) > 0):
@@ -129,9 +131,9 @@ class ShotViewPage(QtWidgets.QWidget):
             self.dt_ms = int(self.dt * 1000)
         else:
             #Parse diagnostic data if no shot script data
-            self.scriptSpin = []
-            self.scriptTilt = []
-            self.scriptAngle = []
+            self.scriptSpin = array('f')
+            self.scriptTilt = array('f')
+            self.scriptAngle = array('f')
             diag_data = Controller.diagnostic_data.get_diagnostic_data_entries()
             self.MaxTime = diag_data[-1].time  # assuming motor_data is sorted by time
             self.dt = 0.25  # TODO: make global constant for diagnostic data interval
@@ -165,10 +167,10 @@ class ShotViewPage(QtWidgets.QWidget):
         time_values = np.arange(0.25, self.MaxTime, self.dt)
          
         # reset displayed data and counters
-        self.displayedSpin = np.array([])
-        self.displayedTilt = np.array([])
-        self.displayedAngle = np.array([])
-        self.displayedTime = np.array([])
+        self.displayedSpin = array('f')
+        self.displayedTilt = array('f')
+        self.displayedAngle = array('f')
+        self.displayedTime = array('d')
         self.ElapsedTime = 0.0
         self.count = 0
         if(len(self.ConnectionManager.get_smartdots()) > 0):
@@ -207,15 +209,21 @@ class ShotViewPage(QtWidgets.QWidget):
     def UpdateShotView(self):
         # Update using seconds so MaxTime comparison is consistent
         self.ElapsedTime += self.dt
-        self.displayedTime = np.append(self.displayedTime, self.ElapsedTime)
-        self.displayedSpin = np.append(self.displayedSpin, self.scriptSpin[self.count])
-        self.displayedTilt = np.append(self.displayedTilt, self.scriptTilt[self.count])
-        self.displayedAngle = np.append(self.displayedAngle, self.scriptAngle[self.count])
-        self.motorGraph.updateDataBetter(self.displayedTime, self.displayedSpin, self.displayedTilt, self.displayedAngle,np.array([0.0]),np.array([0.0]),np.array([0.0]),np.array([0.0]))
+        # append to array.array buffers (fast, low overhead)
+        self.displayedTime.append(self.ElapsedTime)
+        self.displayedSpin.append(self.scriptSpin[self.count])
+        self.displayedTilt.append(self.scriptTilt[self.count])
+        self.displayedAngle.append(self.scriptAngle[self.count])
+        # motorGraph may expect numpy arrays; convert on-call
+        # pass array.array buffers directly to avoid allocating ndarrays each update
+        self.motorGraph.updateDataBetter(self.displayedTime, self.displayedSpin, self.displayedTilt, self.displayedAngle,
+                         array('d', [0.0]), array('f', [0.0]), array('f', [0.0]), array('f', [0.0]))
         # print("Updating Shot View:", self.ElapsedTime, self.count)
         if self.SmartDot:
-            self.SmartDotGraph.updateDataBetter(self.SmartDot.xl_time,self.SmartDot.xl_x, self.SmartDot.xl_y, self.SmartDot.xl_z,
-                                                self.SmartDot.gy_time,self.SmartDot.gy_x, self.SmartDot.gy_y, self.SmartDot.gy_z,
+            # SmartDot buffers are array.array; convert to numpy arrays for plotting APIs that expect them
+            # pass SmartDot buffers directly (they are array.array)
+            self.SmartDotGraph.updateDataBetter(self.SmartDot.xl_time, self.SmartDot.xl_x, self.SmartDot.xl_y, self.SmartDot.xl_z,
+                                                self.SmartDot.gy_time, self.SmartDot.gy_x, self.SmartDot.gy_y, self.SmartDot.gy_z,
                                                 self.SmartDot.mg_time, self.SmartDot.mg_x, self.SmartDot.mg_y, self.SmartDot.mg_z,
                                                 self.SmartDot.lt_time, self.SmartDot.lt_value)
         self.count += 1

@@ -1,5 +1,6 @@
 import io
 import os
+from array import array
 def is_raspberry_pi():
     """Checks if the code is running on a Raspberry Pi."""
     try:
@@ -25,20 +26,20 @@ def PackageSmartDotData(self,bsc):
         # Load SmartDot data from BSC data controller
     smartdot_data = dc.smartdot_data
 
-    self.time_accel = []
-    self.accel_x = []
-    self.accel_y = []
-    self.accel_z = []
-    self.time_gyro = []
-    self.gyro_x = []
-    self.gyro_y = []
-    self.gyro_z = []
-    self.time_mag = []
-    self.mag_x = []
-    self.mag_y = []
-    self.mag_z = []
-    self.time_light = []
-    self.light = []
+    self.time_accel = array('d')
+    self.accel_x = array('f')
+    self.accel_y = array('f')
+    self.accel_z = array('f')
+    self.time_gyro = array('d')
+    self.gyro_x = array('f')
+    self.gyro_y = array('f')
+    self.gyro_z = array('f')
+    self.time_mag = array('d')
+    self.mag_x = array('f')
+    self.mag_y = array('f')
+    self.mag_z = array('f')
+    self.time_light = array('d')
+    self.light = array('f')
 
     for data in smartdot_data.data_entries:
         #print(f"SmartDot Data - Time: {data.time}, Selector: {data.data_selector}, AccelX: {data.accelerometer_x}, AccelY: {data.accelerometer_y}, AccelZ: {data.accelerometer_z}, GyroX: {data.gyroscope_x}, GyroY: {data.gyroscope_y}, GyroZ: {data.gyroscope_z}, MagX: {data.magnetometer_x}, MagY: {data.magnetometer_y}, MagZ: {data.magnetometer_z}, Light: {data.light}")
@@ -70,13 +71,13 @@ def PackageMotorData(self,bsc):
             # Load Motor data from BSC data controller
     dc = bsc.get_data_controller()
 
-    time_motor = []
-    time_rpm = []
-    time_angle = []
-    time_tilt = []
-    motor_rpm = []
-    motor_angleDeg = []
-    motor_tiltDeg = []
+    time_motor = array('d')
+    time_rpm = array('d')
+    time_angle = array('d')
+    time_tilt = array('d')
+    motor_rpm = array('f')
+    motor_angleDeg = array('f')
+    motor_tiltDeg = array('f')
 
     if dc.session_data.isShotMode:
         motor_data = dc.shot_script_data.get_shot_script_data_entries()
@@ -106,10 +107,10 @@ def PackageMotorData(self,bsc):
                     pass  
     
     #TODO: Implement encoder data packaging when available
-    time_encoder = [0.0]
-    encoder_rpm = [0.0]
-    encoder_angle = [0.0]
-    encoder_tilt = [0.0]
+    time_encoder = array('d', [0.0])
+    encoder_rpm = array('f', [0.0])
+    encoder_angle = array('f', [0.0])
+    encoder_tilt = array('f', [0.0])
 
     return MotorDataPackage(
         time_rpm, motor_rpm, time_angle, motor_angleDeg, time_tilt, motor_tiltDeg,
