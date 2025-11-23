@@ -92,25 +92,8 @@ class AnalysisModePage(QtWidgets.QWidget):
 
     def loadData(self):
         dc = bsc.get_data_controller()
-        # Load SmartDot data from BSC data controller
-        smartdot_package = utils.PackageSmartDotData(self, bsc)
-        """#Test print
-        print("SmartDot Data Package:")
-        print(f"Time Accel: {smartdot_package.time_accel}")
-        print(f"Accel X: {smartdot_package.accel_x}")
-        print(f"Accel Y: {smartdot_package.accel_y}")
-        print(f"Accel Z: {smartdot_package.accel_z}")
-        print(f"Time Gyro: {smartdot_package.time_gyro}")
-        print(f"Gyro X: {smartdot_package.gyro_x}")
-        print(f"Gyro Y: {smartdot_package.gyro_y}")
-        print(f"Gyro Z: {smartdot_package.gyro_z}")
-        print(f"Time Mag: {smartdot_package.time_mag}")
-        print(f"Mag X: {smartdot_package.mag_x}")
-        print(f"Mag Y: {smartdot_package.mag_y}")
-        print(f"Mag Z: {smartdot_package.mag_z}")
-        print(f"Time Light: {smartdot_package.time_light}")
-        print(f"Light: {smartdot_package.light}")"""
         # Update SmartDot graph
+        smartdot_package = utils.PackageSmartDotData(self, bsc)
         self.smartDotGraph.updateDataBetter(
             smartdot_package.time_accel, smartdot_package.accel_x, smartdot_package.accel_y, smartdot_package.accel_z,
             smartdot_package.time_gyro, smartdot_package.gyro_x, smartdot_package.gyro_y, smartdot_package.gyro_z,

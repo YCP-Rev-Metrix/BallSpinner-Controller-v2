@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1094</width>
-    <height>1351</height>
+    <width>1280</width>
+    <height>864</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,7 +31,7 @@
     <item row="1" column="0">
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>7</number>
+       <number>5</number>
       </property>
       <widget class="QWidget" name="pageFrontPage">
        <layout class="QGridLayout" name="gridLayout">
@@ -78,12 +78,8 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="pageSmartDotTest">
-       <layout class="QGridLayout" name="gridLayout_4">
-        <item row="0" column="0">
-         <widget class="SmartDotTestPage" name="SmartDotTestPage" native="true"/>
-        </item>
-       </layout>
+      <widget class="QWidget" name="pagePlaceHolder">
+       <layout class="QGridLayout" name="gridLayout_4"/>
       </widget>
       <widget class="QWidget" name="pageShotViewPage">
        <layout class="QGridLayout" name="gridLayout_shotview">
@@ -115,8 +111,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1094</width>
-     <height>30</height>
+     <width>1280</width>
+     <height>33</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuNavigation">
@@ -151,12 +147,6 @@
   </action>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>SmartDotTestPage</class>
-   <extends>QWidget</extends>
-   <header>frontend.SmartDotTestPage</header>
-   <container>1</container>
-  </customwidget>
   <customwidget>
    <class>AnalysisModePage</class>
    <extends>QWidget</extends>

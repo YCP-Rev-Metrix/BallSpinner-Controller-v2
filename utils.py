@@ -78,7 +78,7 @@ def PackageMotorData(self,bsc):
     motor_angleDeg = []
     motor_tiltDeg = []
 
-    if hasattr(dc, 'shot_script_data'):
+    if dc.session_data.isShotMode:
         motor_data = dc.shot_script_data.get_shot_script_data_entries()
         for data in motor_data:
             time_motor.append(data.time)
@@ -89,7 +89,7 @@ def PackageMotorData(self,bsc):
         time_rpm = time_motor
         time_angle = time_motor
         time_tilt = time_motor
-    elif hasattr(dc, 'diagnostic_data'):
+    else:
         motor_data = dc.diagnostic_data.get_diagnostic_data_entries()
         for data in motor_data:
             match data.motor_id:
@@ -104,9 +104,7 @@ def PackageMotorData(self,bsc):
                     motor_tiltDeg.append(data.instruction)
                 case _:
                     pass  
-    else:
-        print("No motor data available in DataController.")  
-    # Load Encoder data from BSC data controller
+    
     #TODO: Implement encoder data packaging when available
     time_encoder = [0.0]
     encoder_rpm = [0.0]

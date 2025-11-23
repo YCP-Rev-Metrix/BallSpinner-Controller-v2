@@ -34,7 +34,7 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         self.shotModePage = self.findChild(ShotModePage, 'ShotModePage')
         self.analysisModePage = self.findChild(AnalysisModePage, 'AnalysisModePage')
         self.cloudTestPage = self.findChild(CloudTest, 'CloudTestPage')
-        self.smartDotTestPage = self.findChild(SmartDotTestPage, 'SmartDotTestPage')
+        
         self.shotViewPage = self.findChild(ShotViewPage, 'ShotViewPage')
         self.dataViewPage = self.findChild(DataViewPage, 'DataViewPage')
 
@@ -44,7 +44,7 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         self.shotModePage.changePage.connect(self.switch_to_page)
         self.analysisModePage.changePage.connect(self.switch_to_page)
         self.cloudTestPage.changePage.connect(self.switch_to_page)
-        self.smartDotTestPage.changePage.connect(self.switch_to_page)
+        
         self.shotViewPage.changePage.connect(self.switch_to_page)
         self.dataViewPage.changePage.connect(self.switch_to_page)
 
@@ -96,7 +96,7 @@ class BSCMainWindow(QtWidgets.QMainWindow):
                 self.window().setWindowTitle("Ball Spinner Controller - Cloud Test")
                 #No Data Expected
                 pass
-            case 5: #SmartDot Test Page
+            case 5: #Empty Page
                 #No Data Expected
                 pass
             case 6: #Shot View Page
@@ -135,7 +135,7 @@ Order of pages in stackedWidget:
 2 - ShotModePage
 3 - AnalysisModePage
 4 - Cloud Test 
-5 - SmartDotTestPage (Currently not used, can be replaced)
+5 - Empty Page
 6 - ShotViewPage
 7 - DataViewPage
 """

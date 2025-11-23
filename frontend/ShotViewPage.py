@@ -118,7 +118,8 @@ class ShotViewPage(QtWidgets.QWidget):
     def StartShotView(self):
         Controller = bsc.get_data_controller()
         self.btnAnalyze.setEnabled(False)  # Disabled during shot view
-        if hasattr(Controller, 'shot_script_data'):
+        if Controller.session_data.isShotMode:
+            #Parse shot script data
             motor_package = utils.PackageMotorData(self, bsc)
             self.scriptSpin = motor_package.motor_rpm
             self.scriptTilt = motor_package.motor_tiltDeg

@@ -25,7 +25,7 @@ tiltArray = np.array([0.0])
 angleArray = np.array([0.0])
 
 #X is the time array
-xArray = np.array([0.0])
+timeArray = np.array([0.0])
 
 
 class DiagnosticModePage(QtWidgets.QWidget):
@@ -59,13 +59,15 @@ class DiagnosticModePage(QtWidgets.QWidget):
         btnStop = self.findChild(QtWidgets.QPushButton, 'btnStop')
         btnClear = self.findChild(QtWidgets.QPushButton, 'btnClear')
 
-
-        
-
         # Additional initialization code can go here
         spinGraph = self.findChild(pg.PlotWidget, 'graph1')
         tiltGraph = self.findChild(pg.PlotWidget, 'graph2')
         angleGraph = self.findChild(pg.PlotWidget, 'graph3')
+
+        #label configurations
+        labelSpin = self.findChild(QtWidgets.QLabel, 'lblSpin')
+        labelTilt = self.findChild(QtWidgets.QLabel, 'lblTilt')
+        labelAngle = self.findChild(QtWidgets.QLabel, 'lblAngle')
 
 
         #Graph configurations
@@ -74,30 +76,32 @@ class DiagnosticModePage(QtWidgets.QWidget):
         spinGraph.setTitle("Diagnostic Spin Graph")
         spinGraph.setLabel('left', 'Spin Rate', units='RPM')
         spinGraph.setLabel('bottom', 'Time', units='s')
-        self.spinCurve = spinGraph.plot(xArray, spinArray, pen=pg.mkPen(color='b', width=2)) #Extra refrence allows to be manipulated in thread
+        self.spinCurve = spinGraph.plot(timeArray, spinArray, pen=pg.mkPen(color='b', width=2)) #Extra refrence allows to be manipulated in thread
         spinGraph.setYRange(0,620)
         spinGraph.setMouseEnabled(x=False, y=False)
         #Tilt Motor graph setup
         tiltGraph.setTitle("Diagnostic Tilt Graph")
         tiltGraph.setLabel('left', 'Tilt Angle', units='Degrees')
         tiltGraph.setLabel('bottom', 'Time', units='s')
-        self.tiltCurve = tiltGraph.plot(xArray, tiltArray, pen=pg.mkPen(color='r', width=2)) #Extra refrence allows to be manipulated in thread
-        tiltGraph.setYRange(0,100)
+        self.tiltCurve = tiltGraph.plot(timeArray, tiltArray, pen=pg.mkPen(color='r', width=2)) #Extra refrence allows to be manipulated in thread
+        tiltGraph.setYRange(-100,100)
         tiltGraph.setMouseEnabled(x=False, y=False)
         #Angle Motor graph setup
         angleGraph.setTitle("Diagnostic Angle Graph")
         angleGraph.setLabel('left', 'Angle', units='Degrees')
         angleGraph.setLabel('bottom', 'Time', units='s')
-        self.angleCurve = angleGraph.plot(xArray, angleArray, pen=pg.mkPen(color='g', width=2)) #Extra refrence allows to be manipulated in thread
-        angleGraph.setYRange(0,50)
+        self.angleCurve = angleGraph.plot(timeArray, angleArray, pen=pg.mkPen(color='g', width=2)) #Extra refrence allows to be manipulated in thread
+        angleGraph.setYRange(-50,50)
         angleGraph.setMouseEnabled(x=False, y=False)
 
         #Dial configurations
         self.spinDial = self.findChild(QtWidgets.QDial, 'dial')
         self.tiltDial = self.findChild(QtWidgets.QDial, 'dial_2')
         self.angleDial = self.findChild(QtWidgets.QDial, 'dial_3')
-        
-        # Simulate generating data in a separate thread
+        self.spinDial.setRange(0, 600)  # Set dial range from 0 to 600
+        self.tiltDial.setRange(-90, 90)  # Set dial range from -90 to 90
+        self.angleDial.setRange(-45, 45)  # Set dial range from -45 to 45
+
         
         # control flag: only update while active (set by BSCMainWindow)
         self.active = False
@@ -163,8 +167,8 @@ class DiagnosticModePage(QtWidgets.QWidget):
             dc.add_diagnostic_script_data(data)
 
         def _Generator():
-            #XArray is the time array
-            global spinArray, tiltArray, angleArray, xArray
+            #timeArray is the time array
+            global spinArray, tiltArray, angleArray, timeArray
             while not self._stop_event.is_set():
 
                 # only update while the diagnostic tab/widget is active
@@ -172,42 +176,46 @@ class DiagnosticModePage(QtWidgets.QWidget):
                     time.sleep(0.25)
                     continue
 
-                spinArray= np.append(spinArray, 600* 0.01 * self.spinDial.value()) #max rpm 400
-                tiltArray= np.append(tiltArray, 90* 0.01*self.tiltDial.value()) #max tilt 90 degrees
-                angleArray= np.append(angleArray,  45* 0.01 *self.angleDial.value()) #`max angle 45 degrees`
-                xArray= np.append(xArray, xArray[-1]+0.25)
+                spinArray= np.append(spinArray, self.spinDial.value()) #max rpm 400
+                tiltArray= np.append(tiltArray, self.tiltDial.value()) #max tilt 90 degrees
+                angleArray= np.append(angleArray,  self.angleDial.value()) #`max angle 45 degrees`
+                timeArray= np.append(timeArray, timeArray[-1]+0.25)
+                #use labels to show current values
+                labelSpin.setText(f"Spin Rate: {self.spinDial.value():.2f} RPM")
+                labelTilt.setText(f"Tilt Angle: {self.tiltDial.value():.2f} Degrees")
+                labelAngle.setText(f"Angle: {self.angleDial.value():.2f} Degrees")
 
                 #These if statements add changes in motor values to the Diagnostic Script and DataController.
                 self.diagnostic_script.change_speed(0, spinArray[-1])
                 if(spinArray[-1]!=spinArray[-2]):
-                    add_diag_data_instance_to_data_controller(xArray[-1], 0, spinArray[-1])
+                    add_diag_data_instance_to_data_controller(timeArray[-1], 0, spinArray[-1])
                 if(tiltArray[-1]!=tiltArray[-2]):
-                    add_diag_data_instance_to_data_controller(xArray[-1], 1, tiltArray[-1])
+                    add_diag_data_instance_to_data_controller(timeArray[-1], 1, tiltArray[-1])
                     self.diagnostic_script.change_speed(1, tiltArray[-1])
                 if(angleArray[-1]!=angleArray[-2]):
-                    add_diag_data_instance_to_data_controller(xArray[-1], 2, angleArray[-1])
+                    add_diag_data_instance_to_data_controller(timeArray[-1], 2, angleArray[-1])
                     self.diagnostic_script.change_speed(2, angleArray[-1])
                     
 
-                spinGraph.setXRange(max(0, xArray[-1]-3), xArray[-1])
-                tiltGraph.setXRange(max(0, xArray[-1]-3), xArray[-1])
-                angleGraph.setXRange(max(0, xArray[-1]-3), xArray[-1])
+                spinGraph.setXRange(max(0, timeArray[-1]-3), timeArray[-1])
+                tiltGraph.setXRange(max(0, timeArray[-1]-3), timeArray[-1])
+                angleGraph.setXRange(max(0, timeArray[-1]-3), timeArray[-1])
 
                 # update the plotted curves
-                self.spinCurve.setData(xArray, spinArray)
-                self.tiltCurve.setData(xArray, tiltArray)
-                self.angleCurve.setData(xArray, angleArray)
+                self.spinCurve.setData(timeArray, spinArray)
+                self.tiltCurve.setData(timeArray, tiltArray)
+                self.angleCurve.setData(timeArray, angleArray)
 
                 time.sleep(0.05) # 20x a second
         def clear_graphs():
-            global spinArray, tiltArray, angleArray, xArray
+            global spinArray, tiltArray, angleArray, timeArray
             spinArray = np.array([0.0])
             tiltArray = np.array([0.0])
             angleArray = np.array([0.0])
-            xArray = np.array([0.0])
-            self.spinCurve.setData(xArray, spinArray)
-            self.tiltCurve.setData(xArray, tiltArray)
-            self.angleCurve.setData(xArray, angleArray)
+            timeArray = np.array([0.0])
+            self.spinCurve.setData(timeArray, spinArray)
+            self.tiltCurve.setData(timeArray, tiltArray)
+            self.angleCurve.setData(timeArray, angleArray)
 
         t = threading.Thread(target=_Generator, daemon=True)
         t.start()

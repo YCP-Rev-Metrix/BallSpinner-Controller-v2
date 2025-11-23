@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1094</width>
-    <height>1347</height>
+    <width>1280</width>
+    <height>864</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -74,6 +74,12 @@
       </item>
       <item>
        <widget class="QDateTimeEdit" name="dtStartTime">
+        <property name="currentSection">
+         <enum>QDateTimeEdit::MonthSection</enum>
+        </property>
+        <property name="displayFormat">
+         <string>M/d/yy hh:mm</string>
+        </property>
         <property name="calendarPopup">
          <bool>true</bool>
         </property>
@@ -88,6 +94,12 @@
       </item>
       <item>
        <widget class="QDateTimeEdit" name="dtEndTime">
+        <property name="currentSection">
+         <enum>QDateTimeEdit::MonthSection</enum>
+        </property>
+        <property name="displayFormat">
+         <string>M/d/yy hh:mm</string>
+        </property>
         <property name="calendarPopup">
          <bool>true</bool>
         </property>
@@ -104,7 +116,11 @@
     </widget>
    </item>
    <item row="1" column="0">
-    <widget class="QTableView" name="tableViewData"/>
+    <widget class="QTableView" name="tableViewData">
+     <property name="sortingEnabled">
+      <bool>true</bool>
+     </property>
+    </widget>
    </item>
    <item row="2" column="0">
     <layout class="QHBoxLayout" name="horizontalLayout_2">

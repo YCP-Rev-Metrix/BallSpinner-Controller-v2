@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>904</width>
-    <height>920</height>
+    <width>1280</width>
+    <height>864</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,13 +19,13 @@
    </item>
    <item row="0" column="0">
     <layout class="QGridLayout" name="gridLayout">
-     <item row="1" column="1">
+     <item row="0" column="1">
       <widget class="PlotWidget" name="graph2" native="true"/>
      </item>
-     <item row="1" column="0">
+     <item row="0" column="0">
       <widget class="PlotWidget" name="graph1" native="true"/>
      </item>
-     <item row="1" column="2">
+     <item row="0" column="2">
       <widget class="PlotWidget" name="graph3" native="true"/>
      </item>
      <item row="2" column="2">
@@ -33,13 +33,6 @@
      </item>
      <item row="2" column="1">
       <widget class="QDial" name="dial_2"/>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Diagnostic Mode&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-      </widget>
      </item>
      <item row="2" column="0">
       <widget class="QDial" name="dial"/>
@@ -71,6 +64,27 @@
        </property>
       </widget>
      </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="lblSpin">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLabel" name="lblTilt">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QLabel" name="lblAngle">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>
@@ -85,7 +99,7 @@
   <customwidget>
    <class>SmartDotTestPage</class>
    <extends>QWidget</extends>
-    <header>frontend.SmartDotTestPage</header>
+   <header>frontend.SmartDotTestPage</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
