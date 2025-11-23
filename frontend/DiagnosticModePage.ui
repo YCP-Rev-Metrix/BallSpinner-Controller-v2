@@ -15,7 +15,7 @@
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
    <item row="0" column="1">
-    <widget class="SmartDotTestPage" name="widget" native="true"/>
+    <widget class="SmartDotViewer" name="widget" native="true"/>
    </item>
    <item row="0" column="0">
     <layout class="QGridLayout" name="gridLayout">
@@ -97,9 +97,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>SmartDotTestPage</class>
+   <class>SmartDotViewer</class>
    <extends>QWidget</extends>
-   <header>frontend.SmartDotTestPage</header>
+   <header>frontend.SmartDotViewer</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

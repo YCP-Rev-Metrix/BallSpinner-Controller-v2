@@ -189,7 +189,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         self.connection_worker.connectionFailed.connect(self.on_connection_failed)
         self.connection_worker.statusUpdate.connect(self.on_status_update)
         self.connection_worker.deviceDisconnected.connect(self.on_device_disconnected)
-        # Forward the disconnect signal to external listeners (like SmartDotTestPage)
+        # Forward the disconnect signal to external listeners (like SmartDotViewer)
         self.connection_worker.deviceDisconnected.connect(self.signalDeviceDisconnected.emit)
         self.connection_worker.start()
     

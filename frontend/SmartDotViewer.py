@@ -12,14 +12,14 @@ else:
 from PyQt6.QtCore import pyqtSignal
 
 
-class SmartDotTestPage(QtWidgets.QWidget):
+class SmartDotViewer(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         # load the .ui file (module-relative path)
         import os
-        uic.loadUi(os.path.join(os.path.dirname(__file__), 'SmartDotTestPage.ui'), self, package='frontend')
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'SmartDotViewer.ui'), self, package='frontend')
 
         # Find the embedded SmartDotGraph widget created by the .ui (named SmartDotGraphContainer)
         self.SmartDotGraph = self.findChild(SmartDotGraph, 'smartDotGraph')
@@ -177,6 +177,6 @@ class SmartDotTestPage(QtWidgets.QWidget):
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    widget = SmartDotTestPage()
+    widget = SmartDotViewer()
     widget.show()
     sys.exit(app.exec())

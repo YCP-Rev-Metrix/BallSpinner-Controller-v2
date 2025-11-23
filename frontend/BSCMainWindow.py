@@ -6,7 +6,7 @@ from PyQt6.QtGui import QAction
 
 from frontend.DataViewPage import DataViewPage
 from frontend.FrontPage import FrontPage
-from frontend.SmartDotTestPage import SmartDotTestPage
+from frontend.SmartDotViewer import SmartDotViewer
 from frontend.AnalysisModePage import AnalysisModePage
 from frontend.DiagnosticModePage import DiagnosticModePage
 from frontend.ShotModePage import ShotModePage

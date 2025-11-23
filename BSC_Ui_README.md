@@ -57,7 +57,7 @@ index is the page you want to go to. The following is an example list of indexes
 	2 - ShotModePage
 	3 - AnalysisModePage
 	4 - Cloud Test 
-	5 - SmartDotTestPage (Currently not used, can be replaced)
+	5 - SmartDotViewer (Currently not used, can be replaced)
 	
 data is used if additional data needs to be sent to another page. Any object can be passed
 
@@ -241,7 +241,7 @@ index is the page you want to go to. The following is an example list of indexes
 	2 - ShotModePage
 	3 - AnalysisModePage
 	4 - Cloud Test 
-	5 - SmartDotTestPage (Currently not used, can be replaced)
+	5 - SmartDotViewer (Currently not used, can be replaced)
 	
 data is used if additional data needs to be sent to another page.
 
