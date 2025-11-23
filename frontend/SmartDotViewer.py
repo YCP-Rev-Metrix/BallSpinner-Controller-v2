@@ -74,6 +74,17 @@ class SmartDotViewer(QtWidgets.QWidget):
             self.btnStart.setEnabled(False)
         if self.btnStop:
             self.btnStop.setEnabled(False)
+    def hide_buttons(self):
+        if self.btnStart:
+            self.btnStart.setVisible(False)
+        if self.btnStop:
+            self.btnStop.setVisible(False)
+    def show_buttons(self):
+        if self.btnStart:
+            self.btnStart.setVisible(True)
+        if self.btnStop:
+            self.btnStop.setVisible(True)
+    
 
     def disconnectSmartDot(self):
         self.btnStart.setEnabled(False)

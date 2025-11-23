@@ -17,6 +17,7 @@ from BSC import bsc
 from backend.models.SessionData import SessionData
 from backend.models.DataController import DataController
 from backend.models.DiagnosticScriptData import DiagnosticScriptDataInstance
+from frontend.SmartDotViewer import SmartDotViewer
 
 import datetime as dt
 
@@ -70,6 +71,11 @@ class DiagnosticModePage(QtWidgets.QWidget):
         labelTilt = self.findChild(QtWidgets.QLabel, 'lblTilt')
         labelAngle = self.findChild(QtWidgets.QLabel, 'lblAngle')
 
+        #load SmartDotViewer
+        self.smartdotViewer = self.findChild(QtWidgets.QWidget, 'SmartDotViewer')
+        self.smartdotViewer.hide_buttons()
+        
+
 
         #Graph configurations
 
@@ -118,6 +124,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 btnStop.setEnabled(True)
                 self.set_active(True)
                 self.diagnostic_script.start_motors([1,2,3])
+                #Start SmartDotViewer updates if connected
+                if(len(bsc.get_smartdotConnectionManager().get_connections()) > 0):
+                    self.smartdotViewer.start_updates()
+
 
                 #Initialize the Session
                 bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Diagnostic Session", isShotMode=False))
@@ -128,6 +138,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 btnStop.setEnabled(False)
                 self.set_active(False)
                 self.diagnostic_script.stop_motors([1,2,3])
+                #Stop SmartDotViewer updates if connected
+                if(len(bsc.get_smartdotConnectionManager().get_connections()) > 0):
+                    self.smartdotViewer.stop_updates()
 
 
         # public setter used by BSCMainWindow.on_tab_changed
