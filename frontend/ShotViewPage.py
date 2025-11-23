@@ -136,7 +136,7 @@ class ShotViewPage(QtWidgets.QWidget):
             self.scriptAngle = array('f')
             diag_data = Controller.diagnostic_data.get_diagnostic_data_entries()
             self.MaxTime = diag_data[-1].time  # assuming motor_data is sorted by time
-            self.dt = 0.25  # TODO: make global constant for diagnostic data interval
+            self.dt = bsc.diagnostic_sample_interval_ms / 1000.0  # interval in seconds
             self.dt_ms = int(self.dt * 1000)
             # check data at 0.25s intervals
             self.scriptSpin.append(0.0)

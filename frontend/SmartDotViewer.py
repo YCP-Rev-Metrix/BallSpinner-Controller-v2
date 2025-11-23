@@ -186,6 +186,10 @@ class SmartDotViewer(QtWidgets.QWidget):
         # Here you would add the actual connection testing code
         self.lblConnectionStatus.setText("Connection Successful!")
 
+    def reset(self):
+        self.active = False
+        #TODO: Reset graphs and data arrays
+
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
