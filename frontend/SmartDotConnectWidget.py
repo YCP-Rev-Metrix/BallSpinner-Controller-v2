@@ -107,7 +107,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         # Track connection worker thread
         self.connection_worker = None
 
-        self.setFixedSize(300, 600)
+        #self.setFixedSize(300, 600)
         if utils.is_raspberry_pi():
             # self.scanner = ScanSmartDot()
             pass
