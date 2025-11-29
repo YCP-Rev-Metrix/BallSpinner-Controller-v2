@@ -53,11 +53,8 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         self.EStop.clicked.connect(lambda: self.diagnosticPage.EStop())
 
         # lock resolution to 1920x1080 except on macOS
-        if(platform.system() != 'Darwin'):
-            self.setFixedSize(1920, 1080)  # Set fixed window size to 1920x1080
-        else:
-            self.setBaseSize(1920, 1080)  # Set base window size to 1920x1080 on macOS
-        
+        self.setBaseSize(1920, 1080)  # Set fixed window size to scaled 1920x1080
+    
         self.switch_to_page(0, "Home")  # Start on FrontPage
 
         #connect to navigation from menu bar if exists
