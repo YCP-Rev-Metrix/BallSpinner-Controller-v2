@@ -70,10 +70,7 @@ if __name__ == '__main__':
 
     app = QtWidgets.QApplication([])
     app.setStyle("Fusion")
-    screen = app.primaryScreen()
-    if screen is not None:
-        size = screen.size()
-        print(f"Primary screen resolution: {size.width()}x{size.height()}")
+
     
     
 
