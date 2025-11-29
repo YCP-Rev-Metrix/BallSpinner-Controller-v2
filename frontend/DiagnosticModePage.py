@@ -46,9 +46,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.btnClear = self.findChild(QtWidgets.QPushButton, 'btnClear')
 
         # Additional initialization code can go here
-        self.spinGraph = self.findChild(pg.PlotWidget, 'graph1')
-        self.tiltGraph = self.findChild(pg.PlotWidget, 'graph2')
-        self.angleGraph = self.findChild(pg.PlotWidget, 'graph3')
+        self.spinGraph = self.findChild(pg.PlotWidget, 'graphSpin')
+        self.tiltGraph = self.findChild(pg.PlotWidget, 'graphTilt')
+        self.angleGraph = self.findChild(pg.PlotWidget, 'graphAngle')
 
         #label configurations
         self.labelSpin = self.findChild(QtWidgets.QLabel, 'lblSpin')
@@ -85,9 +85,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.angleGraph.setYRange(-50,50)
         self.angleGraph.setMouseEnabled(x=False, y=False)
         #Dial configurations
-        self.spinDial = self.findChild(QtWidgets.QDial, 'dial')
-        self.tiltDial = self.findChild(QtWidgets.QDial, 'dial_2')
-        self.angleDial = self.findChild(QtWidgets.QDial, 'dial_3')
+        self.spinDial = self.findChild(QtWidgets.QDial, 'dialSpin')
+        self.tiltDial = self.findChild(QtWidgets.QDial, 'dialTilt')
+        self.angleDial = self.findChild(QtWidgets.QDial, 'dialAngle')
         self.spinDial.setRange(0, 600)  # Set dial range from 0 to 600
         self.tiltDial.setRange(-90, 90)  # Set dial range from -90 to 90
         self.angleDial.setRange(-45, 45)  # Set dial range from -45 to 45
