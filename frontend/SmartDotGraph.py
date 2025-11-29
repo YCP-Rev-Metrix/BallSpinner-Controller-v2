@@ -98,7 +98,8 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.curves['mag_x'] = self.graph.plot([], [], pen=self.pens['mag_x'], name='Magnetometer_X')
         self.curves['mag_y'] = self.graph.plot([], [], pen=self.pens['mag_y'], name='Magnetometer_Y')
         self.curves['mag_z'] = self.graph.plot([], [], pen=self.pens['mag_z'], name='Magnetometer_Z')
-        self.curves['light'] = self.graph.plot([], [], pen=self.pens['light'], name='Light')
+        self.curves['light'] = self.graph.plot([], [], pen=self.pens['light'], name='Light (log2)')
+        
 
         # Create persistent cursor and scatter markers (added to the plotItem once)
         plotItem = self.graph.getPlotItem()
@@ -165,7 +166,9 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.magnetometerY = array('f', [0.0])
         self.magnetometerZ = array('f', [0.0])
         self.lightTime = array('d', [0.0])
+        # store the raw (linear) light values; compute log2 for plotting only
         self.lightValue = array('f', [0.0])
+        self.lightValueRaw = array('f', [0.0])
         # Cursor and markers created above and will be reused
         self.select_all()
         self.limitViewBox()
@@ -327,21 +330,21 @@ class SmartDotGraph(QtWidgets.QWidget):
                         pass
                     try:
                         if getattr(self, 'marker_acc_x', None) is not None:
-                            if ax is not None:
+                            if ax is not None and self.curves.get('acc_x', None) is not None and self.curves['acc_x'].isVisible():
                                 self.marker_acc_x.setData(x=[t], y=[ax])
                                 self.marker_acc_x.setVisible(True)
                             else:
                                 self.marker_acc_x.setData(x=[], y=[])
                                 self.marker_acc_x.setVisible(False)
                         if getattr(self, 'marker_acc_y', None) is not None:
-                            if ay is not None:
+                            if ay is not None and self.curves.get('acc_y', None) is not None and self.curves['acc_y'].isVisible():
                                 self.marker_acc_y.setData(x=[t], y=[ay])
                                 self.marker_acc_y.setVisible(True)
                             else:
                                 self.marker_acc_y.setData(x=[], y=[])
                                 self.marker_acc_y.setVisible(False)
                         if getattr(self, 'marker_acc_z', None) is not None:
-                            if az is not None:
+                            if az is not None and self.curves.get('acc_z', None) is not None and self.curves['acc_z'].isVisible():
                                 self.marker_acc_z.setData(x=[t], y=[az])
                                 self.marker_acc_z.setVisible(True)
                             else:
@@ -374,21 +377,21 @@ class SmartDotGraph(QtWidgets.QWidget):
                         pass
                     try:
                         if getattr(self, 'marker_gyro_x', None) is not None:
-                            if gx is not None:
+                            if gx is not None and self.curves.get('gyro_x', None) is not None and self.curves['gyro_x'].isVisible():
                                 self.marker_gyro_x.setData(x=[t], y=[gx])
                                 self.marker_gyro_x.setVisible(True)
                             else:
                                 self.marker_gyro_x.setData(x=[], y=[])
                                 self.marker_gyro_x.setVisible(False)
                         if getattr(self, 'marker_gyro_y', None) is not None:
-                            if gy is not None:
+                            if gy is not None and self.curves.get('gyro_y', None) is not None and self.curves['gyro_y'].isVisible():
                                 self.marker_gyro_y.setData(x=[t], y=[gy])
                                 self.marker_gyro_y.setVisible(True)
                             else:
                                 self.marker_gyro_y.setData(x=[], y=[])
                                 self.marker_gyro_y.setVisible(False)
                         if getattr(self, 'marker_gyro_z', None) is not None:
-                            if gz is not None:
+                            if gz is not None and self.curves.get('gyro_z', None) is not None and self.curves['gyro_z'].isVisible():
                                 self.marker_gyro_z.setData(x=[t], y=[gz])
                                 self.marker_gyro_z.setVisible(True)
                             else:
@@ -421,21 +424,21 @@ class SmartDotGraph(QtWidgets.QWidget):
                         pass
                     try:
                         if getattr(self, 'marker_mag_x', None) is not None:
-                            if mx is not None:
+                            if mx is not None and self.curves.get('mag_x', None) is not None and self.curves['mag_x'].isVisible():
                                 self.marker_mag_x.setData(x=[t], y=[mx])
                                 self.marker_mag_x.setVisible(True)
                             else:
                                 self.marker_mag_x.setData(x=[], y=[])
                                 self.marker_mag_x.setVisible(False)
                         if getattr(self, 'marker_mag_y', None) is not None:
-                            if my is not None:
+                            if my is not None and self.curves.get('mag_y', None) is not None and self.curves['mag_y'].isVisible():
                                 self.marker_mag_y.setData(x=[t], y=[my])
                                 self.marker_mag_y.setVisible(True)
                             else:
                                 self.marker_mag_y.setData(x=[], y=[])
                                 self.marker_mag_y.setVisible(False)
                         if getattr(self, 'marker_mag_z', None) is not None:
-                            if mz is not None:
+                            if mz is not None and self.curves.get('mag_z', None) is not None and self.curves['mag_z'].isVisible():
                                 self.marker_mag_z.setData(x=[t], y=[mz])
                                 self.marker_mag_z.setVisible(True)
                             else:
@@ -449,12 +452,22 @@ class SmartDotGraph(QtWidgets.QWidget):
                 idx = _nearest(self.lightTime, x_click)
                 if idx is not None:
                     t = float(np.asarray(self.lightTime)[idx])
-                    lv = float(np.asarray(self.lightValue)[idx]) if self.lightValue is not None else None
+                    raw_lv = None
+                    log_lv = None
+                    if getattr(self, 'lightValueRaw', None) is not None and len(self.lightValueRaw) > idx:
+                        raw_lv = float(np.asarray(self.lightValueRaw)[idx])
+                        try:
+                            if raw_lv > 0:
+                                log_lv = float(np.log2(raw_lv))
+                            else:
+                                log_lv = float('nan')
+                        except Exception:
+                            log_lv = float('nan')
                     if self.lblLightData is not None:
-                        # light uses a neutral gray color
-                        lv_html = _fmt_html(lv, '#777777')
+                        log_html = _fmt_html(log_lv, '#777777')
+                        raw_html = _fmt_html(raw_lv, '#999999')
                         self.lblLightData.setText(
-                            f"Light @ t={t:.3f} (idx={idx}): value={lv_html}"
+                            f"Light @ t={t:.3f} (idx={idx}): log2={log_html}, raw={raw_html}"
                         )
                     try:
                         if self.vline is not None:
@@ -464,8 +477,8 @@ class SmartDotGraph(QtWidgets.QWidget):
                         pass
                     try:
                         if getattr(self, 'marker_light', None) is not None:
-                            if lv is not None:
-                                self.marker_light.setData(x=[t], y=[lv])
+                            if log_lv is not None and self.curves.get('light', None) is not None and self.curves['light'].isVisible():
+                                self.marker_light.setData(x=[t], y=[log_lv])
                                 self.marker_light.setVisible(True)
                             else:
                                 self.marker_light.setData(x=[], y=[])
@@ -488,7 +501,7 @@ class SmartDotGraph(QtWidgets.QWidget):
                 self.accelerometerTime, self.accelerometerX, self.accelerometerY, self.accelerometerZ,
                 self.gyroscopeTime, self.gyroscopeX, self.gyroscopeY, self.gyroscopeZ,
                 self.magnetometerTime, self.magnetometerX, self.magnetometerY, self.magnetometerZ,
-                self.lightTime, self.lightValue
+                self.lightTime, self.lightValueRaw
             )
         except Exception:
             # Swallow exceptions to avoid UI breakage from toggle handlers
@@ -516,7 +529,11 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.magnetometerY = np.array(magnetometerY, dtype=np.float32, copy=True) if magnetometerY is not None else np.array([])
         self.magnetometerZ = np.array(magnetometerZ, dtype=np.float32, copy=True) if magnetometerZ is not None else np.array([])
         self.lightTime = np.array(lightTime, dtype=np.float64, copy=True) if lightTime is not None else np.array([])
-        self.lightValue = np.array(lightValue, dtype=np.float32, copy=True) if lightValue is not None else np.array([])
+        # Store incoming light values as RAW (linear). We'll compute log2 when plotting
+        if lightValue is not None:
+            self.lightValueRaw = np.array(lightValue, dtype=np.float32, copy=True)
+        else:
+            self.lightValueRaw = np.array([])
 
         # Update persistent curves instead of clearing & re-creating them
         self.drawAccelerometer()
@@ -560,7 +577,8 @@ class SmartDotGraph(QtWidgets.QWidget):
     def updateLight(self, time, value):
         # store latest light arrays for click lookup
         self.lightTime = np.array(time, dtype=np.float64, copy=True)
-        self.lightValue = np.array(value, dtype=np.float32, copy=True)
+        # Store raw (linear) light values; plotting will compute log2
+        self.lightValueRaw = np.array(value, dtype=np.float32, copy=True)
         self.drawLight()
         if self.lightTime.size:
             self.limit_view_change(float(self.lightTime[-1]))
@@ -694,7 +712,13 @@ class SmartDotGraph(QtWidgets.QWidget):
     def drawLight(self) :
         try:
             if self.chkLight.isChecked():
-                self.curves['light'].setData(self.lightTime, self.lightValue)
+                # compute log2 for plotting; non-positive raw values map to NaN
+                if getattr(self, 'lightValueRaw', None) is not None and self.lightValueRaw.size:
+                    with np.errstate(divide='ignore', invalid='ignore'):
+                        lv_plot = np.where(self.lightValueRaw > 0, np.log2(self.lightValueRaw), np.nan).astype(np.float32)
+                else:
+                    lv_plot = np.array([])
+                self.curves['light'].setData(self.lightTime, lv_plot)
                 self.curves['light'].setVisible(True)
             else:
                 self.curves['light'].setVisible(False)

@@ -167,7 +167,8 @@ class SimSmartDot(iSmartDot):
         # Varies between day and night levels
         with self._lt_lock:
             self.lt_time.append(time_val)
-            self.lt_value.append(random.uniform(0, 10))
+            
+            self.lt_value.append(math.pow(2,random.uniform(-1, 15)))  # Simulated lux value between ~0.5 and ~32768
 
     def startCollecting(self):
         # Start the sensors
