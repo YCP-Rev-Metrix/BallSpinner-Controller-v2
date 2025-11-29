@@ -18,7 +18,7 @@ class SimMotor(iMotor):
     def connect(self, GPIOPin : int):
         pass
 
-    def disconnect(self, GPIOPin : int):
+    def disconnect(self, GPIOPin : int = None):
         pass
 
     # Turns on Motor at Specified Power (Duty Cycle)
