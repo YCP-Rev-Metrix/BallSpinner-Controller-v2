@@ -42,12 +42,40 @@ setup_logging()
 
 if __name__ == '__main__':
 
-    
-    os.environ.setdefault("QT_SCALE_FACTOR", "0.5")
-    os.environ.setdefault("QT_AUTO_SCREEN_SCALE_FACTOR", "1")
+    # Create a temporary application to get screen info for scaling
+    temp_app = QtWidgets.QApplication([])
+    screen = temp_app.primaryScreen()
+    scale = 1.0
+    size = screen.size()
+    try:
+        #Get height and width relative to 1920x1080
+        width = float(size.width())/1920.0
+        height = float(size.height())/1080.0
+        scale = min(width, height)
+        #scale = 0.5 #test value for debugging
+        print(f"Screen scale factor: {scale:.2f}")
+        os.environ["QT_SCALE_FACTOR"] = f"{scale:.2f}"
+        os.environ.setdefault("QT_AUTO_SCREEN_SCALE_FACTOR", "1")
+    except Exception as e:
+        print(f"Error determining screen size: {e}")
+        scale = 1.0
+    finally:
+        #always attempt to clean up temp app
+        try:
+            temp_app.quit()
+            del temp_app
+        except Exception:
+            #If something else goes wrong, just pass
+            pass
 
     app = QtWidgets.QApplication([])
     app.setStyle("Fusion")
+    screen = app.primaryScreen()
+    if screen is not None:
+        size = screen.size()
+        print(f"Primary screen resolution: {size.width()}x{size.height()}")
+    
+    
 
     # Apply qdarktheme stylesheet and palette. These must run before any
     # widgets are instantiated or UI files are loaded.
