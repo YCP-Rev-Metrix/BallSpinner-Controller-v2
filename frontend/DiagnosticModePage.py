@@ -44,6 +44,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.btnStart = self.findChild(QtWidgets.QPushButton, 'btnStart')
         self.btnStop = self.findChild(QtWidgets.QPushButton, 'btnStop')
         self.btnClear = self.findChild(QtWidgets.QPushButton, 'btnClear')
+        self.btnSave = self.findChild(QtWidgets.QPushButton, 'btnSave')
 
         # Additional initialization code can go here
         self.spinGraph = self.findChild(pg.PlotWidget, 'graphSpin')
@@ -61,7 +62,8 @@ class DiagnosticModePage(QtWidgets.QWidget):
         
 
 
-        #Graph configurations
+        #Configure Save Button
+        self.btnSave.clicked.connect(self.openPostDialog)
 
         #Spin Motor graph setup
         self.spinGraph.setTitle("Diagnostic Spin Graph")
@@ -92,9 +94,6 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.tiltDial.setRange(-90, 90)  # Set dial range from -90 to 90
         self.angleDial.setRange(-45, 45)  # Set dial range from -45 to 45
 
-        
-        # Previous `active` flag removed; use timer state instead
-
         self.btnStart.clicked.connect(lambda: self.toggle_Buttons())
         self.btnStop.clicked.connect(lambda: self.toggle_Buttons())
         self.btnClear.clicked.connect(lambda: self.clear_graphs())
@@ -119,7 +118,22 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self._last_values = {'spin': 0.0, 'tilt': 0.0, 'angle': 0.0}
         self._started_at = None
 
-
+    def openPostDialog(self):
+        from .PostDialog import PostDialog
+        dialog = PostDialog(self)
+        result = dialog.exec()
+        if result == QtWidgets.QDialog.DialogCode.Accepted:
+            print("User accepted the dialog.")
+            session_name = dialog.getSessionName()
+            print(f"Session Name: {session_name}")
+            bsc.get_data_controller().set_session_name(session_name)
+            print("Submitting data to cloud")
+            bsc.get_data_controller().submit_session_data()
+            print("Data submitted to cloud")
+            # Handle acceptance (e.g., save data)
+        else:
+            print("User rejected the dialog.")
+            # Handle rejection (e.g., cancel operation)
     def toggle_Buttons(self):
             # Use timer activity to decide start/stop state
             if not self._timer.isActive():
