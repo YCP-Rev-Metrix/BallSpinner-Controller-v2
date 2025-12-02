@@ -32,7 +32,7 @@ class BSC:
             #self.motor2 = SimMotor(2)
         else:
             self.motor1 = SimMotor(2)
-            #self.motor2 = SimMotor(2)
+            self.motor2 = SimMotor(2)
         self.motor3 = SimMotor(3)
 
     def get_smartdotConnectionManager(self):
