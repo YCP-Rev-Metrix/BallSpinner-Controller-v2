@@ -20,16 +20,16 @@ def send_duty(frac, seconds):
 with serial.Serial(PORT, BAUD, timeout=0.05) as ser:
     time.sleep(1.0)
 
-    print("5% duty...")
+    #print("5% duty...")
     send_duty(0.05, 2.0)
 
-    print("20% duty...")
+    #print("20% duty...")
     send_duty(0.20, 2.0)
 
-    print("Stop...")
+    #print("Stop...")
     send_duty(0.0, 1.0)
 
-print("Done.")
+#print("Done.")
 '''
 
 
@@ -51,15 +51,15 @@ DUTY_SMALL = 0.05
 RUN_TIME = 4      # seconds
 
 
-print(f"Opening {PORT}...")
+#print(f"Opening {PORT}...")
 with serial.Serial(PORT, BAUD, timeout=0.05) as ser:
-    print("Connected.")
+    #print("Connected.")
 
     # Stop motor first
     ser.write(encode(SetDutyCycle(0)))
     time.sleep(0.2)
 
-    print("Running at 5% duty for 4 seconds...")
+    #print("Running at 5% duty for 4 seconds...")
 
     ser.write(encode(SetDutyCycle(0.01)))
     time.sleep(4)
@@ -78,7 +78,7 @@ with serial.Serial(PORT, BAUD, timeout=0.05) as ser:
         ser.write(encode(SetDutyCycle(DUTY_SMALL)))
         time.sleep(0.05)  # keep alive
 
-    print("Moving to 10% duty for 4 seconds...")
+    #print("Moving to 10% duty for 4 seconds...")
 
     start = time.time()
     while time.time() - start < RUN_TIME:
@@ -86,7 +86,7 @@ with serial.Serial(PORT, BAUD, timeout=0.05) as ser:
         time.sleep(0.05)  # keep alive
 
 
-    print("Moving to 30% duty for 4 seconds...")
+    #print("Moving to 30% duty for 4 seconds...")
 
     
     start = time.time()
@@ -94,12 +94,12 @@ with serial.Serial(PORT, BAUD, timeout=0.05) as ser:
         ser.write(encode(SetDutyCycle(DUTY_SMALL*6)))
         time.sleep(0.05)  # keep alive
 
-    print("Stopping motor...")
+    #print("Stopping motor...")
     for i in range(10):
         ser.write(encode(SetDutyCycle(0)))
         time.sleep(0.05)
 
-print("Done.")
+#print("Done.")
 '''
 import time
 import serial
@@ -263,15 +263,15 @@ def read_mc_values(ser: serial.Serial, timeout: float = 0.2):
 
 # ---------- Main program ----------
 
-print(f"Opening {PORT}...")
+#print(f"Opening {PORT}...")
 with serial.Serial(PORT, BAUD, timeout=0.05) as ser:
-    print("Connected.")
+    #print("Connected.")
 
     # Stop motor initially
     ser.write(encode(SetDutyCycle(0.0)))
     time.sleep(0.2)
 
-    print("Running at 5% duty and printing encoder/RPM data...")
+    #print("Running at 5% duty and #printing encoder/RPM data...")
 
     start = time.time()
     while time.time() - start < RUN_TIME:
@@ -289,7 +289,7 @@ with serial.Serial(PORT, BAUD, timeout=0.05) as ser:
             # Your 4-pole RC motor = 2 pole pairs → mech RPM = ERPM / 2
             mech_rpm = erpm / 2.0
 
-            print(
+            #print(
                 f"ERPM: {erpm:9.1f} | "
                 f"RPM: {mech_rpm:9.1f} | "
                 f"I_motor: {vals['motor_current']:6.2f} A | "
@@ -300,9 +300,9 @@ with serial.Serial(PORT, BAUD, timeout=0.05) as ser:
 
         time.sleep(0.05)
 
-    print("Stopping motor...")
+    #print("Stopping motor...")
     for _ in range(10):
         ser.write(encode(SetDutyCycle(0.0)))
         time.sleep(0.05)
 
-print("Done.")
+#print("Done.")

@@ -22,7 +22,7 @@ class BDCMotor(iMotor):
 
     def __init__(self, GPIOPin: int):
         self.GPIO_Pin = GPIOPin
-        #print(f"pin: {self.GPIO_Pin}")
+        ##print(f"pin: {self.GPIO_Pin}")
         # Initialize software PWM using gpiozero
         self.motor = PWMOutputDevice(GPIOPin, frequency=FREQ)
         time.sleep(1)
@@ -36,7 +36,7 @@ class BDCMotor(iMotor):
     def disconnect(self, GPIOPin: int):
         if self.motor:
             self.motor.close()
-        print(f"Motor on GPIO{GPIOPin} disconnected.")
+        #print(f"Motor on GPIO{GPIOPin} disconnected.")
 
     # ---------------- UTILITY ----------------
     def clamp(self, x, lo, hi):
@@ -51,45 +51,45 @@ class BDCMotor(iMotor):
             duty = duty * (0.1 - 0.05) + 0.05  # Map to ESC duty range
             v2 = duty
             clamp_val = self.clamp(duty, 0.051, 0.1)
-            print(f"clamp value: {clamp_val}")
+            #print(f"clamp value: {clamp_val}")
             self.motor.value = float(clamp_val)
-            print(f"clamp: {self.clamp(duty, 0.05, 0.1)}")
-            print(f"v1 {v1} v2 {v2} self.motor duty value: {self.motor.value}")
+            #print(f"clamp: {self.clamp(duty, 0.05, 0.1)}")
+            #print(f"v1 {v1} v2 {v2} self.motor duty value: {self.motor.value}")
 
 
     # ---------------- ARM / DISARM ----------------
     def arm(self):
-        print(f"this is motor. :{self.motor}")
+        #print(f"this is motor. :{self.motor}")
         self.currSpeed = MIN_THR
 
         #self.motor.value = 0.0
         #time.sleep(1)
 
-        #print("Full speed")
+        ##print("Full speed")
         #self.motor.value = 0.1
         #time.sleep(2)
 
-        print("Low speed")
+        #print("Low speed")
         #self.motor.value = 0.05
         #time.sleep(2)
 
-        #print("Half speed")
+        ##print("Half speed")
         #self.motor.value = .075
         #time.sleep(4)
         self.set_pulse()
         #self.motor.value = 0.075
         self.motor.value = 0.06
-        print(f"THIS IS MOTOR IN ARMs.: {self.motor.value}")
+        #print(f"THIS IS MOTOR IN ARMs.: {self.motor.value}")
         time.sleep(.25)
         #self.motor.value = 0.05
-        print("armed")
+        #print("armed")
 
     def disarm(self):
         self.targetSpeed = MIN_THR
         self.rampDown()
         self.currSpeed = 0
         self.set_pulse()
-        print("disarmed")
+        #print("disarmed")
 
     # ---------------- MOTOR CONTROL ----------------
     def start(self, rpm=1):
@@ -116,7 +116,7 @@ class BDCMotor(iMotor):
         self.targetSpeed = self.clamp(dutyCycle / 12.0 + 1119.5, MIN_THR, MAX_THR)
         if self.targetSpeed >= 1120.0:
             self.targetSpeed += 5.0
-        #print(f"new target speed: {self.targetSpeed}")
+        ##print(f"new target speed: {self.targetSpeed}")
         if self.targetSpeed > self.currSpeed:
             self.rampUp()
         else:
@@ -126,25 +126,25 @@ class BDCMotor(iMotor):
         return self.currSpeed
 
     def rampUp(self):
-        # print("ramping up to speed")
+        # #print("ramping up to speed")
         while self.currSpeed < self.targetSpeed:
             self.currSpeed += STEP
             if self.currSpeed > self.targetSpeed:
                 self.currSpeed = self.targetSpeed
             self.set_pulse()
             time.sleep(0.05)
-        # print(f"current speed: {self.currSpeed}")
+        # #print(f"current speed: {self.currSpeed}")
 
 
     def rampDown(self):
-        # print("ramping down to speed")
+        # #print("ramping down to speed")
         while self.currSpeed > self.targetSpeed:
             self.currSpeed -= STEP
             if self.currSpeed < self.targetSpeed:
                 self.currSpeed = self.targetSpeed
             self.set_pulse()
             time.sleep(0.05)
-        # print(f"current speed: {self.currSpeed}")
+        # #print(f"current speed: {self.currSpeed}")
 
     def setDutyCycle(self, dutyCycle: int):
         # Direct duty cycle (0-100%)

@@ -90,11 +90,11 @@ class ShotModePage(QtWidgets.QWidget):
         self.btnStartShot.clicked.connect(self.start_shot)
 
     def start_shot(self):
-        print("Shot started!")
+        #print("Shot started!")
         # Todo implement shot logic here based on graph settings and duration.
-        print(self.graph_rpm.sample_spline_display(0.1))
-        print(self.graph_tilt.sample_spline_display(0.1))
-        print(self.graph_angle.sample_spline_display(0.1))
+        #print(self.graph_rpm.sample_spline_display(0.1))
+        #print(self.graph_tilt.sample_spline_display(0.1))
+        #print(self.graph_angle.sample_spline_display(0.1))
         # Assume we have some method or data structure to get the current motor values.
         # For this example, let's get hypothetical current values for each motor:
         '''all of the code below this comment in this function is experimental just for testing my script
@@ -142,12 +142,12 @@ class ShotModePage(QtWidgets.QWidget):
                 tiltDeg=tilt_array[i]
             ))
 
-        # print(bsc.get_session())
-        print(bsc.get_data_controller())
+        # #print(bsc.get_session())
+        #print(bsc.get_data_controller())
 
-        # print(self.graph_rpm.sample_spline_display(sample_interval))
-        # print(self.graph_tilt.sample_spline_display(sample_interval))
-        # print(self.graph_angle.sample_spline_display(sample_interval))
+        # #print(self.graph_rpm.sample_spline_display(sample_interval))
+        # #print(self.graph_tilt.sample_spline_display(sample_interval))
+        # #print(self.graph_angle.sample_spline_display(sample_interval))
 
         self.GraphsData = MotorData(
             dt=sample_interval,
@@ -168,11 +168,11 @@ class ShotModePage(QtWidgets.QWidget):
     def CheckButtons(self):
         if(bsc.smartdotConnectionManager.get_connections):
             self.btnStartShot.setEnabled(True)
-            print("SmartDot connected, enabling Start Shot button.")
+            #print("SmartDot connected, enabling Start Shot button.")
         else:
             self.btnStartShot.setEnabled(False)
-            print("No SmartDot connected, disabling Start Shot button.")
-        print("SmartDot list:",bsc.smartdotConnectionManager.get_connections())
+            #print("No SmartDot connected, disabling Start Shot button.")
+        #print("SmartDot list:",bsc.smartdotConnectionManager.get_connections())
 
     def reset(self):
         self.graph_rpm.reset_view_and_clear()

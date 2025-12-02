@@ -115,8 +115,8 @@ def move_angle_timeds(h, step_pin, dir_pin, angle_deg, total_time_s, clockwise=T
     time_per_step = total_time_s / steps
     half_delay = time_per_step / 2.0
 
-    # Print debug info to console so you can confirm the math at runtime.
-    print(
+    # #print debug info to console so you can confirm the math at runtime.
+    #print(
         f"Moving {angle_deg}° in {total_time_s:.3f}s -> "
         f"{steps} steps, {time_per_step*1000:.3f} ms/step"
     )
@@ -151,7 +151,7 @@ def main():
         # Example motion:
         #   - Move 90 degrees clockwise in 4 seconds
         # ------------------------------------------
-        print("360° CW in 4 seconds...")
+        #print("360° CW in 4 seconds...")
         move_angle_timeds(
             h,
             step_pin=STEP_PIN,
@@ -166,7 +166,7 @@ def main():
         # uncomment the block below. This will move the motor back 90°
         # in 4 seconds using the opposite DIR level.
         """
-        print("90° CCW in 4 seconds...")
+        #print("90° CCW in 4 seconds...")
         move_angle_timeds(
             h,
             step_pin=STEP_PIN,
@@ -177,7 +177,7 @@ def main():
         )
         """
 
-        print("Done.")
+        #print("Done.")
 
     finally:
         # --------------------------
@@ -190,7 +190,7 @@ def main():
 
         # Close the gpiochip handle to release resources.
         lgpio.gpiochip_close(h)
-        print("GPIO released.")
+        #print("GPIO released.")
 
 
 if __name__ == "__main__":

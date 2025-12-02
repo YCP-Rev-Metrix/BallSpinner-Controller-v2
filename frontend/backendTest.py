@@ -13,7 +13,7 @@ class Backend(QObject):
 
     @Slot()
     def doSomething(self):
-        print("Python slot called!")
+        #print("Python slot called!")
         self._message = "Updated from Python"
         self.messageChanged.emit(self._message)
 

@@ -113,7 +113,7 @@ class HomePage(QtWidgets.QMainWindow):
     def closeEvent(self, event):
         """Signal background threads to stop when the window is closing."""
 
-        print("Closing the application")
+        #print("Closing the application")
 
         try:
             self._stop_event.set()
@@ -122,8 +122,8 @@ class HomePage(QtWidgets.QMainWindow):
 
         #Disconnect all connections to SmartDots
         bsc.get_smartdotConnectionManager().disconnect_all()
-        print("Disconnected from all SmartDots")
-        print("SmartDots list should be empty: ", bsc.get_smartdotConnectionManager().get_smartdots())
+        #print("Disconnected from all SmartDots")
+        #print("SmartDots list should be empty: ", bsc.get_smartdotConnectionManager().get_smartdots())
 
         bsc.disconnect_all_motors()
         super().closeEvent(event)

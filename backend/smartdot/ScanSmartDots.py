@@ -20,13 +20,13 @@ class ScanSmartDot():
             """Thread function that waits 10 seconds then stops scanning."""
             for i in range(10):
                 time.sleep(1)
-                print(f"Scanning... {i+1}/10 seconds")
+                #print(f"Scanning... {i+1}/10 seconds")
             BleScanner.stop()
-            print("Scan stopped after 10 seconds.")
+            #print("Scan stopped after 10 seconds.")
         
         BleScanner.set_handler(handler)
         BleScanner.start()
-        print("Started scanning for MetaWear devices...")
+        #print("Started scanning for MetaWear devices...")
 
         # Create and start the timer thread
         timer_thread = threading.Thread(target=stop_scan_after_delay)
@@ -42,5 +42,5 @@ class ScanSmartDot():
 if __name__ == "__main__":
     scan = ScanSmartDot()
     scan.scan10Seconds()
-    print("Found devices:", scan.devices)
+    #print("Found devices:", scan.devices)
 

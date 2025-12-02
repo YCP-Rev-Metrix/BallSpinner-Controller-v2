@@ -46,7 +46,7 @@ class DataViewPage(QtWidgets.QWidget):
         
         self.btnSearch.clicked.connect(
             lambda: self.refresh_data(self.dateStart.dateTime().toString("yyyyMMddhhmmss"), self.dateEnd.dateTime().toString("yyyyMMddhhmmss"))
-            # lambda: print(int(self.dateStart.dateTime().toString("yyyyMMdd")))
+            # lambda: #print(int(self.dateStart.dateTime().toString("yyyyMMdd")))
             )
         
         #self.btnSearch.clicked.connect(self.refresh_data)
@@ -162,11 +162,11 @@ class DataViewPage(QtWidgets.QWidget):
             self.proxy.setSessionTypeFilter(None)
 
     def refresh_data(self, start_time, end_time):
-        print(start_time, end_time)
+        #print(start_time, end_time)
         # clear the persistent model and refill it; proxy filters this model
         self.model.clear()
-        print(f"Getting sessions in time range: {start_time} to {end_time}")
-        print(f"Type of start_time: {type(start_time)}, Type of end_time: {type(end_time)}")
+        #print(f"Getting sessions in time range: {start_time} to {end_time}")
+        #print(f"Type of start_time: {type(start_time)}, Type of end_time: {type(end_time)}")
         result = self.cloud_api.get_sessions_in_time_range(start_time, end_time)
         if result['status_code'] == 200:
             sessions = result['data']
@@ -209,12 +209,12 @@ class DataViewPage(QtWidgets.QWidget):
 
         pass
     def analyze_data(self):
-        print("Analyze Data Clicked")
+        #print("Analyze Data Clicked")
         self.load_data()
         self.changePage.emit(3, bsc.get_data_controller())
         pass
     def replay_data(self):
-        print("Replay Data Clicked")
+        #print("Replay Data Clicked")
         self.load_data()
         self.changePage.emit(6, bsc.get_data_controller())
         pass

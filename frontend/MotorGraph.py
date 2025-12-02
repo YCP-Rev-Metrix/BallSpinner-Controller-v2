@@ -84,7 +84,7 @@ class MotorGraph(QtWidgets.QWidget):
         #Select/Deselect All buttons
         self.btnSelectAll.clicked.connect(self.select_all)
         self.btnDeselectAll.clicked.connect(self.deselect_all)
-        # Print graph coordinates to terminal when user clicks on the graph
+        # #print graph coordinates to terminal when user clicks on the graph
         # We map the scene position of the mouse click to the view (data) coordinates
         self.graph.scene().sigMouseClicked.connect(self._on_graph_click)
 
@@ -161,7 +161,7 @@ class MotorGraph(QtWidgets.QWidget):
     
 
     def _on_graph_click(self, event):
-        """Handle mouse clicks on the plot scene and print mapped data coordinates.
+        """Handle mouse clicks on the plot scene and #print mapped data coordinates.
 
         The event is a QGraphicsSceneMouseEvent. We convert the event's
         scene position into the view (data) coordinates using the plot's ViewBox.
@@ -368,8 +368,8 @@ class MotorGraph(QtWidgets.QWidget):
                         pass
 
         except Exception as e:
-            # Fallback: print the exception to help debugging
-            print("Error mapping graph click to data coords:", e)
+            # Fallback: #print the exception to help debugging
+            #print("Error mapping graph click to data coords:", e)
 
  
     def updateDataBetter(self,MotorTime, SpinArray, TiltArray, AngleArray

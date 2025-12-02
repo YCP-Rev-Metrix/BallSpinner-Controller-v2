@@ -1,11 +1,11 @@
 # Requires: sudo pip3 install metawear
 # usage: sudo python3 scan_connect.py
-# from __future__ import print_function
+# from __future__ import #print_function
 from mbientlab.metawear import MetaWear, libmetawear, parse_value
 from mbientlab.metawear.cbindings import *
 from mbientlab.warble import * 
 from time import sleep
-print("libwarble", libwarble);
+#print("libwarble", libwarble);
 import platform
 import six
 
@@ -14,7 +14,7 @@ import struct
 import time
 
 def warble_log(level, message):
-    print(f"[WARBLE] {message.decode('utf-8')}", flush=True)
+    #print(f"[WARBLE] {message.decode('utf-8')}", flush=True)
 
 # Set log callback
 #libwarble.warble_set_logger(ctypes.CFUNCTYPE(None, ctypes.c_int, ctypes.c_char_p)(warble_log))
@@ -27,7 +27,7 @@ selection = -1
 devices = None
 
 while selection == -1:
-    print("scanning for devices...")
+    #print("scanning for devices...")
     devices = {}
     def handler(result):
         devices[result.mac] = result.name
@@ -40,14 +40,14 @@ while selection == -1:
 
     i = 0
     for address, name in six.iteritems(devices):
-        print("[%d] %s (%s)" % (i, address, name))
+        #print("[%d] %s (%s)" % (i, address, name))
         i+= 1
 
     msg = "Select your device (-1 to rescan): "
     selection = int(raw_input(msg) if platform.python_version_tuple()[0] == '2' else input(msg))
 
 address = list(devices)[selection]
-print("Connecting to %s..." % (address))
+#print("Connecting to %s..." % (address))
 device = MetaWear(address)
 device.connect()
 
@@ -111,7 +111,7 @@ def accelDataHandler(ctx, data, state=None):
         # Pack Sample Count into 3 Byte Big Endian Int
         state['AccelSampleCount'] += 1
         sampleCountInBytes = struct.pack('>I', state['AccelSampleCount'])[1:4]
-        print(f"x:  {parsedData.x}  y:  {parsedData.y}  z:  {parsedData.z}")
+        #print(f"x:  {parsedData.x}  y:  {parsedData.y}  z:  {parsedData.z}")
         # Pack Timestamp, and x,y,z into 4 Byte Little Endian Floats
         # timeStampInBytes = struct.pack("<f", timeStamp)
         # xValInBytes = struct.pack('<f', parsedData.x)
@@ -125,11 +125,11 @@ def accelDataHandler(ctx, data, state=None):
         #     if callable(sig):
         #         sig(mess)
         #     else:
-        #         # no TCP / signal provided — print a human-friendly fallback
-        #         print("Encoded message (hex):", mess.hex())
+        #         # no TCP / signal provided — #print a human-friendly fallback
+        #         #print("Encoded message (hex):", mess.hex())
         # except Exception as e:
-        #     print(parsedData)
-        #     print(e)
+        #     #print(parsedData)
+        #     #print(e)
     # else:
     #     xl_start = state.get('xl_start_time', time.time())
     #     # persist start time if not present
@@ -143,7 +143,7 @@ def accelDataHandler(ctx, data, state=None):
     #         'y': parsedData.y,
     #         'z': parsedData.z
     #     }
-    #     print(arr[0])
+    #     #print(arr[0])
 
     return state
 
@@ -164,14 +164,14 @@ def startAccel(device, state=None):
     XL_rate = state.get('XL_SampleRate', globals().get('XL_samplerate', 25))
     XL_range_val = state.get('XL_Range', globals().get('XL_range', 2))
 
-    print("Configuring Accelerometer")
+    #print("Configuring Accelerometer")
     libmetawear.mbl_mw_acc_set_odr(device.board, XL_rate)
-    print("ODR SET")
+    #print("ODR SET")
     libmetawear.mbl_mw_acc_set_range(device.board, XL_range_val)
-    print("RANGE SET")
+    #print("RANGE SET")
     libmetawear.mbl_mw_acc_write_acceleration_config(device.board)
 
-    print("Subscribing to acceleration data")
+    #print("Subscribing to acceleration data")
     accelSignal = libmetawear.mbl_mw_acc_get_acceleration_data_signal(device.board)
     state['xl_start_time'] = time.time()
 
@@ -182,13 +182,13 @@ def startAccel(device, state=None):
     state['accelCallback'] = FnVoid_VoidP_DataP(_cb)
     libmetawear.mbl_mw_datasignal_subscribe(accelSignal, None, state['accelCallback'])
 
-    print("Enabling acceleration sampling")
+    #print("Enabling acceleration sampling")
     libmetawear.mbl_mw_acc_enable_acceleration_sampling(device.board)
 
     if accelSignal is not None:
         libmetawear.mbl_mw_acc_start(device.board)
     else:
-        print("Unable to Start Polling Data: Acceleration Not Enabled")
+        #print("Unable to Start Polling Data: Acceleration Not Enabled")
 
     state['AccelSampleCount'] = 0
     state['accelSignal'] = accelSignal
@@ -209,7 +209,7 @@ def stopAccel(device, state=None):
         state = {}
 
     accelSignal = state.get('accelSignal')
-    print("Stopping acceleration sampling")
+    #print("Stopping acceleration sampling")
     try:
         libmetawear.mbl_mw_acc_stop(device.board)
     except Exception:
@@ -233,22 +233,22 @@ def stopAccel(device, state=None):
 
 turnOffLED()
 
-print("ENABLING LED")
+#print("ENABLING LED")
 turnOnBlueLED()
-print("Connected to " + device.address + " over " + ("USB" if device.usb.is_connected else "BLE"))
-# print("Device information: " + str(device.info))
-print("setting up XL collection")
+#print("Connected to " + device.address + " over " + ("USB" if device.usb.is_connected else "BLE"))
+# #print("Device information: " + str(device.info))
+#print("setting up XL collection")
 setupCollection()
-print("Starting XL collection")
+#print("Starting XL collection")
 startAccel(device)
 
 sleep(5.0)
 
 
-print("DISABLING LED")
+#print("DISABLING LED")
 turnOffLED()
 device.disconnect()
 sleep(1.0)
-print("Disconnected") 
+#print("Disconnected") 
 
 

@@ -53,7 +53,7 @@ class StepMotor():
         lgpio.gpio_write(self.h, self.DIR_PIN, 0)
         lgpio.gpiochip_close(self.h)
         self.connected = False
-        print("GPIO released")
+        #print("GPIO released")
 
     def disconnect(self):
         # Close the gpiochip handle to release resources.
@@ -136,7 +136,7 @@ class StepMotor():
                         time_to_use = self.motor_times[1] if len(self.motor_times) > 1 else (self.motor_times[0] if len(self.motor_times) > 0 else 1.0)
                         
                         if abs(target_angle) > 0.01:  # Only move if significant
-                            print(f"Moving to waypoint {self.count}: {target_angle}° in {time_to_use}s")
+                            #print(f"Moving to waypoint {self.count}: {target_angle}° in {time_to_use}s")
                             move_angle_timeds(
                                 self.h,
                                 step_pin=self.STEP_PIN,
@@ -155,7 +155,7 @@ class StepMotor():
                         time_to_use = self.motor_times[self.count] if self.count < len(self.motor_times) else 1.0
                         
                         if abs(angle_diff) > 0.01:  # Only move if significant difference
-                            print(f"Moving to waypoint {self.count}: {self.motor_degrees[self.count]}° (Δ{angle_diff}°) in {time_to_use}s")
+                            #print(f"Moving to waypoint {self.count}: {self.motor_degrees[self.count]}° (Δ{angle_diff}°) in {time_to_use}s")
                             move_angle_timeds(
                                 self.h,
                                 step_pin=self.STEP_PIN,
@@ -172,7 +172,7 @@ class StepMotor():
                     if abs(final_angle) > 0.01:  # Only move if not already at 0
                         # Use the last time interval, or default to 1 second
                         time_to_zero = self.motor_times[-1] if len(self.motor_times) > 0 else 1.0
-                        print(f"Returning to 0° from {final_angle}° in {time_to_zero}s")
+                        #print(f"Returning to 0° from {final_angle}° in {time_to_zero}s")
                         move_angle_timeds(
                             self.h,
                             step_pin=self.STEP_PIN,
@@ -182,7 +182,7 @@ class StepMotor():
                             clockwise=(final_angle < 0),  # Opposite direction to return to 0
                         )
                 
-                print(f"Movement sequence complete. Returned to 0°")
+                #print(f"Movement sequence complete. Returned to 0°")
             finally:
                 with self.movement_lock:
                     self.movement_in_progress = False
@@ -365,8 +365,8 @@ def move_angle_timeds(h, step_pin, dir_pin, angle_deg, total_time_s, clockwise=T
     time_per_step = total_time_s / steps
     half_delay = time_per_step / 2.0
 
-    # Print debug info to console so you can confirm the math at runtime.
-    print(
+    # #print debug info to console so you can confirm the math at runtime.
+    #print(
         f"Moving {angle_deg}° in {total_time_s:.3f}s -> "
         f"{steps} steps, {time_per_step*1000:.3f} ms/step"
     )
@@ -402,7 +402,7 @@ def main():
         # Example motion:
         #   - Move 90 degrees clockwise in 4 seconds
         # ------------------------------------------
-        print("90° CW in 4 seconds...")
+        #print("90° CW in 4 seconds...")
         move_angle_timeds(
             h,
             step_pin=STEP_PIN,
@@ -417,7 +417,7 @@ def main():
         # uncomment the block below. This will move the motor back 90°
         # in 4 seconds using the opposite DIR level.
         """
-        print("90° CCW in 4 seconds...")
+        #print("90° CCW in 4 seconds...")
         move_angle_timeds(
             h,
             step_pin=STEP_PIN,
@@ -428,7 +428,7 @@ def main():
         )
         """
 
-        print("Done.")
+        #print("Done.")
 
     finally:
         # --------------------------
@@ -441,7 +441,7 @@ def main():
 
         # Close the gpiochip handle to release resources.
         lgpio.gpiochip_close(h)
-        print("GPIO released.")
+        #print("GPIO released.")
 
 '''
 if __name__ == "__main__":

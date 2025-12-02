@@ -120,7 +120,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
             self.smartdot = SimSmartDot()
             self.setDeviceList(["SI:MU:LA:TE:DD:OT"])
 
-        print(bsc.get_smartdotConnectionManager())
+        #print(bsc.get_smartdotConnectionManager())
         
         # Update disconnect list to show any existing connections
         self.updateDisconnectList()
@@ -128,13 +128,13 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
     def start_scan(self):
         """Starts the ScanSmartDots.py script using ProcessRunner"""
         self.lblStatus.setText("Scanning for SmartDots...")
-        print("Starting scan subprocess...")
+        #print("Starting scan subprocess...")
 
         # You can pass absolute or relative path to ScanSmartDots.py
         self.process_runner.start("python3", ["-u", "backend/smartdot/ScanSmartDots.py"])
     # Handlers for ProcessRunner signals
     def on_process_output(self, text: str):
-        print("[Scan Output]", text)
+        #print("[Scan Output]", text)
 
         if "Found devices:" in text:
             try:
@@ -147,14 +147,14 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
 
 
                 if isinstance(devices, list):
-                    print("Parsed device list:", devices)
+                    #print("Parsed device list:", devices)
                     self.lblStatus.setText(f"Found {len(devices)} devices")
                     self.setDeviceList(devices)
                 else:
-                    print("Unexpected format for devices:", list_part)
+                    #print("Unexpected format for devices:", list_part)
                     self.lblStatus.setText("Scan complete (no valid devices found)")
             except Exception as e:
-                print("Error parsing device list:", e)
+                #print("Error parsing device list:", e)
                 self.lblStatus.setText("Error parsing scan output")
 
         else:
@@ -162,11 +162,11 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
             self.lblStatus.setText(f"Scan running... {text}")
 
     def on_process_error(self, text: str):
-        print("[Scan Error]", text)
+        #print("[Scan Error]", text)
         self.lblStatus.setText(f"Error: {text}")
 
     def on_process_finished(self, code: int, status: int):
-        print(f"Scan finished (code={code}, status={status})")
+        #print(f"Scan finished (code={code}, status={status})")
         self.lblStatus.setText("Scan complete")
         # You could reload the device list here if the scan outputs it to a file or stdout
 
@@ -202,7 +202,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
 
         #Add the connection to the manager upon successful connection
         bsc.get_smartdotConnectionManager().add_connection(self.smartdot._MAC_ADDRESS, self.smartdot)
-        print(f"Connections: {bsc.get_smartdotConnectionManager().get_connections()}")
+        #print(f"Connections: {bsc.get_smartdotConnectionManager().get_connections()}")
         
         # Update disconnect list to show the new connection
         self.updateDisconnectList()
@@ -218,7 +218,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         #Remove the connection from the manager upon disconnection
         smartdot = bsc.get_smartdotConnectionManager().get_smartdot(mac_address)
         bsc.get_smartdotConnectionManager().remove_connection(mac_address, smartdot)
-        print(f"Connections: {bsc.get_smartdotConnectionManager().get_connections()}")
+        #print(f"Connections: {bsc.get_smartdotConnectionManager().get_connections()}")
 
         # Update disconnect list to reflect the disconnection
         self.updateDisconnectList()
@@ -226,7 +226,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
     def on_connection_failed(self, error_message):
         """Called when connection fails"""
         self.lblStatus.setText(error_message)
-        print(f"Connection failed: {error_message}")
+        #print(f"Connection failed: {error_message}")
 
     def setDeviceList(self, devices):
         #remove existing buttons
@@ -286,8 +286,8 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
             bsc.get_smartdotConnectionManager().remove_connection(mac_address, smartdot)
             # Update disconnect list to reflect the change
             self.updateDisconnectList()
-            print(f"Disconnected from {mac_address}")
-            print(f"Connections: {bsc.get_smartdotConnectionManager().get_connections()}")
+            #print(f"Disconnected from {mac_address}")
+            #print(f"Connections: {bsc.get_smartdotConnectionManager().get_connections()}")
         else:
             self.lblStatus.setText(f"Device {mac_address} not found")
 

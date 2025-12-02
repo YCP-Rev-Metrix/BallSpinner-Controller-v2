@@ -65,10 +65,10 @@ class AnalysisModePage(QtWidgets.QWidget):
         dialog = AnalysisDialog(self, type)
         result = dialog.exec()
         if result == QtWidgets.QDialog.DialogCode.Accepted:
-            print("User accepted the dialog.")
+            #print("User accepted the dialog.")
             # Handle acceptance (e.g., proceed with analysis)
         else:
-            print("User rejected the dialog.")
+            #print("User rejected the dialog.")
             # Handle rejection (e.g., cancel operation)
 
 
@@ -77,16 +77,16 @@ class AnalysisModePage(QtWidgets.QWidget):
         dialog = PostDialog(self)
         result = dialog.exec()
         if result == QtWidgets.QDialog.DialogCode.Accepted:
-            print("User accepted the dialog.")
+            #print("User accepted the dialog.")
             session_name = dialog.getSessionName()
-            print(f"Session Name: {session_name}")
+            #print(f"Session Name: {session_name}")
             bsc.get_data_controller().set_session_name(session_name)
-            print("Submitting data to cloud")
+            #print("Submitting data to cloud")
             bsc.get_data_controller().submit_session_data()
-            print("Data submitted to cloud")
+            #print("Data submitted to cloud")
             # Handle acceptance (e.g., save data)
         else:
-            print("User rejected the dialog.")
+            #print("User rejected the dialog.")
             # Handle rejection (e.g., cancel operation)
 
     def loadData(self):
@@ -110,7 +110,7 @@ class AnalysisModePage(QtWidgets.QWidget):
         self.light = []
 
         for data in smartdot_data.data_entries:
-            print(f"SmartDot Data - Time: {data.time}, Selector: {data.data_selector}, AccelX: {data.accelerometer_x}, AccelY: {data.accelerometer_y}, AccelZ: {data.accelerometer_z}, GyroX: {data.gyroscope_x}, GyroY: {data.gyroscope_y}, GyroZ: {data.gyroscope_z}, MagX: {data.magnetometer_x}, MagY: {data.magnetometer_y}, MagZ: {data.magnetometer_z}, Light: {data.light}")
+            #print(f"SmartDot Data - Time: {data.time}, Selector: {data.data_selector}, AccelX: {data.accelerometer_x}, AccelY: {data.accelerometer_y}, AccelZ: {data.accelerometer_z}, GyroX: {data.gyroscope_x}, GyroY: {data.gyroscope_y}, GyroZ: {data.gyroscope_z}, MagX: {data.magnetometer_x}, MagY: {data.magnetometer_y}, MagZ: {data.magnetometer_z}, Light: {data.light}")
             if data.data_selector == 0:  # Accelerometer
                 self.time_accel.append(data.time)
                 self.accel_x.append(data.accelerometer_x)
@@ -154,7 +154,7 @@ class AnalysisModePage(QtWidgets.QWidget):
             motor_rpm.append(data.rpm)
             motor_angleDeg.append(data.angleDeg)
             motor_tiltDeg.append(data.tiltDeg)
-            print(f"Motor Data - Time: {data.time}, RPM: {data.rpm}, AngleDeg: {data.angleDeg}, TiltDeg: {data.tiltDeg}")
+            #print(f"Motor Data - Time: {data.time}, RPM: {data.rpm}, AngleDeg: {data.angleDeg}, TiltDeg: {data.tiltDeg}")
 
 
 
@@ -176,7 +176,7 @@ class AnalysisModePage(QtWidgets.QWidget):
             try:
                 diag_data = dc.diagnostic_data.get_diagnostic_data_entries()
             except Exception as e:
-                print("Error loading diagnostic data:", e)
+                #print("Error loading diagnostic data:", e)
                 diag_data = []
             time_rpm = []
             time_angle = []

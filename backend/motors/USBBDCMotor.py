@@ -221,7 +221,7 @@ class USBBDCMotor(iMotor):
             mech_rpm = erpm / 2.0
 
 
-        print(f"ERPM: {erpm:9.1f} | RPM: {mech_rpm:9.1f} | I_motor: {vals['motor_current']:6.2f} A | V_in: {vals['v_in']:5.2f} V | Duty: {vals['duty_now']*100:5.1f}% | Fault: {vals['fault']}")
+        #print(f"ERPM: {erpm:9.1f} | RPM: {mech_rpm:9.1f} | I_motor: {vals['motor_current']:6.2f} A | V_in: {vals['v_in']:5.2f} V | Duty: {vals['duty_now']*100:5.1f}% | Fault: {vals['fault']}")
 
     def rampUp(self):
         while self.currSpeed < self.targetSpeed:
@@ -247,15 +247,15 @@ class USBBDCMotor(iMotor):
 
 # ---------- Main program ----------
 '''
-print(f"Opening {PORT}...")
+#print(f"Opening {PORT}...")
 with serial.Serial(PORT, BAUD, timeout=0.05) as ser:
-    print("Connected.")
+    #print("Connected.")
 
     # Stop motor initially
     ser.write(encode(SetDutyCycle(0.0)))
     time.sleep(0.2)
 
-    print("Running at 5% duty and printing encoder/RPM data...")
+    #print("Running at 5% duty and #printing encoder/RPM data...")
 
     start = time.time()
     while time.time() - start < RUN_TIME:
@@ -273,7 +273,7 @@ with serial.Serial(PORT, BAUD, timeout=0.05) as ser:
             # Your 4-pole RC motor = 2 pole pairs → mech RPM = ERPM / 2
             mech_rpm = erpm / 2.0
 
-            print(
+            #print(
                 f"ERPM: {erpm:9.1f} | "
                 f"RPM: {mech_rpm:9.1f} | "
                 f"I_motor: {vals['motor_current']:6.2f} A | "
@@ -284,10 +284,10 @@ with serial.Serial(PORT, BAUD, timeout=0.05) as ser:
 
         time.sleep(0.05)
 
-    print("Stopping motor...")
+    #print("Stopping motor...")
     for _ in range(10):
         ser.write(encode(SetDutyCycle(0.0)))
         time.sleep(0.05)
 
-print("Done.")
+#print("Done.")
 '''

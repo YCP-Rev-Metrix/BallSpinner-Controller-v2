@@ -23,14 +23,14 @@ class SimMotor(iMotor):
 
     # Turns on Motor at Specified Power (Duty Cycle)
     def start(self, dutyCycle = 100):
-        #print("Motor started in motor object")
+        ##print("Motor started in motor object")
         pass    
 
     def stop(self):
         pass
 
     def changeSpeed(self, dutyCycle : int, isShotMode: bool):
-        #print("speed changed in motor object")
+        ##print("speed changed in motor object")
         self.currSpeed = dutyCycle
 
     def rampUp(self):

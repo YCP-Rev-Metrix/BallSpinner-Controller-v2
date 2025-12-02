@@ -41,8 +41,8 @@ class MetaMotion(iSmartDot):
         self.data_arr= [None,None,None,None]
 
     def connect(self, MAC_Address, retry_count=0, status_callback=None) -> bool:
-    #print("Attempting to connect to device")
-    #print(MAC_Address)
+    ##print("Attempting to connect to device")
+    ##print(MAC_Address)
         try:
             self.device = MetaWear(MAC_Address)
             
@@ -110,19 +110,19 @@ class MetaMotion(iSmartDot):
             self.MG_SampleRate = 10
 
             self.turnOnBlueLED()
-            print("Connected to device")
+            #print("Connected to device")
 
 
             #connect the onDisconnect callback
-            self.device.on_disconnect = lambda status: self.disconnect_print()
+            self.device.on_disconnect = lambda status: self.disconnect_#print()
 
             
             return True
         except Exception as e:
-            print(e)
+            #print(e)
             if "Timed out" in str(e) and retry_count == 0:
                 #Restart bluetooth and try again real quick :P (only retry once)
-                print("You timed out - retrying connection...")
+                #print("You timed out - retrying connection...")
                 # Call status callback if provided to notify UI of retry
                 if status_callback:
                     status_callback("Connection failed, retrying...")
@@ -155,16 +155,16 @@ class MetaMotion(iSmartDot):
             
         #     mess = sampleCountInBytes + timeStampInBytes + xValInBytes + yValInBytes + zValInBytes
 
-        #     try: # Check if TCP connection is set up, if not, just print xyz values in terminal
+        #     try: # Check if TCP connection is set up, if not, just #print xyz values in terminal
         #         self.accelDataSig(mess)
-        #         #print("Encoded Data " + xValInBytes.hex() + ' ' + yValInBytes.hex() + ' ' + zValInBytes.hex())
+        #         ##print("Encoded Data " + xValInBytes.hex() + ' ' + yValInBytes.hex() + ' ' + zValInBytes.hex())
 
         #     except Exception as e:
-        #         print(parsedData)
-        #         print(e)
+        #         #print(parsedData)
+        #         #print(e)
         # else:
         time_val = time.time() - self.xl_start_time
-        #print(f"{time.time()} - {self.xl_start_time} = {time_val}")
+        ##print(f"{time.time()} - {self.xl_start_time} = {time_val}")
         self.data_arr[0]= {
             'timestamp':time_val,
             'x':parsedData.x, 
@@ -175,8 +175,8 @@ class MetaMotion(iSmartDot):
         self.xl_x.append(parsedData.x)
         self.xl_y.append(parsedData.y)
         self.xl_z.append(parsedData.z)
-        #print(self.xl_time)
-        # print(f"XL: {self.data_arr}")
+        ##print(self.xl_time)
+        # #print(f"XL: {self.data_arr}")
     def magDataHandler(self, ctx, data):
         #Parse data into Cartesian Values
         parsedData = parse_value(data)
@@ -194,7 +194,7 @@ class MetaMotion(iSmartDot):
             'y':parsedData.y, 
             'z':parsedData.z
         }
-        # print(f"MG: {self.data_arr[1]}")
+        # #print(f"MG: {self.data_arr[1]}")
         self.mg_time.append(time_val)
         self.mg_x.append(parsedData.x)
         self.mg_y.append(parsedData.y)
@@ -217,7 +217,7 @@ class MetaMotion(iSmartDot):
             'y':parsedData.y, 
             'z':parsedData.z
         }            
-        # print(f"GY: {self.data_arr[2]}")
+        # #print(f"GY: {self.data_arr[2]}")
         self.gy_time.append(time_val)
         self.gy_x.append(parsedData.x)
         self.gy_y.append(parsedData.y)
@@ -237,8 +237,8 @@ class MetaMotion(iSmartDot):
         #     try:
         #         self.lightDataSig(mess)
         #     except Exception as e:
-        #         print(parsedData)
-        #         print(e)
+        #         #print(parsedData)
+        #         #print(e)
         # else:
         time_val = time.time() - self.lt_start_time
         self.data_arr[3] ={
@@ -247,7 +247,7 @@ class MetaMotion(iSmartDot):
             'y':0, 
             'z':0
         }               
-        # print(f"LT: {self.data_arr[3]}")
+        # #print(f"LT: {self.data_arr[3]}")
         self.lt_time.append(time_val)
         self.lt_value.append(parsedData)
 
@@ -265,7 +265,7 @@ class MetaMotion(iSmartDot):
         self.MagSampleCount = 0
 
     def stopMag(self):
-        print("Stopping Magnetometer sampling")
+        #print("Stopping Magnetometer sampling")
         libmetawear.mbl_mw_mag_bmm150_stop(self.device.board)
         libmetawear.mbl_mw_datasignal_unsubscribe(self.magSignal)
         
@@ -273,49 +273,49 @@ class MetaMotion(iSmartDot):
         self.turnOffLED()
         self.device.disconnect()
 
-    def disconnect_print(self):
-        print("The MetaMotion Device is Disconnected")
+    def disconnect_#print(self):
+        #print("The MetaMotion Device is Disconnected")
         # Call disconnect callback if provided to notify UI
         if self.disconnect_callback:
             self.disconnect_callback(self._MAC_ADDRESS)
     # Define a callback function to handle data
     def i2c_data_handler(self, ctx, data):
         data_obj = data.contents
-        # print(f"Raw Data: {data_obj}")
-        # print("Datadata%s -> %s &  %s" % (self.device.address, parse_value(data), data.contents))
-        #print("ur problem here bro")DatadataC8:30:26:28:92:4A -> [] &  {epoch : 1742670940955, extra : 4108379404, value : 4098885936, type_id : 4, length : 0}
+        # #print(f"Raw Data: {data_obj}")
+        # #print("Datadata%s -> %s &  %s" % (self.device.address, parse_value(data), data.contents))
+        ##print("ur problem here bro")DatadataC8:30:26:28:92:4A -> [] &  {epoch : 1742670940955, extra : 4108379404, value : 4098885936, type_id : 4, length : 0}
     
     def startAccel(self):
         
-        print("Configuring Accelerometer")
+        #print("Configuring Accelerometer")
         libmetawear.mbl_mw_acc_set_odr(self.device.board, self.XL_SampleRate)
-        print("ODR SET")        
+        #print("ODR SET")        
         libmetawear.mbl_mw_acc_set_range(self.device.board, self.XL_Range)  
-        print("RANGE SET")
+        #print("RANGE SET")
         libmetawear.mbl_mw_acc_write_acceleration_config(self.device.board)
 
-        print("Subscribing to acceleration data")
+        #print("Subscribing to acceleration data")
         self.accelSignal = libmetawear.mbl_mw_acc_get_acceleration_data_signal(self.device.board)
         self.xl_start_time = time.time()
         libmetawear.mbl_mw_datasignal_subscribe(self.accelSignal, None, self.accelCallback)
            
-        print("Enabling acceleration sampling")
+        #print("Enabling acceleration sampling")
         libmetawear.mbl_mw_acc_enable_acceleration_sampling(self.device.board)
         
         if(self.accelSignal != None):
             libmetawear.mbl_mw_acc_start(self.device.board)
             # self.i2c_signal = libmetawear.mbl_mw_i2c_get_data_signal(self.device.board, 1, 0xA)
             # libmetawear.mbl_mw_datasignal_subscribe(self.i2c_signal, None, self.XL_ODR_Callback)
-            # print("Now reading data signal with parameters")
+            # #print("Now reading data signal with parameters")
             # libmetawear.mbl_mw_datasignal_read_with_parameters(self.i2c_signal, byref(self.XL_ODR_parameters))
         else:
-            print("Unable to Start Polling Data: Acceleration Not Enabled")
+            #print("Unable to Start Polling Data: Acceleration Not Enabled")
         self.AccelSampleCount = 0
 
        
 
     def stopAccel(self):
-        print("Stopping acceleration sampling")
+        #print("Stopping acceleration sampling")
         libmetawear.mbl_mw_acc_stop(self.device.board)
         libmetawear.mbl_mw_acc_disable_acceleration_sampling(self.device.board)
         libmetawear.mbl_mw_datasignal_unsubscribe(self.accelSignal)
@@ -340,7 +340,7 @@ class MetaMotion(iSmartDot):
         self.GyroSampleCount = 0
 
     def stopGyro(self):
-        print("Stopping Gyroscope Sampling")
+        #print("Stopping Gyroscope Sampling")
         libmetawear.mbl_mw_gyro_bmi160_stop(self.device.board)
         libmetawear.mbl_mw_gyro_bmi160_disable_rotation_sampling(self.device.board)
         libmetawear.mbl_mw_datasignal_unsubscribe(self.gyroSig)
@@ -392,7 +392,7 @@ class MetaMotion(iSmartDot):
             #Setting the Sample Rate is done in the API based on
             #Set Sample Rate
             self.XL_SampleRate = XL
-            print("Accelerometer Set To %sHz " % self.XL_SampleRate)
+            #print("Accelerometer Set To %sHz " % self.XL_SampleRate)
 
         if GY != None: 
             #Create Mapping of Enums to Sample Rates
@@ -411,7 +411,7 @@ class MetaMotion(iSmartDot):
             #Calculate Closest sample rate of what was entered vs. what is possible to set
             dataRate = min(GYDataRates, key=lambda k: abs(GYDataRates[k] - GY))
 
-            print("Gyroscope Set To %sHz " % GYDataRates[dataRate])
+            #print("Gyroscope Set To %sHz " % GYDataRates[dataRate])
             
             #Choose Enum associated with set value
             magDataRates = tuple(GYDataRates.keys())
@@ -434,7 +434,7 @@ class MetaMotion(iSmartDot):
             #Calculate Closest sample rate of what was entered vs. what is possible to set
             dataRate = min(magDataRates, key=lambda k: abs(magDataRates[k] - MG))
 
-            print("Magnetometer Set To %sHz " % magDataRates[dataRate])
+            #print("Magnetometer Set To %sHz " % magDataRates[dataRate])
             
             #Choose Enum associated with set value
             magDataRates = tuple(magDataRates.keys())
@@ -466,7 +466,7 @@ class MetaMotion(iSmartDot):
             #Calculate Closest sample rate of what was entered vs. what is possible to set
             dataRate = min(LTDataRates, key=lambda k: abs(LTDataRates[k] - LT))
 
-            print("Light Set To %sHz " % LTDataRates[dataRate])
+            #print("Light Set To %sHz " % LTDataRates[dataRate])
             
             #Choose Enum associated with set value
             LTDataRates = tuple(LTDataRates.keys())

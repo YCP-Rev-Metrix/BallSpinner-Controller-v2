@@ -87,7 +87,7 @@ class SamplerWindow(QtWidgets.QWidget):
             if xs.size > 0:
                 self.out_plot.plot(xs, ys, pen=None, symbol='o', symbolBrush='r', symbolSize=6)
         except Exception as e:
-            print('Plot error:', e)
+            #print('Plot error:', e)
 
 
 if __name__ == '__main__':

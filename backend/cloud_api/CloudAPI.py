@@ -30,7 +30,7 @@ class CloudAPI(iCloud):
         else:
             logger.info("API request successful")
             logger.debug(f"Retrieved data: {result['data']}")
-            print(f"Data: {result['data']}")
+            #print(f"Data: {result['data']}")
             return result['status_code'], result['data']
 
     def post_session_data(self, session_data: SessionData):
@@ -41,7 +41,7 @@ class CloudAPI(iCloud):
             session_data: SessionData instance
         """
         logger.info("post_session_data called")
-        print(session_data.get_id())
+        #print(session_data.get_id())
         data = []
         data.append({
             "id": session_data.get_id(),
@@ -64,7 +64,7 @@ class CloudAPI(iCloud):
         """
         logger.info("get_sessions_in_time_range called")
         url = "https://api.revmetrix.io/api/gets/GetAllPiSessions"
-        print(f"Getting sessions in time range: {start_time} to {end_time}")
+        #print(f"Getting sessions in time range: {start_time} to {end_time}")
         result = APIUtils.make_post_request(url, {"rangeStart": start_time, "rangeEnd": end_time})
         return result
 
@@ -115,7 +115,7 @@ class CloudAPI(iCloud):
         logger.info(f"Getting Shot Script data for sesionId: {session_id}")
         url = "https://api.revmetrix.io/api/gets/GetAllPiShotsBySession"
         result = APIUtils.make_get_request(url=url, url_params={"sessionId": session_id})
-        print(result)
+        #print(result)
         return result
 
     def post_shot_script_data(self, shot_script_data: ShotScriptData, session_id):
@@ -142,7 +142,7 @@ class CloudAPI(iCloud):
             })
         url = "https://api.revmetrix.io/api/posts/PostPiShot"
         result = APIUtils.make_post_request(url=url, data=data)
-        print(result)
+        #print(result)
         return result
 
 
@@ -159,7 +159,7 @@ class CloudAPI(iCloud):
         logger.info(f"Getting Smartdot data for sessionId: {session_id}")
         url = "https://api.revmetrix.io/api/gets/GetAllPiSmartDotDataBySession"
         result = APIUtils.make_get_request(url, url_params={"sessionId": session_id})
-        print(result)
+        #print(result)
         return result
 
     def post_smartdot_data(self, smart_dot_data: SmartDotData, session_id):
@@ -174,7 +174,7 @@ class CloudAPI(iCloud):
 
         #Gather the smartdot data from the data controller.
         data = []
-        # print(f"Smartdot data: {smart_dot_data}")
+        # #print(f"Smartdot data: {smart_dot_data}")
         for i in smart_dot_data:
             data.append(
                   {
@@ -195,14 +195,14 @@ class CloudAPI(iCloud):
                 }
             )
         result = APIUtils.make_post_request(url=url, data=data)
-        print(result)
+        #print(result)
         return result
 
     def get_encoder_data(self, session_id):
         logger.info(f"Getting encoder data by sessionId: {session_id}")
         url = "https://api.revmetrix.io/api/gets/GetAllPiEncoderDataBySession"
         result = APIUtils.make_get_request(url=url, url_params={"sessionId": session_id})
-        print(result)
+        #print(result)
         return result
     def post_encoder_data(self, encoder_data: EncoderData, session_id):
         logger.info(f"Posting encoder data by sessionId: {session_id}")
@@ -218,13 +218,13 @@ class CloudAPI(iCloud):
                 "motorId": i.motor_id
             })
         result = APIUtils.make_post_request(url=url, data=data)
-        print(result)
+        #print(result)
         return result
     def get_heat_data(self, session_id):
         logger.info(f"Getting Heat data by sessionId: {session_id}")
         url = "https://api.revmetrix.io/api/gets/GetAllPiHeatDataBySession"
         result = APIUtils.make_get_request(url=url, url_params={"sessionId": session_id})
-        print(result)
+        #print(result)
         return result
     def post_heat_data(self, heat_data: HeatData, session_id):
         logger.info(f"Posting heat data by sessionId: {session_id}")
@@ -239,12 +239,12 @@ class CloudAPI(iCloud):
                 "motorId": i.motor_id
             })
         result = APIUtils.make_post_request(url=url, data=data)
-        print(result)
+        #print(result)
         return result
 if __name__ == "__main__":
     
 
-    print(dt.datetime.now().isoformat())
+    #print(dt.datetime.now().isoformat())
     cloud_api = CloudAPI()
     # session_data = SessionData(id=-1, timeStamp=datetime.now(), name="Test Session", isShotMode=True)
     data = [
@@ -256,4 +256,4 @@ if __name__ == "__main__":
     ]
 
     result = cloud_api.post_session_data(data)
-    print(result)
+    #print(result)

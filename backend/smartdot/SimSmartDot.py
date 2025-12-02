@@ -100,7 +100,7 @@ class SimSmartDot(iSmartDot):
         self.xl_y.append(9.81 * math.cos(2 * math.pi * 0.3 * time_val) + 0.1 * math.cos(2 * math.pi * 4 * time_val))
         self.xl_z.append(9.81 + 0.5 * math.sin(2 * math.pi * 0.2 * time_val))
 
-        # print(f"XL: {self.xl_time}, {self.xl_x}, {self.xl_y}, {self.xl_z}")
+        # #print(f"XL: {self.xl_time}, {self.xl_x}, {self.xl_y}, {self.xl_z}")
 
     def gyroDataHandler(self, ctx, data):
         if self.gy_start_time is None:
@@ -170,7 +170,7 @@ class SimSmartDot(iSmartDot):
         self.lt_timer_thread.start()
         
         logger.info("Started collecting data with timer threads")
-        print("Started collecting data")
+        #print("Started collecting data")
 
     def stopCollecting(self):
         # Stop and kill timer threads

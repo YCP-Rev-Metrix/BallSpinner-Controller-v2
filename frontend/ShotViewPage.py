@@ -52,9 +52,9 @@ class ShotViewPage(QtWidgets.QWidget):
         if(len(self.ConnectionManager.get_smartdots()) > 0):
             try:
                 self.SmartDot = self.ConnectionManager.get_connections()[0]
-                print("SmartDot connected:", self.SmartDot)
+                #print("SmartDot connected:", self.SmartDot)
             except Exception as e:
-                print("Error connecting to SmartDot:", e)
+                #print("Error connecting to SmartDot:", e)
         
 
         self.displayedSpin = np.array([])
@@ -92,18 +92,18 @@ class ShotViewPage(QtWidgets.QWidget):
         if(len(self.ConnectionManager.get_smartdots()) > 0):
             try:
                 self.SmartDot = self.ConnectionManager.get_smartdots()[0]
-                print("SmartDot connected:", self.SmartDot)
+                #print("SmartDot connected:", self.SmartDot)
             except Exception as e:
-                print("Error connecting to SmartDot:", e)
+                #print("Error connecting to SmartDot:", e)
 
-        print("Starting Shot View with interval (ms):", self.dt_ms)
-        print("Max Time (sec):", self.MaxTime)
+        #print("Starting Shot View with interval (ms):", self.dt_ms)
+        #print("Max Time (sec):", self.MaxTime)
 
         if (self.SmartDot):
-            print("Using SmartDot in Shot View")
+            #print("Using SmartDot in Shot View")
             self.SmartDot.startCollecting()
         else:
-            print("No SmartDot connected in Shot View")
+            #print("No SmartDot connected in Shot View")
 
         self.timer.setInterval(self.dt_ms)
         # connect to UpdateShotView without passing ms; UpdateShotView will use seconds
@@ -135,8 +135,8 @@ class ShotViewPage(QtWidgets.QWidget):
             self.MaxTime = motor_data[-1].time  # assuming motor_data is sorted by time
             self.dt = motor_data[1].time - motor_data[0].time  # interval in seconds
             self.dt_ms = int(self.dt * 1000)
-            print(len(self.scriptSpin), len(self.scriptTilt), len(self.scriptAngle))
-            print("Determined dt (s):", self.dt)
+            #print(len(self.scriptSpin), len(self.scriptTilt), len(self.scriptAngle))
+            #print("Determined dt (s):", self.dt)
         else:
             #Pase diagnostic data if no shot script data
             diag_data = Controller.diagnostic_data.get_diagnostic_data_entries()
@@ -183,18 +183,18 @@ class ShotViewPage(QtWidgets.QWidget):
         if(len(self.ConnectionManager.get_smartdots()) > 0):
             try:
                 self.SmartDot = self.ConnectionManager.get_smartdots()[0]
-                print("SmartDot connected:", self.SmartDot)
+                #print("SmartDot connected:", self.SmartDot)
             except Exception as e:
-                print("Error connecting to SmartDot:", e)
+                #print("Error connecting to SmartDot:", e)
 
-        print("Starting Shot View with interval (ms):", self.dt_ms)
-        print("Max Time (sec):", self.MaxTime)
+        #print("Starting Shot View with interval (ms):", self.dt_ms)
+        #print("Max Time (sec):", self.MaxTime)
 
         if (self.SmartDot):
-            print("Using SmartDot in Shot View")
+            #print("Using SmartDot in Shot View")
             self.SmartDot.startCollecting()
         else:
-            print("No SmartDot connected in Shot View")
+            #print("No SmartDot connected in Shot View")
 
         self.timer.setInterval(self.dt_ms)
         # connect to UpdateShotView without passing ms; UpdateShotView will use seconds
@@ -221,7 +221,7 @@ class ShotViewPage(QtWidgets.QWidget):
         self.displayedTilt = np.append(self.displayedTilt, self.scriptTilt[self.count])
         self.displayedAngle = np.append(self.displayedAngle, self.scriptAngle[self.count])
         self.motorGraph.updateDataBetter(self.displayedTime, self.displayedSpin, self.displayedTilt, self.displayedAngle,np.array([0.0]),np.array([0.0]),np.array([0.0]),np.array([0.0]))
-        # print("Updating Shot View:", self.ElapsedTime, self.count)
+        # #print("Updating Shot View:", self.ElapsedTime, self.count)
         if self.SmartDot:
             self.SmartDotGraph.updateDataBetter(self.SmartDot.xl_time,self.SmartDot.xl_x, self.SmartDot.xl_y, self.SmartDot.xl_z,
                                                 self.SmartDot.gy_time,self.SmartDot.gy_x, self.SmartDot.gy_y, self.SmartDot.gy_z,
@@ -299,9 +299,9 @@ class ShotViewPage(QtWidgets.QWidget):
                     magnetometer_z=-1,
                     light=self.SmartDot.lt_value[i]
                 ))
-            print("Submitted SmartDot data to DataController")
+            #print("Submitted SmartDot data to DataController")
         bsc.disconnect_all_motors()
-        print("Shot View Ended")
+        #print("Shot View Ended")
         self.btnAnalyze.setEnabled(True)  # Enable Analyze button after shot view
         
 

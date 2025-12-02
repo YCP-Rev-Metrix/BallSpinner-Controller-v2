@@ -83,10 +83,10 @@ class DataController:
         #Submit the smartdot data to the cloud API
         smartdot_data = self.get_smartdot_data()
         for i in smartdot_data:
-            print(f"JABGIAWBGOAWHG: {i.__str__()}")
+            #print(f"JABGIAWBGOAWHG: {i.__str__()}")
         if smartdot_data:
             result = self.cloud_api.post_smartdot_data(smartdot_data, session_id)
-            print(f"JABGIAWBGOAWHGJABGIAWBGOAWHG: {result}")
+            #print(f"JABGIAWBGOAWHGJABGIAWBGOAWHG: {result}")
         else:
             logger.warning(f"No SmartDot Data found for this Shot Session {self.session_data}")
 
@@ -111,7 +111,7 @@ class DataController:
         if session_data.isShotMode:
             #Load the shot script data from the cloud API
             ss_data = self.cloud_api.get_shot_script_data_by_session(session_data.id)
-            print(f"Shot Script Data: {ss_data}")
+            #print(f"Shot Script Data: {ss_data}")
             if ss_data:
                 for i in ss_data['data']:
                     self.shot_script_data.add_shot_script_data(ShotScriptDataInstance(time=i['time'], rpm=i['rpm'], angleDeg=i['angleDegrees'], tiltDeg=i['tiltDegrees']))
@@ -120,10 +120,10 @@ class DataController:
         else:
             #Load the diagnostic script data from the cloud API
             ds_data = self.cloud_api.get_diagnostic_script_data_by_session(session_data.id)
-            # print(f"Diagnostic Script Data: {ds_data}")
+            # #print(f"Diagnostic Script Data: {ds_data}")
             if ds_data:
                 for i in ds_data['data']:
-                    # print(f"Loading Diagnostic Script Data: {i}")
+                    # #print(f"Loading Diagnostic Script Data: {i}")
                     self.diagnostic_script_data.add_diagnostic_script_data(DiagnosticScriptDataInstance(time=i['time'], motor_id=i['motorId'], instruction=i['instruction']))
             else:
                 logger.warning(f"No Diagnostic Mode Data found for this Shot Session {session_data}")
@@ -152,7 +152,7 @@ class DataController:
         else:
             logger.warning(f"No Heat Data found for this Shot Session {session_data}")
 
-        print(f"Data Controller loaded from cloud: {self}")
+        #print(f"Data Controller loaded from cloud: {self}")
         
     def __str__(self):
         return f"DataController(session_data={self.session_data}\n, smartdot_data={self.smartdot_data}\n, diagnostic_script_data={self.diagnostic_script_data}\n, shot_script_data={self.shot_script_data}\n, encoder_data={self.encoder_data}\n, heat_data={self.heat_data}\n)"

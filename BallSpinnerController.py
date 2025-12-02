@@ -26,15 +26,15 @@ class BallSpinnerController():
         self.mode = "diagnostic"
 
     def openMode(self, mode: int):
-        #print(f"Switching page to {mode}")
+        ##print(f"Switching page to {mode}")
         if mode == 1: # DIAGNOSTIC
             self.isModeShot = False
-            print("Diagnostic mode opened")
+            #print("Diagnostic mode opened")
         elif mode == 2: # SHOT
             self.isModeShot = True
-            print("Shot mode opened")
+            #print("Shot mode opened")
         elif mode == 3: # ANALYSIS
             self.isModeShot = False
-            print("Analysis mode opened")
+            #print("Analysis mode opened")
             # ALSO OPEN ANALYSIS MODE HERE WHEN IMPLEMENTED
     

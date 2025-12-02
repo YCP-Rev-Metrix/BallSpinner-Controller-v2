@@ -106,7 +106,7 @@ class SmartDotGraph(QtWidgets.QWidget):
         #Select/Deselect All buttons
         self.btnSelectAll.clicked.connect(self.select_all)
         self.btnDeselectAll.clicked.connect(self.deselect_all)
-        # Print graph coordinates to terminal when user clicks on the graph
+        # #print graph coordinates to terminal when user clicks on the graph
         # We map the scene position of the mouse click to the view (data) coordinates
         self.graph.scene().sigMouseClicked.connect(self._on_graph_click)
 
@@ -193,7 +193,7 @@ class SmartDotGraph(QtWidgets.QWidget):
     
 
     def _on_graph_click(self, event):
-        """Handle mouse clicks on the plot scene and print mapped data coordinates.
+        """Handle mouse clicks on the plot scene and #print mapped data coordinates.
 
         The event is a QGraphicsSceneMouseEvent. We convert the event's
         scene position into the view (data) coordinates using the plot's ViewBox.
@@ -231,7 +231,7 @@ class SmartDotGraph(QtWidgets.QWidget):
                     ax = float(np.asarray(self.accelerometerX)[idx]) if self.accelerometerX is not None else None
                     ay = float(np.asarray(self.accelerometerY)[idx]) if self.accelerometerY is not None else None
                     az = float(np.asarray(self.accelerometerZ)[idx]) if self.accelerometerZ is not None else None
-                    # Update label instead of printing, color values to match plot lines
+                    # Update label instead of #printing, color values to match plot lines
                     if self.lblAccelerometer is not None:
                         # colors match plotting pens: x=red, y=green, z=blue
                         ax_html = _fmt_html(ax, '#ff0000')
@@ -524,8 +524,8 @@ class SmartDotGraph(QtWidgets.QWidget):
                         pass
 
         except Exception as e:
-            # Fallback: print the exception to help debugging
-            print("Error mapping graph click to data coords:", e)
+            # Fallback: #print the exception to help debugging
+            #print("Error mapping graph click to data coords:", e)
 
     def _on_checkbox_toggled(self, checked):
         """Handler for any checkbox toggle: call updateDataBetter with stored arrays

@@ -78,12 +78,12 @@ class SmartDotTestPage(QtWidgets.QWidget):
         self.btnStart.setEnabled(False)
         # Here you would add the actual disconnection code
         if self.SmartDot:
-            print("Disconnecting SmartDot...")
+            #print("Disconnecting SmartDot...")
             self.SmartDot.disconnect()
     
     def on_device_disconnected(self, mac_address):
         """Called when device disconnects"""
-        print(f"Device disconnected: {mac_address}")
+        #print(f"Device disconnected: {mac_address}")
         # Disable the disconnect button
         if self.btnDisconnect:
             self.btnDisconnect.setEnabled(False)
@@ -100,11 +100,11 @@ class SmartDotTestPage(QtWidgets.QWidget):
         self.SmartDot = None
     
     def connectSmartDot(self, device):
-        print("Connecting SmartDot...")
+        #print("Connecting SmartDot...")
         self.SmartDot = device
         self.btnStart.setEnabled(True)
-        print(f"SmartDot: {self.SmartDot}")
-        print(f"Smart dot type: {type(self.SmartDot)}")
+        #print(f"SmartDot: {self.SmartDot}")
+        #print(f"Smart dot type: {type(self.SmartDot)}")
         # Here you would add the actual connection code
         
 
@@ -113,7 +113,7 @@ class SmartDotTestPage(QtWidgets.QWidget):
         if not self._timer.isActive():
             self._timer.start()
             self.active = True
-            print("start collecting")
+            #print("start collecting")
             self.SmartDot.startCollecting()
         if self.btnStart:
             self.btnStart.setEnabled(False)
@@ -126,7 +126,7 @@ class SmartDotTestPage(QtWidgets.QWidget):
         if self._timer.isActive():
             self._timer.stop()
         self.active = False
-        print("stop collecting")
+        #print("stop collecting")
         self.SmartDot.stopCollecting()
         if self.btnStart:
             self.btnStart.setEnabled(True)
@@ -170,7 +170,7 @@ class SmartDotTestPage(QtWidgets.QWidget):
 
     def test_connection(self):
         # Simulate testing connection logic
-        print("Testing SmartDot connection...")
+        #print("Testing SmartDot connection...")
         # Here you would add the actual connection testing code
         self.lblConnectionStatus.setText("Connection Successful!")
 

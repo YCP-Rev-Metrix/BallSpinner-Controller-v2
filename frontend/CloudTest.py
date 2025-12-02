@@ -41,7 +41,7 @@ class CloudTest(QtWidgets.QWidget):
         
 
         result = self.cloud_api.post_session_data(data)
-        print(result)
+        #print(result)
         # if status_code == 200:
         #     self.label.setText(str(data))
         # else:
@@ -51,55 +51,55 @@ class CloudTest(QtWidgets.QWidget):
         """Handle the 'Clear Label' button click"""
         # Clear the label text
         self.label.setText("Response")
-        print("Label cleared")
+        #print("Label cleared")
     
     def get_sessions(self):
         """Handle the 'Get Sessions' button click"""
         #Get all sessions in the time range
         result = self.cloud_api.get_sessions_in_time_range(20251119,20251119)
-        print("Get Sessions clicked")
-        print(result)
+        #print("Get Sessions clicked")
+        #print(result)
 
 
     def post_smart_dot_data(self):
         """Handle the 'Post Smart Dot Data' button click"""
-        print("Post Smart Dot Data clicked")
+        #print("Post Smart Dot Data clicked")
         result = self.cloud_api.post_smartdot_data(bsc.get_data_controller().get_smartdot_data(),1)
-        print(result)
+        #print(result)
     
     def get_smart_dot_data(self):
         """Handle the 'Get Smart Dot Data' button click"""
-        print("get diagnostic data")
+        #print("get diagnostic data")
         result = self.cloud_api.get_smartdot_data(1)
-        print(result)
+        #print(result)
     
     def get_diagnostic_data(self):
         """Handle the 'Get Diagnostic Data' button click"""
-        print("Get Diagnostic Data clicked")
+        #print("Get Diagnostic Data clicked")
         result = self.cloud_api.get_all_diagnostic_script_data_by_session(1)
-        print(result)
+        #print(result)
     
     def post_diagnostic_data(self):
         """Handle the 'Post Diagnostic Data' button click"""
-        print("Post Diagnostic Data clicked")
+        #print("Post Diagnostic Data clicked")
         result = self.cloud_api.post_diagnostic_script_data(bsc.get_data_controller().get_diagnostic_script_data(), 1)
-        print(result)
+        #print(result)
 
 
     def post_shot_script_data(self):
         """Handle the 'Post Shot Script Data' button click"""
-        print("Post Shot Script Data clicked")
+        #print("Post Shot Script Data clicked")
         result = self.cloud_api.post_shot_script_data(bsc.get_data_controller().get_shot_script_data(), 1)
-        print(result)
+        #print(result)
     
     def get_shot_script_data(self):
         """Handle the 'Get Shot Script Data' button click"""
-        print("Get Shot Script Data clicked")
+        #print("Get Shot Script Data clicked")
         result = self.cloud_api.get_shot_script_data_by_session(1)
-        print(result)
+        #print(result)
 
     def post_encoder_data(self):
-        print("Post Encoder Data clicked")
+        #print("Post Encoder Data clicked")
 
         artificial_encoder_data = [
                                     EncoderDataInstance(time=0.0, pulses=100, motor_id=1),
@@ -108,13 +108,13 @@ class CloudTest(QtWidgets.QWidget):
                                   ]
         # result = self.cloud_api.post_encoder_data(bsc.get_data_controller().get_encoder_data(), 1)
         result = self.cloud_api.post_encoder_data(artificial_encoder_data, 1)
-        print(result)
+        #print(result)
     def get_encoder_data(self):
-        print("Get Encoder Data clicked")
+        #print("Get Encoder Data clicked")
         result = self.cloud_api.get_encoder_data(1)
-        print(result)
+        #print(result)
     def post_heat_data(self):
-        print("Post Heat Data clicked")
+        #print("Post Heat Data clicked")
         artificial_heat_data = [
                                 HeatDataInstance(time=0.0, value=100, motor_id=1),
                                 HeatDataInstance(time=0.1, value=200, motor_id=2),
@@ -123,22 +123,22 @@ class CloudTest(QtWidgets.QWidget):
     
         # result = self.cloud_api.post_heat_data(bsc.get_data_controller().get_heat_data(), 1)
         result = self.cloud_api.post_heat_data(artificial_heat_data, 1)
-        print(result)
+        #print(result)
     def get_heat_data(self):
-        print("Get Heat Data clicked")
+        #print("Get Heat Data clicked")
         result = self.cloud_api.get_heat_data(1)
-        print(result)
+        #print(result)
 
     def submit_all_data(self):
-        print("Submit All Data clicked")
+        #print("Submit All Data clicked")
         bsc.get_data_controller().submit_session_data()
-        print("All data submitted")
+        #print("All data submitted")
 
     def load_session_data_from_cloud(self):
-        print("Load Session Data from Cloud clicked")
+        #print("Load Session Data from Cloud clicked")
         session_id = self.spinBox_sessionId.value()
         bsc.get_data_controller().load_session_data_from_cloud(SessionData(id=session_id, timeStamp=dt.datetime.now().isoformat(), name="Diagnostic Session", isShotMode=False))
-        print("Session data loaded from cloud")
+        #print("Session data loaded from cloud")
 
 if __name__ == '__main__':
     # Standard boilerplate for a PyQt application

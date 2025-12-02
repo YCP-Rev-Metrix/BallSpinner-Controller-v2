@@ -14,9 +14,9 @@ class SmartDotConnectionManager:
             else:
                 self.connections.append(MAC_Address)
                 self.smartdots.append(smartdot)
-                print(f"Connections: {self.connections}")
-                print(f"SmartDots: {smartdot._MAC_ADDRESS}")
-                print(f"SmartDots: {self.smartdots}")
+                #print(f"Connections: {self.connections}")
+                #print(f"SmartDots: {smartdot._MAC_ADDRESS}")
+                #print(f"SmartDots: {self.smartdots}")
                 return True
         else:
             return False
@@ -25,9 +25,9 @@ class SmartDotConnectionManager:
         if MAC_Address in self.connections:
             self.connections.remove(MAC_Address)
             self.smartdots.remove(smartdot)
-            print(f"Connections: {self.connections}")
-            print(f"SmartDots: {smartdot._MAC_ADDRESS}")
-            print(f"SmartDots: {self.smartdots}")
+            #print(f"Connections: {self.connections}")
+            #print(f"SmartDots: {smartdot._MAC_ADDRESS}")
+            #print(f"SmartDots: {self.smartdots}")
             return True
         else:
             return False
