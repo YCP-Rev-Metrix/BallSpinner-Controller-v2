@@ -231,7 +231,7 @@ class USBBDCMotor(iMotor):
 
             # Scale input x (0-600) to a range 0-2.6 for SetDutyCycle (which is a tiny eenie weenie bit over 600, like 605 but whatever)
             self.ser.write(encode(SetDutyCycle(self.currSpeed *0.000043333333)))
-            time.sleep(0.02)
+            # time.sleep(0.02)
 
     def rampDown(self):
         while self.currSpeed > self.targetSpeed:
@@ -241,7 +241,7 @@ class USBBDCMotor(iMotor):
 
             # Scale input x (0-600) to a range 0-2.6 for SetDutyCycle (which is a tiny eenie weenie bit over 600, like 605 but whatever)
             self.ser.write(encode(SetDutyCycle(self.currSpeed *0.000043333333)))
-            time.sleep(0.02)
+            # time.sleep(0.02)
         self.ser.write(encode(SetDutyCycle(self.currSpeed *0.000043333333)))
 
 
