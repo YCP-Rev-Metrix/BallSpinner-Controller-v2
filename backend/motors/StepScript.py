@@ -151,12 +151,12 @@ def main():
         # Example motion:
         #   - Move 90 degrees clockwise in 4 seconds
         # ------------------------------------------
-        print("90° CW in 4 seconds...")
+        print("360° CW in 4 seconds...")
         move_angle_timeds(
             h,
             step_pin=STEP_PIN,
             dir_pin=DIR_PIN,
-            angle_deg=90.0,
+            angle_deg=720.0,
             total_time_s=4.0,
             clockwise=True,
         )

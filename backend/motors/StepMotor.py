@@ -28,16 +28,16 @@ DIR_PIN  = 24  # BCM 24 -> DIR-
 #   200 full steps/rev * 8x microstepping = 1600 steps/rev
 STEPS_PER_REV = 1600  # adjust if you change microstepping on the driver
 
-class StepMotor():
+class StepMotor(int GPIO_PIN):
 
     motorID = 0
     currSpeed = 0.0
     targetSpeed = 0.0
     targetPower = 0.0
-    GPIO_Pin = 0
+    GPIO_Pin = GPIO_PIN
     motor = None
-    STEP_PIN = 23 
-    DIR_PIN  = 24 
+    STEP_PIN = GPIO_Pin 
+    DIR_PIN  = STEP_PIN + 1
 
     motor_degrees = [0.0]
     motor_times = [0.0]
