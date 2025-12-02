@@ -72,6 +72,8 @@ if __name__ == '__main__':
     app.setStyle("Fusion")
 
     
+
+    
     
 
     # Apply qdarktheme stylesheet and palette. These must run before any
@@ -81,5 +83,8 @@ if __name__ == '__main__':
 
     window = BSCMainWindow()
     window.show()
+
+    #Make window full screen
+    window.showFullScreen()
 
     QtWidgets.QApplication.exec()
