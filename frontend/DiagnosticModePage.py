@@ -207,10 +207,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
 
         # Only call change_speed / add data when value has changed
         if spin_v != self._last_values['spin']:
-            self.diagnostic_script.change_speed(0, spin_v)
             self.add_diag_data_instance_to_data_controller(t, 0, spin_v)
             self._last_values['spin'] = spin_v
             self.labelSpin.setText(f"Spin Rate: {spin_v:.2f} RPM")
+        self.diagnostic_script.change_speed(0, spin_v)
 
         if tilt_v != self._last_values['tilt']:
             self.diagnostic_script.change_speed(1, tilt_v)
