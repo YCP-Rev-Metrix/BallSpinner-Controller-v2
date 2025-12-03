@@ -14,7 +14,14 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
+<item row="0" column="0">
+        <widget class="QLabel" name="debugLabel">
+            <property name="text">
+                <string>Debug Label</string>
+            </property>
+        </widget>
+    </item> 
+   <item row="1" column="0">
     <layout class="QVBoxLayout" name="verticalLayout" stretch="1,16,2">
      <item>
       <widget class="QFrame" name="frameControls">
@@ -177,6 +184,7 @@
          </property>
         </spacer>
        </item>
+       
        <item>
         <widget class="QPushButton" name="btnReplay">
          <property name="sizePolicy">

@@ -66,6 +66,7 @@ class CloudAPI(iCloud):
         url = "https://api.revmetrix.io/api/gets/GetAllPiSessions"
         print(f"Getting sessions in time range: {start_time} to {end_time}")
         result = APIUtils.make_post_request(url, {"rangeStart": start_time, "rangeEnd": end_time})
+        print(f"This is the failed result: {result}")
         return result
 
     def get_diagnostic_script_data_by_session(self, session_id):
