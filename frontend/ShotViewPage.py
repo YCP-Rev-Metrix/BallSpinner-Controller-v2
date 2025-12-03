@@ -194,7 +194,7 @@ class ShotViewPage(QtWidgets.QWidget):
             self.timer.timeout.disconnect()
         except Exception:
             pass
-        
+         
         self.timer.timeout.connect(self.UpdateShotView)
         self.startTime = time.time() #Record start time of shot view
         self.timer.start()
@@ -241,10 +241,21 @@ class ShotViewPage(QtWidgets.QWidget):
         self.shot_script.change_speed([self.scriptSpin[self.count],self.scriptTilt[self.count],self.scriptAngle[self.count]])
 
         # Spawn a worker thread per motor that then calls change_speed_single
-        self.spawn_motor_thread("Spin", 0, self.scriptSpin[self.count])
-        self.spawn_motor_thread("Tilt", 1, self.scriptTilt[self.count])
-        self.spawn_motor_thread("Angle", 2, self.scriptAngle[self.count])
-
+        try:
+            self.spawn_motor_thread("Spin", 0, self.scriptSpin[self.count])
+        except Exception as e:
+            print("Error spawning Spin motor thread:", e)
+        
+        try:
+            self.spawn_motor_thread("Tilt", 1, self.scriptTilt[self.count])
+        except Exception as e:
+            print("Error spawning Tilt motor thread:", e)
+        
+        try:
+            self.spawn_motor_thread("Angle", 2, self.scriptAngle[self.count])
+        except Exception as e:
+            print("Error spawning Angle motor thread:", e)
+            
         self.motorGraph.updateDataDiagnostic(
                         self.displayedSpinTime, self.displayedSpin,
                         self.displayedTiltTime, self.displayedTilt,
