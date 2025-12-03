@@ -8,13 +8,13 @@ import threading
 # ================================
 # STEP_PIN drives the PUL- input on the stepper driver (e.g. DM542).
 # Each rising edge (or full high+low pulse, depending on driver) is one microstep.
-STEP_PIN = 23  # BCM 23 -> PUL-
+#STEP_PIN = 23  # BCM 23 -> PUL-
 
 # DIR_PIN drives the DIR- input on the stepper driver.
 # Changing this pin HIGH/LOW changes the motor rotation direction (CW/CCW),
 # as long as the driver's DIR+ is tied to a stable logic voltage (e.g. 3.3 V or 5 V)
 # and there is a common ground between the Pi and the driver.
-DIR_PIN  = 24  # BCM 24 -> DIR-
+#DIR_PIN  = 24  # BCM 24 -> DIR-
 
 # ================================
 # MOTION / MECHANICAL PARAMETERS
@@ -36,8 +36,8 @@ class StepMotor():
     targetPower = 0.0
     GPIO_Pin = 0
     motor = None
-    STEP_PIN = 23 
-    DIR_PIN  = 24 
+    STEP_PIN = 0 
+    DIR_PIN  = STEP_PIN + 1
 
     motor_degrees = [0.0]
     motor_times = [0.0]
@@ -45,11 +45,12 @@ class StepMotor():
     h = lgpio.gpiochip_open(0)
     connected = True
     t = threading.Thread()#target=run_movement_chain, daemon=True)
+    prev_angle = 0.0
 
     def stop(self):
         self.t.join()  # Wait for the thread to finish before continuing
-        lgpio.gpio_write(self.h, STEP_PIN, 0)
-        lgpio.gpio_write(self.h, DIR_PIN, 0)
+        lgpio.gpio_write(self.h, self.STEP_PIN, 0)
+        lgpio.gpio_write(self.h, self.DIR_PIN, 0)
         lgpio.gpiochip_close(self.h)
         self.connected = False
         print("GPIO released")
@@ -59,13 +60,15 @@ class StepMotor():
         if(self.connected):
             self.stop()
     
-    def __init__(self, GPIO_Pin=None):
+    def __init__(self, GPIO_Pin=int):
         self.GPIO_Pin = GPIO_Pin
+        self.STEP_PIN = GPIO_Pin
+        self.DIR_PIN = GPIO_Pin + 1
         if not (self.connected):
             self.h = lgpio.gpiochip_open(0)
             self.connected = True
-        lgpio.gpio_claim_output(self.h, STEP_PIN, 0)
-        lgpio.gpio_claim_output(self.h, DIR_PIN, 0)
+        lgpio.gpio_claim_output(self.h, self.STEP_PIN, 0)
+        lgpio.gpio_claim_output(self.h, self.DIR_PIN, 0)
         self.movement_in_progress = False  # Track if a movement is currently running
         self.movement_lock = threading.Lock()  # Lock for thread safety
 
@@ -73,8 +76,8 @@ class StepMotor():
         if not (self.connected):
             self.connected = True
             self.h = lgpio.gpiochip_open(0)
-            lgpio.gpio_claim_output(self.h, STEP_PIN, 0)
-            lgpio.gpio_claim_output(self.h, DIR_PIN, 0)
+            lgpio.gpio_claim_output(self.h, self.STEP_PIN, 0)
+            lgpio.gpio_claim_output(self.h, self.DIR_PIN, 0)
             self.movement_in_progress = False  # Track if a movement is currently running
             self.movement_lock = threading.Lock()  # Lock for thread safety
 
@@ -86,22 +89,22 @@ class StepMotor():
         angle = dutyCycle # so i dont have to fix imotor lol
         if not (isShotMode):
             isClockwise = True
-            angle = angle - self.motor_degrees[0]
-            if(angle<0):
-                angle = angle * -1
+            new_angle = angle - self.prev_angle
+            if(new_angle<0):
+                new_angle = new_angle * -1
                 isClockwise = False
-
+                
+            self.prev_angle = angle
 
 
             move_angle_timeds(
                 self.h,
                 step_pin=self.STEP_PIN,
                 dir_pin=self.DIR_PIN,
-                angle_deg=angle,
-                total_time_s=0.01,
+                angle_deg=new_angle,
+                total_time_s=0.1,
                 clockwise=isClockwise,
             )
-            self.motor_degrees[0] = angle
         else:
         # Only trigger first movement, then let it chain automatically
             if self.count == 0 and not self.movement_in_progress:
