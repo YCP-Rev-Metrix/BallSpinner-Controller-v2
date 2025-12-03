@@ -50,12 +50,15 @@ if __name__ == '__main__':
     try:
         #Get height and width relative to 1920x1080
         width = float(size.width())/1920.0
+        print(f"Screen width: {size.width()} pixels")
         height = float(size.height())/1080.0
+        print(f"Screen height: {size.height()} pixels")
         scale = min(width, height)
         #scale = 0.5 #test value for debugging
         print(f"Screen scale factor: {scale:.2f}")
         os.environ["QT_SCALE_FACTOR"] = f"{scale:.2f}"
         os.environ.setdefault("QT_AUTO_SCREEN_SCALE_FACTOR", "1")
+        print(f"Set QT_SCALE_FACTOR to {os.environ['QT_SCALE_FACTOR']}")
     except Exception as e:
         print(f"Error determining screen size: {e}")
         scale = 1.0
@@ -71,10 +74,6 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication([])
     app.setStyle("Fusion")
 
-    
-
-    
-    
 
     # Apply qdarktheme stylesheet and palette. These must run before any
     # widgets are instantiated or UI files are loaded.
@@ -85,6 +84,6 @@ if __name__ == '__main__':
     window.show()
 
     #Make window full screen
-    window.showFullScreen()
+    #window.showFullScreen()
 
     QtWidgets.QApplication.exec()

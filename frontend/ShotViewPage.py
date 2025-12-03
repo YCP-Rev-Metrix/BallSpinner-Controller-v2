@@ -9,14 +9,34 @@ import threading
 import time
 import os
 import io
+import logging
+import datetime
 from backend.models.SmartDotData import SmartDotDataInstance
 import utils
-from PyQt6.QtCore import pyqtSignal, Qt, QTimer
+from PyQt6.QtCore import pyqtSignal, Qt, QTimer, QThread
 #Database related imports
 from frontend.SmartDotGraph import SmartDotGraph
 from frontend.MotorGraph import MotorGraph
 
 from BSC import bsc, MotorData
+"""
+# Configure a simple file logger for thread finish times
+_logger = logging.getLogger('ShotViewPageThreadLogger')
+if not _logger.handlers:
+    _logger.setLevel(logging.INFO)
+    try:
+        logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'logs'))
+        os.makedirs(logs_dir, exist_ok=True)
+        log_path = os.path.join(logs_dir, 'shotview_thread_times.log')
+    except Exception:
+        log_path = os.path.abspath('shotview_thread_times.log')
+    fh = logging.FileHandler(log_path)
+    fh.setLevel(logging.INFO)
+    fmt = logging.Formatter('%(asctime)s - %(message)s')
+    fh.setFormatter(fmt)
+    _logger.addHandler(fh)
+"""
+
 
 
 class ShotViewPage(QtWidgets.QWidget):
@@ -61,19 +81,37 @@ class ShotViewPage(QtWidgets.QWidget):
         self.displayedSpin = array('f')
         self.displayedTilt = array('f')
         self.displayedAngle = array('f')
-        self.displayedTime = array('d')
+        self.displayedSpinTime = array('d')
+        self.displayedTiltTime = array('d')
+        self.displayedAngleTime = array('d')
         self.ElapsedTime = 0.0
         self.count = 0
         self.MaxTime = 0.0
         self.dt = 1 #Should never run as this
+        self.startTime = time.time() #Record start time of shot view
 
         self.timer = QTimer(self)
+        # Keep track of active worker threads so they are not garbage collected
+        self._active_threads = []
+
+        # A small label on the page to show process output (created dynamically)
+        try:
+            layout = self.layout()
+            if layout is None:
+                from PyQt6.QtWidgets import QVBoxLayout
+                layout = QVBoxLayout(self)
+                self.setLayout(layout)
+        except Exception:
+            layout = None
+        self.processOutputLabel = QtWidgets.QLabel(self)
+        self.processOutputLabel.setObjectName('processOutputLabel')
+        if layout is not None:
+            layout.addWidget(self.processOutputLabel)
         # Expose the nested StartShotView as a public method on the instance
         
  
     def StartShotView(self, Data):
         self.btnAnalyze.setEnabled(False)  # Disabled during shot view
-        self.shot_script.start_motors([0, 1, 2])
 
         # Data.spin/tilt/angle may be lists or numpy arrays; convert to array.array for storage
         self.scriptSpin = array('f', list(Data.spin))
@@ -115,6 +153,7 @@ class ShotViewPage(QtWidgets.QWidget):
         except Exception:
             pass
         self.timer.timeout.connect(self.UpdateShotView)
+        self.startTime = time.time() #Record start time of shot view
         self.timer.start()
     
     def StartShotView(self):
@@ -161,6 +200,7 @@ class ShotViewPage(QtWidgets.QWidget):
                 self.scriptSpin.append(spin_val)
                 self.scriptTilt.append(tilt_val)
                 self.scriptAngle.append(angle_val)
+
         self.shot_script.start_motors([0, 1, 2])
         time_values = []
         t = 0.0
@@ -196,12 +236,19 @@ class ShotViewPage(QtWidgets.QWidget):
             self.timer.timeout.disconnect()
         except Exception:
             pass
-
+        
         self.timer.timeout.connect(self.UpdateShotView)
+        self.startTime = time.time() #Record start time of shot view
         self.timer.start()
         
-        bsc.motor2.interpolate(self.scriptTilt)
-        bsc.motor2.set_motor_times_from_indices(time_values)
+        # Only call interpolate / set_motor_times_from_indices if motor supports them
+        try:
+            if hasattr(bsc.motor2, 'interpolate'):
+                bsc.motor2.interpolate(self.scriptTilt)
+            if hasattr(bsc.motor2, 'set_motor_times_from_indices'):
+                bsc.motor2.set_motor_times_from_indices(time_values)
+        except Exception as e:
+            print("Warning: motor2 interpolation skipped:", e)
 
 
 
@@ -210,6 +257,8 @@ class ShotViewPage(QtWidgets.QWidget):
         # Update using seconds so MaxTime comparison is consistent
         self.ElapsedTime += self.dt
         # append to array.array buffers (fast, low overhead)
+        """
+        #Move to on thread completion
         self.displayedTime.append(self.ElapsedTime)
         self.displayedSpin.append(self.scriptSpin[self.count])
         self.displayedTilt.append(self.scriptTilt[self.count])
@@ -218,7 +267,7 @@ class ShotViewPage(QtWidgets.QWidget):
         # pass array.array buffers directly to avoid allocating ndarrays each update
         self.motorGraph.updateDataBetter(self.displayedTime, self.displayedSpin, self.displayedTilt, self.displayedAngle,
                          array('d', [0.0]), array('f', [0.0]), array('f', [0.0]), array('f', [0.0]))
-        # print("Updating Shot View:", self.ElapsedTime, self.count)
+        """
         if self.SmartDot:
             # SmartDot buffers are array.array; convert to numpy arrays for plotting APIs that expect them
             # pass SmartDot buffers directly (they are array.array)
@@ -227,13 +276,136 @@ class ShotViewPage(QtWidgets.QWidget):
                                                 self.SmartDot.mg_time, self.SmartDot.mg_x, self.SmartDot.mg_y, self.SmartDot.mg_z,
                                                 self.SmartDot.lt_time, self.SmartDot.lt_value)
         self.count += 1
+
+
+
+        # Change speeds for all motors atomically
+        self.shot_script.change_speed([self.scriptSpin[self.count],self.scriptTilt[self.count],self.scriptAngle[self.count]])
+
+        # Spawn a worker thread per motor that then calls change_speed_single
+        self.spawn_motor_thread("Spin", 0, self.scriptSpin[self.count])
+        self.spawn_motor_thread("Tilt", 1, self.scriptTilt[self.count])
+        self.spawn_motor_thread("Angle", 2, self.scriptAngle[self.count])
+
+        self.motorGraph.updateDataDiagnostic(
+                        self.displayedSpinTime, self.displayedSpin,
+                        self.displayedTiltTime, self.displayedTilt,
+                        self.displayedAngleTime, self.displayedAngle,
+                        array('d', [0.0]), array('f', [0.0]),array('f', [0.0]), array('f', [0.0]))    
         if(self.ElapsedTime >= self.MaxTime or self.count >= len(self.scriptSpin)):
             self.EndShotView()
             return
-        self.shot_script.change_speed([self.scriptSpin[self.count],self.scriptTilt[self.count],self.scriptAngle[self.count]])
+
+
+    class _MotorWorker(QThread):
+        finished_signal = pyqtSignal(object)
+
+        def __init__(self, motor_index: int, value: float, shot_script: ShotScript, parent=None):
+            super().__init__(parent)
+            self.motor_index = motor_index
+            self.value = value
+            self.shot_script = shot_script
+
+        def run(self):
+            
+            try:
+                self.shot_script.change_speed_single(self.motor_index, self.value)
+
+                result = {'motor_index': self.motor_index, 'value': self.value,}
+            except Exception as e:
+                result = {'motor_index': self.motor_index, 'value': self.value, 'error': str(e)}
+
+            self.finished_signal.emit(result)
+
+    def spawn_motor_thread(self, motor: str, motor_index: int, value: float):
+        """Spawn a QThread worker that counts and then calls ShotScript.change_speed_single."""
+        worker = ShotViewPage._MotorWorker(motor_index, value, self.shot_script, parent=self)
+        # keep reference
+        self._active_threads.append(worker)
+        worker.finished_signal.connect(lambda data, w=worker: self._on_thread_finished(w, data))
+        worker.start()
+
+    def _on_thread_finished(self, worker: QThread, data: object):
+        # Called when a worker thread emits finished_signal
+        try:
+            # remove worker from active list
+            self._active_threads.remove(worker)
+        except ValueError:
+            pass
+        # compute time delta since last append for this motor and append value and delta
+        try:
+            self.motor_index = None
+            self.value = None
+            if isinstance(data, dict):
+                self.motor_index = data.get('motor_index')
+                self.value = data.get('value')
+            # fallback if data is an object with attributes
+            else:
+                self.motor_index = getattr(data, 'motor_index', None)
+                self.value = getattr(data, 'value', None)
+            self.now = time.time()
+            self.delta = self.now - self.startTime
+
+            if self.motor_index == 0:
+                # append motor value and delta to spin lists
+                try:
+                    self.displayedSpin.append(self.value)
+                except Exception:
+                    pass
+                try:
+                    self.displayedSpinTime.append(self.delta)
+                except Exception:
+                    pass
+            elif self.motor_index == 1:
+                try:
+                    self.displayedTilt.append(self.value)
+                except Exception:
+                    pass
+                try:
+                    self.displayedTiltTime.append(self.delta)
+                except Exception:
+                    pass
+            elif self.motor_index == 2:
+                try:
+                    self.displayedAngle.append(self.value)
+                except Exception:
+                    pass
+                try:
+                    self.displayedAngleTime.append(self.delta)
+                except Exception:
+                    pass
+
+            # Logging: compute start/end times for the motor call based on reported duration (if available) 
+            #_logger.info(f"Motor {self.motor_index} set to {self.value} at elapsed time {self.delta:.3f} sec. Now: {self.now:.3f} StartTime: {self.startTime:.3f}")
+        except Exception as e:
+            print("Error in _on_thread_finished processing:", e)
+        # schedule deletion
+        worker.quit()
+        worker.wait(100)
+        worker.deleteLater()
+
+
 
     def EndShotView(self):
         self.timer.stop()
+        #Ensure all motors are stopped
+        self.shot_script.stop_motors()
+        #Make graph final update
+        self.motorGraph.updateDataDiagnostic(
+                        self.displayedSpinTime, self.displayedSpin,
+                        self.displayedTiltTime, self.displayedTilt,
+                        self.displayedAngleTime, self.displayedAngle,
+                        array('d', [0.0]), array('f', [0.0]),array('f', [0.0]), array('f', [0.0]))
+        # Update SmartDot graph only if SmartDot data is available
+        if self.SmartDot:
+            try:
+                self.SmartDotGraph.updateDataBetter(self.SmartDot.xl_time, self.SmartDot.xl_x, self.SmartDot.xl_y, self.SmartDot.xl_z,
+                                                    self.SmartDot.gy_time, self.SmartDot.gy_x, self.SmartDot.gy_y, self.SmartDot.gy_z,
+                                                    self.SmartDot.mg_time, self.SmartDot.mg_x, self.SmartDot.mg_y, self.SmartDot.mg_z,
+                                                    self.SmartDot.lt_time, self.SmartDot.lt_value)
+            except Exception as e:
+                print("Warning: SmartDotGraph update failed:", e)
+        #Collect SmartDot data into DataController
         if self.SmartDot:
             self.SmartDot.stopCollecting()
             #Get datacontroller
