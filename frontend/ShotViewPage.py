@@ -19,7 +19,7 @@ from frontend.SmartDotGraph import SmartDotGraph
 from frontend.MotorGraph import MotorGraph
 
 from BSC import bsc, MotorData
-"""
+
 # Configure a simple file logger for thread finish times
 _logger = logging.getLogger('ShotViewPageThreadLogger')
 if not _logger.handlers:
@@ -35,7 +35,7 @@ if not _logger.handlers:
     fmt = logging.Formatter('%(asctime)s - %(message)s')
     fh.setFormatter(fmt)
     _logger.addHandler(fh)
-"""
+
 
 
 
@@ -334,7 +334,7 @@ class ShotViewPage(QtWidgets.QWidget):
                     pass
 
             # Logging: compute start/end times for the motor call based on reported duration (if available) 
-            #_logger.info(f"Motor {self.motor_index} set to {self.value} at elapsed time {self.delta:.3f} sec. Now: {self.now:.3f} StartTime: {self.startTime:.3f}")
+            _logger.info(f"Motor {self.motor_index} set to {self.value} at elapsed time {self.delta:.3f} sec. Now: {self.now:.3f} StartTime: {self.startTime:.3f}")
         except Exception as e:
             print("Error in _on_thread_finished processing:", e)
         # schedule deletion
