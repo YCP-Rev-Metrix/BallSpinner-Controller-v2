@@ -25,6 +25,8 @@ class BSC:
         self.cloud_api = CloudAPI()
         self.session = None
         self.data_controller = None
+        # Diagnostic sampling interval (milliseconds) used by UI pages
+        self.diagnostic_sample_interval_ms = 50
         if utils.is_raspberry_pi_5():
             self.motor1 = USBBDCMotor() # UNCOMMENT AFTER STEPPER
             #self.motor1 = SimMotor(1)

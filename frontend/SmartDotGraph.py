@@ -4,6 +4,7 @@ from PyQt6 import QtWidgets, uic
 import os
 import pyqtgraph as pg
 import numpy as np 
+from array import array
 
 # Module-level arrays used by the graph update. Kept as globals for minimal changes
 
@@ -72,33 +73,103 @@ class SmartDotGraph(QtWidgets.QWidget):
         legend = self.graph.addLegend()
         legend.setColumnCount(2)
 
+        # Create pens and persistent plot curves to avoid recreating plot items on every update
+        self.pens = {
+            'acc_x': pg.mkPen(color='r', width=2),
+            'acc_y': pg.mkPen(color='g', width=2),
+            'acc_z': pg.mkPen(color='b', width=2),
+            'gyro_x': pg.mkPen(color='c', width=2),
+            'gyro_y': pg.mkPen(color='m', width=2),
+            'gyro_z': pg.mkPen(color='y', width=2),
+            'mag_x': pg.mkPen(color='#008080', width=2),
+            'mag_y': pg.mkPen(color='#800000', width=2),
+            'mag_z': pg.mkPen(color='#800080', width=2),
+            'light': pg.mkPen(color='w', width=2),
+        }
+
+        # Create persistent curves (PlotDataItem) for each series and keep them in a dict
+        self.curves = {}
+        self.curves['acc_x'] = self.graph.plot([], [], pen=self.pens['acc_x'], name='Accelerometer_X')
+        self.curves['acc_y'] = self.graph.plot([], [], pen=self.pens['acc_y'], name='Accelerometer_Y')
+        self.curves['acc_z'] = self.graph.plot([], [], pen=self.pens['acc_z'], name='Accelerometer_Z')
+        self.curves['gyro_x'] = self.graph.plot([], [], pen=self.pens['gyro_x'], name='Gyroscope_X')
+        self.curves['gyro_y'] = self.graph.plot([], [], pen=self.pens['gyro_y'], name='Gyroscope_Y')
+        self.curves['gyro_z'] = self.graph.plot([], [], pen=self.pens['gyro_z'], name='Gyroscope_Z')
+        self.curves['mag_x'] = self.graph.plot([], [], pen=self.pens['mag_x'], name='Magnetometer_X')
+        self.curves['mag_y'] = self.graph.plot([], [], pen=self.pens['mag_y'], name='Magnetometer_Y')
+        self.curves['mag_z'] = self.graph.plot([], [], pen=self.pens['mag_z'], name='Magnetometer_Z')
+        self.curves['light'] = self.graph.plot([], [], pen=self.pens['light'], name='Light (log2)')
+        
+
+        # Create persistent cursor and scatter markers (added to the plotItem once)
+        plotItem = self.graph.getPlotItem()
+        try:
+            self.vline = pg.InfiniteLine(
+                angle=90,
+                movable=False,
+                pen=pg.mkPen(color=(255,0,255), width=1, style=pg.QtCore.Qt.PenStyle.DotLine)
+            )
+            self.vline.setZValue(1000)
+            self.vline.setVisible(False)
+            plotItem.addItem(self.vline, ignoreBounds=True)
+        except Exception:
+            # In case adding fails, keep vline set but invisible
+            self.vline = None
+
+        # brushes for scatter markers
+        self.brushes = {
+            'acc_x': pg.mkBrush(255,0,0),
+            'acc_y': pg.mkBrush(0,170,0),
+            'acc_z': pg.mkBrush(0,0,255),
+            'gyro_x': pg.mkBrush(0,255,255),
+            'gyro_y': pg.mkBrush(255,0,255),
+            'gyro_z': pg.mkBrush(255,255,0),
+            'mag_x': pg.mkBrush(0,128,128),
+            'mag_y': pg.mkBrush(128,0,0),
+            'mag_z': pg.mkBrush(128,0,128),
+            'light': pg.mkBrush(200,200,200),
+        }
+
+        # create scatter markers and add them to the plot; keep invisible until used
+        try:
+            self.marker_acc_x = pg.ScatterPlotItem(size=7, brush=self.brushes['acc_x'])
+            self.marker_acc_y = pg.ScatterPlotItem(size=7, brush=self.brushes['acc_y'])
+            self.marker_acc_z = pg.ScatterPlotItem(size=7, brush=self.brushes['acc_z'])
+            self.marker_gyro_x = pg.ScatterPlotItem(size=7, brush=self.brushes['gyro_x'])
+            self.marker_gyro_y = pg.ScatterPlotItem(size=7, brush=self.brushes['gyro_y'])
+            self.marker_gyro_z = pg.ScatterPlotItem(size=7, brush=self.brushes['gyro_z'])
+            self.marker_mag_x = pg.ScatterPlotItem(size=7, brush=self.brushes['mag_x'])
+            self.marker_mag_y = pg.ScatterPlotItem(size=7, brush=self.brushes['mag_y'])
+            self.marker_mag_z = pg.ScatterPlotItem(size=7, brush=self.brushes['mag_z'])
+            self.marker_light = pg.ScatterPlotItem(size=7, brush=self.brushes['light'])
+            for m in (self.marker_acc_x, self.marker_acc_y, self.marker_acc_z,
+                      self.marker_gyro_x, self.marker_gyro_y, self.marker_gyro_z,
+                      self.marker_mag_x, self.marker_mag_y, self.marker_mag_z,
+                      self.marker_light):
+                m.setVisible(False)
+                plotItem.addItem(m)
+        except Exception:
+            # If adding markers fails, keep marker variables defined above as None or existing
+            pass
+
         # initalize storage for plot data
-        self.accelerometerTime = np.array([0.0])
-        self.accelerometerX = np.array([0.0])
-        self.accelerometerY = np.array([0.0])
-        self.accelerometerZ = np.array([0.0])
-        self.gyroscopeTime = np.array([0.0])
-        self.gyroscopeX = np.array([0.0])
-        self.gyroscopeY = np.array([0.0])
-        self.gyroscopeZ = np.array([0.0])
-        self.magnetometerTime = np.array([0.0])
-        self.magnetometerX = np.array([0.0])
-        self.magnetometerY = np.array([0.0])
-        self.magnetometerZ = np.array([0.0])
-        self.lightTime = np.array([0.0])
-        self.lightValue = np.array([0.0])
-        # Cursor and markers will be created on first click (lazy)
-        self.vline = None
-        self.marker_acc_x = None
-        self.marker_acc_y = None
-        self.marker_acc_z = None
-        self.marker_gyro_x = None
-        self.marker_gyro_y = None
-        self.marker_gyro_z = None
-        self.marker_mag_x = None
-        self.marker_mag_y = None
-        self.marker_mag_z = None
-        self.marker_light = None
+        self.accelerometerTime = array('d', [0.0])
+        self.accelerometerX = array('f', [0.0])
+        self.accelerometerY = array('f', [0.0])
+        self.accelerometerZ = array('f', [0.0])
+        self.gyroscopeTime = array('d', [0.0])
+        self.gyroscopeX = array('f', [0.0])
+        self.gyroscopeY = array('f', [0.0])
+        self.gyroscopeZ = array('f', [0.0])
+        self.magnetometerTime = array('d', [0.0])
+        self.magnetometerX = array('f', [0.0])
+        self.magnetometerY = array('f', [0.0])
+        self.magnetometerZ = array('f', [0.0])
+        self.lightTime = array('d', [0.0])
+        # store the raw (linear) light values; compute log2 for plotting only
+        self.lightValue = array('f', [0.0])
+        self.lightValueRaw = array('f', [0.0])
+        # Cursor and markers created above and will be reused
         self.select_all()
         self.limitViewBox()
 
@@ -221,7 +292,17 @@ class SmartDotGraph(QtWidgets.QWidget):
                 if time_arr is None or len(time_arr) == 0:
                     return None
                 ta = np.asarray(time_arr)
-                return int(np.argmin(np.abs(ta - val)))
+                # Use searchsorted for sorted time arrays (faster than argmin on abs diff)
+                idx = np.searchsorted(ta, val)
+                if idx == 0:
+                    return 0
+                if idx >= len(ta):
+                    return len(ta) - 1
+                left = idx - 1
+                right = idx
+                if abs(ta[left] - val) <= abs(ta[right] - val):
+                    return int(left)
+                return int(right)
 
             # Accelerometer
             if self.accelerometerTime is not None and len(self.accelerometerTime) > 0:
@@ -240,70 +321,35 @@ class SmartDotGraph(QtWidgets.QWidget):
                         self.lblAccelerometer.setText(
                             f"Accelerometer @ t={t:.3f} (idx={idx}): x={ax_html}, y={ay_html}, z={az_html}"
                         )
-                    # ensure cursor exists and set it to exact clicked x; create markers lazily
+                    # Show and position the persistent cursor/markers (created in __init__)
                     try:
-                        if self.vline is None:
-                            self.vline = pg.InfiniteLine(
-                                angle=90,
-                                movable=False,
-                                pen=pg.mkPen(color=(255,0,255), width=1, style=pg.QtCore.Qt.PenStyle.DotLine)
-                            )
-                            self.vline.setZValue(1000)
-                            try:
-                                vb.addItem(self.vline)
-                            except Exception:
-                                try:
-                                    self.graph.addItem(self.vline, ignoreBounds=True)
-                                except Exception:
-                                    pass
-                        self.vline.setPos(x_click)
+                        if self.vline is not None:
+                            self.vline.setVisible(True)
+                            self.vline.setPos(x_click)
                     except Exception:
                         pass
                     try:
-                        plotItem = self.graph.getPlotItem()
-                        if self.marker_acc_x is None:
-                            self.marker_acc_x = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,0))
-                            self.marker_acc_x.setZValue(200)
-                            try:
-                                plotItem.addItem(self.marker_acc_x)
-                            except Exception:
-                                try:
-                                    self.graph.addItem(self.marker_acc_x)
-                                except Exception:
-                                    pass
-                        if self.marker_acc_y is None:
-                            self.marker_acc_y = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,170,0))
-                            self.marker_acc_y.setZValue(200)
-                            try:
-                                plotItem.addItem(self.marker_acc_y)
-                            except Exception:
-                                try:
-                                    self.graph.addItem(self.marker_acc_y)
-                                except Exception:
-                                    pass
-                        if self.marker_acc_z is None:
-                            self.marker_acc_z = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,0,255))
-                            self.marker_acc_z.setZValue(200)
-                            try:
-                                plotItem.addItem(self.marker_acc_z)
-                            except Exception:
-                                try:
-                                    self.graph.addItem(self.marker_acc_z)
-                                except Exception:
-                                    pass
-
-                        if ax is not None:
-                            self.marker_acc_x.setData(x=[t], y=[ax])
-                        else:
-                            self.marker_acc_x.setData(x=[], y=[])
-                        if ay is not None:
-                            self.marker_acc_y.setData(x=[t], y=[ay])
-                        else:
-                            self.marker_acc_y.setData(x=[], y=[])
-                        if az is not None:
-                            self.marker_acc_z.setData(x=[t], y=[az])
-                        else:
-                            self.marker_acc_z.setData(x=[], y=[])
+                        if getattr(self, 'marker_acc_x', None) is not None:
+                            if ax is not None and self.curves.get('acc_x', None) is not None and self.curves['acc_x'].isVisible():
+                                self.marker_acc_x.setData(x=[t], y=[ax])
+                                self.marker_acc_x.setVisible(True)
+                            else:
+                                self.marker_acc_x.setData(x=[], y=[])
+                                self.marker_acc_x.setVisible(False)
+                        if getattr(self, 'marker_acc_y', None) is not None:
+                            if ay is not None and self.curves.get('acc_y', None) is not None and self.curves['acc_y'].isVisible():
+                                self.marker_acc_y.setData(x=[t], y=[ay])
+                                self.marker_acc_y.setVisible(True)
+                            else:
+                                self.marker_acc_y.setData(x=[], y=[])
+                                self.marker_acc_y.setVisible(False)
+                        if getattr(self, 'marker_acc_z', None) is not None:
+                            if az is not None and self.curves.get('acc_z', None) is not None and self.curves['acc_z'].isVisible():
+                                self.marker_acc_z.setData(x=[t], y=[az])
+                                self.marker_acc_z.setVisible(True)
+                            else:
+                                self.marker_acc_z.setData(x=[], y=[])
+                                self.marker_acc_z.setVisible(False)
                     except Exception:
                         pass
 
@@ -323,70 +369,34 @@ class SmartDotGraph(QtWidgets.QWidget):
                         self.lblGyroscopeData.setText(
                             f"Gyroscope @ t={t:.3f} (idx={idx}): x={gx_html}, y={gy_html}, z={gz_html}"
                         )
-                    # ensure cursor exists and set it to exact clicked x; create gyro markers lazily
                     try:
-                        if self.vline is None:
-                            self.vline = pg.InfiniteLine(
-                                angle=90,
-                                movable=False,
-                                pen=pg.mkPen(color=(255,0,255), width=1, style=pg.QtCore.Qt.PenStyle.DotLine)
-                            )
-                            self.vline.setZValue(1000)
-                            try:
-                                vb.addItem(self.vline)
-                            except Exception:
-                                try:
-                                    self.graph.addItem(self.vline, ignoreBounds=True)
-                                except Exception:
-                                    pass
-                        self.vline.setPos(x_click)
+                        if self.vline is not None:
+                            self.vline.setVisible(True)
+                            self.vline.setPos(x_click)
                     except Exception:
                         pass
                     try:
-                        plotItem = self.graph.getPlotItem()
-                        if self.marker_gyro_x is None:
-                            self.marker_gyro_x = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,255,255))
-                            self.marker_gyro_x.setZValue(200)
-                            try:
-                                plotItem.addItem(self.marker_gyro_x)
-                            except Exception:
-                                try:
-                                    self.graph.addItem(self.marker_gyro_x)
-                                except Exception:
-                                    pass
-                        if self.marker_gyro_y is None:
-                            self.marker_gyro_y = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,255))
-                            self.marker_gyro_y.setZValue(200)
-                            try:
-                                plotItem.addItem(self.marker_gyro_y)
-                            except Exception:
-                                try:
-                                    self.graph.addItem(self.marker_gyro_y)
-                                except Exception:
-                                    pass
-                        if self.marker_gyro_z is None:
-                            self.marker_gyro_z = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,255,0))
-                            self.marker_gyro_z.setZValue(200)
-                            try:
-                                plotItem.addItem(self.marker_gyro_z)
-                            except Exception:
-                                try:
-                                    self.graph.addItem(self.marker_gyro_z)
-                                except Exception:
-                                    pass
-
-                        if gx is not None:
-                            self.marker_gyro_x.setData(x=[t], y=[gx])
-                        else:
-                            self.marker_gyro_x.setData(x=[], y=[])
-                        if gy is not None:
-                            self.marker_gyro_y.setData(x=[t], y=[gy])
-                        else:
-                            self.marker_gyro_y.setData(x=[], y=[])
-                        if gz is not None:
-                            self.marker_gyro_z.setData(x=[t], y=[gz])
-                        else:
-                            self.marker_gyro_z.setData(x=[], y=[])
+                        if getattr(self, 'marker_gyro_x', None) is not None:
+                            if gx is not None and self.curves.get('gyro_x', None) is not None and self.curves['gyro_x'].isVisible():
+                                self.marker_gyro_x.setData(x=[t], y=[gx])
+                                self.marker_gyro_x.setVisible(True)
+                            else:
+                                self.marker_gyro_x.setData(x=[], y=[])
+                                self.marker_gyro_x.setVisible(False)
+                        if getattr(self, 'marker_gyro_y', None) is not None:
+                            if gy is not None and self.curves.get('gyro_y', None) is not None and self.curves['gyro_y'].isVisible():
+                                self.marker_gyro_y.setData(x=[t], y=[gy])
+                                self.marker_gyro_y.setVisible(True)
+                            else:
+                                self.marker_gyro_y.setData(x=[], y=[])
+                                self.marker_gyro_y.setVisible(False)
+                        if getattr(self, 'marker_gyro_z', None) is not None:
+                            if gz is not None and self.curves.get('gyro_z', None) is not None and self.curves['gyro_z'].isVisible():
+                                self.marker_gyro_z.setData(x=[t], y=[gz])
+                                self.marker_gyro_z.setVisible(True)
+                            else:
+                                self.marker_gyro_z.setData(x=[], y=[])
+                                self.marker_gyro_z.setVisible(False)
                     except Exception:
                         pass
 
@@ -406,70 +416,34 @@ class SmartDotGraph(QtWidgets.QWidget):
                         self.lblMagnomaterData.setText(
                             f"Magnetometer @ t={t:.3f} (idx={idx}): x={mx_html}, y={my_html}, z={mz_html}"
                         )
-                    # ensure cursor exists and set it to exact clicked x; create magnetometer markers lazily
                     try:
-                        if self.vline is None:
-                            self.vline = pg.InfiniteLine(
-                                angle=90,
-                                movable=False,
-                                pen=pg.mkPen(color=(255,0,255), width=1, style=pg.QtCore.Qt.PenStyle.DotLine)
-                            )
-                            self.vline.setZValue(1000)
-                            try:
-                                vb.addItem(self.vline)
-                            except Exception:
-                                try:
-                                    self.graph.addItem(self.vline, ignoreBounds=True)
-                                except Exception:
-                                    pass
-                        self.vline.setPos(x_click)
+                        if self.vline is not None:
+                            self.vline.setVisible(True)
+                            self.vline.setPos(x_click)
                     except Exception:
                         pass
                     try:
-                        plotItem = self.graph.getPlotItem()
-                        if self.marker_mag_x is None:
-                            self.marker_mag_x = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,128,128))
-                            self.marker_mag_x.setZValue(200)
-                            try:
-                                plotItem.addItem(self.marker_mag_x)
-                            except Exception:
-                                try:
-                                    self.graph.addItem(self.marker_mag_x)
-                                except Exception:
-                                    pass
-                        if self.marker_mag_y is None:
-                            self.marker_mag_y = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(128,0,0))
-                            self.marker_mag_y.setZValue(200)
-                            try:
-                                plotItem.addItem(self.marker_mag_y)
-                            except Exception:
-                                try:
-                                    self.graph.addItem(self.marker_mag_y)
-                                except Exception:
-                                    pass
-                        if self.marker_mag_z is None:
-                            self.marker_mag_z = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(128,0,128))
-                            self.marker_mag_z.setZValue(200)
-                            try:
-                                plotItem.addItem(self.marker_mag_z)
-                            except Exception:
-                                try:
-                                    self.graph.addItem(self.marker_mag_z)
-                                except Exception:
-                                    pass
-
-                        if mx is not None:
-                            self.marker_mag_x.setData(x=[t], y=[mx])
-                        else:
-                            self.marker_mag_x.setData(x=[], y=[])
-                        if my is not None:
-                            self.marker_mag_y.setData(x=[t], y=[my])
-                        else:
-                            self.marker_mag_y.setData(x=[], y=[])
-                        if mz is not None:
-                            self.marker_mag_z.setData(x=[t], y=[mz])
-                        else:
-                            self.marker_mag_z.setData(x=[], y=[])
+                        if getattr(self, 'marker_mag_x', None) is not None:
+                            if mx is not None and self.curves.get('mag_x', None) is not None and self.curves['mag_x'].isVisible():
+                                self.marker_mag_x.setData(x=[t], y=[mx])
+                                self.marker_mag_x.setVisible(True)
+                            else:
+                                self.marker_mag_x.setData(x=[], y=[])
+                                self.marker_mag_x.setVisible(False)
+                        if getattr(self, 'marker_mag_y', None) is not None:
+                            if my is not None and self.curves.get('mag_y', None) is not None and self.curves['mag_y'].isVisible():
+                                self.marker_mag_y.setData(x=[t], y=[my])
+                                self.marker_mag_y.setVisible(True)
+                            else:
+                                self.marker_mag_y.setData(x=[], y=[])
+                                self.marker_mag_y.setVisible(False)
+                        if getattr(self, 'marker_mag_z', None) is not None:
+                            if mz is not None and self.curves.get('mag_z', None) is not None and self.curves['mag_z'].isVisible():
+                                self.marker_mag_z.setData(x=[t], y=[mz])
+                                self.marker_mag_z.setVisible(True)
+                            else:
+                                self.marker_mag_z.setData(x=[], y=[])
+                                self.marker_mag_z.setVisible(False)
                     except Exception:
                         pass
 
@@ -478,48 +452,37 @@ class SmartDotGraph(QtWidgets.QWidget):
                 idx = _nearest(self.lightTime, x_click)
                 if idx is not None:
                     t = float(np.asarray(self.lightTime)[idx])
-                    lv = float(np.asarray(self.lightValue)[idx]) if self.lightValue is not None else None
+                    raw_lv = None
+                    log_lv = None
+                    if getattr(self, 'lightValueRaw', None) is not None and len(self.lightValueRaw) > idx:
+                        raw_lv = float(np.asarray(self.lightValueRaw)[idx])
+                        try:
+                            if raw_lv > 0:
+                                log_lv = float(np.log2(raw_lv))
+                            else:
+                                log_lv = float('nan')
+                        except Exception:
+                            log_lv = float('nan')
                     if self.lblLightData is not None:
-                        # light uses a neutral gray color
-                        lv_html = _fmt_html(lv, '#777777')
+                        log_html = _fmt_html(log_lv, '#777777')
+                        raw_html = _fmt_html(raw_lv, '#999999')
                         self.lblLightData.setText(
-                            f"Light @ t={t:.3f} (idx={idx}): value={lv_html}"
+                            f"Light @ t={t:.3f} (idx={idx}): log2={log_html}, raw={raw_html}"
                         )
-                    # ensure cursor exists and set it to exact clicked x; create light marker lazily
                     try:
-                        if self.vline is None:
-                            self.vline = pg.InfiniteLine(
-                                angle=90,
-                                movable=False,
-                                pen=pg.mkPen(color=(255,0,255), width=1, style=pg.QtCore.Qt.PenStyle.DotLine)
-                            )
-                            self.vline.setZValue(1000)
-                            try:
-                                vb.addItem(self.vline)
-                            except Exception:
-                                try:
-                                    self.graph.addItem(self.vline, ignoreBounds=True)
-                                except Exception:
-                                    pass
-                        self.vline.setPos(x_click)
+                        if self.vline is not None:
+                            self.vline.setVisible(True)
+                            self.vline.setPos(x_click)
                     except Exception:
                         pass
                     try:
-                        plotItem = self.graph.getPlotItem()
-                        if self.marker_light is None:
-                            self.marker_light = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(200,200,200))
-                            self.marker_light.setZValue(200)
-                            try:
-                                plotItem.addItem(self.marker_light)
-                            except Exception:
-                                try:
-                                    self.graph.addItem(self.marker_light)
-                                except Exception:
-                                    pass
-                        if lv is not None:
-                            self.marker_light.setData(x=[t], y=[lv])
-                        else:
-                            self.marker_light.setData(x=[], y=[])
+                        if getattr(self, 'marker_light', None) is not None:
+                            if log_lv is not None and self.curves.get('light', None) is not None and self.curves['light'].isVisible():
+                                self.marker_light.setData(x=[t], y=[log_lv])
+                                self.marker_light.setVisible(True)
+                            else:
+                                self.marker_light.setData(x=[], y=[])
+                                self.marker_light.setVisible(False)
                     except Exception:
                         pass
 
@@ -538,7 +501,7 @@ class SmartDotGraph(QtWidgets.QWidget):
                 self.accelerometerTime, self.accelerometerX, self.accelerometerY, self.accelerometerZ,
                 self.gyroscopeTime, self.gyroscopeX, self.gyroscopeY, self.gyroscopeZ,
                 self.magnetometerTime, self.magnetometerX, self.magnetometerY, self.magnetometerZ,
-                self.lightTime, self.lightValue
+                self.lightTime, self.lightValueRaw
             )
         except Exception:
             # Swallow exceptions to avoid UI breakage from toggle handlers
@@ -551,24 +514,28 @@ class SmartDotGraph(QtWidgets.QWidget):
                         magnometerTime, 
                         magnetometerX, magnetometerY, magnetometerZ,
                         lightTime, lightValue):
-        self.graph.clear()  # Clear existing plots
-        #store data in class variables
-        self.accelerometerTime = acclerometerTime
-        self.accelerometerX = acclerometerX
-        self.accelerometerY = accelerometerY    
-        self.accelerometerZ = accelerometerZ
-        self.gyroscopeTime = gyroscoperTime
-        self.gyroscopeX = gyroscopeX
-        self.gyroscopeY = gyroscopeY
-        self.gyroscopeZ = gyroscopeZ
-        self.magnetometerTime = magnometerTime
-        self.magnetometerX = magnetometerX
-        self.magnetometerY = magnetometerY
-        self.magnetometerZ = magnetometerZ
-        self.lightTime = lightTime
-        self.lightValue = lightValue
+        # Store incoming data as NumPy arrays (do conversion once)
+        # Make explicit copies to avoid sharing buffers with producer arrays
+        self.accelerometerTime = np.array(acclerometerTime, dtype=np.float64, copy=True) if acclerometerTime is not None else np.array([])
+        self.accelerometerX = np.array(acclerometerX, dtype=np.float32, copy=True) if acclerometerX is not None else np.array([])
+        self.accelerometerY = np.array(accelerometerY, dtype=np.float32, copy=True) if accelerometerY is not None else np.array([])
+        self.accelerometerZ = np.array(accelerometerZ, dtype=np.float32, copy=True) if accelerometerZ is not None else np.array([])
+        self.gyroscopeTime = np.array(gyroscoperTime, dtype=np.float64, copy=True) if gyroscoperTime is not None else np.array([])
+        self.gyroscopeX = np.array(gyroscopeX, dtype=np.float32, copy=True) if gyroscopeX is not None else np.array([])
+        self.gyroscopeY = np.array(gyroscopeY, dtype=np.float32, copy=True) if gyroscopeY is not None else np.array([])
+        self.gyroscopeZ = np.array(gyroscopeZ, dtype=np.float32, copy=True) if gyroscopeZ is not None else np.array([])
+        self.magnetometerTime = np.array(magnometerTime, dtype=np.float64, copy=True) if magnometerTime is not None else np.array([])
+        self.magnetometerX = np.array(magnetometerX, dtype=np.float32, copy=True) if magnetometerX is not None else np.array([])
+        self.magnetometerY = np.array(magnetometerY, dtype=np.float32, copy=True) if magnetometerY is not None else np.array([])
+        self.magnetometerZ = np.array(magnetometerZ, dtype=np.float32, copy=True) if magnetometerZ is not None else np.array([])
+        self.lightTime = np.array(lightTime, dtype=np.float64, copy=True) if lightTime is not None else np.array([])
+        # Store incoming light values as RAW (linear). We'll compute log2 when plotting
+        if lightValue is not None:
+            self.lightValueRaw = np.array(lightValue, dtype=np.float32, copy=True)
+        else:
+            self.lightValueRaw = np.array([])
 
-        # Plot data based on checkbox states
+        # Update persistent curves instead of clearing & re-creating them
         self.drawAccelerometer()
         self.drawGyroscope()
         self.drawMagnetometer()
@@ -578,130 +545,43 @@ class SmartDotGraph(QtWidgets.QWidget):
         else:
             last = 0
         self.limit_view_change(last)
-        # re-add cursor and markers so they persist after clear()
-        try:
-            vb = self.graph.getPlotItem().getViewBox()
-            plotItem = self.graph.getPlotItem()
-            if self.vline is not None:
-                try:
-                    vb.addItem(self.vline)
-                except Exception:
-                    try:
-                        self.graph.addItem(self.vline, ignoreBounds=True)
-                    except Exception:
-                        pass
-            if self.marker_acc_x is not None:
-                try:
-                    plotItem.addItem(self.marker_acc_x)
-                except Exception:
-                    try:
-                        self.graph.addItem(self.marker_acc_x)
-                    except Exception:
-                        pass
-            if self.marker_acc_y is not None:
-                try:
-                    plotItem.addItem(self.marker_acc_y)
-                except Exception:
-                    try:
-                        self.graph.addItem(self.marker_acc_y)
-                    except Exception:
-                        pass
-            if self.marker_acc_z is not None:
-                try:
-                    plotItem.addItem(self.marker_acc_z)
-                except Exception:
-                    try:
-                        self.graph.addItem(self.marker_acc_z)
-                    except Exception:
-                        pass
-            if self.marker_gyro_x is not None:
-                try:
-                    plotItem.addItem(self.marker_gyro_x)
-                except Exception:
-                    try:
-                        self.graph.addItem(self.marker_gyro_x)
-                    except Exception:
-                        pass
-            if self.marker_gyro_y is not None:
-                try:
-                    plotItem.addItem(self.marker_gyro_y)
-                except Exception:
-                    try:
-                        self.graph.addItem(self.marker_gyro_y)
-                    except Exception:
-                        pass
-            if self.marker_gyro_z is not None:
-                try:
-                    plotItem.addItem(self.marker_gyro_z)
-                except Exception:
-                    try:
-                        self.graph.addItem(self.marker_gyro_z)
-                    except Exception:
-                        pass
-            if self.marker_mag_x is not None:
-                try:
-                    plotItem.addItem(self.marker_mag_x)
-                except Exception:
-                    try:
-                        self.graph.addItem(self.marker_mag_x)
-                    except Exception:
-                        pass
-            if self.marker_mag_y is not None:
-                try:
-                    plotItem.addItem(self.marker_mag_y)
-                except Exception:
-                    try:
-                        self.graph.addItem(self.marker_mag_y)
-                    except Exception:
-                        pass
-            if self.marker_mag_z is not None:
-                try:
-                    plotItem.addItem(self.marker_mag_z)
-                except Exception:
-                    try:
-                        self.graph.addItem(self.marker_mag_z)
-                    except Exception:
-                        pass
-            if self.marker_light is not None:
-                try:
-                    plotItem.addItem(self.marker_light)
-                except Exception:
-                    try:
-                        self.graph.addItem(self.marker_light)
-                    except Exception:
-                        pass
-        except Exception:
-            pass
+        # Persistent cursor/markers are created in __init__ and reused; nothing to re-add here.
     def updateAccelerometer(self, time, x, y, z):
         # store latest accelerometer arrays for click lookup
-        self.accelerometerTime = np.asarray(time)
-        self.accelerometerX = np.asarray(x)
-        self.accelerometerY = np.asarray(y)
-        self.accelerometerZ = np.asarray(z)
+        # copy inputs to avoid referencing external buffers that may be mutated
+        self.accelerometerTime = np.array(time, dtype=np.float64, copy=True)
+        self.accelerometerX = np.array(x, dtype=np.float32, copy=True)
+        self.accelerometerY = np.array(y, dtype=np.float32, copy=True)
+        self.accelerometerZ = np.array(z, dtype=np.float32, copy=True)
         self.drawAccelerometer()
-        self.limit_view_change(time[-1])
+        if self.accelerometerTime.size:
+            self.limit_view_change(float(self.accelerometerTime[-1]))
     def updateGyroscope(self, time, x, y, z):
         # store latest gyroscope arrays for click lookup
-        self.gyroscopeTime = np.asarray(time)
-        self.gyroscopeX = np.asarray(x)
-        self.gyroscopeY = np.asarray(y)
-        self.gyroscopeZ = np.asarray(z)
+        self.gyroscopeTime = np.array(time, dtype=np.float64, copy=True)
+        self.gyroscopeX = np.array(x, dtype=np.float32, copy=True)
+        self.gyroscopeY = np.array(y, dtype=np.float32, copy=True)
+        self.gyroscopeZ = np.array(z, dtype=np.float32, copy=True)
         self.drawGyroscope()
-        self.limit_view_change(time[-1])
+        if self.gyroscopeTime.size:
+            self.limit_view_change(float(self.gyroscopeTime[-1]))
     def updateMagnetometer(self, time, x, y, z):
         # store latest magnetometer arrays for click lookup
-        self.magnetometerTime = np.asarray(time)
-        self.magnetometerX = np.asarray(x)
-        self.magnetometerY = np.asarray(y)
-        self.magnetometerZ = np.asarray(z)
+        self.magnetometerTime = np.array(time, dtype=np.float64, copy=True)
+        self.magnetometerX = np.array(x, dtype=np.float32, copy=True)
+        self.magnetometerY = np.array(y, dtype=np.float32, copy=True)
+        self.magnetometerZ = np.array(z, dtype=np.float32, copy=True)
         self.drawMagnetometer()
-        self.limit_view_change(time[-1])
+        if self.magnetometerTime.size:
+            self.limit_view_change(float(self.magnetometerTime[-1]))
     def updateLight(self, time, value):
         # store latest light arrays for click lookup
-        self.lightTime = np.asarray(time)
-        self.lightValue = np.asarray(value)
+        self.lightTime = np.array(time, dtype=np.float64, copy=True)
+        # Store raw (linear) light values; plotting will compute log2
+        self.lightValueRaw = np.array(value, dtype=np.float32, copy=True)
         self.drawLight()
-        self.limit_view_change(time[-1])
+        if self.lightTime.size:
+            self.limit_view_change(float(self.lightTime[-1]))
     def setMode(self, mode):
 
     
@@ -771,29 +651,79 @@ class SmartDotGraph(QtWidgets.QWidget):
                 self.chkMagnetometer_Z.setVisible(True)
                 self.chkLight.setVisible(True)
     def drawAccelerometer(self) :
-        if self.chkAccelerometer_X.isChecked():
-            self.graph.plot(self.accelerometerTime, self.accelerometerX, pen=pg.mkPen(color='r', width=2), name='Accelerometer_X')
-        if self.chkAccelerometer_Y.isChecked():
-            self.graph.plot(self.accelerometerTime, self.accelerometerY, pen=pg.mkPen(color='g', width=2), name='Accelerometer_Y')
-        if self.chkAccelerometer_Z.isChecked():
-            self.graph.plot(self.accelerometerTime, self.accelerometerZ, pen=pg.mkPen(color='b', width=2), name='Accelerometer_Z')
+        # Use persistent PlotDataItems and update their data/visibility
+        try:
+            if self.chkAccelerometer_X.isChecked():
+                self.curves['acc_x'].setData(self.accelerometerTime, self.accelerometerX)
+                self.curves['acc_x'].setVisible(True)
+            else:
+                self.curves['acc_x'].setVisible(False)
+            if self.chkAccelerometer_Y.isChecked():
+                self.curves['acc_y'].setData(self.accelerometerTime, self.accelerometerY)
+                self.curves['acc_y'].setVisible(True)
+            else:
+                self.curves['acc_y'].setVisible(False)
+            if self.chkAccelerometer_Z.isChecked():
+                self.curves['acc_z'].setData(self.accelerometerTime, self.accelerometerZ)
+                self.curves['acc_z'].setVisible(True)
+            else:
+                self.curves['acc_z'].setVisible(False)
+        except Exception:
+            # Fallback to no-op if curves aren't available
+            pass
     def drawGyroscope(self) :
-        if self.chkGyroscope_X.isChecked():
-            self.graph.plot(self.gyroscopeTime, self.gyroscopeX, pen=pg.mkPen(color='c', width=2), name='Gyroscope_X')
-        if self.chkGyroscope_Y.isChecked():
-            self.graph.plot(self.gyroscopeTime, self.gyroscopeY, pen=pg.mkPen(color='m', width=2), name='Gyroscope_Y')
-        if self.chkGyroscope_Z.isChecked():
-            self.graph.plot(self.gyroscopeTime, self.gyroscopeZ, pen=pg.mkPen(color='y', width=2), name='Gyroscope_Z')   
+        try:
+            if self.chkGyroscope_X.isChecked():
+                self.curves['gyro_x'].setData(self.gyroscopeTime, self.gyroscopeX)
+                self.curves['gyro_x'].setVisible(True)
+            else:
+                self.curves['gyro_x'].setVisible(False)
+            if self.chkGyroscope_Y.isChecked():
+                self.curves['gyro_y'].setData(self.gyroscopeTime, self.gyroscopeY)
+                self.curves['gyro_y'].setVisible(True)
+            else:
+                self.curves['gyro_y'].setVisible(False)
+            if self.chkGyroscope_Z.isChecked():
+                self.curves['gyro_z'].setData(self.gyroscopeTime, self.gyroscopeZ)
+                self.curves['gyro_z'].setVisible(True)
+            else:
+                self.curves['gyro_z'].setVisible(False)
+        except Exception:
+            pass
     def drawMagnetometer(self) :
-        if self.chkMagnetometer_X.isChecked():
-            self.graph.plot(self.magnetometerTime, self.magnetometerX, pen=pg.mkPen(color="#008080", width=2), name='Magnetometer_X')
-        if self.chkMagnetometer_Y.isChecked():
-            self.graph.plot(self.magnetometerTime, self.magnetometerY, pen=pg.mkPen(color="#800000", width=2), name='Magnetometer_Y')
-        if self.chkMagnetometer_Z.isChecked():
-            self.graph.plot(self.magnetometerTime, self.magnetometerZ, pen=pg.mkPen(color='#800080', width=2), name='Magnetometer_Z')
+        try:
+            if self.chkMagnetometer_X.isChecked():
+                self.curves['mag_x'].setData(self.magnetometerTime, self.magnetometerX)
+                self.curves['mag_x'].setVisible(True)
+            else:
+                self.curves['mag_x'].setVisible(False)
+            if self.chkMagnetometer_Y.isChecked():
+                self.curves['mag_y'].setData(self.magnetometerTime, self.magnetometerY)
+                self.curves['mag_y'].setVisible(True)
+            else:
+                self.curves['mag_y'].setVisible(False)
+            if self.chkMagnetometer_Z.isChecked():
+                self.curves['mag_z'].setData(self.magnetometerTime, self.magnetometerZ)
+                self.curves['mag_z'].setVisible(True)
+            else:
+                self.curves['mag_z'].setVisible(False)
+        except Exception:
+            pass
     def drawLight(self) :
-        if self.chkLight.isChecked():
-            self.graph.plot(self.lightTime, self.lightValue, pen=pg.mkPen(color='w', width=2), name='Light')
+        try:
+            if self.chkLight.isChecked():
+                # compute log2 for plotting; non-positive raw values map to NaN
+                if getattr(self, 'lightValueRaw', None) is not None and self.lightValueRaw.size:
+                    with np.errstate(divide='ignore', invalid='ignore'):
+                        lv_plot = np.where(self.lightValueRaw > 0, np.log2(self.lightValueRaw), np.nan).astype(np.float32)
+                else:
+                    lv_plot = np.array([])
+                self.curves['light'].setData(self.lightTime, lv_plot)
+                self.curves['light'].setVisible(True)
+            else:
+                self.curves['light'].setVisible(False)
+        except Exception:
+            pass
     def setView(self, viewIndex: int):
         self.cbolimitView.setCurrentIndex(viewIndex)
 

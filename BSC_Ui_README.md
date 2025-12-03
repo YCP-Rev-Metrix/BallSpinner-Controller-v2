@@ -1,10 +1,29 @@
+```markdown
 # Creating a new page in the BSC
 
 ## Part 1: How does the UI work
 
 The BSC UI consists of 2 kinds of files
+# BSC UI Quick Guide
 
-1. .ui files, the visual component
+This document explains how the BSC Qt UI is structured and how to add new pages.
+
+Key points
+- **Main UI:** `BSCMainWindow.ui` (loaded by `BSCMainWindow.py`)
+- **Pages:** Each page should have a `.ui` file and a corresponding `.py` file
+- **Navigation:** `BSCMainWindow` contains a `QStackedWidget` where each page is a child widget
+
+How to add a page (summary)
+1. Create `YourPage.ui` in `frontend/` using Qt Designer
+2. Create `YourPage.py` with a QWidget subclass that loads the `.ui` via `uic.loadUi` and exposes a `changePage` signal if needed
+3. Promote the widget in `BSCMainWindow.ui` to use your new class or instantiate and add it in code
+4. Wire any signals to `BSCMainWindow.switch_to_page`
+
+Notes
+- Use `self.findChild(YourPageClass, 'NameInUi')` in `BSCMainWindow` to obtain references to pages defined in the UI file
+- Update `BSCMainWindow.ui` in Qt Designer and save it after promoting widgets
+
+If you want, I can restore additional tutorial sections from the previous file, but this smaller guide keeps the repo references consistent with the new `BSCMainWindow` name.
 1. .py files, the script component
 
 The .ui files are XML-based files that should be edited in the *Qt Designer* almost exclusively. If you are going to edit the files manually, only adjust values within the objects rather than trying to restructure the objects themselves. **Make a backup before manually editing the files**. All Ui files are made of widgets. There are some premade widgets within the designer, or you can create UI files to function as widgets within your application.
@@ -38,7 +57,7 @@ index is the page you want to go to. The following is an example list of indexes
 	2 - ShotModePage
 	3 - AnalysisModePage
 	4 - Cloud Test 
-	5 - SmartDotTestPage (Currently not used, can be replaced)
+	5 - SmartDotViewer (Currently not used, can be replaced)
 	
 data is used if additional data needs to be sent to another page. Any object can be passed
 
@@ -193,23 +212,24 @@ The .ui files are XML-based files that should be edited in the *Qt Designer* alm
 
 The .py files are what allow us to have any functionality whatsoever on a page, turning the .ui file into a class that can be used.
 
-### The HomePage
 
-The main UI file in the BSC is called *HomePage.ui*. This file contains an E-stop button and a QStackedWidget. This QStackedWidget contains a set of header widgets labeled in the form of *page[Your Page Name]*. Within these widgets should only be a single widget, promoted to the class of the screen you want to create. 
+### The BSCMainWindow
 
-	HomePage
+The main UI file in the BSC is called *BSCMainWindow.ui*. This file contains an E-stop button and a QStackedWidget. This QStackedWidget contains a set of header widgets labeled in the form of *page[Your Page Name]*. Within these widgets should only be a single widget, promoted to the class of the screen you want to create. 
+
+	BSCMainWindow
 		btnEStop (QPushButton)
 		StackedWidget (QStackedWidget)
-			Page[SamplePage1] (QWidget)
+			Page[SamplePage1] (Qwidget)
 				[samplePage1]([SamplePage1])
-			Page[SamplePage2] (QWidget)
-				[samplePage2]([SamplePage2])
-			
+				Page[SamplePage2] (Qwidget)
+					[samplePage2]([SamplePage2])
+					
 
 
-*HomePage.py* is the Python file that loads and draws *HomePage.ui* and handles navigation. This Widget exists to contain and manage the various pages in the app. All pages added should be properly defined in the HomePage. Below is a piece of example code.
+*BSCMainWindow.py* is the Python file that loads and draws *BSCMainWindow.ui* and handles navigation. This Widget exists to contain and manage the various pages in the app. All pages added should be properly defined in the BSCMainWindow. Below is a piece of example code.
 
-	self.[Page name] = self.findChild([Class of new page], '[name of page in HomePage.ui]')
+	self.[Page name] = self.findChild([Class of new page], '[name of page in BSCMainWindow.ui]')
 	
 Page navigation is handled by the signal changePage connected to the method switch_to_page(self, index, data): (see tutorial)
 
@@ -221,7 +241,7 @@ index is the page you want to go to. The following is an example list of indexes
 	2 - ShotModePage
 	3 - AnalysisModePage
 	4 - Cloud Test 
-	5 - SmartDotTestPage (Currently not used, can be replaced)
+	5 - SmartDotViewer (Currently not used, can be replaced)
 	
 data is used if additional data needs to be sent to another page.
 

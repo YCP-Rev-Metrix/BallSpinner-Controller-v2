@@ -171,10 +171,11 @@ class MetaMotion(iSmartDot):
             'y':parsedData.y, 
             'z':parsedData.z
         }
-        self.xl_time.append(time_val)
-        self.xl_x.append(parsedData.x)
-        self.xl_y.append(parsedData.y)
-        self.xl_z.append(parsedData.z)
+        with self._xl_lock:
+            self.xl_time.append(time_val)
+            self.xl_x.append(parsedData.x)
+            self.xl_y.append(parsedData.y)
+            self.xl_z.append(parsedData.z)
         #print(self.xl_time)
         # print(f"XL: {self.data_arr}")
     def magDataHandler(self, ctx, data):
@@ -195,10 +196,11 @@ class MetaMotion(iSmartDot):
             'z':parsedData.z
         }
         # print(f"MG: {self.data_arr[1]}")
-        self.mg_time.append(time_val)
-        self.mg_x.append(parsedData.x)
-        self.mg_y.append(parsedData.y)
-        self.mg_z.append(parsedData.z)
+        with self._mg_lock:
+            self.mg_time.append(time_val)
+            self.mg_x.append(parsedData.x)
+            self.mg_y.append(parsedData.y)
+            self.mg_z.append(parsedData.z)
 
     def gyroDataHandler(self, ctx, data):
         #Parse data into Cartesian Values
@@ -218,10 +220,11 @@ class MetaMotion(iSmartDot):
             'z':parsedData.z
         }            
         # print(f"GY: {self.data_arr[2]}")
-        self.gy_time.append(time_val)
-        self.gy_x.append(parsedData.x)
-        self.gy_y.append(parsedData.y)
-        self.gy_z.append(parsedData.z)
+        with self._gy_lock:
+            self.gy_time.append(time_val)
+            self.gy_x.append(parsedData.x)
+            self.gy_y.append(parsedData.y)
+            self.gy_z.append(parsedData.z)
 
     def lightDataHandler(self, ctx, data):
         parsedData = parse_value(data)
@@ -248,8 +251,9 @@ class MetaMotion(iSmartDot):
             'z':0
         }               
         # print(f"LT: {self.data_arr[3]}")
-        self.lt_time.append(time_val)
-        self.lt_value.append(parsedData)
+        with self._lt_lock:
+            self.lt_time.append(time_val)
+            self.lt_value.append(parsedData)
 
     def startMag(self):  
         libmetawear.mbl_mw_mag_bmm150_stop(self.device.board)

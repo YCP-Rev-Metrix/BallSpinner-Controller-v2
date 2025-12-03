@@ -3,7 +3,7 @@ import pyqtgraph as pg
 import numpy as np
 import sys
 
-from .InputGraph import InputGraph
+from frontend.InputGraph import InputGraph
 
 
 class SamplerWindow(QtWidgets.QWidget):
@@ -75,7 +75,8 @@ class SamplerWindow(QtWidgets.QWidget):
         if ys.size != xs.size:
             # truncate or pad with endpoint value
             if ys.size == 0:
-                xs = np.array([])
+                from array import array
+                xs = array('d')
             elif ys.size < xs.size:
                 xs = xs[: ys.size]
             else:

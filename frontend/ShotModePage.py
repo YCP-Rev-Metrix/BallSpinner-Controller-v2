@@ -128,7 +128,7 @@ class ShotModePage(QtWidgets.QWidget):
         bsc.set_data_controller(DataController(bsc.get_session()))
 
         #Access the data controller's ShotModeData and add the three motors 
-        sample_interval = 0.025
+        sample_interval = 0.050 # 50 ms sample interval, 25 was too short
         rpm_array = self.graph_rpm.sample_spline_display(sample_interval)
         tilt_array = self.graph_tilt.sample_spline_display(sample_interval)
         angle_array = self.graph_angle.sample_spline_display(sample_interval)

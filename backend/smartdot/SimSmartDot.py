@@ -4,6 +4,8 @@ import time
 import math
 import logging
 import random
+from array import array
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +49,31 @@ class SimSmartDot(iSmartDot):
         self.mg_timer_thread = None
         self.lt_timer_thread = None
         self._MAC_ADDRESS = MAC_Address
+
+        # Use compact C-backed arrays for sensor data (timestamps double, values float)
+        self.xl_time = array('d')
+        self.xl_x = array('f')
+        self.xl_y = array('f')
+        self.xl_z = array('f')
+
+        self.gy_time = array('d')
+        self.gy_x = array('f')
+        self.gy_y = array('f')
+        self.gy_z = array('f')
+
+        self.mg_time = array('d')
+        self.mg_x = array('f')
+        self.mg_y = array('f')
+        self.mg_z = array('f')
+
+        self.lt_time = array('d')
+        self.lt_value = array('f')
+
+        # Locks to protect concurrent access from timer threads
+        self._xl_lock = threading.Lock()
+        self._gy_lock = threading.Lock()
+        self._mg_lock = threading.Lock()
+        self._lt_lock = threading.Lock()
 
         self.connect(MAC_Address)
 
@@ -95,10 +122,11 @@ class SimSmartDot(iSmartDot):
         
         # Generate simulated accelerometer data (sinusoidal patterns)
         # Using different frequencies for x, y, z to create realistic variation
-        self.xl_time.append(time_val)
-        self.xl_x.append(9.81 * math.sin(2 * math.pi * 0.5 * time_val) + 0.1 * math.sin(2 * math.pi * 5 * time_val))
-        self.xl_y.append(9.81 * math.cos(2 * math.pi * 0.3 * time_val) + 0.1 * math.cos(2 * math.pi * 4 * time_val))
-        self.xl_z.append(9.81 + 0.5 * math.sin(2 * math.pi * 0.2 * time_val))
+        with self._xl_lock:
+            self.xl_time.append(time_val)
+            self.xl_x.append(9.81 * math.sin(2 * math.pi * 0.5 * time_val) + 0.1 * math.sin(2 * math.pi * 5 * time_val))
+            self.xl_y.append(9.81 * math.cos(2 * math.pi * 0.3 * time_val) + 0.1 * math.cos(2 * math.pi * 4 * time_val))
+            self.xl_z.append(9.81 + 0.5 * math.sin(2 * math.pi * 0.2 * time_val))
 
         # print(f"XL: {self.xl_time}, {self.xl_x}, {self.xl_y}, {self.xl_z}")
 
@@ -109,10 +137,11 @@ class SimSmartDot(iSmartDot):
         time_val = time.time() - self.gy_start_time
         
         # Generate simulated gyroscope data (degrees per second)
-        self.gy_time.append(time_val)
-        self.gy_x.append(10.0 * math.sin(2 * math.pi * 0.4 * time_val))
-        self.gy_y.append(15.0 * math.cos(2 * math.pi * 0.35 * time_val))
-        self.gy_z.append(5.0 * math.sin(2 * math.pi * 0.6 * time_val))
+        with self._gy_lock:
+            self.gy_time.append(time_val)
+            self.gy_x.append(10.0 * math.sin(2 * math.pi * 0.4 * time_val))
+            self.gy_y.append(15.0 * math.cos(2 * math.pi * 0.35 * time_val))
+            self.gy_z.append(5.0 * math.sin(2 * math.pi * 0.6 * time_val))
 
     def magDataHandler(self, ctx, data):
         if self.mg_start_time is None:
@@ -122,10 +151,11 @@ class SimSmartDot(iSmartDot):
         
         # Generate simulated magnetometer data (microteslas)
         # Earth's magnetic field is typically around 50-60 microteslas
-        self.mg_time.append(time_val)
-        self.mg_x.append(0.0 + 5.0 * math.sin(2 * math.pi * 0.1 * time_val))
-        self.mg_y.append(5.0 + 5.0 * math.cos(2 * math.pi * 0.12 * time_val))
-        self.mg_z.append(5.0 + 3.0 * math.sin(2 * math.pi * 0.15 * time_val))
+        with self._mg_lock:
+            self.mg_time.append(time_val)
+            self.mg_x.append(0.0 + 5.0 * math.sin(2 * math.pi * 0.1 * time_val))
+            self.mg_y.append(5.0 + 5.0 * math.cos(2 * math.pi * 0.12 * time_val))
+            self.mg_z.append(5.0 + 3.0 * math.sin(2 * math.pi * 0.15 * time_val))
 
     def lightDataHandler(self, ctx, data):
         if self.lt_start_time is None:
@@ -135,8 +165,10 @@ class SimSmartDot(iSmartDot):
         
         # Generate simulated light sensor data (lux)
         # Varies between day and night levels
-        self.lt_time.append(time_val)
-        self.lt_value.append(random.uniform(0, 10))
+        with self._lt_lock:
+            self.lt_time.append(time_val)
+            
+            self.lt_value.append(math.pow(2,random.uniform(-1, 15)))  # Simulated lux value between ~0.5 and ~32768
 
     def startCollecting(self):
         # Start the sensors

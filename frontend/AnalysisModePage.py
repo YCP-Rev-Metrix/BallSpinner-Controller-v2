@@ -10,8 +10,9 @@ import math
 from PyQt6.QtCore import pyqtSignal
 from backend.models.SmartDotData import SmartDotDataInstance
 import pyqtgraph as pg
-from BSC import bsc
-
+from BSC import bsc 
+import utils
+from utils import PackageSmartDotData, SmartDotDataPackage, PackageMotorData, MotorDataPackage
 
 class AnalysisDialog(QtWidgets.QDialog):
     def __init__(self, parent=None, type: str = None):
@@ -91,117 +92,23 @@ class AnalysisModePage(QtWidgets.QWidget):
 
     def loadData(self):
         dc = bsc.get_data_controller()
-        # Load SmartDot data from BSC data controller
-        smartdot_data = dc.smartdot_data
-
-        self.time_accel = []
-        self.accel_x = []
-        self.accel_y = []
-        self.accel_z = []
-        self.time_gyro = []
-        self.gyro_x = []
-        self.gyro_y = []
-        self.gyro_z = []
-        self.time_mag = []
-        self.mag_x = []
-        self.mag_y = []
-        self.mag_z = []
-        self.time_light = []
-        self.light = []
-
-        for data in smartdot_data.data_entries:
-            print(f"SmartDot Data - Time: {data.time}, Selector: {data.data_selector}, AccelX: {data.accelerometer_x}, AccelY: {data.accelerometer_y}, AccelZ: {data.accelerometer_z}, GyroX: {data.gyroscope_x}, GyroY: {data.gyroscope_y}, GyroZ: {data.gyroscope_z}, MagX: {data.magnetometer_x}, MagY: {data.magnetometer_y}, MagZ: {data.magnetometer_z}, Light: {data.light}")
-            if data.data_selector == 0:  # Accelerometer
-                self.time_accel.append(data.time)
-                self.accel_x.append(data.accelerometer_x)
-                self.accel_y.append(data.accelerometer_y)
-                self.accel_z.append(data.accelerometer_z)
-            elif data.data_selector == 1:  # Gyroscope
-                self.time_gyro.append(data.time)
-                self.gyro_x.append(data.gyroscope_x)
-                self.gyro_y.append(data.gyroscope_y)
-                self.gyro_z.append(data.gyroscope_z)
-            elif data.data_selector == 2:  # Magnetometer
-                self.time_mag.append(data.time)
-                self.mag_x.append(data.magnetometer_x)
-                self.mag_y.append(data.magnetometer_y)
-                self.mag_z.append(data.magnetometer_z)
-            elif data.data_selector == 3:  # Light
-                self.time_light.append(data.time)
-                self.light.append(data.light)
-        
-
         # Update SmartDot graph
+        smartdot_package = utils.PackageSmartDotData(self, bsc)
         self.smartDotGraph.updateDataBetter(
-            self.time_accel, self.accel_x, self.accel_y, self.accel_z,
-            self.time_gyro, self.gyro_x, self.gyro_y, self.gyro_z,
-            self.time_mag, self.mag_x, self.mag_y, self.mag_z,
-            self.time_light, self.light
+            smartdot_package.time_accel, smartdot_package.accel_x, smartdot_package.accel_y, smartdot_package.accel_z,
+            smartdot_package.time_gyro, smartdot_package.gyro_x, smartdot_package.gyro_y, smartdot_package.gyro_z,
+            smartdot_package.time_mag, smartdot_package.mag_x, smartdot_package.mag_y, smartdot_package.mag_z,
+            smartdot_package.time_light, smartdot_package.light
         )
-        # Load Motor data from BSC data controller
-        if hasattr(dc, 'shot_script_data'):
-            motor_data = dc.shot_script_data.get_shot_script_data_entries()
-        else:
-            motor_data = []
 
-        time_motor = []
-        motor_rpm = []
-        motor_angleDeg = []
-        motor_tiltDeg = []
-
-        for data in motor_data:
-            time_motor.append(data.time)
-            motor_rpm.append(data.rpm)
-            motor_angleDeg.append(data.angleDeg)
-            motor_tiltDeg.append(data.tiltDeg)
-            print(f"Motor Data - Time: {data.time}, RPM: {data.rpm}, AngleDeg: {data.angleDeg}, TiltDeg: {data.tiltDeg}")
-
-
-
-        #Get encoder values
-        time_encoder = []
-        encoder_rpm = []
-        encoder_angle = []
-        encoder_tilt = []
-
-        #TODO: Get store encoder data if we are using encoders, using 0.0 as temp
-        time_encoder = [0.0]
-        encoder_rpm = [0.0]
-        encoder_angle = [0.0]
-        encoder_tilt = [0.0]
-
-        
-        # If no shot script data, try to load from diagnostic data
-        if time_motor == []:
-            try:
-                diag_data = dc.diagnostic_data.get_diagnostic_data_entries()
-            except Exception as e:
-                print("Error loading diagnostic data:", e)
-                diag_data = []
-            time_rpm = []
-            time_angle = []
-            time_tilt = []
-            for data in diag_data:
-                match data.motor_id:
-                    case 0:
-                        time_rpm.append(data.time)
-                        motor_rpm.append(data.instruction)
-                    case 1:
-                        time_angle.append(data.time)
-                        motor_angleDeg.append(data.instruction)
-                    case 2:
-                        time_tilt.append(data.time)
-                        motor_tiltDeg.append(data.instruction)
-                    case _:
-                        pass
-            # Update Motor graph
-            self.motorGraph.updateDataDiagnostic(time_rpm, motor_rpm, time_angle, motor_angleDeg, time_tilt, motor_tiltDeg
-                                                 ,time_encoder, encoder_rpm, encoder_angle, encoder_tilt)
-        else:
         # Update Motor graph
-            self.motorGraph.updateDataBetter(time_motor, motor_rpm, motor_angleDeg, motor_tiltDeg, time_encoder, encoder_rpm, encoder_angle, encoder_tilt)
-        
-
+        motor_package = utils.PackageMotorData(self, bsc)
+        self.motorGraph.updateDataDiagnostic(
+            motor_package.time_rpm, motor_package.motor_rpm,
+            motor_package.time_angle, motor_package.motor_angleDeg,
+            motor_package.time_tilt, motor_package.motor_tiltDeg,
+            motor_package.time_encoder, motor_package.encoder_rpm, motor_package.encoder_angle, motor_package.encoder_tilt
+        )
 
 if __name__ == '__main__':
     # Standard boilerplate for a PyQt application
