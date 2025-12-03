@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1069</width>
-    <height>836</height>
+    <width>1065</width>
+    <height>892</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,7 +24,11 @@
           <widget class="InputGraph" name="inputGraph_RPM" native="true"/>
          </item>
          <item>
-          <widget class="InputGraph" name="InputGraph_Angle" native="true"/>
+          <widget class="InputGraph" name="InputGraph_Angle" native="true">
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
+          </widget>
          </item>
          <item>
           <widget class="InputGraph" name="InputGraph_Tilt" native="true"/>
@@ -44,8 +48,37 @@
          </item>
          <item>
           <widget class="QSlider" name="sliderTime">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <strikeout>false</strikeout>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
+           <property name="maximum">
+            <number>99</number>
+           </property>
+           <property name="sliderPosition">
+            <number>0</number>
+           </property>
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="invertedAppearance">
+            <bool>false</bool>
+           </property>
+           <property name="tickPosition">
+            <enum>QSlider::NoTicks</enum>
+           </property>
+           <property name="tickInterval">
+            <number>10</number>
            </property>
           </widget>
          </item>
