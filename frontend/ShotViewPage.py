@@ -238,7 +238,7 @@ class ShotViewPage(QtWidgets.QWidget):
 
 
         # Change speeds for all motors atomically
-        self.shot_script.change_speed([self.scriptSpin[self.count],self.scriptTilt[self.count],self.scriptAngle[self.count]])
+        #self.shot_script.change_speed([self.scriptSpin[self.count],self.scriptTilt[self.count],self.scriptAngle[self.count]])
 
         # Spawn a worker thread per motor that then calls change_speed_single
         try:
