@@ -1,6 +1,6 @@
 from PyQt6 import QtWidgets
 from PyQt6 import QtCore
-from PyQt6.QtGui import QPalette, QColor
+from PyQt6.QtGui import QPalette, QColor, QGuiApplication, QCursor
 import io
 import os
 
@@ -44,21 +44,18 @@ if __name__ == '__main__':
 
     # Create a temporary application to get screen info for scaling
     temp_app = QtWidgets.QApplication([])
-    screen = temp_app.primaryScreen()
+    screen = QGuiApplication.screenAt(QCursor.pos()) or temp_app.primaryScreen()
     scale = 1.0
     size = screen.size()
     try:
         #Get height and width relative to 1920x1080
         width = float(size.width())/1920.0
-        print(f"Screen width: {size.width()} pixels")
         height = float(size.height())/1080.0
-        print(f"Screen height: {size.height()} pixels")
         scale = min(width, height)
         #scale = 0.5 #test value for debugging
         print(f"Screen scale factor: {scale:.2f}")
         os.environ["QT_SCALE_FACTOR"] = f"{scale:.2f}"
         os.environ.setdefault("QT_AUTO_SCREEN_SCALE_FACTOR", "1")
-        print(f"Set QT_SCALE_FACTOR to {os.environ['QT_SCALE_FACTOR']}")
     except Exception as e:
         print(f"Error determining screen size: {e}")
         scale = 1.0
