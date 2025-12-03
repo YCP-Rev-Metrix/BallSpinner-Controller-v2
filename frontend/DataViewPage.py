@@ -34,6 +34,12 @@ class DataViewPage(QtWidgets.QWidget):
         self.btnSearch = self.findChild(QtWidgets.QPushButton, 'btnSearch')
         self.btnAnalyze = self.findChild(QtWidgets.QPushButton, 'btnAnalyze')
         self.btnReplay = self.findChild(QtWidgets.QPushButton, 'btnReplay')
+        self.debugLabel = self.findChild(QtWidgets.QLabel, 'debugLabel')
+        self.debugLabel.setText("haha")
+        self.debugLabel.setScaledContents(True)
+        self.debugLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.debugLabel.setStyleSheet("font-size: 20px; font-weight: bold; color: white;")
+        self.debugLabel.setHidden(True)
 
         self.textSearch = self.findChild(QtWidgets.QLineEdit, 'txtSearch')
 
@@ -167,9 +173,25 @@ class DataViewPage(QtWidgets.QWidget):
         self.model.clear()
         print(f"Getting sessions in time range: {start_time} to {end_time}")
         print(f"Type of start_time: {type(start_time)}, Type of end_time: {type(end_time)}")
+        
+
+        self.debugLabel.setText("Fetching data from the cloud...")
+        self.debugLabel.setHidden(False)
+        QtWidgets.QApplication.processEvents()  # Force UI update before blocking call
+
         result = self.cloud_api.get_sessions_in_time_range(start_time, end_time)
+
+
+        #Implement Error catching here
+        if 'error' in result:
+            self.debugLabel.setText("Failed to fetch data from the cloud\nDo you have internet?")
+        else:
+            self.debugLabel.setHidden(True)
+
+        #Implement data parsing here
         if result['status_code'] == 200:
             sessions = result['data']
+            print(f"Sessions: {sessions}")
             if len(sessions) > 0:
                 # Set headers
                 headers = list(sessions[0].keys())
@@ -182,6 +204,9 @@ class DataViewPage(QtWidgets.QWidget):
                         item.setEditable(False)
                         row.append(item)
                     self.model.appendRow(row)
+            else:
+                self.debugLabel.setHidden(False)
+                self.debugLabel.setText("No shots were found in the time range")
 
         pass
     def load_data(self):
