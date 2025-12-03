@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1280</width>
-    <height>864</height>
+    <height>836</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -112,7 +112,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>33</height>
+     <height>30</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuNavigation">
@@ -121,9 +121,10 @@
     </property>
     <addaction name="actionHome"/>
     <addaction name="actionCloud_Test"/>
+    <addaction name="actionExit_Application"/>
    </widget>
-   <addaction name="menuNavigation"/>
-  </widget>
+     <addaction name="menuNavigation"/>
+     </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionHome">
    <property name="text">
@@ -143,6 +144,11 @@
   <action name="actionCloud_Test">
    <property name="text">
     <string>Cloud Test</string>
+   </property>
+  </action>
+  <action name="actionExit_Application">
+   <property name="text">
+    <string>Exit Application</string>
    </property>
   </action>
  </widget>

@@ -68,8 +68,11 @@ if __name__ == '__main__':
             #If something else goes wrong, just pass
             pass
 
+
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_DontUseNativeMenuBar, True)
+
     app = QtWidgets.QApplication([])
-    app.setStyle("Fusion")
+    app.setStyle("MacOs")  # Use Windows style for consistency across platforms
 
 
     # Apply qdarktheme stylesheet and palette. These must run before any
@@ -81,6 +84,6 @@ if __name__ == '__main__':
     window.show()
 
     #Make window full screen
-    #window.showFullScreen()
+    window.showFullScreen()
 
     QtWidgets.QApplication.exec()

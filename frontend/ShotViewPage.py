@@ -41,6 +41,7 @@ if not _logger.handlers:
 
 class ShotViewPage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
+    navigationLock = pyqtSignal(bool) # False = lock, True = unlock
     #motor1 = USBBDCMotor()
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -109,56 +110,13 @@ class ShotViewPage(QtWidgets.QWidget):
             layout.addWidget(self.processOutputLabel)
         # Expose the nested StartShotView as a public method on the instance
         
- 
-    def StartShotView(self, Data):
-        self.btnAnalyze.setEnabled(False)  # Disabled during shot view
 
-        # Data.spin/tilt/angle may be lists or numpy arrays; convert to array.array for storage
-        self.scriptSpin = array('f', list(Data.spin))
-        self.scriptTilt = array('f', list(Data.tilt))
-        self.scriptAngle = array('f', list(Data.angle))
-        self.MaxTime = Data.length 
-        # Keep seconds and milliseconds explicitly
-        self.dt = float(Data.dt)            # interval in seconds
-        self.dt_ms = int(self.dt * 1000)   # interval in milliseconds for QTimer
-
-        # reset displayed data and counters
-        self.displayedSpin = array('f')
-        self.displayedTilt = array('f')
-        self.displayedAngle = array('f')
-        self.displayedTime = array('d')
-        self.ElapsedTime = 0.0
-        self.count = 0
-        if(len(self.ConnectionManager.get_smartdots()) > 0):
-            try:
-                self.SmartDot = self.ConnectionManager.get_smartdots()[0]
-                print("SmartDot connected:", self.SmartDot)
-            except Exception as e:
-                print("Error connecting to SmartDot:", e)
-
-        print("Starting Shot View with interval (ms):", self.dt_ms)
-        print("Max Time (sec):", self.MaxTime)
-
-        if (self.SmartDot):
-            print("Using SmartDot in Shot View")
-            self.SmartDot.startCollecting()
-        else:
-            print("No SmartDot connected in Shot View")
-
-        self.timer.setInterval(self.dt_ms)
-        # connect to UpdateShotView without passing ms; UpdateShotView will use seconds
-        try:
-            # disconnect previous connections if any
-            self.timer.timeout.disconnect()
-        except Exception:
-            pass
-        self.timer.timeout.connect(self.UpdateShotView)
-        self.startTime = time.time() #Record start time of shot view
-        self.timer.start()
-    
     def StartShotView(self):
         Controller = bsc.get_data_controller()
         self.btnAnalyze.setEnabled(False)  # Disabled during shot view
+        self.navigationLock.emit(False) # Lock navigation during shot view
+        
+
         if Controller.session_data.isShotMode:
             #Parse shot script data
             motor_package = utils.PackageMotorData(self, bsc)
@@ -475,6 +433,7 @@ class ShotViewPage(QtWidgets.QWidget):
             bsc.disconnect_all_motors()
         print("Shot View Ended")
         self.btnAnalyze.setEnabled(True)  # Enable Analyze button after shot view
+        self.navigationLock.emit(True) # Unlock navigation after shot view
         
 
             

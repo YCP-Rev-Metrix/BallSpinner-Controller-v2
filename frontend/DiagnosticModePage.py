@@ -21,6 +21,7 @@ import datetime as dt
 
 class DiagnosticModePage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
+    navigationLock = pyqtSignal(bool) # False = lock, True = unlock
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -151,6 +152,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 # Initialize the Session
                 bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Diagnostic Session", isShotMode=False))
                 bsc.set_data_controller(DataController(bsc.get_session()))
+                self.navigationLock.emit(False)
             else:
                 # Stop
                 self.btnStart.setEnabled(True)
@@ -161,6 +163,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 # Stop SmartDotViewer updates if connected
                 if len(bsc.get_smartdotConnectionManager().get_connections()) > 0:
                     self.smartdotViewer.stop_updates()
+                self.navigationLock.emit(True)
 
 
     def EStop(self):
