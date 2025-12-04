@@ -78,7 +78,29 @@ class ShotModePage(QtWidgets.QWidget):
         self.sliderTime = self.findChild(QtWidgets.QSlider, 'sliderTime')
         self.lblShotDuration = self.findChild(QtWidgets.QLabel, 'lblShotDuration')
 
+# Make the slider more touch-friendly: larger hit area, bigger handle,
+# accept touch events, and coarser page steps so it's easier to move on
+# a touchscreen.
         self.sliderTime.setMaximum(100)  # set maximum to 100 for 1.00 sec max duration
+        self.sliderTime.setSingleStep(1)
+        self.sliderTime.setPageStep(5)
+        self.sliderTime.setTickInterval(5)
+        self.sliderTime.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBelow)
+
+        # Increase the widget height so the groove + handle are easier to touch
+        self.sliderTime.setFixedHeight(44)
+        self.sliderTime.setTracking(True)
+        self.sliderTime.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        
+        
+        # Larger handle and groove via stylesheet for better touch interaction
+        self.sliderTime.setStyleSheet("""
+QSlider::groove:horizontal { height: 14px; border-radius: 7px; background: #e6e6e6; }
+QSlider::sub-page:horizontal { background: #66a3ff; border-radius: 7px; }
+QSlider::add-page:horizontal { background: #e6e6e6; border-radius: 7px; }
+QSlider::handle:horizontal { width: 34px; height: 34px; margin: -10px 0; border-radius: 17px; background: #4285F4; }
+""")
+
         # connect slider change to label update if found and initialize label
         self.sliderTime.valueChanged.connect(self.update_shot_duration_label)
         self.update_shot_duration_label(self.sliderTime.value())
