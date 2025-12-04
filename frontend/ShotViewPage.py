@@ -20,6 +20,7 @@ from frontend.MotorGraph import MotorGraph
 
 from BSC import bsc, MotorData
 
+"""
 # Configure a simple file logger for thread finish times
 _logger = logging.getLogger('ShotViewPageThreadLogger')
 if not _logger.handlers:
@@ -35,6 +36,7 @@ if not _logger.handlers:
     fmt = logging.Formatter('%(asctime)s - %(message)s')
     fh.setFormatter(fmt)
     _logger.addHandler(fh)
+    """
 
 
 
@@ -168,7 +170,10 @@ class ShotViewPage(QtWidgets.QWidget):
         self.displayedSpin = array('f')
         self.displayedTilt = array('f')
         self.displayedAngle = array('f')
-        self.displayedTime = array('d')
+        # Reset per-motor time buffers (was using displayedTime previously which caused stale data)
+        self.displayedSpinTime = array('d')
+        self.displayedTiltTime = array('d')
+        self.displayedAngleTime = array('d')
         self.ElapsedTime = 0.0
         self.count = 0
         if(len(self.ConnectionManager.get_smartdots()) > 0):
@@ -198,7 +203,12 @@ class ShotViewPage(QtWidgets.QWidget):
         self.timer.timeout.connect(self.UpdateShotView)
         self.startTime = time.time() #Record start time of shot view
         self.timer.start()
-        
+        # clear any leftover active thread refs from previous run
+        try:
+            self._active_threads.clear()
+        except Exception:
+            self._active_threads = []
+
         # Only call interpolate / set_motor_times_from_indices if motor supports them
         try:
             if hasattr(bsc.motor2, 'interpolate'):
@@ -233,12 +243,18 @@ class ShotViewPage(QtWidgets.QWidget):
                                                 self.SmartDot.gy_time, self.SmartDot.gy_x, self.SmartDot.gy_y, self.SmartDot.gy_z,
                                                 self.SmartDot.mg_time, self.SmartDot.mg_x, self.SmartDot.mg_y, self.SmartDot.mg_z,
                                                 self.SmartDot.lt_time, self.SmartDot.lt_value)
-        self.count += 1
+        # Guard: if there is no script data, throw an error (invalid state)
+        if len(self.scriptSpin) == 0:
+            raise RuntimeError("UpdateShotView called but 'scriptSpin' is empty. Ensure StartShotView populated script data before starting.")
 
+        # Guard: ensure index in range before accessing script arrays — treat as programming error
+        if self.count >= len(self.scriptSpin):
+            raise IndexError(f"UpdateShotView index {self.count} out of range for 'scriptSpin' length {len(self.scriptSpin)}")
 
+        
 
-        # Change speeds for all motors atomically
-        #self.shot_script.change_speed([self.scriptSpin[self.count],self.scriptTilt[self.count],self.scriptAngle[self.count]])
+        # Change speeds for all motors atomically (use current index)
+        #self.shot_script.change_speed([self.scriptSpin[idx],self.scriptTilt[idx],self.scriptAngle[idx]])
 
         # Spawn a worker thread per motor that then calls change_speed_single
         try:
@@ -261,6 +277,9 @@ class ShotViewPage(QtWidgets.QWidget):
                         self.displayedTiltTime, self.displayedTilt,
                         self.displayedAngleTime, self.displayedAngle,
                         array('d', [0.0]), array('f', [0.0]),array('f', [0.0]), array('f', [0.0]))    
+        # advance to next index after spawning motor tasks
+        self.count += 1
+
         if(self.ElapsedTime >= self.MaxTime or self.count >= len(self.scriptSpin)):
             self.EndShotView()
             return
@@ -345,7 +364,7 @@ class ShotViewPage(QtWidgets.QWidget):
                     pass
 
             # Logging: compute start/end times for the motor call based on reported duration (if available) 
-            _logger.info(f"Motor {self.motor_index} set to {self.value} at elapsed time {self.delta:.3f} sec. Now: {self.now:.3f} StartTime: {self.startTime:.3f}")
+            #_logger.info(f"Motor {self.motor_index} set to {self.value} at elapsed time {self.delta:.3f} sec. Now: {self.now:.3f} StartTime: {self.startTime:.3f}")
         except Exception as e:
             print("Error in _on_thread_finished processing:", e)
         # schedule deletion
@@ -358,7 +377,24 @@ class ShotViewPage(QtWidgets.QWidget):
     def EndShotView(self):
         self.timer.stop()
         #Ensure all motors are stopped
+        time.sleep(0.05)  # brief pause to ensure last commands are sent
         self.shot_script.stop_motors()
+        # Ensure all worker threads finish (blocking). Request quit and wait for each.
+        try:
+            for w in list(self._active_threads):
+                try:
+                    if hasattr(w, 'isRunning') and w.isRunning():
+                        w.quit()
+                        w.wait(1000)  # wait up to 1000 ms for each worker
+                except Exception:
+                    pass
+            # clear references now that threads have finished (or timed out)
+            try:
+                self._active_threads.clear()
+            except Exception:
+                self._active_threads = []
+        except Exception:
+            pass
         #Make graph final update
         self.motorGraph.updateDataDiagnostic(
                         self.displayedSpinTime, self.displayedSpin,
