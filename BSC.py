@@ -31,11 +31,12 @@ class BSC:
             self.motor1 = USBBDCMotor() # UNCOMMENT AFTER STEPPER
             #self.motor1 = SimMotor(1)
             self.motor2 = StepMotor(23, 24) #Uncomment when step working
+            self.motor3 = StepMotor(27, 17)
             #self.motor2 = SimMotor(2)
         else:
             self.motor1 = SimMotor(2)
             self.motor2 = SimMotor(2)
-        self.motor3 = SimMotor(3)
+            self.motor3 = SimMotor(2) #222 fun haha
 
     def get_smartdotConnectionManager(self):
         return self.smartdotConnectionManager
