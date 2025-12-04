@@ -16,7 +16,6 @@ from frontend.SmartDotConnectWidget import SmartDotConnectWidget
 from backend.models.ShotScriptData import ShotScriptDataInstance
 
 import datetime as dt
-
 from backend.smartdot.iSmartDot import iSmartDot
 
 

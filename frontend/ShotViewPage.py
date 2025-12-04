@@ -13,30 +13,18 @@ import logging
 import datetime
 from backend.models.SmartDotData import SmartDotDataInstance
 import utils
-from PyQt6.QtCore import pyqtSignal, Qt, QTimer, QThread
+from PyQt6.QtCore import pyqtSignal, Qt, QTimer, QThread, QThreadPool, QRunnable, QObject
 #Database related imports
 from frontend.SmartDotGraph import SmartDotGraph
 from frontend.MotorGraph import MotorGraph
 
 from BSC import bsc, MotorData
 
-"""
+
 # Configure a simple file logger for thread finish times
-_logger = logging.getLogger('ShotViewPageThreadLogger')
-if not _logger.handlers:
-    _logger.setLevel(logging.INFO)
-    try:
-        logs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'logs'))
-        os.makedirs(logs_dir, exist_ok=True)
-        log_path = os.path.join(logs_dir, 'shotview_thread_times.log')
-    except Exception:
-        log_path = os.path.abspath('shotview_thread_times.log')
-    fh = logging.FileHandler(log_path)
-    fh.setLevel(logging.INFO)
-    fmt = logging.Formatter('%(asctime)s - %(message)s')
-    fh.setFormatter(fmt)
-    _logger.addHandler(fh)
-    """
+from logs.logger_config import get_logger
+_logger = get_logger(__name__)
+
 
 
 
@@ -94,7 +82,10 @@ class ShotViewPage(QtWidgets.QWidget):
         self.startTime = time.time() #Record start time of shot view
 
         self.timer = QTimer(self)
-        # Keep track of active worker threads so they are not garbage collected
+        # Thread pool for motor tasks and active task tracking
+        self._thread_pool = QThreadPool()
+        self._thread_pool.setMaxThreadCount(9)
+        # Keep track of active worker runnables so they are not garbage collected
         self._active_threads = []
 
         # A small label on the page to show process output (created dynamically)
@@ -251,7 +242,6 @@ class ShotViewPage(QtWidgets.QWidget):
         if self.count >= len(self.scriptSpin):
             raise IndexError(f"UpdateShotView index {self.count} out of range for 'scriptSpin' length {len(self.scriptSpin)}")
 
-        
 
         # Change speeds for all motors atomically (use current index)
         #self.shot_script.change_speed([self.scriptSpin[idx],self.scriptTilt[idx],self.scriptAngle[idx]])
@@ -285,39 +275,49 @@ class ShotViewPage(QtWidgets.QWidget):
             return
 
 
-    class _MotorWorker(QThread):
-        finished_signal = pyqtSignal(object)
+    class WorkerSignals(QObject):
+        finished = pyqtSignal(object)
 
-        def __init__(self, motor_index: int, value: float, shot_script: ShotScript, parent=None):
-            super().__init__(parent)
+
+    class MotorRunnable(QRunnable):
+        """A QRunnable that calls ShotScript.change_speed_single and emits a finished signal."""
+        def __init__(self, motor_index: int, value: float, shot_script: ShotScript, signals: 'ShotViewPage.WorkerSignals'):
+            super().__init__()
             self.motor_index = motor_index
             self.value = value
             self.shot_script = shot_script
+            self.signals = signals
 
         def run(self):
-            
             try:
                 self.shot_script.change_speed_single(self.motor_index, self.value)
-
-                result = {'motor_index': self.motor_index, 'value': self.value,}
+                result = {'motor_index': self.motor_index, 'value': self.value}
             except Exception as e:
                 result = {'motor_index': self.motor_index, 'value': self.value, 'error': str(e)}
-
-            self.finished_signal.emit(result)
+            try:
+                # Emit finished result back to the GUI thread
+                self.signals.finished.emit(result)
+            except Exception:
+                pass
 
     def spawn_motor_thread(self, motor: str, motor_index: int, value: float):
-        """Spawn a QThread worker that counts and then calls ShotScript.change_speed_single."""
-        worker = ShotViewPage._MotorWorker(motor_index, value, self.shot_script, parent=self)
-        # keep reference
-        self._active_threads.append(worker)
-        worker.finished_signal.connect(lambda data, w=worker: self._on_thread_finished(w, data))
-        worker.start()
+        """Submit a motor command to the QThreadPool as a QRunnable worker."""
+        signals = ShotViewPage.WorkerSignals()
+        runnable = ShotViewPage.MotorRunnable(motor_index, value, self.shot_script, signals)
+        # keep reference so the runnable and its signals are not garbage collected
+        self._active_threads.append(runnable)
+        signals.finished.connect(lambda data, r=runnable: self._on_thread_finished(r, data))
+        # Start the runnable in the pool
+        self._thread_pool.start(runnable)
 
     def _on_thread_finished(self, worker: QThread, data: object):
         # Called when a worker thread emits finished_signal
         try:
-            # remove worker from active list
-            self._active_threads.remove(worker)
+            # remove worker/runnable from active list
+            try:
+                self._active_threads.remove(worker)
+            except ValueError:
+                pass
         except ValueError:
             pass
         # compute time delta since last append for this motor and append value and delta
@@ -367,34 +367,30 @@ class ShotViewPage(QtWidgets.QWidget):
             #_logger.info(f"Motor {self.motor_index} set to {self.value} at elapsed time {self.delta:.3f} sec. Now: {self.now:.3f} StartTime: {self.startTime:.3f}")
         except Exception as e:
             print("Error in _on_thread_finished processing:", e)
-        # schedule deletion
-        worker.quit()
-        worker.wait(100)
-        worker.deleteLater()
+        # For QRunnable workers we don't have quit/wait/deleteLater; they will finish on their own.
+        try:
+            # Nothing to explicitly quit for QRunnable; ensure it's removed from active list above.
+            pass
+        except Exception:
+            pass
 
 
 
     def EndShotView(self):
+        #Stop timer
         self.timer.stop()
         #Ensure all motors are stopped
-        time.sleep(0.05)  # brief pause to ensure last commands are sent
         self.shot_script.stop_motors()
-        # Ensure all worker threads finish (blocking). Request quit and wait for each.
+        # Wait for thread pool tasks to complete (bounded). Then clear active task refs.
         try:
-            for w in list(self._active_threads):
-                try:
-                    if hasattr(w, 'isRunning') and w.isRunning():
-                        w.quit()
-                        w.wait(1000)  # wait up to 1000 ms for each worker
-                except Exception:
-                    pass
-            # clear references now that threads have finished (or timed out)
-            try:
-                self._active_threads.clear()
-            except Exception:
-                self._active_threads = []
+            # Wait up to 2 seconds for the pool to finish outstanding tasks
+            self._thread_pool.waitForDone(2000)
         except Exception:
             pass
+        try:
+            self._active_threads.clear()
+        except Exception:
+            self._active_threads = []
         #Make graph final update
         self.motorGraph.updateDataDiagnostic(
                         self.displayedSpinTime, self.displayedSpin,
