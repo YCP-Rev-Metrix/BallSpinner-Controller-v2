@@ -108,9 +108,6 @@ QSlider::handle:horizontal { width: 34px; height: 34px; margin: -10px 0; border-
         # connect button to start shot action
         self.btnStartShot = self.findChild(QtWidgets.QPushButton, 'btnStartShot')
         self.CheckButtons()
-
-        self.btnStartShot.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
-
         self.btnStartShot.clicked.connect(self.start_shot)
 
     def start_shot(self):

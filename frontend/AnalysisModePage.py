@@ -1,5 +1,5 @@
 import time
-from PyQt6 import QtWidgets, uic, QtCore
+from PyQt6 import QtWidgets, uic
 import os
 from PyQt6.QtCore import Qt, QTimer
 import numpy as np
@@ -24,15 +24,6 @@ class AnalysisDialog(QtWidgets.QDialog):
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
         self.graph = self.findChild(pg.PlotWidget, 'graph')
-
-        # Enable touch events on dialog controls and buttons
-        try:
-            try:
-                self.buttonBox.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
-            except Exception:
-                pass
-        except Exception:
-            pass
         
         self.setWindowTitle("Analysis Options")
         self.setModal(True)
@@ -65,17 +56,6 @@ class AnalysisModePage(QtWidgets.QWidget):
         self.btnOp2 = self.findChild(QtWidgets.QPushButton, 'btnOp2')
         self.btnOp3 = self.findChild(QtWidgets.QPushButton, 'btnOp3')
         self.btnOp4 = self.findChild(QtWidgets.QPushButton, 'btnOp4')
-
-        # Accept touch events on operation buttons
-        try:
-            for b in (self.btnSave, self.btnOp1, self.btnOp2, self.btnOp3, self.btnOp4):
-                if b is not None:
-                    try:
-                        b.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
-                    except Exception:
-                        pass
-        except Exception:
-            pass
 
         self.btnOp1.clicked.connect(lambda: self.openAnalysisDialog("Option 1 Analysis"))
         self.btnOp2.clicked.connect(lambda: self.openAnalysisDialog("Option 2 Analysis"))
