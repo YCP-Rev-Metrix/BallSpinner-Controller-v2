@@ -80,6 +80,10 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         self.lblStatus = self.findChild(QtWidgets.QLabel, 'lblStatus')
         self.lblStatus.setText("Not Connected")
 
+        # Enable touch events on key interactive controls
+        self.btnConnect.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.scanBtn.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+                
         # Grab the QScrollArea and the widget it contains.
         # The .ui defines the scroll area as 'conDevices' and the contained widget
         # is the scroll area's widget (named 'scrollAreaWidgetContents' in the .ui).
@@ -246,6 +250,10 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         for device in self.Devices:
             btn = QtWidgets.QPushButton(f"Connect to {device}")
             layout.addWidget(btn)
+            try:
+                btn.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+            except Exception:
+                pass
             btn.clicked.connect(lambda _, d=device: self.connect_to_smartdot(d))
 
     def updateDisconnectList(self):
@@ -270,6 +278,10 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         for mac_address in connections:
             btn = QtWidgets.QPushButton(mac_address)
             layout.addWidget(btn)
+            try:
+                btn.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+            except Exception:
+                pass
             btn.clicked.connect(lambda _, mac=mac_address: self.disconnect_from_smartdot(mac))
     
     def disconnect_from_smartdot(self, mac_address):

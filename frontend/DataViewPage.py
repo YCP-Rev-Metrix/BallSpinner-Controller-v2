@@ -1,4 +1,4 @@
-from PyQt6 import QtWidgets, uic
+from PyQt6 import QtWidgets, uic, QtCore
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QTableView
 from PyQt6.QtGui import QPixmap, QStandardItemModel, QStandardItem 
@@ -48,6 +48,15 @@ class DataViewPage(QtWidgets.QWidget):
 
         self.cboSessionType = self.findChild(QtWidgets.QComboBox, 'cboSessionType')
 
+        # Enable touch events on interactive widgets for better touchscreen support
+        self.tableview.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.btnSearch.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.btnAnalyze.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.btnReplay.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.textSearch.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.dateStart.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.dateEnd.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.cboSessionType.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
         
 
         # Connect button signals to their respective functions

@@ -1,4 +1,4 @@
-from PyQt6 import QtWidgets, uic
+from PyQt6 import QtWidgets, uic, QtCore
 from backend.drivers.ShotScript import ShotScript
 #from backend.motors.USBBDCMotor import USBBDCMotor
 #from backend.motors.SimMotor import SimMotor
@@ -53,6 +53,11 @@ class ShotViewPage(QtWidgets.QWidget):
         self.btnAnalyze = self.findChild(QtWidgets.QPushButton, 'btnAnalyze')
         self.btnAnalyze.clicked.connect(lambda: self.changePage.emit(3, "SampleText"))  # Go back to Home Page
         self.btnAnalyze.setEnabled(False)  # Disabled during shot view
+        # Accept touch events on common interactive widgets
+        self.btnAnalyze.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.motorGraph.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True) #likely unneeded
+        self.SmartDotGraph.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True) #likely unneeded
+        
 
         self.scriptSpin = array('f')
         self.scriptTilt = array('f')

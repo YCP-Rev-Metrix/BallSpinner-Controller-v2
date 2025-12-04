@@ -1,6 +1,6 @@
 from ctypes import cast
 from unittest import case
-from PyQt6 import QtWidgets, uic
+from PyQt6 import QtWidgets, uic, QtCore
 import os
 import pyqtgraph as pg
 import numpy as np 
@@ -72,6 +72,25 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.graph.setMouseEnabled(x=False, y=False)
         legend = self.graph.addLegend()
         legend.setColumnCount(2)
+
+        # Enable touch events on interactive controls (checkboxes, buttons, spinboxes, combobox)
+        self.chkAccelerometer_X.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.chkAccelerometer_Y.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.chkAccelerometer_Z.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.chkGyroscope_X.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.chkGyroscope_Y.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.chkGyroscope_Z.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.chkMagnetometer_X.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.chkMagnetometer_Y.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.chkMagnetometer_Z.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.chkLight.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.chkLimitView.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.btnSelectAll.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.btnDeselectAll.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.dsbLookBackSeconds.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.cbolimitView.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.dsbMinXValue.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.dsbMaxXValue.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
 
         # Create pens and persistent plot curves to avoid recreating plot items on every update
         self.pens = {

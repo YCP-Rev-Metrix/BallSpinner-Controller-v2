@@ -1,4 +1,4 @@
-from PyQt6 import QtWidgets, uic
+from PyQt6 import QtWidgets, uic, QtCore
 from PyQt6.QtGui import QPixmap
 import os
 from PyQt6.QtCore import pyqtSignal
@@ -14,6 +14,17 @@ class FrontPage(QtWidgets.QWidget):
         self.btnDiagnostics = self.findChild(QtWidgets.QPushButton, 'btnDiagnostic')
         self.btnShotMode = self.findChild(QtWidgets.QPushButton, 'btnShot')
         self.btnData = self.findChild(QtWidgets.QPushButton, 'btnAnalysis')
+
+        # Accept touch events for navigation buttons
+        try:
+            for b in (self.btnDiagnostics, self.btnShotMode, self.btnData):
+                if b is not None:
+                    try:
+                        b.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
 
         """
          self.label = self.findChild(QtWidgets.QLabel, 'label')

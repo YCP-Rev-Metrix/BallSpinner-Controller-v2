@@ -1,6 +1,6 @@
 from ctypes import cast
 from unittest import case
-from PyQt6 import QtWidgets, uic
+from PyQt6 import QtWidgets, uic, QtCore
 import os
 import pyqtgraph as pg
 import numpy as np
@@ -54,6 +54,20 @@ class MotorGraph(QtWidgets.QWidget):
         self.graph.setMouseEnabled(x=False, y=False)
         legend = self.graph.addLegend()
         legend.setColumnCount(3)
+
+        # Explicitly enable touch events on interactive controls for touchscreen support
+        self.chkSpin.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.chkTilt.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.chkAngle.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.chkSpinData.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.chkTiltData.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.chkAngleData.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.btnSelectAll.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.btnDeselectAll.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.dsbLookBackSeconds.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.cbolimitView.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.dsbMinXValue.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.dsbMaxXValue.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
 
         # Create pens and persistent plot curves to avoid recreating plot items on every update
         self.pens = {

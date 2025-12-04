@@ -8,6 +8,25 @@ class PostDialog(QtWidgets.QDialog):
         self.buttonBox = self.findChild(QtWidgets.QDialogButtonBox, 'buttonBox')
         self.sessionNameInput = self.findChild(QtWidgets.QLineEdit, 'txtSessionName')
 
+        # Accept touch events on dialog and its interactive children
+        try:
+            try:
+                self.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+            except Exception:
+                pass
+            try:
+                if self.buttonBox is not None:
+                    self.buttonBox.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+            except Exception:
+                pass
+            try:
+                if self.sessionNameInput is not None:
+                    self.sessionNameInput.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+            except Exception:
+                pass
+        except Exception:
+            pass
+
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 

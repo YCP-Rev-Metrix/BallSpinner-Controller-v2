@@ -1,6 +1,6 @@
 import platform
 from unittest import case
-from PyQt6 import QtWidgets, uic
+from PyQt6 import QtWidgets, uic, QtCore
 import os
 from PyQt6.QtGui import QAction
 
@@ -25,6 +25,8 @@ class BSCMainWindow(QtWidgets.QMainWindow):
 
         self.EStop = self.findChild(QtWidgets.QPushButton, 'btnEStop')
         self.EStop.setStyleSheet("background-color: red; font-weight: bold; font-size: 16px;")
+        self.EStop.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        
         
         # This is the container for all pages
         self.tab = self.findChild(QtWidgets.QStackedWidget, "stackedWidget") 
