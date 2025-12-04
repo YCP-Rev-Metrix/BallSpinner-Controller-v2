@@ -1,6 +1,7 @@
 from backend.smartdot.SmartDotConnectionManager import SmartDotConnectionManager
 # from backend.models.DataController import DataController
 from backend.cloud_api.CloudAPI import CloudAPI
+from backend.models.SessionPerformanceData import *
 # from backend.models.SessionData import SessionData
 import utils
 from backend.motors.SimMotor import SimMotor
@@ -25,6 +26,7 @@ class BSC:
         self.cloud_api = CloudAPI()
         self.session = None
         self.data_controller = None
+        self.session_performace_data = SessionPerformanceData()
         # Diagnostic sampling interval (milliseconds) used by UI pages
         self.diagnostic_sample_interval_ms = 50
         if utils.is_raspberry_pi_5():
