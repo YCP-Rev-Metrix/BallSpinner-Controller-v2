@@ -21,10 +21,10 @@ create a new .desktop file and fill in with the following format.
 ```bash
 [Desktop Entry]
 Type=Application
-Name=WhateverYouWantButINamedMineRevMetrixStartupScript
-Exec=[!---YOURPATHTO---!]/BallSpinner-Controller-v2/startup.sh
+Name=RevMetrixStartupScript
+Exec=lxterminal --command="[!---YOURPATHTO---!]/BallSpinner-Controller-v2/startup.sh"
+Terminal=true
 ```
-
 
 ### Hooray!
 You should now have a functioning startup script :)

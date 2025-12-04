@@ -1,6 +1,7 @@
 from PyQt6 import QtWidgets, QtCore, uic
 from PyQt6.QtCore import Qt, QTimer
 import numpy as np
+from array import array
 from frontend.SmartDotGraph import SmartDotGraph
 from frontend.SmartDotConnectWidget import SmartDotConnectWidget
 import math
@@ -12,14 +13,14 @@ else:
 from PyQt6.QtCore import pyqtSignal
 
 
-class SmartDotTestPage(QtWidgets.QWidget):
+class SmartDotViewer(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         # load the .ui file (module-relative path)
         import os
-        uic.loadUi(os.path.join(os.path.dirname(__file__), 'SmartDotTestPage.ui'), self, package='frontend')
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'SmartDotViewer.ui'), self, package='frontend')
 
         # Find the embedded SmartDotGraph widget created by the .ui (named SmartDotGraphContainer)
         self.SmartDotGraph = self.findChild(SmartDotGraph, 'smartDotGraph')
@@ -37,17 +38,17 @@ class SmartDotTestPage(QtWidgets.QWidget):
         self.SmartDot = None  # Placeholder for the connected SmartDot device
 
         # Instance arrays to persist between timer callbacks
-        self.arrayGeneralTime = np.array([0.0])
-        self.arrayAccelerometer_X = np.array([0.0])
-        self.arrayAccelerometer_Y = np.array([0.0])
-        self.arrayAccelerometer_Z = np.array([0.0])
-        self.arrayGyroscope_X = np.array([0.0])
-        self.arrayGyroscope_Y = np.array([0.0])
-        self.arrayGyroscope_Z = np.array([0.0])
-        self.arrayMagnetometer_X = np.array([0.0])
-        self.arrayMagnetometer_Y = np.array([0.0])
-        self.arrayMagnetometer_Z = np.array([0.0])
-        self.arrayLight = np.array([0.0])
+        self.arrayGeneralTime = array('d', [0.0])
+        self.arrayAccelerometer_X = array('f', [0.0])
+        self.arrayAccelerometer_Y = array('f', [0.0])
+        self.arrayAccelerometer_Z = array('f', [0.0])
+        self.arrayGyroscope_X = array('f', [0.0])
+        self.arrayGyroscope_Y = array('f', [0.0])
+        self.arrayGyroscope_Z = array('f', [0.0])
+        self.arrayMagnetometer_X = array('f', [0.0])
+        self.arrayMagnetometer_Y = array('f', [0.0])
+        self.arrayMagnetometer_Z = array('f', [0.0])
+        self.arrayLight = array('f', [0.0])
 
         # Timer interval (ms) 
         self.timer_interval_ms = 15  # default milliseconds 
@@ -73,6 +74,17 @@ class SmartDotTestPage(QtWidgets.QWidget):
             self.btnStart.setEnabled(False)
         if self.btnStop:
             self.btnStop.setEnabled(False)
+    def hide_buttons(self):
+        if self.btnStart:
+            self.btnStart.setVisible(False)
+        if self.btnStop:
+            self.btnStop.setVisible(False)
+    def show_buttons(self):
+        if self.btnStart:
+            self.btnStart.setVisible(True)
+        if self.btnStop:
+            self.btnStop.setVisible(True)
+    
 
     def disconnectSmartDot(self):
         self.btnStart.setEnabled(False)
@@ -174,9 +186,13 @@ class SmartDotTestPage(QtWidgets.QWidget):
         # Here you would add the actual connection testing code
         self.lblConnectionStatus.setText("Connection Successful!")
 
+    def reset(self):
+        self.active = False
+        #TODO: Reset graphs and data arrays
+
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    widget = SmartDotTestPage()
+    widget = SmartDotViewer()
     widget.show()
     sys.exit(app.exec())

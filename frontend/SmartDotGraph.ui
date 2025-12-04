@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1111</width>
-    <height>920</height>
+    <width>904</width>
+    <height>864</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -159,9 +159,9 @@
         <property name="layoutDirection">
          <enum>Qt::RightToLeft</enum>
         </property>
-            <property name="currentIndex">
-             <number>1</number>
-            </property>
+        <property name="currentIndex">
+         <number>1</number>
+        </property>
         <item>
          <property name="text">
           <string>View All</string>

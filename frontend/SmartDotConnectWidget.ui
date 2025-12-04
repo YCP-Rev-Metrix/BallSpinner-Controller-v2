@@ -7,19 +7,19 @@
     <x>0</x>
     <y>0</y>
     <width>904</width>
-    <height>892</height>
+    <height>864</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-    <item>
-     <widget class="QPushButton" name="startScan">
-      <property name="text">
-       <string>Scan for Smartdot</string>
-      </property>
-     </widget>
+   <item>
+    <widget class="QPushButton" name="startScan">
+     <property name="text">
+      <string>Scan for Smartdot</string>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="QLabel" name="lblHeader">
@@ -45,7 +45,7 @@
         <x>0</x>
         <y>0</y>
         <width>878</width>
-        <height>816</height>
+        <height>360</height>
        </rect>
       </property>
      </widget>
@@ -82,7 +82,7 @@
         <x>0</x>
         <y>0</y>
         <width>878</width>
-        <height>816</height>
+        <height>360</height>
        </rect>
       </property>
      </widget>

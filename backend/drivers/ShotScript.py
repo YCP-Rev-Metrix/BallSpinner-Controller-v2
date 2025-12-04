@@ -29,7 +29,7 @@ class ShotScript:
                 logger.info(f"Stopped motor {i + 1}")
             except Exception as e:
                 logger.error(f"Error stopping motor {i + 1}: {e}")
-
+    #change Speed instruction for all three motors at once
     def change_speed(self, values):
         if len(values) != 3:
             logger.error("change_speed: must provide 3 values for 3 motors.")
@@ -40,4 +40,15 @@ class ShotScript:
                 logger.info(f"Changed speed of motor {i + 1} to {values[i]}")
             except Exception as e:
                 logger.error(f"Error changing speed of motor {i + 1}: {e}")
+    
+    #Change instruction for a single motor
+    def change_speed_single(self, motor_index, value):
+        if motor_index < 0 or motor_index >= len(self.motors):
+            logger.error("change_speed_single: invalid motor index.")
+            return
+        try:
+            self.motors[motor_index].changeSpeed(float(value), True)
+            logger.info(f"Changed speed of motor {motor_index + 1} to {value}")
+        except Exception as e:
+            logger.error(f"Error changing speed of motor {motor_index + 1}: {e}")
 

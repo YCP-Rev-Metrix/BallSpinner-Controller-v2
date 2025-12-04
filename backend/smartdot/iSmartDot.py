@@ -1,31 +1,41 @@
  
 from abc import ABCMeta, abstractmethod
+from array import array
+import threading
 
-class iSmartDot(metaclass=ABCMeta): 
+
+class iSmartDot(metaclass=ABCMeta):
 
     def __init__(self):
         # Required data storage fields for all sensor types
+        # Use compact C-backed arrays for lower memory and faster appends
         # Accelerometer (XL) data
-        self.xl_time = []
-        self.xl_x = []
-        self.xl_y = []
-        self.xl_z = []
-        
+        self.xl_time = array('d')
+        self.xl_x = array('f')
+        self.xl_y = array('f')
+        self.xl_z = array('f')
+
         # Gyroscope (GY) data
-        self.gy_time = []
-        self.gy_x = []
-        self.gy_y = []
-        self.gy_z = []
-        
+        self.gy_time = array('d')
+        self.gy_x = array('f')
+        self.gy_y = array('f')
+        self.gy_z = array('f')
+
         # Magnetometer (MG) data
-        self.mg_time = []
-        self.mg_x = []
-        self.mg_y = []
-        self.mg_z = []
-        
+        self.mg_time = array('d')
+        self.mg_x = array('f')
+        self.mg_y = array('f')
+        self.mg_z = array('f')
+
         # Light sensor (LT) data
-        self.lt_time = []
-        self.lt_value = []
+        self.lt_time = array('d')
+        self.lt_value = array('f')
+
+        # Locks for thread-safe appends/reads
+        self._xl_lock = threading.Lock()
+        self._gy_lock = threading.Lock()
+        self._mg_lock = threading.Lock()
+        self._lt_lock = threading.Lock()
     
     #Confirm all class under this interface have called all functions
     @classmethod

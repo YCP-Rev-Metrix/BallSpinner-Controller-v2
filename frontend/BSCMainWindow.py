@@ -6,21 +6,22 @@ from PyQt6.QtGui import QAction
 
 from frontend.DataViewPage import DataViewPage
 from frontend.FrontPage import FrontPage
-from frontend.SmartDotTestPage import SmartDotTestPage
+from frontend.SmartDotViewer import SmartDotViewer
 from frontend.AnalysisModePage import AnalysisModePage
 from frontend.DiagnosticModePage import DiagnosticModePage
 from frontend.ShotModePage import ShotModePage
 from frontend.CloudTest import CloudTest
 from frontend.ShotViewPage import ShotViewPage
+from frontend.ExitDialog import ExitDialog
 from BSC import bsc
 from BSC import MotorData
 
-class HomePage(QtWidgets.QMainWindow):
+class BSCMainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
-        
+
         # Load the UI file (module-relative path).
-        uic.loadUi(os.path.join(os.path.dirname(__file__), 'HomePage.ui'), self, package='frontend')
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'BSCMainWindow.ui'), self, package='frontend')
 
         self.EStop = self.findChild(QtWidgets.QPushButton, 'btnEStop')
         self.EStop.setStyleSheet("background-color: red; font-weight: bold; font-size: 16px;")
@@ -34,7 +35,7 @@ class HomePage(QtWidgets.QMainWindow):
         self.shotModePage = self.findChild(ShotModePage, 'ShotModePage')
         self.analysisModePage = self.findChild(AnalysisModePage, 'AnalysisModePage')
         self.cloudTestPage = self.findChild(CloudTest, 'CloudTestPage')
-        self.smartDotTestPage = self.findChild(SmartDotTestPage, 'SmartDotTestPage')
+        
         self.shotViewPage = self.findChild(ShotViewPage, 'ShotViewPage')
         self.dataViewPage = self.findChild(DataViewPage, 'DataViewPage')
 
@@ -44,30 +45,49 @@ class HomePage(QtWidgets.QMainWindow):
         self.shotModePage.changePage.connect(self.switch_to_page)
         self.analysisModePage.changePage.connect(self.switch_to_page)
         self.cloudTestPage.changePage.connect(self.switch_to_page)
-        self.smartDotTestPage.changePage.connect(self.switch_to_page)
         self.shotViewPage.changePage.connect(self.switch_to_page)
         self.dataViewPage.changePage.connect(self.switch_to_page)
+
+        self.shotViewPage.navigationLock.connect(self.toggle_navigation)
+        self.diagnosticPage.navigationLock.connect(self.toggle_navigation)
+
 
 
         # connect E-Stop button to diagnostic page E-Stop function
         self.EStop.clicked.connect(lambda: self.diagnosticPage.EStop())
 
         # lock resolution to 1920x1080 except on macOS
-        if(platform.system() != 'Darwin'):
-            self.setFixedSize(1920, 1080)  # Set fixed window size to 1920x1080
-        else:
-            self.setBaseSize(1920, 1080)  # Set base window size to 1920x1080 on macOS
-        
+        self.setBaseSize(1920, 1080)  # Set fixed window size to scaled 1920x1080
+    
         self.switch_to_page(0, "Home")  # Start on FrontPage
 
-        #connect to navigation from menu bar if exists
+        # connect to navigation from menu bar if exists
         self.actionHome = self.findChild(QAction, 'actionHome')
         self.actionCloudTest = self.findChild(QAction, 'actionCloud_Test')
+        self.actionQuit = self.findChild(QAction, 'actionExit_Application')
 
         self.actionHome.triggered.connect(lambda: self.switch_to_page(0, "Home"))
         self.actionCloudTest.triggered.connect(lambda: self.switch_to_page(4, "Cloud Test"))
 
-       
+        # Open confirmation dialog on quit; only close if confirmed
+        self.actionQuit.triggered.connect(self.attempt_exit)
+
+        self.navigation_menu = self.findChild(QtWidgets.QMenu, 'menuNavigation')
+
+    def toggle_navigation(self, enable: bool):
+        """Enable or disable the navigation menu."""
+        self.navigation_menu.setEnabled(enable)
+
+    def attempt_exit(self):
+        """Show exit confirmation dialog and close if the user accepts."""
+        try:
+            confirmed = ExitDialog.confirm(self)
+        except Exception:
+            # Fallback: if dialog fails for any reason, proceed to close
+            confirmed = True
+
+        if confirmed:
+            self.close()
     def switch_to_page(self, index, data):
         """Switch to the specified tab index and update the window title."""
         self.tab.setCurrentIndex(index)
@@ -96,7 +116,7 @@ class HomePage(QtWidgets.QMainWindow):
                 self.window().setWindowTitle("Ball Spinner Controller - Cloud Test")
                 #No Data Expected
                 pass
-            case 5: #SmartDot Test Page
+            case 5: #Empty Page
                 #No Data Expected
                 pass
             case 6: #Shot View Page
@@ -135,7 +155,7 @@ Order of pages in stackedWidget:
 2 - ShotModePage
 3 - AnalysisModePage
 4 - Cloud Test 
-5 - SmartDotTestPage (Currently not used, can be replaced)
+5 - Empty Page
 6 - ShotViewPage
 7 - DataViewPage
 """

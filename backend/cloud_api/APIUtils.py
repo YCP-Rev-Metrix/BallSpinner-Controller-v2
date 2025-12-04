@@ -21,7 +21,7 @@ class APIUtils:
         try:
             # Make the GET request
             if url_params is not None:
-                response = requests.get(url, params=url_params)
+                response = requests.get(url, params=url_params, timeout=7)
                 logger.debug(f"Response status code: {response.status_code}")
             else:
                 response = requests.get(url)
@@ -102,7 +102,7 @@ class APIUtils:
         logger.debug(f"Making POST request to: {url}")
         try:
             # Make the POST request
-            response = requests.post(url, json=data)    
+            response = requests.post(url, json=data, timeout=7)    
             logger.debug(f"Response status code: {response.status_code}")
             # Check if the request was successful
             response.raise_for_status()
