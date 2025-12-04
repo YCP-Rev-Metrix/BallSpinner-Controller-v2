@@ -60,10 +60,10 @@ class StepMotor():
         if(self.connected):
             self.stop()
     
-    def __init__(self, GPIO_Pin=int):
+    def __init__(self, GPIO_Pin=int, DIR_Pin=int):
         self.GPIO_Pin = GPIO_Pin
         self.STEP_PIN = GPIO_Pin
-        self.DIR_PIN = GPIO_Pin + 1
+        self.DIR_PIN = DIR_Pin
         if not (self.connected):
             self.h = lgpio.gpiochip_open(0)
             self.connected = True
