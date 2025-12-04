@@ -1,4 +1,4 @@
-from PyQt6 import QtWidgets, uic
+from PyQt6 import QtWidgets, uic, QtCore
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QTableView
 from PyQt6.QtGui import QPixmap, QStandardItemModel, QStandardItem 
@@ -79,7 +79,7 @@ class DataViewPage(QtWidgets.QWidget):
         self.tableview.horizontalHeader().setStretchLastSection(True)
         self.tableview.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
         self.tableview.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
-
+        self.tableview.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
         # Make table scrollbars larger for easier grabbing
         self.tableview.setStyleSheet("""
             QScrollBar:vertical { width: 28px; background: transparent; }
