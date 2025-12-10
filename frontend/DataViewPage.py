@@ -48,7 +48,25 @@ class DataViewPage(QtWidgets.QWidget):
 
         self.cboSessionType = self.findChild(QtWidgets.QComboBox, 'cboSessionType')
 
-        
+        # Prevent QDateTimeEdit text overflow by setting fixed width and font size
+        self.dateStart.setFixedWidth(200)
+        self.dateEnd.setFixedWidth(200)
+
+        # Keep qdarktheme look while stopping text overhang in the date edits
+        date_edit_style = """
+        QDateTimeEdit {
+            font-size: 15px;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            padding: 2px 10px;
+            min-width: 160px;
+            background: transparent;
+        }
+        """
+        self.dateStart.setStyleSheet(date_edit_style)
+        self.dateEnd.setStyleSheet(date_edit_style)
+        # Hide spin buttons to avoid double arrow rendering on some styles
+        self.dateStart.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
+        self.dateEnd.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
 
         # Connect button signals to their respective functions
         self.btnSearch.clicked.connect(

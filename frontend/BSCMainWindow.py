@@ -148,6 +148,15 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         bsc.disconnect_all_motors()
         super().closeEvent(event)
 
+    def resizeEvent(self, event):
+            """Lock window to 16:9 aspect ratio on resize."""
+            width = event.size().width()
+            height = int(width * 9 / 16)
+            # Prevent recursion by only resizing if height is not already correct
+            if event.size().height() != height:
+                self.resize(width, height)
+            super().resizeEvent(event)
+
 """
 Order of pages in stackedWidget:
 0 - FrontPage
