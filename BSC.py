@@ -30,7 +30,7 @@ class BSC:
         if utils.is_raspberry_pi_5():
             self.motor1 = USBBDCMotor() # UNCOMMENT AFTER STEPPER
             #self.motor1 = SimMotor(1)
-            self.motor2 = StepMotor(23) #Uncomment when step working
+            self.motor2 = StepMotor(23, 24) #Uncomment when step working
             #self.motor2 = SimMotor(2)
         else:
             self.motor1 = SimMotor(2)

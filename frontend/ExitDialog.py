@@ -10,8 +10,10 @@ class ExitDialog(QtWidgets.QDialog):
         self.setModal(True)
         self.resize(400, 200)
 
-    @staticmethod
-    def confirm(parent=None) -> bool:
-        dlg = ExitDialog(parent)
-        result = dlg.exec()
-        return result == QtWidgets.QDialog.Accepted
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.setWindowTitle("EXIT APPLICATION")
+        self.setModal(True)
+        self.resize(400, 200)
+
