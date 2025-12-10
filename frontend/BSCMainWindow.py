@@ -80,14 +80,14 @@ class BSCMainWindow(QtWidgets.QMainWindow):
 
     def attempt_exit(self):
         """Show exit confirmation dialog and close if the user accepts."""
-        try:
-            confirmed = ExitDialog.confirm(self)
-        except Exception:
-            # Fallback: if dialog fails for any reason, proceed to close
-            confirmed = True
-
-        if confirmed:
+        dialog = ExitDialog(self)
+        result = dialog.exec()
+        if result == QtWidgets.QDialog.DialogCode.Accepted:
+            #print("User accepted exit.")
             self.close()
+        else:
+            #print("User canceled exit.")
+            return
     def switch_to_page(self, index, data):
         """Switch to the specified tab index and update the window title."""
         self.tab.setCurrentIndex(index)

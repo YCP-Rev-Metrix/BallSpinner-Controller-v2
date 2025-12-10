@@ -108,49 +108,15 @@ class ShotViewPage(QtWidgets.QWidget):
         Controller = bsc.get_data_controller()
         self.btnAnalyze.setEnabled(False)  # Disabled during shot view
         self.navigationLock.emit(False) # Lock navigation during shot view
-        
-
-        if Controller.session_data.isShotMode:
-            #Parse shot script data
-            motor_package = utils.PackageMotorData(self, bsc)
-            self.scriptSpin = motor_package.motor_rpm
-            self.scriptTilt = motor_package.motor_tiltDeg
-            self.scriptAngle = motor_package.motor_angleDeg
-            self.MaxTime = motor_package.time_rpm[-1]  # assuming motor_data is sorted by time
-            self.dt = motor_package.time_rpm[1] - motor_package.time_rpm[0]  # interval in seconds
-            self.dt_ms = int(self.dt * 1000)
-        else:
-            #Parse diagnostic data if no shot script data
-            self.scriptSpin = array('f')
-            self.scriptTilt = array('f')
-            self.scriptAngle = array('f')
-            diag_data = Controller.diagnostic_data.get_diagnostic_data_entries()
-            self.MaxTime = diag_data[-1].time  # assuming motor_data is sorted by time
-            self.dt = bsc.diagnostic_sample_interval_ms / 1000.0  # interval in seconds
-            self.dt_ms = int(self.dt * 1000)
-            # check data at 0.25s intervals
-            self.scriptSpin.append(0.0)
-            self.scriptTilt.append(0.0)
-            self.scriptAngle.append(0.0)
-            for i in np.arange(0.25, self.MaxTime, self.dt):
-                # find closest diag data for each motor
-                spin_val = self.scriptSpin[-1]
-                tilt_val = self.scriptTilt[-1]
-                angle_val = self.scriptAngle[-1]
-                for data in diag_data:
-                    if abs(data.time - i) < self.dt / 2:
-                        match data.motor_id:
-                            case 0:
-                                spin_val = data.instruction
-                            case 1:
-                                angle_val = data.instruction
-                            case 2:
-                                tilt_val = data.instruction
-                            case _:
-                                pass
-                self.scriptSpin.append(spin_val)
-                self.scriptTilt.append(tilt_val)
-                self.scriptAngle.append(angle_val)
+        print("Packaging motor data for Shot View")
+        motor_package = utils.PackageMotorData(self, bsc)
+        print("Motor data packaged")
+        self.scriptSpin = motor_package.motor_rpm
+        self.scriptTilt = motor_package.motor_tiltDeg
+        self.scriptAngle = motor_package.motor_angleDeg
+        self.MaxTime = motor_package.time_rpm[-1]  # assuming motor_data is sorted by time
+        self.dt = motor_package.time_rpm[1] - motor_package.time_rpm[0]  # interval in seconds
+        self.dt_ms = int(self.dt * 1000)
 
         self.shot_script.start_motors([0, 1, 2])
         time_values = []
@@ -216,17 +182,6 @@ class ShotViewPage(QtWidgets.QWidget):
         # Update using seconds so MaxTime comparison is consistent
         self.ElapsedTime += self.dt
         # append to array.array buffers (fast, low overhead)
-        """
-        #Move to on thread completion
-        self.displayedTime.append(self.ElapsedTime)
-        self.displayedSpin.append(self.scriptSpin[self.count])
-        self.displayedTilt.append(self.scriptTilt[self.count])
-        self.displayedAngle.append(self.scriptAngle[self.count])
-        # motorGraph may expect numpy arrays; convert on-call
-        # pass array.array buffers directly to avoid allocating ndarrays each update
-        self.motorGraph.updateDataBetter(self.displayedTime, self.displayedSpin, self.displayedTilt, self.displayedAngle,
-                         array('d', [0.0]), array('f', [0.0]), array('f', [0.0]), array('f', [0.0]))
-        """
         if self.SmartDot:
             # SmartDot buffers are array.array; convert to numpy arrays for plotting APIs that expect them
             # pass SmartDot buffers directly (they are array.array)
@@ -242,25 +197,22 @@ class ShotViewPage(QtWidgets.QWidget):
         if self.count >= len(self.scriptSpin):
             raise IndexError(f"UpdateShotView index {self.count} out of range for 'scriptSpin' length {len(self.scriptSpin)}")
 
-
-        # Change speeds for all motors atomically (use current index)
-        #self.shot_script.change_speed([self.scriptSpin[idx],self.scriptTilt[idx],self.scriptAngle[idx]])
-
         # Spawn a worker thread per motor that then calls change_speed_single
         try:
             self.spawn_motor_thread("Spin", 0, self.scriptSpin[self.count])
         except Exception as e:
-            print("Error spawning Spin motor thread:", e)
+            #print("Error spawning Spin motor thread:", e)
+            pass
         
         try:
             self.spawn_motor_thread("Tilt", 1, self.scriptTilt[self.count])
         except Exception as e:
-            print("Error spawning Tilt motor thread:", e)
+            pass
         
         try:
             self.spawn_motor_thread("Angle", 2, self.scriptAngle[self.count])
         except Exception as e:
-            print("Error spawning Angle motor thread:", e)
+            pass
             
         self.motorGraph.updateDataDiagnostic(
                         self.displayedSpinTime, self.displayedSpin,
@@ -270,7 +222,7 @@ class ShotViewPage(QtWidgets.QWidget):
         # advance to next index after spawning motor tasks
         self.count += 1
 
-        if(self.ElapsedTime >= self.MaxTime or self.count >= len(self.scriptSpin)):
+        if(self.ElapsedTime > self.MaxTime or self.count >= len(self.scriptSpin)):
             self.EndShotView()
             return
 
