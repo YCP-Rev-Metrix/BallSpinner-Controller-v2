@@ -9,6 +9,10 @@ from .iMotor import iMotor
 from logs.logger_config import get_logger
 logger = get_logger(__name__)
 
+from backend.models.DataController import DataController
+from backend.models.EncoderData import EncoderDataInstance
+from BSC import bsc
+
 PORT = "/dev/ttyACM0"   # or "/dev/ttyUSB0"
 BAUD = 115200
 
@@ -222,6 +226,8 @@ class USBBDCMotor(iMotor):
 
 
         print(f"ERPM: {erpm:9.1f} | RPM: {mech_rpm:9.1f} | I_motor: {vals['motor_current']:6.2f} A | V_in: {vals['v_in']:5.2f} V | Duty: {vals['duty_now']*100:5.1f}% | Fault: {vals['fault']}")
+        data_controller : DataController = bsc.get_data_controller()
+        data_controller.add_encoder_data(EncoderDataInstance(time=time.time(), pulses=erpm, motor_id=self.motorID, replay_iteration=data_controller.get_replay_iteration()))
 
     def rampUp(self):
         while self.currSpeed < self.targetSpeed:

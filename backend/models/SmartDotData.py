@@ -1,5 +1,5 @@
 class SmartDotDataInstance:
-    def __init__(self, time, data_selector, accelerometer_x, accelerometer_y, accelerometer_z, gyroscope_x, gyroscope_y, gyroscope_z, magnetometer_x, magnetometer_y, magnetometer_z, light):
+    def __init__(self, time, data_selector, accelerometer_x, accelerometer_y, accelerometer_z, gyroscope_x, gyroscope_y, gyroscope_z, magnetometer_x, magnetometer_y, magnetometer_z, light, replay_iteration):
         self.time = time
         self.data_selector = data_selector
         self.accelerometer_x = accelerometer_x
@@ -12,6 +12,8 @@ class SmartDotDataInstance:
         self.magnetometer_y = magnetometer_y
         self.magnetometer_z = magnetometer_z
         self.light = light
+        self.replay_iteration = replay_iteration
+
 
     # def get_data(self):
     #     if self.data_selector == 0:
@@ -24,7 +26,7 @@ class SmartDotDataInstance:
     #         return self.light
 
     def __str__(self):
-        return f"SmartDotDataInstance(time={self.time}, data_selector={self.data_selector}, accelerometer_x={self.accelerometer_x}, accelerometer_y={self.accelerometer_y}, accelerometer_z={self.accelerometer_z}, gyroscope_x={self.gyroscope_x}, gyroscope_y={self.gyroscope_y}, gyroscope_z={self.gyroscope_z}, magnetometer_x={self.magnetometer_x}, magnetometer_y={self.magnetometer_y}, magnetometer_z={self.magnetometer_z}, light={self.light})"
+        return f"SmartDotDataInstance(time={self.time}, data_selector={self.data_selector}, accelerometer_x={self.accelerometer_x}, accelerometer_y={self.accelerometer_y}, accelerometer_z={self.accelerometer_z}, gyroscope_x={self.gyroscope_x}, gyroscope_y={self.gyroscope_y}, gyroscope_z={self.gyroscope_z}, magnetometer_x={self.magnetometer_x}, magnetometer_y={self.magnetometer_y}, magnetometer_z={self.magnetometer_z}, light={self.light}, replay_iteration={self.replay_iteration})"
 
 class SmartDotData:
     def __init__(self):

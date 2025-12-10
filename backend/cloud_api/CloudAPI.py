@@ -192,7 +192,9 @@ class CloudAPI(iCloud):
                     "mG_X": i.magnetometer_x,
                     "mG_Y": i.magnetometer_y,
                     "mG_Z": i.magnetometer_z,
-                    "lt": i.light
+                    "lt": i.light,
+                    "replayIteration": i.replay_iteration
+                    
                 }
             )
         result = APIUtils.make_post_request(url=url, data=data)
@@ -216,11 +218,14 @@ class CloudAPI(iCloud):
                 "sessionId": session_id,
                 "time": i.time,
                 "pulses": i.pulses,
-                "motorId": i.motor_id
+                "motorId": i.motor_id,
+                "replayIteration": i.replay_iteration
             })
+
         result = APIUtils.make_post_request(url=url, data=data)
         print(result)
         return result
+        
     def get_heat_data(self, session_id):
         logger.info(f"Getting Heat data by sessionId: {session_id}")
         url = "https://api.revmetrix.io/api/gets/GetAllPiHeatDataBySession"

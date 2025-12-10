@@ -1,8 +1,9 @@
 class HeatDataInstance:
-    def __init__(self, time: float, motor_id: int, value: float):
+    def __init__(self, time: float, motor_id: int, value: float, replay_iteration: int):
         self.time = time
         self.motor_id = motor_id
         self.value = value
+        self.replay_iteration = replay_iteration
 
     def get_time(self):
         return self.time
@@ -12,7 +13,7 @@ class HeatDataInstance:
         return self.value
 
     def __str__(self):
-        return f"HeatDataInstance(time={self.time}, motor_id={self.motor_id}, value={self.value})"
+        return f"HeatDataInstance(time={self.time}, motor_id={self.motor_id}, value={self.value}, replay_iteration={self.replay_iteration})"
 
 class HeatData:
     def __init__(self):

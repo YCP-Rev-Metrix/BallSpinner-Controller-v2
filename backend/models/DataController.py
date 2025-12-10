@@ -18,6 +18,12 @@ class DataController:
         self.encoder_data = EncoderData()
         self.heat_data = HeatData()
         self.cloud_api = bsc.get_cloud_api()
+        self.replay_iteration = 0
+        
+    def get_replay_iteration(self):
+        return self.replay_iteration
+    def set_replay_iteration(self, replay_iteration: int):
+        self.replay_iteration = replay_iteration
 
 
     def set_session_name(self, session_name: str):

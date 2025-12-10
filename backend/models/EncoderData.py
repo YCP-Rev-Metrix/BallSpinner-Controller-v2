@@ -1,8 +1,9 @@
 class EncoderDataInstance:
-    def __init__(self, time: float, pulses: float, motor_id: int):
+    def __init__(self, time: float, pulses: float, motor_id: int, replay_iteration: int):
         self.time = time
         self.pulses = pulses
         self.motor_id = motor_id
+        self.replay_iteration = replay_iteration
 
     def get_time(self):
         return self.time
@@ -14,7 +15,7 @@ class EncoderDataInstance:
         return self.motor_id
 
     def __str__(self):
-        return f"EncoderDataInstance(time={self.time}, pulses={self.pulses}, motor_id={self.motor_id})"
+        return f"EncoderDataInstance(time={self.time}, pulses={self.pulses}, motor_id={self.motor_id}, replay_iteration={self.replay_iteration})"
 
 class EncoderData:
     def __init__(self):
