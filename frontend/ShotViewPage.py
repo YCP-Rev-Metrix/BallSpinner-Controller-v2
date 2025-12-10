@@ -376,7 +376,8 @@ class ShotViewPage(QtWidgets.QWidget):
                     magnetometer_x=-1,
                     magnetometer_y=-1,
                     magnetometer_z=-1,
-                    light=-1
+                    light=-1,
+                    replay_iteration=0,
                 ))
             for i in range(0,len(self.SmartDot.gy_time)):
                 dc.add_smartdot_data(SmartDotDataInstance(
@@ -391,7 +392,9 @@ class ShotViewPage(QtWidgets.QWidget):
                     magnetometer_x=-1,
                     magnetometer_y=-1,
                     magnetometer_z=-1,
-                    light=-1
+                    light=-1,
+                    replay_iteration=0,
+
                 ))
             for i in range(0,len(self.SmartDot.mg_time)):
                 dc.add_smartdot_data(SmartDotDataInstance(
@@ -406,7 +409,9 @@ class ShotViewPage(QtWidgets.QWidget):
                     magnetometer_x=self.SmartDot.mg_x[i],
                     magnetometer_y=self.SmartDot.mg_y[i],
                     magnetometer_z=self.SmartDot.mg_z[i],
-                    light=-1
+                    light=-1,
+                    replay_iteration=0,
+
                 ))
             for i in range(0,len(self.SmartDot.lt_time)):
                 dc.add_smartdot_data(SmartDotDataInstance(
@@ -421,7 +426,9 @@ class ShotViewPage(QtWidgets.QWidget):
                     magnetometer_x=-1,
                     magnetometer_y=-1,
                     magnetometer_z=-1,
-                    light=self.SmartDot.lt_value[i]
+                    light=self.SmartDot.lt_value[i],
+                    replay_iteration=0,
+
                 ))
             print("Submitted SmartDot data to DataController")
         if(utils.is_raspberry_pi()):
