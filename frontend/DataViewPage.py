@@ -1,4 +1,4 @@
-from PyQt6 import QtWidgets, uic
+from PyQt6 import QtWidgets, uic, QtCore
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QTableView
 from PyQt6.QtGui import QPixmap, QStandardItemModel, QStandardItem 
@@ -48,8 +48,27 @@ class DataViewPage(QtWidgets.QWidget):
 
         self.cboSessionType = self.findChild(QtWidgets.QComboBox, 'cboSessionType')
 
+        # Prevent QDateTimeEdit text overflow by setting fixed width and font size
+        self.dateStart.setFixedWidth(200)
+        self.dateEnd.setFixedWidth(200)
+
+        # Keep qdarktheme look while stopping text overhang in the date edits
+        date_edit_style = """
+        QDateTimeEdit {
+            font-size: 15px;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            padding: 2px 10px;
+            min-width: 160px;
+            background: transparent;
+        }
+        """
+        self.dateStart.setStyleSheet(date_edit_style)
+        self.dateEnd.setStyleSheet(date_edit_style)
+        # Hide spin buttons to avoid double arrow rendering on some styles
+        self.dateStart.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
+        self.dateEnd.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
+
         # Connect button signals to their respective functions
-        
         self.btnSearch.clicked.connect(
             lambda: self.refresh_data(self.dateStart.dateTime().toString("yyyyMMddhhmmss"), self.dateEnd.dateTime().toString("yyyyMMddhhmmss"))
             # lambda: print(int(self.dateStart.dateTime().toString("yyyyMMdd")))
@@ -78,7 +97,15 @@ class DataViewPage(QtWidgets.QWidget):
         self.tableview.horizontalHeader().setStretchLastSection(True)
         self.tableview.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
         self.tableview.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
-
+        self.tableview.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        # Make table scrollbars larger for easier grabbing
+        self.tableview.setStyleSheet("""
+            QScrollBar:vertical { width: 28px; background: transparent; }
+            QScrollBar::handle:vertical { background: rgba(200,200,200,0.9); min-height: 40px; border-radius: 6px; }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
+            QScrollBar:horizontal { height: 18px; background: transparent; }
+            QScrollBar::handle:horizontal { background: rgba(200,200,200,0.9); min-width: 30px; border-radius: 6px; }
+        """)
 
         # Use a custom proxy so we can combine text filtering with a session-type filter
         class FilterProxy(QSortFilterProxyModel):
@@ -208,11 +235,14 @@ class DataViewPage(QtWidgets.QWidget):
                 self.debugLabel.setHidden(False)
                 self.debugLabel.setText("No shots were found in the time range")
 
-        pass
+       
+
+
     def load_data(self):
-        #TODO: Implement data loading logic, turn session into Datacontroller with proper data
+        
         sel = self.tableview.selectionModel().selectedRows()
         if not sel:
+            print("No row selected")
             return -1
         rowidx = self.proxy.mapToSource(sel[0])
         session_id_index = self.model.index(rowidx.row(), 0)  # Assuming first column is session ID
@@ -232,17 +262,26 @@ class DataViewPage(QtWidgets.QWidget):
         bsc.set_data_controller(DataController(bsc.get_session()))
         bsc.get_data_controller().load_session_data_from_cloud(bsc.get_session())
 
-        pass
+        
+
+
+
     def analyze_data(self):
         print("Analyze Data Clicked")
-        self.load_data()
+        if(self.load_data() == -1):
+            self.debugLabel.setHidden(False)
+            self.debugLabel.setText("Please select a session to analyze.")
+            return
         self.changePage.emit(3, bsc.get_data_controller())
-        pass
+       
     def replay_data(self):
         print("Replay Data Clicked")
-        self.load_data()
+        if(self.load_data() == -1):
+            self.debugLabel.setHidden(False)
+            self.debugLabel.setText("Please select a session to replay.")
+            return
         self.changePage.emit(6, bsc.get_data_controller())
-        pass
+       
 
 
 

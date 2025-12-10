@@ -2,7 +2,6 @@ from PyQt6 import QtWidgets, uic
 import pyqtgraph as pg
 import numpy as np
 pg.setConfigOptions(antialias=False)
-import time
 import os
 from PyQt6.QtCore import pyqtSignal, QTimer
 
@@ -100,8 +99,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.btnClear.clicked.connect(lambda: self.clear_graphs())
         # Use a QTimer for periodic sampling & UI updates (runs in main thread)
         self._timer = QTimer(self)
-        # Get sample interval from central `bsc` object (milliseconds)
-        self._sample_interval_ms = bsc.diagnostic_sample_interval_ms
+        # Get sample interval from central `bsc` object (milliseconds) and clamp to >=50ms
+        self._sample_interval_ms = max(50, bsc.diagnostic_sample_interval_ms)
+        self._sample_dt_s = self._sample_interval_ms / 1000.0
         self._timer.setInterval(self._sample_interval_ms)
         self._timer.timeout.connect(self._on_timer)
 
@@ -117,7 +117,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self._filled = False
 
         self._last_values = {'spin': 0.0, 'tilt': 0.0, 'angle': 0.0}
-        self._started_at = None
+        self._sample_index = 0  # drives quantized 50ms grid
 
     def openPostDialog(self):
         from .PostDialog import PostDialog
@@ -143,7 +143,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 self.btnStop.setEnabled(True)
                 self.diagnostic_script.start_motors([1,2,3])
                 # start timer when entering active state
-                self._started_at = time.monotonic()
+                self._sample_index = 0  # reset counter when starting
                 self._timer.start()
                 # Start SmartDotViewer updates if connected
                 if len(bsc.get_smartdotConnectionManager().get_connections()) > 0:
@@ -188,10 +188,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
         # Runs in main (GUI) thread. Poll dials and update buffers + plots.
         # Called only when the timer is active; no separate `active` flag needed.
 
-        now = time.monotonic()
-        if self._started_at is None:
-            self._started_at = now
-        t = now - self._started_at
+        # Quantized time based on fixed interval (>=50ms)
+        t = self._sample_index * self._sample_dt_s
+        self._sample_index += 1
 
         spin_v = float(self.spinDial.value())
         tilt_v = float(self.tiltDial.value())
@@ -277,7 +276,6 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self._angle_arr = np.zeros(self._N, dtype=np.float32)
         self._write_idx = 0
         self._filled = False
-        self._started_at = None
         self.spinCurve.setData([0.0], [0.0])
         self.tiltCurve.setData([0.0], [0.0])
         self.angleCurve.setData([0.0], [0.0])
