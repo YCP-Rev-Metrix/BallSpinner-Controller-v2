@@ -158,6 +158,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 self.btnStart.setEnabled(True)
                 self.btnStop.setEnabled(False)
                 self.diagnostic_script.stop_motors([1,2,3])
+                bsc.disconnect_all_motors()
                 # stop periodic updates
                 self._timer.stop()
                 # Stop SmartDotViewer updates if connected
@@ -169,6 +170,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
     def EStop(self):
         #Motor.stop() uncomment when motor works
         self.diagnostic_script.stop_motors([1,2,3])
+        bsc.disconnect_all_motors()
         self.clear_graphs()
         self.btnStart.setEnabled(True)
         self.btnStop.setEnabled(False)

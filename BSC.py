@@ -3,6 +3,7 @@ from backend.smartdot.SmartDotConnectionManager import SmartDotConnectionManager
 from backend.cloud_api.CloudAPI import CloudAPI
 # from backend.models.SessionData import SessionData
 import utils
+import lgpio
 from backend.motors.SimMotor import SimMotor
 if utils.is_raspberry_pi_5():
     from backend.motors.USBBDCMotor import USBBDCMotor #UNCOMMENT AFTER STEPPER
@@ -17,6 +18,7 @@ class MotorData:
         self.angle = angle
         self.dt = dt
         self.length = length
+        self.connected = True
 
         
 class BSC:
@@ -27,11 +29,13 @@ class BSC:
         self.data_controller = None
         # Diagnostic sampling interval (milliseconds) used by UI pages
         self.diagnostic_sample_interval_ms = 50
+        self.h = lgpio.gpiochip_open(0)
+
         if utils.is_raspberry_pi_5():
             self.motor1 = USBBDCMotor() # UNCOMMENT AFTER STEPPER
             #self.motor1 = SimMotor(1)
-            self.motor2 = StepMotor(23, 24) #Uncomment when step working
-            self.motor3 = StepMotor(27, 17)
+            self.motor2 = StepMotor(23, 24, self.h) #Uncomment when step working
+            self.motor3 = StepMotor(27, 17, self.h)
             #self.motor2 = SimMotor(2)
         else:
             self.motor1 = SimMotor(2)
@@ -59,7 +63,10 @@ class BSC:
     def disconnect_all_motors(self):
         self.motor1.disconnect()
         self.motor2.disconnect()
-        self.motor3.disconnect(3)
+        self.motor3.disconnect()
+        lgpio.gpiochip_close(self.h)
+        self.connected = False
+        print("All motors disconnected!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
 
 bsc = BSC()

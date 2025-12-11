@@ -42,28 +42,37 @@ class StepMotor():
     motor_degrees = [0.0]
     motor_times = [0.0]
     count = 0
-    h = lgpio.gpiochip_open(0)
+    #h = lgpio.gpiochip_open(0) moved to BSC.py
+    h = 0 #default to 0, will be set to the handle in BSC.py
     connected = True
-    t = threading.Thread()#target=run_movement_chain, daemon=True)
+    #t = threading.Thread()#target=run_movement_chain, daemon=True)
     prev_angle = 0.0
 
     def stop(self):
-        self.t.join()  # Wait for the thread to finish before continuing
-        lgpio.gpio_write(self.h, self.STEP_PIN, 0)
-        lgpio.gpio_write(self.h, self.DIR_PIN, 0)
-        lgpio.gpiochip_close(self.h)
+        #self.t.join()  # Wait for the thread to finish before continuing
+        if self.connected and self.h:
+            try:
+                lgpio.gpio_write(self.h, self.STEP_PIN, 0)
+                lgpio.gpio_write(self.h, self.DIR_PIN, 0)
+                # Free the GPIO pins so they can be claimed again
+                lgpio.gpio_free(self.h, self.STEP_PIN)
+                lgpio.gpio_free(self.h, self.DIR_PIN)
+            except Exception as e:
+                print(f"Error freeing GPIO pins for motor {self.GPIO_Pin}: {e}")
         self.connected = False
-        print("GPIO released")
+        # Don't set h to None here - BSC manages the handle
+        print(f"GPIO released for motor on pin {self.GPIO_Pin}")
 
     def disconnect(self):
         # Close the gpiochip handle to release resources.
         if(self.connected):
             self.stop()
     
-    def __init__(self, GPIO_Pin=int, DIR_Pin=int):
+    def __init__(self, GPIO_Pin, DIR_Pin, h):
         self.GPIO_Pin = GPIO_Pin
         self.STEP_PIN = GPIO_Pin
         self.DIR_PIN = DIR_Pin
+        self.h = h
         if not (self.connected):
             self.h = lgpio.gpiochip_open(0)
             self.connected = True
@@ -73,9 +82,28 @@ class StepMotor():
         self.movement_lock = threading.Lock()  # Lock for thread safety
 
     def start(self, rpm=1):
+        # Check if handle is valid, reopen if needed
+        if self.h:
+            try:
+                # Test if handle is valid
+                lgpio.gpio_read(self.h, self.STEP_PIN)
+            except Exception:
+                # Handle is invalid (closed), reopen it
+                self.h = lgpio.gpiochip_open(0)
+        else:
+            # No handle, open it
+            self.h = lgpio.gpiochip_open(0)
+        
+        # If pins might already be claimed, try to free them first
+        try:
+            # Try to free pins if they're already claimed (won't error if not claimed)
+            lgpio.gpio_free(self.h, self.STEP_PIN)
+            lgpio.gpio_free(self.h, self.DIR_PIN)
+        except Exception:
+            pass  # Pins weren't claimed, that's fine
+        
         if not (self.connected):
             self.connected = True
-            self.h = lgpio.gpiochip_open(0)
             lgpio.gpio_claim_output(self.h, self.STEP_PIN, 0)
             lgpio.gpio_claim_output(self.h, self.DIR_PIN, 0)
             self.movement_in_progress = False  # Track if a movement is currently running
@@ -83,6 +111,7 @@ class StepMotor():
 
         self.count = 0  # Reset counter for new sequence
         self.movement_in_progress = False
+        self.current_angle = 0.0  # Track current position
         # Don't move here - wait for first changeSpeed call
 
     def changeSpeed(self, dutyCycle: float, isShotMode: bool):
@@ -96,7 +125,6 @@ class StepMotor():
                 
             self.prev_angle = angle
 
-
             move_angle_timeds(
                 self.h,
                 step_pin=self.STEP_PIN,
@@ -106,9 +134,33 @@ class StepMotor():
                 clockwise=isClockwise,
             )
         else:
-        # Only trigger first movement, then let it chain automatically
-            if self.count == 0 and not self.movement_in_progress:
-                self._start_movement_sequence()
+            # Reactive approach: move towards target angle each time step
+            target_angle = angle
+            angle_diff = target_angle - self.current_angle
+            
+            if abs(angle_diff) > 0.01:  # Only move if significant difference
+                # Get dt from ShotViewPage - we need to pass it or calculate it
+                # For now, use a small default that will be overridden
+                # You'll need to pass dt as a parameter or store it
+                dt = 0.1  # This should come from the caller or be stored
+                
+                # Determine direction
+                isClockwise = angle_diff > 0
+                
+                # Move the difference over the time interval
+                move_angle_timeds(
+                    self.h,
+                    step_pin=self.STEP_PIN,
+                    dir_pin=self.DIR_PIN,
+                    angle_deg=abs(angle_diff),
+                    total_time_s=dt,
+                    clockwise=isClockwise,
+                )
+                
+                self.current_angle = target_angle  # Update current position
+
+        print(f"step motor on pin{self.GPIO_Pin} running and moving to {angle} degrees")
+
     
     def _start_movement_sequence(self):
         """Start the sequence of movements through all waypoints"""
@@ -188,8 +240,7 @@ class StepMotor():
                     self.movement_in_progress = False
 
         self.t = threading.Thread(target=run_movement_chain, daemon=True)
-
-        self.t.start()
+        self.t.start()  # Start the thread instead of calling directly
 
     def getCurrentSpeed(self):
         return self.currSpeed
