@@ -1,0 +1,681 @@
+================================================================================
+BALL SPINNER CONTROLLER - UNIT TESTING CHECKLIST
+================================================================================
+
+This document outlines all areas of the application that should have unit tests.
+Organize testing by module/layer for systematic coverage.
+
+================================================================================
+1. UTILITY MODULE (utils.py)
+================================================================================
+
+[  ] test_is_raspberry_pi()
+     - Should return True when running on Raspberry Pi
+     - Should return False on non-Pi systems
+     - Should handle FileNotFoundError gracefully
+
+[  ] test_is_raspberry_pi_5()
+     - Should return True when running on Raspberry Pi 5
+     - Should return False on other Pi versions
+     - Should return False on non-Pi systems
+
+[  ] test_PackageSmartDotData()
+     - Should correctly extract SmartDot data from BSC controller
+     - Should initialize all array types (accel_x, accel_y, accel_z, gyro_*, mag_*)
+     - Should handle empty data entries
+     - Should correctly count data entries
+
+
+================================================================================
+2. BACKEND - DATA MODELS
+================================================================================
+
+--- 2.1 SessionData (backend/models/SessionData.py) ---
+
+[  ] test_SessionData_initialization()
+     - Should accept and store id, timestamp, name, isShotMode
+     - Should default id to -1 if None is passed
+     - Should store all properties correctly
+
+[  ] test_SessionData_getters()
+     - test_get_id()
+     - test_get_time_stamp()
+     - test_get_name()
+     - test_get_is_shot_mode()
+
+[  ] test_SessionData_string_representation()
+     - Should return proper string format
+
+--- 2.2 SmartDotData (backend/models/SmartDotData.py) ---
+
+[  ] test_SmartDotDataInstance_initialization()
+     - Should accept all required parameters
+     - Should store accelerometer, gyroscope, magnetometer, light data
+
+[  ] test_SmartDotDataInstance_string_representation()
+     - Should return proper string format
+
+[  ] test_SmartDotData_add_data()
+     - Should successfully add SmartDotDataInstance
+     - Should handle multiple additions
+     - Should maintain insertion order
+
+[  ] test_SmartDotData_get_entries()
+     - Should return all added entries
+     - Should return empty list when no data added
+     - Should not modify original list when returned
+
+--- 2.3 EncoderData (backend/models/EncoderData.py) ---
+
+[  ] test_EncoderDataInstance_initialization()
+     - Should accept time, pulses, motor_id
+     - Should store values correctly
+
+[  ] test_EncoderDataInstance_getters()
+     - test_get_time()
+     - test_get_pulses()
+     - test_get_motor_id()
+
+[  ] test_EncoderData_add_encoder_data()
+     - Should add single encoder data instance
+     - Should handle multiple additions
+
+[  ] test_EncoderData_get_entries()
+     - Should return all entries
+     - Should handle empty state
+
+[  ] test_EncoderData_string_representation()
+     - Should format output correctly
+
+--- 2.4 HeatData (backend/models/HeatData.py) ---
+
+[  ] test_HeatDataInstance_initialization()
+     - Should accept time, motor_id, value
+     - Should store values correctly
+
+[  ] test_HeatDataInstance_getters()
+     - test_get_time()
+     - test_get_motor_id()
+     - test_get_value()
+
+[  ] test_HeatData_add_heat_data()
+     - Should add single heat data instance
+     - Should handle multiple additions
+
+[  ] test_HeatData_get_entries()
+     - Should return all entries
+     - Should handle empty state
+
+--- 2.5 DiagnosticScriptData (backend/models/DiagnosticScriptData.py) ---
+
+[  ] test_DiagnosticScriptDataInstance_initialization()
+     - Should accept time, motor_id, instruction
+
+[  ] test_DiagnosticScriptData_add_data()
+     - Should successfully add data instances
+     - Should handle multiple additions
+
+[  ] test_DiagnosticScriptData_get_entries()
+     - Should return all entries
+
+--- 2.6 ShotScriptData (backend/models/ShotScriptData.py) ---
+
+[  ] test_ShotScriptDataInstance_initialization()
+     - Should accept time, rpm, angleDeg, tiltDeg
+
+[  ] test_ShotScriptData_add_data()
+     - Should successfully add data instances
+
+[  ] test_ShotScriptData_get_entries()
+     - Should return all entries
+
+--- 2.7 DataController (backend/models/DataController.py) ---
+
+[  ] test_DataController_initialization()
+     - Should accept SessionData
+     - Should initialize all data storage objects
+     - Should get cloud_api from BSC
+
+[  ] test_set_session_name()
+     - Should update session name
+     - Should log the operation
+
+[  ] test_add_smartdot_data()
+     - Should add SmartDotDataInstance
+     - Should log the addition
+
+[  ] test_add_diagnostic_script_data()
+     - Should add DiagnosticScriptDataInstance
+     - Should log the addition
+
+[  ] test_add_shot_script_data()
+     - Should add ShotScriptDataInstance
+     - Should log the addition
+
+[  ] test_add_encoder_data()
+     - Should add EncoderDataInstance
+     - Should log the addition
+
+[  ] test_add_heat_data()
+     - Should add HeatDataInstance
+     - Should log the addition
+
+[  ] test_get_smartdot_data()
+     - Should return SmartDotData entries
+
+[  ] test_get_diagnostic_script_data()
+     - Should return DiagnosticScriptData entries
+
+[  ] test_get_shot_script_data()
+     - Should return ShotScriptData entries
+
+[  ] test_get_encoder_data()
+     - Should return EncoderData entries
+
+[  ] test_get_heat_data()
+     - Should return HeatData entries
+
+[  ] test_submit_session_data()
+     - Should call cloud_api.post_session_data()
+     - Should handle shot mode vs diagnostic mode
+     - Should submit all relevant data types
+     - Should handle missing data gracefully
+
+[  ] test_load_session_data_from_cloud()
+     - Should load shot script data when isShotMode=True
+     - Should load diagnostic script data when isShotMode=False
+     - Should load smartdot, encoder, heat data
+     - Should handle missing data from cloud
+     - Should log warnings for missing data
+
+
+================================================================================
+3. BACKEND - CLOUD API
+================================================================================
+
+--- 3.1 CloudAPI (backend/cloud_api/CloudAPI.py) ---
+
+[  ] test_CloudAPI_initialization()
+     - Should inherit from iCloud interface
+
+[  ] test_get_test_data()
+     - Should make GET request to test endpoint
+     - Should return status code and data
+     - Should handle API errors
+
+[  ] test_post_session_data()
+     - Should format session data correctly
+     - Should submit to correct endpoint
+     - Should return response data
+     - Should extract session_id from response
+
+[  ] test_get_sessions_in_time_range()
+     - Should accept start_time and end_time
+     - Should make GET request with time parameters
+     - Should return sessions within range
+
+[  ] test_get_diagnostic_script_data_by_session()
+     - Should accept session_id
+     - Should return diagnostic data
+     - Should handle no data case
+
+[  ] test_post_diagnostic_script_data()
+     - Should format diagnostic data correctly
+     - Should submit with session_id
+     - Should handle multiple entries
+
+[  ] test_get_shot_script_data_by_session()
+     - Should accept session_id
+     - Should return shot script data
+     - Should handle no data case
+
+[  ] test_post_shot_script_data()
+     - Should format shot script data correctly
+     - Should submit with session_id
+
+[  ] test_get_smartdot_data()
+     - Should accept session_id
+     - Should return smartdot sensor data
+     - Should handle all sensor types (accel, gyro, mag, light)
+
+[  ] test_post_smartdot_data()
+     - Should format all smartdot data correctly
+     - Should submit with session_id
+     - Should handle multiple sensor entries
+
+[  ] test_get_encoder_data()
+     - Should accept session_id
+     - Should return encoder pulses data
+
+[  ] test_post_encoder_data()
+     - Should format encoder data correctly
+     - Should submit with session_id
+     - Should handle multiple motors
+
+[  ] test_get_heat_data()
+     - Should accept session_id
+     - Should return heat values
+
+[  ] test_post_heat_data()
+     - Should format heat data correctly
+     - Should submit with session_id
+     - Should handle multiple motors
+
+--- 3.2 APIUtils (backend/cloud_api/APIUtils.py) ---
+
+[  ] test_make_get_request()
+     - Should handle successful requests
+     - Should handle network errors
+     - Should include URL parameters
+     - Should return response data
+
+[  ] test_make_post_request()
+     - Should handle successful posts
+     - Should format JSON correctly
+     - Should handle network errors
+     - Should return response data
+
+
+================================================================================
+4. BACKEND - MOTORS
+================================================================================
+
+--- 4.1 iMotor (backend/motors/iMotor.py) ---
+
+[  ] test_iMotor_is_abstract()
+     - Should not be instantiable directly
+     - All subclasses should implement required methods
+
+[  ] test_motor_connect()
+     - Subclasses should implement connect(GPIOPin)
+
+[  ] test_motor_disconnect()
+     - Subclasses should implement disconnect(GPIOPin)
+
+[  ] test_motor_start()
+     - Subclasses should implement start()
+
+[  ] test_motor_stop()
+     - Subclasses should implement stop()
+
+[  ] test_motor_changeSpeed()
+     - Subclasses should implement changeSpeed(dutyCycle, isShotMode)
+
+[  ] test_motor_getCurrentSpeed()
+     - Subclasses should implement getCurrentSpeed()
+
+[  ] test_motor_rampUp()
+     - Subclasses should implement rampUp()
+
+--- 4.2 SimMotor (backend/motors/SimMotor.py) ---
+
+[  ] test_SimMotor_initialization()
+     - Should initialize with GPIO pin
+     - Should set initial speed to 0
+
+[  ] test_SimMotor_start_stop()
+     - Should start motor
+     - Should stop motor
+
+[  ] test_SimMotor_changeSpeed()
+     - Should change speed correctly
+     - Should handle different duty cycles
+     - Should handle shot mode vs normal mode
+
+[  ] test_SimMotor_getCurrentSpeed()
+     - Should return current speed value
+
+--- 4.3 BDCMotor (backend/motors/BDCMotor.py) ---
+
+[  ] test_BDCMotor_initialization()
+     - Should initialize with GPIO pin
+     - Should create PWM output
+
+[  ] test_BDCMotor_start_stop()
+     - Should start motor
+     - Should stop motor
+
+[  ] test_BDCMotor_changeSpeed()
+     - Should modify PWM duty cycle
+
+--- 4.4 StepMotor (backend/motors/StepMotor.py) ---
+
+[  ] test_StepMotor_initialization()
+     - Should initialize correctly
+
+[  ] test_StepMotor_step_control()
+     - Should execute steps correctly
+
+
+================================================================================
+5. BACKEND - SMARTDOT SENSOR
+================================================================================
+
+--- 5.1 iSmartDot (backend/smartdot/iSmartDot.py) ---
+
+[  ] test_iSmartDot_data_initialization()
+     - Should initialize all sensor data arrays
+     - Should create thread locks for each sensor
+
+[  ] test_iSmartDot_setSampleRates()
+     - Should accept XL, GY, MG, LT rates
+     - Should update only specified rates
+
+[  ] test_iSmartDot_subclass_hook()
+     - Should verify subclasses implement required methods
+
+--- 5.2 SimSmartDot (backend/smartdot/SimSmartDot.py) ---
+
+[  ] test_SimSmartDot_initialization()
+     - Should initialize as SmartDot
+
+[  ] test_SimSmartDot_connect()
+     - Should connect without errors
+
+[  ] test_SimSmartDot_disconnect()
+     - Should disconnect without errors
+
+[  ] test_SimSmartDot_data_streaming()
+     - Should generate simulated sensor data
+     - Should populate all sensor types
+
+--- 5.3 MetaMotionS (backend/smartdot/MetaMotionS.py) ---
+
+[  ] test_MetaMotionS_initialization()
+     - Should initialize with device info
+
+[  ] test_MetaMotionS_connect()
+     - Should connect to real device
+
+[  ] test_MetaMotionS_disconnect()
+     - Should disconnect cleanly
+
+[  ] test_MetaMotionS_stream_data()
+     - Should receive accelerometer data
+     - Should receive gyroscope data
+     - Should receive magnetometer data
+     - Should receive light sensor data
+
+--- 5.4 SmartDotConnectionManager (backend/smartdot/SmartDotConnectionManager.py) ---
+
+[  ] test_connection_manager_add_device()
+     - Should add new SmartDot devices
+
+[  ] test_connection_manager_remove_device()
+     - Should remove devices
+
+[  ] test_connection_manager_get_devices()
+     - Should return active devices
+
+[  ] test_connection_manager_connect_all()
+     - Should connect all devices
+
+[  ] test_connection_manager_disconnect_all()
+     - Should disconnect all devices
+
+
+================================================================================
+6. BACKEND - DRIVERS
+================================================================================
+
+--- 6.1 DiagnosticScript (backend/drivers/DiagnosticScript.py) ---
+
+[  ] test_diagnostic_script_execution()
+     - Should execute diagnostic sequence
+     - Should log results
+     - Should handle errors
+
+[  ] test_diagnostic_data_collection()
+     - Should collect motor data
+     - Should collect sensor data
+
+--- 6.2 ShotScript (backend/drivers/ShotScript.py) ---
+
+[  ] test_shot_script_execution()
+     - Should execute shot sequence
+     - Should follow RPM/angle/tilt profile
+
+[  ] test_shot_data_collection()
+     - Should record shot parameters
+     - Should record sensor data during shot
+
+
+================================================================================
+7. FRONTEND - WIDGETS & DIALOGS
+================================================================================
+
+--- 7.1 BSCMainWindow (frontend/BSCMainWindow.py) ---
+
+[  ] test_main_window_initialization()
+     - Should load UI correctly
+     - Should initialize all pages
+
+[  ] test_main_window_page_switching()
+     - Should switch between pages
+     - Should maintain state
+
+[  ] test_main_window_quit()
+     - Should handle quit signal
+     - Should cleanup resources
+
+--- 7.2 FrontPage (frontend/FrontPage.py) ---
+
+[  ] test_front_page_initialization()
+     - Should load correctly
+
+[  ] test_front_page_button_clicks()
+     - Should handle mode selection buttons
+     - Should switch to appropriate page
+
+--- 7.3 ShotModePage (frontend/ShotModePage.py) ---
+
+[  ] test_shot_mode_initialization()
+     - Should initialize shot parameters
+
+[  ] test_shot_mode_parameter_input()
+     - Should accept RPM, angle, tilt values
+     - Should validate inputs
+
+[  ] test_shot_mode_execution()
+     - Should start shot sequence
+     - Should stop shot sequence
+
+--- 7.4 DiagnosticModePage (frontend/DiagnosticModePage.py) ---
+
+[  ] test_diagnostic_mode_initialization()
+     - Should initialize
+
+[  ] test_diagnostic_mode_execution()
+     - Should run diagnostic
+     - Should collect data
+
+--- 7.5 AnalysisModePage (frontend/AnalysisModePage.py) ---
+
+[  ] test_analysis_mode_load_data()
+     - Should load recorded session data
+
+[  ] test_analysis_mode_display_graphs()
+     - Should display motor graphs
+     - Should display smartdot graphs
+
+[  ] test_analysis_mode_export_data()
+     - Should export session data
+
+--- 7.6 DataViewPage (frontend/DataViewPage.py) ---
+
+[  ] test_data_view_load_sessions()
+     - Should load sessions from cloud
+     - Should populate table
+
+[  ] test_data_view_select_session()
+     - Should load selected session
+     - Should display data
+
+[  ] test_data_view_filtering()
+     - Should filter by date range
+     - Should filter by session name
+
+--- 7.7 SmartDotConnectWidget (frontend/SmartDotConnectWidget.py) ---
+
+[  ] test_smartdot_scan()
+     - Should scan for devices
+     - Should list found devices
+
+[  ] test_smartdot_connect()
+     - Should connect to selected device
+     - Should show connection status
+
+--- 7.8 Graph Widgets (InputGraph.py, MotorGraph.py, SmartDotGraph.py) ---
+
+[  ] test_input_graph_display()
+     - Should plot input data correctly
+
+[  ] test_motor_graph_display()
+     - Should plot motor speed/power data
+
+[  ] test_smartdot_graph_display()
+     - Should plot sensor data
+     - Should handle multiple sensors
+
+--- 7.9 Dialogs ---
+
+[  ] test_exit_dialog()
+     - Should prompt before exit
+     - Should handle yes/no responses
+
+[  ] test_analysis_dialog()
+     - Should display analysis options
+
+[  ] test_post_dialog()
+     - Should confirm data posting
+     - Should show post status
+
+
+================================================================================
+8. LOGGING & CONFIGURATION
+================================================================================
+
+[  ] test_logger_setup()
+     - Should configure logger correctly
+     - Should write to log files
+     - Should display in console
+
+[  ] test_logger_levels()
+     - Should respect DEBUG level
+     - Should respect INFO level
+     - Should respect WARNING level
+     - Should respect ERROR level
+
+
+================================================================================
+9. INTEGRATION TESTS
+================================================================================
+
+[  ] test_complete_diagnostic_session()
+     - Should run full diagnostic workflow
+     - Should collect all data types
+     - Should submit to cloud
+
+[  ] test_complete_shot_session()
+     - Should run full shot workflow
+     - Should execute shot parameters
+     - Should collect shot data
+     - Should submit to cloud
+
+[  ] test_data_round_trip()
+     - Should submit data to cloud
+     - Should retrieve same data
+     - Should match original
+
+[  ] test_ui_workflow_diagnostic()
+     - Should navigate UI for diagnostic mode
+     - Should execute diagnostic
+     - Should view results
+
+[  ] test_ui_workflow_shot()
+     - Should navigate UI for shot mode
+     - Should input parameters
+     - Should execute shot
+     - Should view results
+
+[  ] test_motor_control()
+     - Should start motor
+     - Should change speed
+     - Should stop motor
+     - Should handle errors
+
+[  ] test_smartdot_data_collection()
+     - Should connect smartdot
+     - Should stream data
+     - Should stop streaming
+
+
+================================================================================
+10. ERROR HANDLING & EDGE CASES
+================================================================================
+
+[  ] test_network_timeout()
+     - Should handle API timeouts
+     - Should display error message
+
+[  ] test_invalid_input()
+     - Should validate user input
+     - Should show validation errors
+
+[  ] test_missing_cloud_connection()
+     - Should handle offline mode
+     - Should queue data for later
+
+[  ] test_missing_smartdot()
+     - Should allow running without sensor
+     - Should use mock data
+
+[  ] test_missing_motor()
+     - Should allow running without motor
+     - Should use mock motor
+
+[  ] test_corrupted_data()
+     - Should handle corrupted cloud data
+     - Should show error message
+
+[  ] test_insufficient_memory()
+     - Should handle large data streams
+     - Should not crash with memory errors
+
+
+================================================================================
+TESTING PRIORITY
+================================================================================
+
+HIGH PRIORITY (Start Here):
+1. Data models (SessionData, SmartDotData, EncoderData, HeatData)
+2. DataController (core business logic)
+3. CloudAPI (data persistence)
+4. iMotor/Motor implementations (hardware control)
+
+MEDIUM PRIORITY:
+1. SmartDot sensor handling
+2. UI page navigation
+3. Graph display
+
+LOW PRIORITY (Nice to Have):
+1. Dialog edge cases
+2. Logging edge cases
+3. Performance tests
+
+
+================================================================================
+NOTES FOR TESTING
+================================================================================
+
+- Use pytest fixtures for setup/teardown
+- Mock cloud API calls in unit tests
+- Use mock GPIO for motor tests
+- Use mock SmartDot for sensor tests
+- Integration tests can use real API (with test account)
+- Use pytest-qt for PyQt6 UI tests
+- Aim for >80% code coverage
+- Run tests in CI/CD pipeline
+- Keep tests isolated and independent
+
+================================================================================
