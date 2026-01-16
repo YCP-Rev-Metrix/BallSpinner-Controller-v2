@@ -9,12 +9,12 @@ Organize testing by module/layer for systematic coverage.
 1. UTILITY MODULE (utils.py)
 ================================================================================
 
-[  ] test_is_raspberry_pi()
+[✓] test_is_raspberry_pi()
      - Should return True when running on Raspberry Pi
      - Should return False on non-Pi systems
      - Should handle FileNotFoundError gracefully
 
-[  ] test_is_raspberry_pi_5()
+[✓] test_is_raspberry_pi_5()
      - Should return True when running on Raspberry Pi 5
      - Should return False on other Pi versions
      - Should return False on non-Pi systems
@@ -32,18 +32,18 @@ Organize testing by module/layer for systematic coverage.
 
 --- 2.1 SessionData (backend/models/SessionData.py) ---
 
-[  ] test_SessionData_initialization()
+[✓] test_SessionData_initialization()
      - Should accept and store id, timestamp, name, isShotMode
      - Should default id to -1 if None is passed
      - Should store all properties correctly
 
-[  ] test_SessionData_getters()
+[✓] test_SessionData_getters()
      - test_get_id()
      - test_get_time_stamp()
      - test_get_name()
      - test_get_is_shot_mode()
 
-[  ] test_SessionData_string_representation()
+[✓] test_SessionData_string_representation()
      - Should return proper string format
 
 --- 2.2 SmartDotData (backend/models/SmartDotData.py) ---
@@ -67,195 +67,212 @@ Organize testing by module/layer for systematic coverage.
 
 --- 2.3 EncoderData (backend/models/EncoderData.py) ---
 
-[  ] test_EncoderDataInstance_initialization()
+[✓] test_EncoderDataInstance_initialization()
      - Should accept time, pulses, motor_id
      - Should store values correctly
 
-[  ] test_EncoderDataInstance_getters()
-     - test_get_time()
-     - test_get_pulses()
-     - test_get_motor_id()
+[✓] test_EncoderDataInstance_string_representation()
+     - Should format output correctly
 
-[  ] test_EncoderData_add_encoder_data()
+[✓] test_EncoderData_add_single_entry()
      - Should add single encoder data instance
+
+[✓] test_EncoderData_add_multiple_entries()
      - Should handle multiple additions
 
-[  ] test_EncoderData_get_entries()
+[✓] test_EncoderData_get_entries()
      - Should return all entries
-     - Should handle empty state
+     - Should handle multiple entries correctly
 
-[  ] test_EncoderData_string_representation()
+[✓] test_EncoderData_empty()
+     - Should return empty list when no data added
+
+[✓] test_EncoderData_string_representation()
      - Should format output correctly
 
 --- 2.4 HeatData (backend/models/HeatData.py) ---
 
-[  ] test_HeatDataInstance_initialization()
+[✓] test_HeatDataInstance_initialization()
      - Should accept time, motor_id, value
      - Should store values correctly
 
-[  ] test_HeatDataInstance_getters()
-     - test_get_time()
-     - test_get_motor_id()
-     - test_get_value()
+[✓] test_HeatDataInstance_string_representation()
+     - Should format output correctly
 
-[  ] test_HeatData_add_heat_data()
+[✓] test_HeatData_add_single_entry()
      - Should add single heat data instance
+
+[✓] test_HeatData_add_multiple_entries()
      - Should handle multiple additions
 
-[  ] test_HeatData_get_entries()
+[✓] test_HeatData_get_entries()
      - Should return all entries
+
+[✓] test_HeatData_empty()
      - Should handle empty state
+
+[✓] test_HeatData_string_representation()
+     - Should format output correctly
 
 --- 2.5 DiagnosticScriptData (backend/models/DiagnosticScriptData.py) ---
 
-[  ] test_DiagnosticScriptDataInstance_initialization()
+[✓] test_DiagnosticScriptDataInstance_initialization()
      - Should accept time, motor_id, instruction
 
-[  ] test_DiagnosticScriptData_add_data()
+[✓] test_DiagnosticScriptDataInstance_string_representation()
+     - Should format output correctly
+
+[✓] test_DiagnosticScriptData_add_single_entry()
      - Should successfully add data instances
+
+[✓] test_DiagnosticScriptData_add_multiple_entries()
      - Should handle multiple additions
 
-[  ] test_DiagnosticScriptData_get_entries()
+[✓] test_DiagnosticScriptData_get_entries()
      - Should return all entries
+
+[✓] test_DiagnosticScriptData_empty()
+     - Should handle empty state
+
+[✓] test_DiagnosticScriptData_string_representation()
+     - Should format output correctly
 
 --- 2.6 ShotScriptData (backend/models/ShotScriptData.py) ---
 
 [  ] test_ShotScriptDataInstance_initialization()
-     - Should accept time, rpm, angleDeg, tiltDeg
+[  ] test_ShotScriptDataInstance_initialization() (template file created)
 
 [  ] test_ShotScriptData_add_data()
-     - Should successfully add data instances
+[  ] test_ShotScriptData_add_data() (template file created)
 
 [  ] test_ShotScriptData_get_entries()
-     - Should return all entries
-
+[  ] test_ShotScriptData_get_entries() (template file created)
 --- 2.7 DataController (backend/models/DataController.py) ---
 
-[  ] test_DataController_initialization()
+[✓] test_DataController_initialization()
      - Should accept SessionData
-     - Should initialize all data storage objects
+[✓] test_DataController_initialization()
      - Should get cloud_api from BSC
 
-[  ] test_set_session_name()
-     - Should update session name
+[✓] test_set_session_name()
+[✓] test_set_session_name()
      - Should log the operation
 
-[  ] test_add_smartdot_data()
-     - Should add SmartDotDataInstance
+[✓] test_add_smartdot_data()
+[✓] test_add_smartdot_data()
      - Should log the addition
 
-[  ] test_add_diagnostic_script_data()
-     - Should add DiagnosticScriptDataInstance
+[✓] test_add_diagnostic_script_data()
+[✓] test_add_diagnostic_script_data()
      - Should log the addition
 
-[  ] test_add_shot_script_data()
-     - Should add ShotScriptDataInstance
+[✓] test_add_shot_script_data()
+[✓] test_add_shot_script_data()
      - Should log the addition
 
-[  ] test_add_encoder_data()
-     - Should add EncoderDataInstance
+[✓] test_add_encoder_data()
+[✓] test_add_encoder_data()
      - Should log the addition
 
-[  ] test_add_heat_data()
-     - Should add HeatDataInstance
+[✓] test_add_heat_data()
+[✓] test_add_heat_data()
      - Should log the addition
 
-[  ] test_get_smartdot_data()
+[✓] test_get_smartdot_data()
      - Should return SmartDotData entries
 
-[  ] test_get_diagnostic_script_data()
+[✓] test_get_diagnostic_script_data()
      - Should return DiagnosticScriptData entries
 
-[  ] test_get_shot_script_data()
+[✓] test_get_shot_script_data()
      - Should return ShotScriptData entries
 
-[  ] test_get_encoder_data()
+[✓] test_get_encoder_data()
      - Should return EncoderData entries
 
-[  ] test_get_heat_data()
+[✓] test_get_heat_data()
      - Should return HeatData entries
 
-[  ] test_submit_session_data()
+[✓] test_submit_session_data()
      - Should call cloud_api.post_session_data()
      - Should handle shot mode vs diagnostic mode
-     - Should submit all relevant data types
+[✓] test_submit_session_data()
      - Should handle missing data gracefully
 
-[  ] test_load_session_data_from_cloud()
+[✓] test_load_session_data_from_cloud()
      - Should load shot script data when isShotMode=True
      - Should load diagnostic script data when isShotMode=False
      - Should load smartdot, encoder, heat data
-     - Should handle missing data from cloud
+[✓] test_load_session_data_from_cloud()
      - Should log warnings for missing data
 
 
-================================================================================
 3. BACKEND - CLOUD API
 ================================================================================
-
+[  ] test_CloudAPI_initialization() (template file created)
 --- 3.1 CloudAPI (backend/cloud_api/CloudAPI.py) ---
 
 [  ] test_CloudAPI_initialization()
      - Should inherit from iCloud interface
-
+[  ] test_get_test_data()
 [  ] test_get_test_data()
      - Should make GET request to test endpoint
      - Should return status code and data
      - Should handle API errors
 
-[  ] test_post_session_data()
+[  ] test_post_session_data() (template file created)
      - Should format session data correctly
      - Should submit to correct endpoint
      - Should return response data
      - Should extract session_id from response
-
+[  ] test_get_sessions_in_time_range()
 [  ] test_get_sessions_in_time_range()
      - Should accept start_time and end_time
      - Should make GET request with time parameters
      - Should return sessions within range
-
+[  ] test_get_diagnostic_script_data_by_session()
 [  ] test_get_diagnostic_script_data_by_session()
      - Should accept session_id
      - Should return diagnostic data
      - Should handle no data case
-
+[  ] test_post_diagnostic_script_data()
 [  ] test_post_diagnostic_script_data()
      - Should format diagnostic data correctly
      - Should submit with session_id
      - Should handle multiple entries
-
+[  ] test_get_shot_script_data_by_session()
 [  ] test_get_shot_script_data_by_session()
      - Should accept session_id
      - Should return shot script data
-     - Should handle no data case
+[  ] test_post_shot_script_data()
 
 [  ] test_post_shot_script_data()
      - Should format shot script data correctly
      - Should submit with session_id
-
+[  ] test_get_smartdot_data()
 [  ] test_get_smartdot_data()
      - Should accept session_id
      - Should return smartdot sensor data
      - Should handle all sensor types (accel, gyro, mag, light)
-
+[  ] test_post_smartdot_data()
 [  ] test_post_smartdot_data()
      - Should format all smartdot data correctly
      - Should submit with session_id
-     - Should handle multiple sensor entries
+[  ] test_get_encoder_data()
 
 [  ] test_get_encoder_data()
      - Should accept session_id
      - Should return encoder pulses data
-
+[  ] test_post_encoder_data()
 [  ] test_post_encoder_data()
      - Should format encoder data correctly
      - Should submit with session_id
-     - Should handle multiple motors
+[  ] test_get_heat_data()
 
 [  ] test_get_heat_data()
      - Should accept session_id
      - Should return heat values
-
+[  ] test_post_heat_data()
 [  ] test_post_heat_data()
      - Should format heat data correctly
      - Should submit with session_id
@@ -263,7 +280,7 @@ Organize testing by module/layer for systematic coverage.
 
 --- 3.2 APIUtils (backend/cloud_api/APIUtils.py) ---
 
-[  ] test_make_get_request()
+[  ] test_make_get_request() (template file created)
      - Should handle successful requests
      - Should handle network errors
      - Should include URL parameters
@@ -273,97 +290,91 @@ Organize testing by module/layer for systematic coverage.
      - Should handle successful posts
      - Should format JSON correctly
      - Should handle network errors
-     - Should return response data
 
 
 ================================================================================
-4. BACKEND - MOTORS
+[  ] test_iMotor_is_abstract() (template file created)
 ================================================================================
-
---- 4.1 iMotor (backend/motors/iMotor.py) ---
-
-[  ] test_iMotor_is_abstract()
-     - Should not be instantiable directly
-     - All subclasses should implement required methods
 
 [  ] test_motor_connect()
-     - Subclasses should implement connect(GPIOPin)
 
+[  ] test_iMotor_is_abstract()
 [  ] test_motor_disconnect()
-     - Subclasses should implement disconnect(GPIOPin)
+     - All subclasses should implement required methods
 
 [  ] test_motor_start()
-     - Subclasses should implement start()
+     - Subclasses should implement connect(GPIOPin)
 
 [  ] test_motor_stop()
-     - Subclasses should implement stop()
+     - Subclasses should implement disconnect(GPIOPin)
 
 [  ] test_motor_changeSpeed()
-     - Subclasses should implement changeSpeed(dutyCycle, isShotMode)
+     - Subclasses should implement start()
+
+[  ] test_motor_getCurrentSpeed()
+     - Subclasses should implement stop()
+
+[  ] test_motor_rampUp()
 
 [  ] test_motor_getCurrentSpeed()
      - Subclasses should implement getCurrentSpeed()
-
+[  ] test_SimMotor_initialization() (template file created)
 [  ] test_motor_rampUp()
      - Subclasses should implement rampUp()
 
---- 4.2 SimMotor (backend/motors/SimMotor.py) ---
+[  ] test_SimMotor_start_stop() (template file created)
 
 [  ] test_SimMotor_initialization()
      - Should initialize with GPIO pin
      - Should set initial speed to 0
-
+[  ] test_SimMotor_changeSpeed() (template file created)
 [  ] test_SimMotor_start_stop()
      - Should start motor
-     - Should stop motor
-
+[  ] test_SimMotor_getCurrentSpeed() (template file created)
 [  ] test_SimMotor_changeSpeed()
      - Should change speed correctly
      - Should handle different duty cycles
-     - Should handle shot mode vs normal mode
+[  ] test_BDCMotor_initialization() (template file created)
 
 [  ] test_SimMotor_getCurrentSpeed()
      - Should return current speed value
-
+[  ] test_BDCMotor_start_stop() (template file created)
 --- 4.3 BDCMotor (backend/motors/BDCMotor.py) ---
 
-[  ] test_BDCMotor_initialization()
-     - Should initialize with GPIO pin
+[  ] test_BDCMotor_changeSpeed() (template file created)
      - Should create PWM output
 
-[  ] test_BDCMotor_start_stop()
+[  ] test_StepMotor_initialization() (template file created)
      - Should start motor
      - Should stop motor
-
+[  ] test_StepMotor_step_control() (template file created)
 [  ] test_BDCMotor_changeSpeed()
      - Should modify PWM duty cycle
 
---- 4.4 StepMotor (backend/motors/StepMotor.py) ---
 
 [  ] test_StepMotor_initialization()
      - Should initialize correctly
-
+[  ] test_iSmartDot_data_initialization() (template file created)
 [  ] test_StepMotor_step_control()
      - Should execute steps correctly
 
-
+[  ] test_iSmartDot_setSampleRates() (template file created)
 ================================================================================
 5. BACKEND - SMARTDOT SENSOR
-================================================================================
-
+[  ] test_iSmartDot_subclass_hook() (template file created)
 --- 5.1 iSmartDot (backend/smartdot/iSmartDot.py) ---
 
-[  ] test_iSmartDot_data_initialization()
+[  ] test_SimSmartDot_initialization() (template file created)
      - Should initialize all sensor data arrays
      - Should create thread locks for each sensor
-
+[  ] test_SimSmartDot_connect() (template file created)
 [  ] test_iSmartDot_setSampleRates()
      - Should accept XL, GY, MG, LT rates
-     - Should update only specified rates
+[  ] test_SimSmartDot_disconnect() (template file created)
 
 [  ] test_iSmartDot_subclass_hook()
      - Should verify subclasses implement required methods
-
+[  ] test_SimSmartDot_data_streaming() (template file created)
 --- 5.2 SimSmartDot (backend/smartdot/SimSmartDot.py) ---
 
 [  ] test_SimSmartDot_initialization()
