@@ -1,101 +1,131 @@
+"""
+Unit Tests for Data Models
+
+These tests verify that data model classes work correctly in isolation.
+They test basic functionality without needing the full application running.
+
+Data Models Tested:
+- SessionData: Contains metadata about a test session
+- EncoderData: Contains motor encoder pulse counts
+- HeatData: Contains motor temperature readings
+- DiagnosticScriptData: Contains diagnostic test instructions
+
+Why Unit Test Data Models?
+- Models are the foundation of the application
+- Need to ensure they properly store and retrieve data
+- Tests are fast and can be run frequently
+- Verify data integrity before it goes to the cloud API
+
+How to use these tests:
+1. Models are created with initial data
+2. Data is retrieved via getter methods
+3. Assert retrieved data matches what was stored
+4. Test edge cases (None values, empty lists, etc.)
+"""
+
 import pytest
-from unittest.mock import patch, mock_open, MagicMock
-from utils import is_raspberry_pi, is_raspberry_pi_5
+import datetime as dt
 from backend.models.SessionData import SessionData
 from backend.models.EncoderData import EncoderData, EncoderDataInstance
 from backend.models.HeatData import HeatData, HeatDataInstance
 from backend.models.DiagnosticScriptData import DiagnosticScriptData, DiagnosticScriptDataInstance
-import datetime as dt
-
-
-# ============================================================================
-# UTILITY TESTS (utils.py)
-# ============================================================================
-
-
-# Test 1: File exists and contains "Raspberry Pi"
-def test_is_raspberry_pi_true_on_pi():
-    """Test returns True when running on actual Raspberry Pi"""
-    with patch('utils.io.open', mock_open(read_data="Raspberry Pi 4")):
-        result = is_raspberry_pi()
-        assert result is True
-
-
-# Test 2: File doesn't exist (FileNotFoundError)
-def test_is_raspberry_pi_false_file_not_found():
-    """Test returns False when device tree file not found"""
-    with patch('utils.io.open', side_effect=FileNotFoundError):
-        result = is_raspberry_pi()
-        assert result is False
-
-
-# Test 3: File exists but is not a Raspberry Pi
-def test_is_raspberry_pi_false_not_pi():
-    """Test returns False on non-Pi system"""
-    with patch('utils.io.open', mock_open(read_data="Generic Linux Device")):
-        result = is_raspberry_pi()
-        assert result is False
-
-# Test 4: is_raspberry_pi_5() returns True on Pi 5
-def test_is_raspberry_pi_5_true_on_pi5():
-    """Test returns True when running on Raspberry Pi 5"""
-    with patch('utils.io.open', mock_open(read_data="Raspberry Pi 5")):
-        result = is_raspberry_pi_5()
-        assert result is True
-
-# Test 5: is_raspberry_pi_5() returns False on other Pi versions
-def test_is_raspberry_pi_5_false_on_other_pi():
-    """Test returns False on Raspberry Pi 4 or other versions"""
-    with patch('utils.io.open', mock_open(read_data="Raspberry Pi 4")):
-        result = is_raspberry_pi_5()
-        assert result is False
-
-
-# Test 6: is_raspberry_pi_5() returns False when file not found
-def test_is_raspberry_pi_5_false_file_not_found():
-    """Test returns False when device tree file not found"""
-    with patch('utils.io.open', side_effect=FileNotFoundError):
-        result = is_raspberry_pi_5()
-        assert result is False
 
 
 # ============================================================================
 # DATA MODEL TESTS - SessionData (backend/models/SessionData.py)
 # ============================================================================
+# SessionData stores metadata about a single test session
+# - ID: Unique identifier (or -1 if new)
+# - Timestamp: When the test was run
+# - Name: Human-readable name (e.g., "Test 1", "Morning Diagnostic")
+# - IsShotMode: Boolean - True if shot mode, False if diagnostic mode
 
-# Test 7: SessionData initialization with valid values
+# Test 1: SessionData initialization with valid values
 def test_SessionData_initialization():
-    """Test SessionData accepts and stores all parameters correctly"""
+    """
+    Test SessionData accepts and stores all parameters correctly.
+    
+    How it works:
+    1. Create test data with known values
+    2. Create SessionData instance with that data
+    3. Call getter methods to retrieve data
+    4. Assert each retrieved value matches what was stored
+    
+    This validates:
+    - Constructor accepts all required parameters
+    - Getter methods return correct values
+    - Data isn't corrupted during storage
+    
+    Simple pattern used throughout data model tests:
+    Setup → Create Model → Retrieve → Assert
+    """
     test_id = 64
     test_timestamp = dt.datetime(2025,4,4,4,4,4)
     test_name = "Unit Test Session"
     test_is_shot_mode = True
 
+    # Setup: Create model with known data
     test_session = SessionData(test_id,
                                 test_timestamp,
                                 test_name,
                                 test_is_shot_mode
                                 )
+    
+    # Assert: Verify each piece of data was stored correctly
     assert test_session.get_id() == test_id
     assert test_session.get_time_stamp() == test_timestamp
     assert test_session.get_name() == test_name
     assert test_session.get_is_shot_mode() == test_is_shot_mode
 
 
-# Test 8: SessionData defaults id to -1 when None is passed
+# Test 2: SessionData defaults id to -1 when None is passed
 def test_SessionData_initialization_none_id():
-    """Test SessionData defaults id to -1 when None is passed"""
+    """
+    Test SessionData defaults id to -1 when None is passed.
+    
+    How it works:
+    1. Create SessionData with id=None
+    2. Retrieve ID
+    3. Assert it was converted to -1
+    
+    Why this matters:
+    - When creating a NEW session (not loaded from cloud), id should be -1
+    - Server will assign real ID when session is uploaded
+    - This is a default behavior we need to verify
+    
+    Edge case testing:
+    - This tests what happens with unexpected input (None)
+    - Verifies model handles it gracefully
+    """
     test_session = SessionData(None,
                                 dt.datetime.now(),
                                 "Test Session",
                                 False
                                 )
+    # Should default to -1 for new sessions
     assert test_session.get_id() == -1
     
 
-# Test 9: SessionData with isShotMode=False
+# Test 3: SessionData with isShotMode=False
 def test_SessionData_initialization_diagnostic_mode():
-    """Test SessionData works correctly in diagnostic mode (isShotMode=False)"""
+    """
+    Test SessionData works correctly in diagnostic mode (isShotMode=False).
+    
+    How it works:
+    1. Create SessionData with isShotMode=False
+    2. Verify the flag is stored correctly
+    3. Verify other data is still intact
+    
+    Why test both True and False?
+    - Application has two major modes: Shot Mode and Diagnostic Mode
+    - They have different workflows and data
+    - Need to ensure mode flag is preserved correctly
+    - Flag affects how data is loaded and saved
+    
+    Testing both modes:
+    - Shot mode: isShotMode=True (tested above)
+    - Diagnostic mode: isShotMode=False (this test)
+    """
     test_id = 100
     test_timestamp = dt.datetime(2025, 2, 20, 14, 45, 30)
     test_name = "Diagnostic Session"
@@ -111,9 +141,31 @@ def test_SessionData_initialization_diagnostic_mode():
     assert session.get_is_shot_mode() is False
 
 
-# Test 10: SessionData string representation
+# Test 4: SessionData string representation
 def test_SessionData_string_representation():
-    """Test __str__() returns proper format"""
+    """
+    Test __str__() returns proper format.
+    
+    How it works:
+    1. Create SessionData with known values
+    2. Call str() on it
+    3. Verify returned string contains all expected data
+    
+    Why test __str__()?
+    - str() is used for logging and debugging
+    - Developers read logs to understand what's happening
+    - Need to ensure logs are clear and contain useful info
+    - Should show: ID, timestamp, name, mode
+    
+    What we verify:
+    - String contains "SessionData" (identifies the type)
+    - String contains the ID
+    - String contains the name
+    - String contains the mode indicator
+    
+    Example output:
+    "SessionData(id=42, timestamp=2025-01-16 10:30:00, name=Test Session, isShotMode=True)"
+    """
     test_id = 42
     test_timestamp = dt.datetime(2025, 1, 16, 10, 30, 0)
     test_name = "Test Session"
@@ -127,6 +179,7 @@ def test_SessionData_string_representation():
     )
     
     session_str = str(session)
+    # Verify string representation contains key information
     assert "SessionData" in session_str
     assert str(test_id) in session_str
     assert test_name in session_str
@@ -136,10 +189,34 @@ def test_SessionData_string_representation():
 # ============================================================================
 # DATA MODEL TESTS - EncoderData (backend/models/EncoderData.py)
 # ============================================================================
+# EncoderData stores motor encoder readings (pulse counts over time)
+# Used to calculate motor speed and distance traveled
+# - Time: Timestamp when reading was taken
+# - Pulses: Cumulative pulse count from encoder
+# - Motor_ID: Which motor (1, 2, 3, etc.)
 
-# Test 11: EncoderDataInstance initialization
+# Test 5: EncoderDataInstance initialization
 def test_EncoderDataInstance_initialization():
-    """Test EncoderDataInstance accepts and stores all parameters correctly"""
+    """
+    Test EncoderDataInstance accepts and stores all parameters correctly.
+    
+    How it works:
+    1. Create EncoderDataInstance with sample data
+    2. Verify each field is accessible and correct
+    
+    Note: EncoderDataInstance is a single reading
+         EncoderData is a container that holds multiple readings
+    
+    EncoderDataInstance properties:
+    - time: float (seconds since start of test)
+    - pulses: float (cumulative encoder pulses)
+    - motor_id: int (which motor: 1, 2, 3, etc.)
+    
+    Why store encoder data?
+    - Used to calculate motor speed: RPM = pulses / time
+    - Used to track motor health
+    - Uploaded to cloud for analysis
+    """
     test_time = 1.5
     test_pulses = 250.0
     test_motor_id = 2
@@ -150,12 +227,14 @@ def test_EncoderDataInstance_initialization():
         motor_id=test_motor_id
     )
     
+    # Verify data storage
     assert encoder_data.time == test_time
+
     assert encoder_data.pulses == test_pulses
     assert encoder_data.motor_id == test_motor_id
 
 
-# Test 12: EncoderDataInstance string representation
+# Test 6: EncoderDataInstance string representation
 def test_EncoderDataInstance_string_representation():
     """Test EncoderDataInstance __str__() returns proper format"""
     test_time = 2.5
@@ -175,7 +254,7 @@ def test_EncoderDataInstance_string_representation():
     assert str(test_motor_id) in encoder_str
 
 
-# Test 13: EncoderData add_encoder_data single entry
+# Test 7: EncoderData add_encoder_data single entry
 def test_EncoderData_add_single_entry():
     """Test adding a single encoder data instance"""
     encoder_data_container = EncoderData()
@@ -188,7 +267,7 @@ def test_EncoderData_add_single_entry():
     assert entries[0] == encoder_instance
 
 
-# Test 14: EncoderData add_encoder_data multiple entries
+# Test 8: EncoderData add_encoder_data multiple entries
 def test_EncoderData_add_multiple_entries():
     """Test adding multiple encoder data instances"""
     encoder_data_container = EncoderData()
@@ -208,7 +287,7 @@ def test_EncoderData_add_multiple_entries():
     assert entries[2] == instances[2]
 
 
-# Test 15: EncoderData get_encoder_data_entries
+# Test 9: EncoderData get_encoder_data_entries
 def test_EncoderData_get_entries():
     """Test getting encoder data entries"""
     encoder_data_container = EncoderData()
@@ -224,7 +303,7 @@ def test_EncoderData_get_entries():
     assert entries[1].get_pulses() == 250.0
 
 
-# Test 16: EncoderData empty state
+# Test 10: EncoderData empty state
 def test_EncoderData_empty():
     """Test EncoderData when no entries added"""
     encoder_data_container = EncoderData()
@@ -234,7 +313,7 @@ def test_EncoderData_empty():
     assert len(entries) == 0
 
 
-# Test 17: EncoderData string representation
+# Test 11: EncoderData string representation
 def test_EncoderData_string_representation():
     """Test EncoderData __str__() returns proper format"""
     encoder_data_container = EncoderData()
@@ -250,7 +329,7 @@ def test_EncoderData_string_representation():
 # DATA MODEL TESTS - HeatData (backend/models/HeatData.py)
 # ============================================================================
 
-# Test 18: HeatDataInstance initialization
+# Test 12: HeatDataInstance initialization
 def test_HeatDataInstance_initialization():
     """Test HeatDataInstance accepts and stores all parameters correctly"""
     test_time = 3.5
@@ -268,7 +347,7 @@ def test_HeatDataInstance_initialization():
     assert heat_data.value == test_value
 
 
-# Test 19: HeatDataInstance string representation
+# Test 13: HeatDataInstance string representation
 def test_HeatDataInstance_string_representation():
     """Test HeatDataInstance __str__() returns proper format"""
     test_time = 4.5
@@ -288,7 +367,7 @@ def test_HeatDataInstance_string_representation():
     assert str(test_value) in heat_str
 
 
-# Test 20: HeatData add_heat_data single entry
+# Test 14: HeatData add_heat_data single entry
 def test_HeatData_add_single_entry():
     """Test adding a single heat data instance"""
     heat_data_container = HeatData()
@@ -301,7 +380,7 @@ def test_HeatData_add_single_entry():
     assert entries[0] == heat_instance
 
 
-# Test 21: HeatData add_heat_data multiple entries
+# Test 15: HeatData add_heat_data multiple entries
 def test_HeatData_add_multiple_entries():
     """Test adding multiple heat data instances"""
     heat_data_container = HeatData()
@@ -321,7 +400,7 @@ def test_HeatData_add_multiple_entries():
     assert entries[2] == instances[2]
 
 
-# Test 22: HeatData get_heat_data_entries
+# Test 16: HeatData get_heat_data_entries
 def test_HeatData_get_entries():
     """Test getting heat data entries"""
     heat_data_container = HeatData()
@@ -337,7 +416,7 @@ def test_HeatData_get_entries():
     assert entries[1].get_value() == 82.3
 
 
-# Test 23: HeatData empty state
+# Test 17: HeatData empty state
 def test_HeatData_empty():
     """Test HeatData when no entries added"""
     heat_data_container = HeatData()
@@ -347,7 +426,7 @@ def test_HeatData_empty():
     assert len(entries) == 0
 
 
-# Test 24: HeatData string representation
+# Test 18: HeatData string representation
 def test_HeatData_string_representation():
     """Test HeatData __str__() returns proper format"""
     heat_data_container = HeatData()
@@ -362,7 +441,7 @@ def test_HeatData_string_representation():
 # DATA MODEL TESTS - DiagnosticScriptData (backend/models/DiagnosticScriptData.py)
 # ============================================================================
 
-# Test 25: DiagnosticScriptDataInstance initialization
+# Test 19: DiagnosticScriptDataInstance initialization
 def test_DiagnosticScriptDataInstance_initialization():
     """Test DiagnosticScriptDataInstance accepts and stores all parameters correctly"""
     test_time = 2.5
@@ -380,7 +459,7 @@ def test_DiagnosticScriptDataInstance_initialization():
     assert diagnostic_data.instruction == test_instruction
 
 
-# Test 26: DiagnosticScriptDataInstance string representation
+# Test 20: DiagnosticScriptDataInstance string representation
 def test_DiagnosticScriptDataInstance_string_representation():
     """Test DiagnosticScriptDataInstance __str__() returns proper format"""
     test_time = 3.5
@@ -400,7 +479,7 @@ def test_DiagnosticScriptDataInstance_string_representation():
     assert str(test_instruction) in diagnostic_str
 
 
-# Test 27: DiagnosticScriptData add_diagnostic_script_data single entry
+# Test 21: DiagnosticScriptData add_diagnostic_script_data single entry
 def test_DiagnosticScriptData_add_single_entry():
     """Test adding a single diagnostic script data instance"""
     diagnostic_container = DiagnosticScriptData()
@@ -413,7 +492,7 @@ def test_DiagnosticScriptData_add_single_entry():
     assert entries[0] == diagnostic_instance
 
 
-# Test 28: DiagnosticScriptData add_diagnostic_script_data multiple entries
+# Test 22: DiagnosticScriptData add_diagnostic_script_data multiple entries
 def test_DiagnosticScriptData_add_multiple_entries():
     """Test adding multiple diagnostic script data instances"""
     diagnostic_container = DiagnosticScriptData()
@@ -433,7 +512,7 @@ def test_DiagnosticScriptData_add_multiple_entries():
     assert entries[2] == instances[2]
 
 
-# Test 29: DiagnosticScriptData get_diagnostic_script_data
+# Test 23: DiagnosticScriptData get_diagnostic_script_data
 def test_DiagnosticScriptData_get_entries():
     """Test getting diagnostic script data entries"""
     diagnostic_container = DiagnosticScriptData()
@@ -449,7 +528,7 @@ def test_DiagnosticScriptData_get_entries():
     assert entries[1].instruction == 60.0
 
 
-# Test 30: DiagnosticScriptData empty state
+# Test 24: DiagnosticScriptData empty state
 def test_DiagnosticScriptData_empty():
     """Test DiagnosticScriptData when no entries added"""
     diagnostic_container = DiagnosticScriptData()
@@ -459,7 +538,7 @@ def test_DiagnosticScriptData_empty():
     assert len(entries) == 0
 
 
-# Test 31: DiagnosticScriptData string representation
+# Test 25: DiagnosticScriptData string representation
 def test_DiagnosticScriptData_string_representation():
     """Test DiagnosticScriptData __str__() returns proper format"""
     diagnostic_container = DiagnosticScriptData()

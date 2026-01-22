@@ -1,13 +1,61 @@
 ================================================================================
-BALL SPINNER CONTROLLER - UNIT TESTING CHECKLIST
+BALL SPINNER CONTROLLER - COMPREHENSIVE TESTING CHECKLIST
 ================================================================================
 
-This document outlines all areas of the application that should have unit tests.
-Organize testing by module/layer for systematic coverage.
+This document outlines all areas of the application that should have tests.
+Organized by SYSTEM/COMPONENT with BOTH unit and integration tests together.
 
 ================================================================================
-1. UTILITY MODULE (utils.py)
+TEST ORGANIZATION BY SYSTEM
 ================================================================================
+
+Directory Layout:
+  tests/
+  ├── unit/                          # Unit tests (isolated components with mocks)
+  │   ├── conftest.py
+  │   ├── test_gui_interactions_unit.py
+  │   ├── test_apiutils.py
+  │   ├── test_cloudapi.py
+  │   ├── test_data_models.py
+  │   ├── test_utils_functions.py
+  │   ├── test_bdcmotor.py
+  │   ├── test_data_controller.py
+  │   ├── test_imotor.py
+  │   ├── test_ismartdot.py
+  │   ├── test_simmotor.py
+  │   ├── test_simsmartdot.py
+  │   ├── test_stepmotor.py
+  │   ├── test_shot_script_data.py
+  │   ├── test_gui_windows.py
+  │   └── test_package_smartdot.py
+  ├── integration/                   # Integration tests (real workflows, may be skipped)
+  │   ├── conftest.py
+  │   ├── test_gui_interactions.py
+  │   └── test_main.py
+  ├── conftest.py                    # Root configuration
+  └── TESTING_CHECKLIST.txt           # This file
+
+UNIT TESTS: Test individual components in isolation using mocks. 
+  Location: tests/unit/
+  Run: ./run_unit_tests.sh
+  Fast, no dependencies, safe for CI/CD
+
+INTEGRATION TESTS: Test real workflows with actual components.
+  Location: tests/integration/
+  Run: ./run_integration_tests.sh
+  May be skipped if marked with @pytest.mark.skip
+  
+RUN TESTS:
+  - Unit tests only:        ./run_unit_tests.sh
+  - Integration tests only: ./run_integration_tests.sh
+  - All tests:              ./run_all_tests.sh
+  - Specific folder:        pytest tests/unit/ or pytest tests/integration/
+
+================================================================================
+1. UTILITY FUNCTIONS (utils.py)
+================================================================================
+
+--- 1.1 UNIT TESTS ---
 
 [✓] test_is_raspberry_pi()
      - Should return True when running on Raspberry Pi
@@ -19,7 +67,7 @@ Organize testing by module/layer for systematic coverage.
      - Should return False on other Pi versions
      - Should return False on non-Pi systems
 
-[  ] test_PackageSmartDotData()
+[✓] test_PackageSmartDotData()
      - Should correctly extract SmartDot data from BSC controller
      - Should initialize all array types (accel_x, accel_y, accel_z, gyro_*, mag_*)
      - Should handle empty data entries
@@ -27,10 +75,10 @@ Organize testing by module/layer for systematic coverage.
 
 
 ================================================================================
-2. BACKEND - DATA MODELS
+2. DATA MODELS (backend/models/)
 ================================================================================
 
---- 2.1 SessionData (backend/models/SessionData.py) ---
+--- 2.1 UNIT TESTS - SessionData (backend/models/SessionData.py) ---
 
 [✓] test_SessionData_initialization()
      - Should accept and store id, timestamp, name, isShotMode
@@ -46,26 +94,26 @@ Organize testing by module/layer for systematic coverage.
 [✓] test_SessionData_string_representation()
      - Should return proper string format
 
---- 2.2 SmartDotData (backend/models/SmartDotData.py) ---
+--- 2.2 UNIT TESTS - SmartDotData (backend/models/SmartDotData.py) ---
 
-[  ] test_SmartDotDataInstance_initialization()
+[✓] test_SmartDotDataInstance_initialization()
      - Should accept all required parameters
      - Should store accelerometer, gyroscope, magnetometer, light data
 
-[  ] test_SmartDotDataInstance_string_representation()
+[✓] test_SmartDotDataInstance_string_representation()
      - Should return proper string format
 
-[  ] test_SmartDotData_add_data()
+[✓] test_SmartDotData_add_data()
      - Should successfully add SmartDotDataInstance
      - Should handle multiple additions
      - Should maintain insertion order
 
-[  ] test_SmartDotData_get_entries()
+[✓] test_SmartDotData_get_entries()
      - Should return all added entries
      - Should return empty list when no data added
      - Should not modify original list when returned
 
---- 2.3 EncoderData (backend/models/EncoderData.py) ---
+--- 2.3 UNIT TESTS - EncoderData (backend/models/EncoderData.py) ---
 
 [✓] test_EncoderDataInstance_initialization()
      - Should accept time, pulses, motor_id
@@ -90,7 +138,7 @@ Organize testing by module/layer for systematic coverage.
 [✓] test_EncoderData_string_representation()
      - Should format output correctly
 
---- 2.4 HeatData (backend/models/HeatData.py) ---
+--- 2.4 UNIT TESTS - HeatData (backend/models/HeatData.py) ---
 
 [✓] test_HeatDataInstance_initialization()
      - Should accept time, motor_id, value
@@ -114,7 +162,7 @@ Organize testing by module/layer for systematic coverage.
 [✓] test_HeatData_string_representation()
      - Should format output correctly
 
---- 2.5 DiagnosticScriptData (backend/models/DiagnosticScriptData.py) ---
+--- 2.5 UNIT TESTS - DiagnosticScriptData (backend/models/DiagnosticScriptData.py) ---
 
 [✓] test_DiagnosticScriptDataInstance_initialization()
      - Should accept time, motor_id, instruction
@@ -137,49 +185,40 @@ Organize testing by module/layer for systematic coverage.
 [✓] test_DiagnosticScriptData_string_representation()
      - Should format output correctly
 
---- 2.6 ShotScriptData (backend/models/ShotScriptData.py) ---
+--- 2.6 UNIT TESTS - ShotScriptData (backend/models/ShotScriptData.py) ---
 
-[  ] test_ShotScriptDataInstance_initialization()
-[  ] test_ShotScriptDataInstance_initialization() (template file created)
+[✓] test_ShotScriptDataInstance_initialization()
+     - Should accept time, rpm, angleDeg, tiltDeg
 
-[  ] test_ShotScriptData_add_data()
-[  ] test_ShotScriptData_add_data() (template file created)
+[✓] test_ShotScriptData_add_data()
+     - Should successfully add data instances
 
-[  ] test_ShotScriptData_get_entries()
-[  ] test_ShotScriptData_get_entries() (template file created)
---- 2.7 DataController (backend/models/DataController.py) ---
+[✓] test_ShotScriptData_get_entries()
+     - Should return all entries
+
+--- 2.7 UNIT TESTS - DataController (backend/models/DataController.py) ---
 
 [✓] test_DataController_initialization()
      - Should accept SessionData
-[✓] test_DataController_initialization()
      - Should get cloud_api from BSC
 
 [✓] test_set_session_name()
-[✓] test_set_session_name()
-     - Should log the operation
+     - Should set and log the operation
 
 [✓] test_add_smartdot_data()
-[✓] test_add_smartdot_data()
-     - Should log the addition
+     - Should add data and log the addition
 
 [✓] test_add_diagnostic_script_data()
-[✓] test_add_diagnostic_script_data()
-     - Should log the addition
+     - Should add data and log the addition
 
 [✓] test_add_shot_script_data()
-[✓] test_add_shot_script_data()
-     - Should log the addition
+     - Should add data and log the addition
 
 [✓] test_add_encoder_data()
-[✓] test_add_encoder_data()
-     - Should log the addition
+     - Should add data and log the addition
 
 [✓] test_add_heat_data()
-[✓] test_add_heat_data()
-     - Should log the addition
-
-[✓] test_get_smartdot_data()
-     - Should return SmartDotData entries
+     - Should add data and log the addition
 
 [✓] test_get_diagnostic_script_data()
      - Should return DiagnosticScriptData entries
@@ -193,204 +232,264 @@ Organize testing by module/layer for systematic coverage.
 [✓] test_get_heat_data()
      - Should return HeatData entries
 
-[✓] test_submit_session_data()
+[✓] test_submit_session_data_shot_mode()
      - Should call cloud_api.post_session_data()
-     - Should handle shot mode vs diagnostic mode
-[✓] test_submit_session_data()
+     - Should handle shot mode
+
+[✓] test_submit_session_data_diagnostic_mode()
+     - Should call cloud_api.post_session_data()
+     - Should handle diagnostic mode
+
+[✓] test_submit_session_data_missing_data()
      - Should handle missing data gracefully
 
-[✓] test_load_session_data_from_cloud()
+[✓] test_load_session_data_from_cloud_shot_mode()
      - Should load shot script data when isShotMode=True
+
+[✓] test_load_session_data_from_cloud_diagnostic_mode()
      - Should load diagnostic script data when isShotMode=False
-     - Should load smartdot, encoder, heat data
-[✓] test_load_session_data_from_cloud()
+
+[✓] test_load_session_data_from_cloud_missing_data()
      - Should log warnings for missing data
 
+[✓] test_DataController_string_representation()
+     - Should return proper string format
 
-3. BACKEND - CLOUD API
+[✓] test_DataController_submit_session_data_with_smartdot_template()
+     - Should submit session with smartdot data
+
+[✓] test_DataController_submit_session_data_logs_when_no_script_template()
+     - Should log when no script template
+
+--- 2.8 INTEGRATION TESTS - DataController ---
+
+[  ] test_data_controller_roundtrip()
+     - Should submit data to cloud
+     - Should retrieve same data
+     - Retrieved data should match original
+
+
 ================================================================================
-[  ] test_CloudAPI_initialization() (template file created)
---- 3.1 CloudAPI (backend/cloud_api/CloudAPI.py) ---
+3. CLOUD API (backend/cloud_api/)
+================================================================================
 
-[  ] test_CloudAPI_initialization()
-     - Should inherit from iCloud interface
-[  ] test_get_test_data()
-[  ] test_get_test_data()
+--- 3.1 UNIT TESTS - CloudAPI (backend/cloud_api/CloudAPI.py) ---
+
+[✓] test_CloudAPI_initialization()
+     - Should initialize correctly
+
+[✓] test_get_test_data()
      - Should make GET request to test endpoint
      - Should return status code and data
      - Should handle API errors
 
-[  ] test_post_session_data() (template file created)
+[✓] test_post_session_data()
      - Should format session data correctly
      - Should submit to correct endpoint
-     - Should return response data
-     - Should extract session_id from response
-[  ] test_get_sessions_in_time_range()
-[  ] test_get_sessions_in_time_range()
+
+[✓] test_get_sessions_in_time_range()
      - Should accept start_time and end_time
-     - Should make GET request with time parameters
      - Should return sessions within range
-[  ] test_get_diagnostic_script_data_by_session()
-[  ] test_get_diagnostic_script_data_by_session()
+
+[✓] test_get_diagnostic_script_data_by_session()
      - Should accept session_id
      - Should return diagnostic data
-     - Should handle no data case
-[  ] test_post_diagnostic_script_data()
-[  ] test_post_diagnostic_script_data()
+
+[✓] test_post_diagnostic_script_data()
      - Should format diagnostic data correctly
      - Should submit with session_id
-     - Should handle multiple entries
-[  ] test_get_shot_script_data_by_session()
-[  ] test_get_shot_script_data_by_session()
+
+[✓] test_get_shot_script_data_by_session()
      - Should accept session_id
      - Should return shot script data
-[  ] test_post_shot_script_data()
 
-[  ] test_post_shot_script_data()
+[✓] test_post_shot_script_data()
      - Should format shot script data correctly
      - Should submit with session_id
-[  ] test_get_smartdot_data()
+
 [  ] test_get_smartdot_data()
      - Should accept session_id
      - Should return smartdot sensor data
      - Should handle all sensor types (accel, gyro, mag, light)
-[  ] test_post_smartdot_data()
+
 [  ] test_post_smartdot_data()
      - Should format all smartdot data correctly
      - Should submit with session_id
-[  ] test_get_encoder_data()
 
 [  ] test_get_encoder_data()
      - Should accept session_id
      - Should return encoder pulses data
-[  ] test_post_encoder_data()
+
 [  ] test_post_encoder_data()
      - Should format encoder data correctly
      - Should submit with session_id
-[  ] test_get_heat_data()
 
 [  ] test_get_heat_data()
      - Should accept session_id
      - Should return heat values
-[  ] test_post_heat_data()
+
 [  ] test_post_heat_data()
      - Should format heat data correctly
      - Should submit with session_id
      - Should handle multiple motors
 
---- 3.2 APIUtils (backend/cloud_api/APIUtils.py) ---
+--- 3.2 UNIT TESTS - APIUtils (backend/cloud_api/APIUtils.py) ---
 
-[  ] test_make_get_request() (template file created)
+[✓] test_make_get_request()
      - Should handle successful requests
      - Should handle network errors
      - Should include URL parameters
      - Should return response data
 
-[  ] test_make_post_request()
+[✓] test_make_post_request()
      - Should handle successful posts
      - Should format JSON correctly
      - Should handle network errors
 
+--- 3.3 UNIT TESTS - iCloud (backend/cloud_api/iCloud.py) ---
+
+[  ] test_iCloud_interface()
+     - Should define cloud API interface
+     - Should enforce contract for implementations
+
+--- 3.4 INTEGRATION TESTS - Cloud API Workflows ---
+
+[  ] test_cloud_api_full_session_workflow()
+     - Should post session data successfully
+     - Should retrieve session data correctly
+     - All data types should sync properly
+
+[  ] test_cloud_api_error_handling()
+     - Should handle network timeouts
+     - Should handle authentication failures
+     - Should handle data format errors
+
+[  ] test_cloud_api_offline_queue()
+     - Should queue operations when offline
+     - Should flush queue when online
+
 
 ================================================================================
-[  ] test_iMotor_is_abstract() (template file created)
+4. MOTOR CONTROL (backend/motors/)
 ================================================================================
 
-[  ] test_motor_connect()
+--- 4.1 UNIT TESTS - Motor Interface (backend/motors/iMotor.py) ---
 
-[  ] test_iMotor_is_abstract()
-[  ] test_motor_disconnect()
-     - All subclasses should implement required methods
+[✓] test_iMotor_is_abstract()
+     - Should be abstract and not instantiable
 
-[  ] test_motor_start()
-     - Subclasses should implement connect(GPIOPin)
+[✓] test_iMotor_has_abstract_methods()
+     - Should define required abstract methods
 
-[  ] test_motor_stop()
-     - Subclasses should implement disconnect(GPIOPin)
+--- 4.2 UNIT TESTS - SimMotor (backend/motors/SimMotor.py) ---
 
-[  ] test_motor_changeSpeed()
-     - Subclasses should implement start()
-
-[  ] test_motor_getCurrentSpeed()
-     - Subclasses should implement stop()
-
-[  ] test_motor_rampUp()
-
-[  ] test_motor_getCurrentSpeed()
-     - Subclasses should implement getCurrentSpeed()
-[  ] test_SimMotor_initialization() (template file created)
-[  ] test_motor_rampUp()
-     - Subclasses should implement rampUp()
-
-[  ] test_SimMotor_start_stop() (template file created)
-
-[  ] test_SimMotor_initialization()
+[✓] test_SimMotor_initialization()
      - Should initialize with GPIO pin
      - Should set initial speed to 0
-[  ] test_SimMotor_changeSpeed() (template file created)
-[  ] test_SimMotor_start_stop()
-     - Should start motor
-[  ] test_SimMotor_getCurrentSpeed() (template file created)
-[  ] test_SimMotor_changeSpeed()
-     - Should change speed correctly
-     - Should handle different duty cycles
-[  ] test_BDCMotor_initialization() (template file created)
 
-[  ] test_SimMotor_getCurrentSpeed()
-     - Should return current speed value
-[  ] test_BDCMotor_start_stop() (template file created)
---- 4.3 BDCMotor (backend/motors/BDCMotor.py) ---
-
-[  ] test_BDCMotor_changeSpeed() (template file created)
-     - Should create PWM output
-
-[  ] test_StepMotor_initialization() (template file created)
+[✓] test_SimMotor_start_stop()
      - Should start motor
      - Should stop motor
-[  ] test_StepMotor_step_control() (template file created)
-[  ] test_BDCMotor_changeSpeed()
-     - Should modify PWM duty cycle
+
+[✓] test_SimMotor_changeSpeed()
+     - Should change speed correctly
+     - Should handle different duty cycles
+
+[✓] test_SimMotor_getCurrentSpeed()
+     - Should return current speed value
+
+--- 4.3 UNIT TESTS - BDCMotor (backend/motors/BDCMotor.py) ---
+
+[✓] test_BDCMotor_initialization()
+     - Should initialize with GPIO pin
+
+[✓] test_BDCMotor_attributes()
+     - Should have expected attributes
+
+[✓] test_BDCMotor_changeSpeed()
+     - Should change speed correctly
+
+--- 4.4 UNIT TESTS - USBBDCMotor (backend/motors/USBBDCMotor.py) ---
+
+[  ] test_USBBDCMotor_initialization()
+     - Should initialize with USB connection
+
+[  ] test_USBBDCMotor_communication()
+     - Should send speed commands via USB
+
+[  ] test_USBBDCMotor_error_handling()
+     - Should handle communication errors
+
+--- 4.5 UNIT TESTS - StepMotor (backend/motors/StepMotor.py) ---
+
+[✓] test_StepMotor_initialization() (SKIPPED - lgpio not available)
+     - Requires Raspberry Pi with lgpio library
+
+[✓] test_StepMotor_step_control() (SKIPPED - lgpio not available)
+     - Requires Raspberry Pi with lgpio library
+
+--- 4.6 UNIT TESTS - StepScript (backend/motors/StepScript.py) ---
+
+[  ] test_step_script_execution()
+     - Should execute step sequence
+     - Should track step count
+
+[  ] test_step_script_timing()
+     - Should respect timing parameters
+     - Should handle rapid stepping
+
+--- 4.7 INTEGRATION TESTS - Motor Control ---
+
+[  ] test_motor_control_basic()
+     - Should start motor
+     - Should change motor speed
+     - Should stop motor
+     - Should handle errors gracefully
+
+[  ] test_multiple_motor_control()
+     - Should control multiple motors simultaneously
+     - Each motor should respond independently
+     - No interference between motors
+
+[  ] test_motor_emergency_stop()
+     - E-Stop should immediately stop all motors
+     - Motors should not restart without user action
+     - Safety features should work
+
+[  ] test_motor_speed_ramping()
+     - Should smoothly change speed
+     - Should handle rapid acceleration/deceleration
 
 
-[  ] test_StepMotor_initialization()
-     - Should initialize correctly
-[  ] test_iSmartDot_data_initialization() (template file created)
-[  ] test_StepMotor_step_control()
-     - Should execute steps correctly
-
-[  ] test_iSmartDot_setSampleRates() (template file created)
 ================================================================================
-5. BACKEND - SMARTDOT SENSOR
-[  ] test_iSmartDot_subclass_hook() (template file created)
---- 5.1 iSmartDot (backend/smartdot/iSmartDot.py) ---
+5. SMARTDOT SENSOR SYSTEM (backend/smartdot/)
+================================================================================
 
-[  ] test_SimSmartDot_initialization() (template file created)
+--- 5.1 UNIT TESTS - SmartDot Interface (backend/smartdot/iSmartDot.py) ---
+
+[✓] test_iSmartDot_is_abstract()
+     - Should be abstract and not instantiable
+
+[✓] test_iSmartDot_data_structure()
+     - Should validate subclass data structures
+
+--- 5.2 UNIT TESTS - SimSmartDot (backend/smartdot/SimSmartDot.py) ---
+
+[✓] test_SimSmartDot_initialization()
      - Should initialize all sensor data arrays
      - Should create thread locks for each sensor
-[  ] test_SimSmartDot_connect() (template file created)
-[  ] test_iSmartDot_setSampleRates()
-     - Should accept XL, GY, MG, LT rates
-[  ] test_SimSmartDot_disconnect() (template file created)
 
-[  ] test_iSmartDot_subclass_hook()
-     - Should verify subclasses implement required methods
-[  ] test_SimSmartDot_data_streaming() (template file created)
---- 5.2 SimSmartDot (backend/smartdot/SimSmartDot.py) ---
-
-[  ] test_SimSmartDot_initialization()
-     - Should initialize as SmartDot
-
-[  ] test_SimSmartDot_connect()
+[✓] test_SimSmartDot_connect()
      - Should connect without errors
 
-[  ] test_SimSmartDot_disconnect()
+[✓] test_SimSmartDot_disconnect()
      - Should disconnect without errors
 
 [  ] test_SimSmartDot_data_streaming()
      - Should generate simulated sensor data
      - Should populate all sensor types
 
---- 5.3 MetaMotionS (backend/smartdot/MetaMotionS.py) ---
+--- 5.3 UNIT TESTS - MetaMotionS (backend/smartdot/MetaMotionS.py) ---
 
 [  ] test_MetaMotionS_initialization()
      - Should initialize with device info
@@ -407,7 +506,7 @@ Organize testing by module/layer for systematic coverage.
      - Should receive magnetometer data
      - Should receive light sensor data
 
---- 5.4 SmartDotConnectionManager (backend/smartdot/SmartDotConnectionManager.py) ---
+--- 5.4 UNIT TESTS - SmartDotConnectionManager (backend/smartdot/SmartDotConnectionManager.py) ---
 
 [  ] test_connection_manager_add_device()
      - Should add new SmartDot devices
@@ -424,12 +523,47 @@ Organize testing by module/layer for systematic coverage.
 [  ] test_connection_manager_disconnect_all()
      - Should disconnect all devices
 
+--- 5.5 UNIT TESTS - SmartDot Scanning (backend/smartdot/ScanSmartDots.py, SubprocessScan.py, scan_connect.py) ---
+
+[  ] test_smartdot_scan()
+     - Should discover nearby devices
+     - Should return device list
+
+[  ] test_smartdot_subprocess_scan()
+     - Should scan in separate process
+     - Should handle process errors
+
+--- 5.6 INTEGRATION TESTS - SmartDot System ---
+
+[  ] test_smartdot_connection()
+     - Should scan for devices
+     - Should connect to selected device
+     - Should show connection status
+
+[  ] test_smartdot_data_collection()
+     - Should stream sensor data
+     - Should collect all sensor types
+     - Should handle disconnection gracefully
+
+[  ] test_smartdot_multiple_devices()
+     - Should connect to multiple SmartDots
+     - Each device should send independent data
+     - Data should be distinguishable by device
+
+[  ] test_smartdot_connection_loss_recovery()
+     - Should handle SmartDot disconnect
+     - Should attempt to reconnect
+     - User should be notified of connection status
+
 
 ================================================================================
-6. BACKEND - DRIVERS
+6. DRIVER SCRIPTS (backend/drivers/)
 ================================================================================
 
---- 6.1 DiagnosticScript (backend/drivers/DiagnosticScript.py) ---
+--- 6.1 UNIT TESTS - DiagnosticScript (backend/drivers/DiagnosticScript.py) ---
+
+[  ] test_diagnostic_script_initialization()
+     - Should initialize with parameters
 
 [  ] test_diagnostic_script_execution()
      - Should execute diagnostic sequence
@@ -440,7 +574,10 @@ Organize testing by module/layer for systematic coverage.
      - Should collect motor data
      - Should collect sensor data
 
---- 6.2 ShotScript (backend/drivers/ShotScript.py) ---
+--- 6.2 UNIT TESTS - ShotScript (backend/drivers/ShotScript.py) ---
+
+[  ] test_shot_script_initialization()
+     - Should accept RPM, angle, tilt parameters
 
 [  ] test_shot_script_execution()
      - Should execute shot sequence
@@ -450,69 +587,224 @@ Organize testing by module/layer for systematic coverage.
      - Should record shot parameters
      - Should record sensor data during shot
 
+--- 6.3 INTEGRATION TESTS - Driver Workflows ---
+
+[  ] test_complete_diagnostic_session()
+     - Full workflow: Start → Configure → Run → View Results
+     - Each step should transition smoothly
+     - Data should be collected and displayed
+
+[  ] test_complete_shot_session()
+     - Full workflow: Start → Set Parameters → Execute → Analyze
+     - Parameters should be input and validated
+     - Results should be viewable
+
 
 ================================================================================
-7. FRONTEND - WIDGETS & DIALOGS
+7. MAIN APPLICATION ENTRY (main.py)
 ================================================================================
 
---- 7.1 BSCMainWindow (frontend/BSCMainWindow.py) ---
+--- 7.1 UNIT TESTS - Startup & Configuration ---
+
+[  ] test_main_initialization()
+     - Should load configuration
+     - Should initialize components
+
+[  ] test_main_hardware_detection()
+     - Should detect available hardware
+     - Should initialize with available components
+
+--- 7.2 INTEGRATION TESTS - Application Lifecycle ---
+
+[  ] test_application_startup()
+     - Should start without errors
+     - All systems should initialize
+
+[  ] test_application_shutdown()
+     - Should shutdown cleanly
+     - All resources should be released
+
+[  ] test_missing_hardware_startup()
+     - Application should start without motors
+     - Application should start without SmartDot
+     - Graceful degradation for missing components
+
+
+================================================================================
+8. FRONTEND - GUI MAIN WINDOW (frontend/BSCMainWindow.py)
+================================================================================
+
+--- 8.1 UNIT TESTS - Main Window ---
 
 [  ] test_main_window_initialization()
      - Should load UI correctly
      - Should initialize all pages
 
-[  ] test_main_window_page_switching()
+[  ] test_main_window_navigation()
      - Should switch between pages
      - Should maintain state
+
+[  ] test_main_window_page_title_update()
+     - Should update title on page switch
+     - Title should reflect current page
+
+--- 8.2 INTEGRATION TESTS - Main Window Navigation ---
+
+[  ] test_user_navigates_home_to_diagnostic_to_shot()
+     - Should navigate through multiple pages sequentially
+     - Each page should load correctly
+     - Navigation buttons should work between pages
+
+[  ] test_user_rapidly_switches_pages()
+     - Should handle rapid page switching
+     - No performance degradation
+     - UI should not freeze or lag
+
+[  ] test_user_navigates_and_checks_title()
+     - Should update window title on page switch
+     - Title should accurately reflect current page
+     - Each page should have unique identifier in title
+
+[  ] test_main_window_initializes_with_front_page()
+     - Application should start on front page
+     - All default buttons should be visible
+     - Application should be immediately usable
 
 [  ] test_main_window_quit()
      - Should handle quit signal
      - Should cleanup resources
 
---- 7.2 FrontPage (frontend/FrontPage.py) ---
+
+================================================================================
+9. FRONTEND - PAGE: FRONT PAGE (frontend/FrontPage.py)
+================================================================================
+
+--- 9.1 UNIT TESTS - Front Page ---
 
 [  ] test_front_page_initialization()
      - Should load correctly
+     - Should have all mode buttons
 
-[  ] test_front_page_button_clicks()
-     - Should handle mode selection buttons
-     - Should switch to appropriate page
+[  ] test_front_page_button_presence()
+     - Should have diagnostics button
+     - Should have shot mode button
+     - Should have data button
 
---- 7.3 ShotModePage (frontend/ShotModePage.py) ---
+--- 9.2 INTEGRATION TESTS - Front Page Interactions ---
 
-[  ] test_shot_mode_initialization()
-     - Should initialize shot parameters
+[  ] test_user_clicks_diagnostics_button()
+     - Should navigate to diagnostic mode
+     - Diagnostic page should load
+     - Diagnostic controls should be available
 
-[  ] test_shot_mode_parameter_input()
-     - Should accept RPM, angle, tilt values
-     - Should validate inputs
+[  ] test_user_clicks_shot_mode_button()
+     - Should navigate to shot mode
+     - Shot page should load
+     - Shot controls should be visible
 
-[  ] test_shot_mode_execution()
-     - Should start shot sequence
-     - Should stop shot sequence
+[  ] test_user_clicks_data_button()
+     - Should navigate to data/analysis page
+     - Data view should load
+     - Session data should be visible
 
---- 7.4 DiagnosticModePage (frontend/DiagnosticModePage.py) ---
+[  ] test_front_page_button_navigation()
+     - All three buttons should navigate to correct pages
+     - Returning to home should work from any page
+     - Button states should reflect current page
+
+[  ] test_front_page_emits_change_page_signal()
+     - FrontPage should emit signals on button click
+     - Signals should contain correct page index
+     - Main window should respond to signals
+
+
+================================================================================
+10. FRONTEND - PAGE: DIAGNOSTIC MODE (frontend/DiagnosticModePage.py)
+================================================================================
+
+--- 10.1 UNIT TESTS - Diagnostic Page ---
 
 [  ] test_diagnostic_mode_initialization()
-     - Should initialize
+     - Should initialize correctly
+     - Should have diagnostic controls
+
+[  ] test_diagnostic_mode_ui_elements()
+     - Should have start/stop buttons
+     - Should have parameter inputs
+
+--- 10.2 INTEGRATION TESTS - Diagnostic Workflow ---
 
 [  ] test_diagnostic_mode_execution()
      - Should run diagnostic
      - Should collect data
+     - Should update progress display
 
---- 7.5 AnalysisModePage (frontend/AnalysisModePage.py) ---
+[  ] test_diagnostic_data_display()
+     - Should show real-time data during diagnostic
+     - Should update graphs with incoming data
 
-[  ] test_analysis_mode_load_data()
-     - Should load recorded session data
+[  ] test_user_workflow_home_to_diagnostic_to_home()
+     - Complete workflow: Home → Diagnostic → Home
+     - Each transition should work smoothly
+     - Page state should be correct at each step
 
-[  ] test_analysis_mode_display_graphs()
-     - Should display motor graphs
-     - Should display smartdot graphs
 
-[  ] test_analysis_mode_export_data()
-     - Should export session data
+================================================================================
+11. FRONTEND - PAGE: SHOT MODE (frontend/ShotModePage.py)
+================================================================================
 
---- 7.6 DataViewPage (frontend/DataViewPage.py) ---
+--- 11.1 UNIT TESTS - Shot Mode Page ---
+
+[  ] test_shot_mode_initialization()
+     - Should initialize shot parameters
+     - Should have default values
+
+[  ] test_shot_mode_ui_elements()
+     - Should have RPM input field
+     - Should have angle input field
+     - Should have tilt input field
+     - Should have execute button
+
+--- 11.2 INTEGRATION TESTS - Shot Mode Workflow ---
+
+[  ] test_shot_mode_parameter_input()
+     - Should accept RPM, angle, tilt values
+     - Should validate inputs
+     - Invalid inputs should show errors
+
+[  ] test_shot_mode_execution()
+     - Should start shot sequence
+     - Should display shot data in real-time
+     - Should stop shot sequence
+
+[  ] test_complete_shot_session()
+     - Full workflow: Start → Set Parameters → Execute → Analyze
+     - Parameters should be input and validated
+     - Results should be viewable
+
+
+================================================================================
+12. FRONTEND - PAGE: DATA VIEW / ANALYSIS (frontend/DataViewPage.py, AnalysisModePage.py)
+================================================================================
+
+--- 12.1 UNIT TESTS - Data View ---
+
+[  ] test_data_view_initialization()
+     - Should load without errors
+
+[  ] test_data_view_ui_elements()
+     - Should have session table
+     - Should have filter controls
+
+--- 12.2 UNIT TESTS - Analysis Mode ---
+
+[  ] test_analysis_mode_initialization()
+     - Should initialize correctly
+
+[  ] test_analysis_mode_graph_widgets()
+     - Should have graph display areas
+
+--- 12.3 INTEGRATION TESTS - Data Viewing & Analysis ---
 
 [  ] test_data_view_load_sessions()
      - Should load sessions from cloud
@@ -526,7 +818,58 @@ Organize testing by module/layer for systematic coverage.
      - Should filter by date range
      - Should filter by session name
 
---- 7.7 SmartDotConnectWidget (frontend/SmartDotConnectWidget.py) ---
+[  ] test_analysis_mode_load_data()
+     - Should load recorded session data
+
+[  ] test_analysis_mode_display_graphs()
+     - Should display motor graphs
+     - Should display smartdot graphs
+     - Should display encoder data
+
+[  ] test_analysis_mode_export_data()
+     - Should export session data
+
+[  ] test_analysis_graph_interactive_features()
+     - User should be able to zoom on graphs
+     - User should be able to pan graphs
+     - Tooltips should show data values
+
+[  ] test_smartdot_data_visualization()
+     - SmartDot data should display in graph
+     - All sensor types should be plottable
+     - Graph should update with new data
+
+[  ] test_motor_data_visualization()
+     - Motor data should display as graph
+     - Multiple motors should display together
+     - Graph should handle varying data ranges
+
+[  ] test_session_data_loads_on_startup()
+     - Previous session should load on app start
+     - Session data should be accessible
+     - User should be able to view old data
+
+[  ] test_session_export_workflow()
+     - Should export session data to file
+     - Exported file should be readable
+     - Data should be complete and accurate
+
+
+================================================================================
+13. FRONTEND - PAGE: SMARTDOT CONNECTION (frontend/SmartDotConnectWidget.py)
+================================================================================
+
+--- 13.1 UNIT TESTS - SmartDot Widget ---
+
+[  ] test_smartdot_widget_initialization()
+     - Should initialize correctly
+
+[  ] test_smartdot_widget_ui_elements()
+     - Should have scan button
+     - Should have device list
+     - Should have connect button
+
+--- 13.2 INTEGRATION TESTS - SmartDot Connection Widget ---
 
 [  ] test_smartdot_scan()
      - Should scan for devices
@@ -536,7 +879,81 @@ Organize testing by module/layer for systematic coverage.
      - Should connect to selected device
      - Should show connection status
 
---- 7.8 Graph Widgets (InputGraph.py, MotorGraph.py, SmartDotGraph.py) ---
+[  ] test_smartdot_widget_emits_signal_on_connection()
+     - SmartDot widget should emit connection signals
+     - Signals should contain device information
+     - Main window should update on signal
+
+
+================================================================================
+14. FRONTEND - DIALOGS & POPUPS
+================================================================================
+
+--- 14.1 UNIT TESTS - Dialog Windows ---
+
+[  ] test_exit_dialog_initialization()
+     - Should load UI correctly
+
+[  ] test_analysis_dialog_initialization()
+     - Should load UI correctly
+
+[  ] test_post_dialog_initialization()
+     - Should load UI correctly
+
+--- 14.2 INTEGRATION TESTS - Dialog Workflows ---
+
+[  ] test_user_confirms_exit_dialog()
+     - Should show exit confirmation dialog
+     - Confirming should close application
+     - All resources should be cleaned up
+
+[  ] test_user_cancels_exit_dialog()
+     - Should show exit confirmation dialog
+     - Canceling should keep application open
+     - Window should remain fully functional
+
+[  ] test_user_exits_from_different_pages()
+     - Should be able to exit from any page
+     - Dialog should appear regardless of page
+     - Application should close properly
+
+[  ] test_user_attempts_multiple_exits()
+     - Multiple exit attempts should work
+     - Dialog should appear each time
+     - Application should only exit when confirmed
+
+[  ] test_analysis_dialog_workflow()
+     - Analysis dialog should appear on request
+     - User should be able to select options
+     - Dialog should close properly
+
+[  ] test_post_dialog_workflow()
+     - Post dialog should show upload options
+     - User should be able to confirm upload
+     - Upload should complete or show error
+
+[  ] test_dialog_interactions_dont_break_main_window()
+     - Main window should remain responsive during dialogs
+     - Closing dialog should restore window functionality
+     - No lingering effects from dialog interaction
+
+
+================================================================================
+15. FRONTEND - GRAPH WIDGETS (frontend/InputGraph.py, MotorGraph.py, SmartDotGraph.py)
+================================================================================
+
+--- 15.1 UNIT TESTS - Graph Display ---
+
+[  ] test_input_graph_initialization()
+     - Should initialize without errors
+
+[  ] test_motor_graph_initialization()
+     - Should initialize without errors
+
+[  ] test_smartdot_graph_initialization()
+     - Should initialize without errors
+
+--- 15.2 INTEGRATION TESTS - Graph Visualization ---
 
 [  ] test_input_graph_display()
      - Should plot input data correctly
@@ -548,82 +965,123 @@ Organize testing by module/layer for systematic coverage.
      - Should plot sensor data
      - Should handle multiple sensors
 
---- 7.9 Dialogs ---
-
-[  ] test_exit_dialog()
-     - Should prompt before exit
-     - Should handle yes/no responses
-
-[  ] test_analysis_dialog()
-     - Should display analysis options
-
-[  ] test_post_dialog()
-     - Should confirm data posting
-     - Should show post status
+[  ] test_graph_data_updates()
+     - Graphs should update with new data in real-time
+     - Performance should remain acceptable
 
 
 ================================================================================
-8. LOGGING & CONFIGURATION
+16. FRONTEND - KEYBOARD & MENU INTERACTIONS
 ================================================================================
 
-[  ] test_logger_setup()
-     - Should configure logger correctly
-     - Should write to log files
-     - Should display in console
+--- 16.1 INTEGRATION TESTS - Menu Navigation ---
 
-[  ] test_logger_levels()
-     - Should respect DEBUG level
-     - Should respect INFO level
-     - Should respect WARNING level
-     - Should respect ERROR level
+[  ] test_user_clicks_home_menu_action()
+     - Should navigate to home page
+     - Page should change to index 0
+     - Window title should reflect current page
+
+[  ] test_user_clicks_cloud_test_menu_action()
+     - Should navigate to cloud test page
+     - Page should change to correct index
+     - Cloud test interface should be visible
+
+[  ] test_user_can_access_all_menu_items()
+     - Should successfully click all menu items
+     - No pages should fail to load
+     - Application should remain stable
+
+--- 16.2 INTEGRATION TESTS - Keyboard Interaction ---
+
+[  ] test_user_presses_escape_key()
+     - Should handle Escape key press
+     - Application should remain responsive
+     - No errors should occur
+
+[  ] test_user_presses_tab_to_navigate_widgets()
+     - Should tab through widgets
+     - Focus should move visibly
+     - Widget focus order should make sense
+
+[  ] test_user_presses_enter_on_buttons()
+     - Should activate buttons via Enter key
+     - Actions should execute same as mouse click
+     - Page should respond appropriately
+
+[  ] test_keyboard_shortcuts()
+     - Should respond to keyboard shortcuts if defined
+     - Shortcuts should trigger expected actions
+     - Shortcut conflicts should be prevented
+
+--- 16.3 INTEGRATION TESTS - Button Clicks ---
+
+[  ] test_user_clicks_estop_button()
+     - Should click E-Stop button
+     - Button should be visually responsive
+     - Window should remain responsive
+
+[  ] test_user_clicks_estop_button_multiple_times()
+     - Should handle multiple rapid E-Stop clicks
+     - No errors or crashes
+     - Window state should be consistent
+
+[  ] test_user_rapidly_clicks_multiple_buttons()
+     - Multiple rapid clicks should not break application
+     - No race conditions or crashes
+     - Actions should queue properly
 
 
 ================================================================================
-9. INTEGRATION TESTS
+17. FRONTEND - NAVIGATION & SIGNAL HANDLING
 ================================================================================
 
-[  ] test_complete_diagnostic_session()
-     - Should run full diagnostic workflow
-     - Should collect all data types
-     - Should submit to cloud
+--- 17.1 INTEGRATION TESTS - Page Navigation ---
 
-[  ] test_complete_shot_session()
-     - Should run full shot workflow
-     - Should execute shot parameters
-     - Should collect shot data
-     - Should submit to cloud
+[  ] test_user_interacts_with_all_pages_sequentially()
+     - Should load and interact with each page
+     - Each page should have expected widgets
+     - Page switching should be smooth
 
-[  ] test_data_round_trip()
-     - Should submit data to cloud
-     - Should retrieve same data
-     - Should match original
+[  ] test_user_workflow_explore_multiple_pages()
+     - Should navigate through various page sequences
+     - Non-linear navigation should work
+     - Application state should be consistent
 
-[  ] test_ui_workflow_diagnostic()
-     - Should navigate UI for diagnostic mode
-     - Should execute diagnostic
-     - Should view results
+--- 17.2 INTEGRATION TESTS - Signal Propagation ---
 
-[  ] test_ui_workflow_shot()
-     - Should navigate UI for shot mode
-     - Should input parameters
-     - Should execute shot
-     - Should view results
+[  ] test_navigation_lock_signal_disables_menu()
+     - Pages should be able to lock navigation menu
+     - Menu should be disabled during lock
+     - Menu should re-enable when unlocked
 
-[  ] test_motor_control()
-     - Should start motor
-     - Should change speed
-     - Should stop motor
-     - Should handle errors
+[  ] test_signals_propagate_correctly()
+     - Signals from child widgets should reach parent
+     - No signal loss in propagation
+     - Multiple listeners should all receive signals
 
-[  ] test_smartdot_data_collection()
-     - Should connect smartdot
-     - Should stream data
-     - Should stop streaming
+--- 17.3 INTEGRATION TESTS - Window State ---
+
+[  ] test_user_toggles_navigation_state()
+     - Should enable/disable navigation menu
+     - State changes should be visible
+     - Menu should become disabled/enabled
+
+[  ] test_window_maintains_state_during_navigation()
+     - Window state should persist across page switches
+     - User input on one page shouldn't affect another
+     - Application should remember settings
+
+[  ] test_window_resizing_and_responsiveness()
+     - Window should be resizable
+     - UI elements should adapt to window size
+     - No elements should become inaccessible
 
 
 ================================================================================
-10. ERROR HANDLING & EDGE CASES
+18. ERROR HANDLING & EDGE CASES
 ================================================================================
+
+--- 18.1 UNIT TESTS - Error Handling ---
 
 [  ] test_network_timeout()
      - Should handle API timeouts
@@ -653,6 +1111,110 @@ Organize testing by module/layer for systematic coverage.
      - Should handle large data streams
      - Should not crash with memory errors
 
+--- 18.2 INTEGRATION TESTS - Edge Cases ---
+
+[  ] test_user_switches_to_invalid_page_index()
+     - Should gracefully handle invalid page requests
+     - Application should not crash
+     - User should be informed of error
+
+[  ] test_application_handles_missing_hardware()
+     - Application should start without motors
+     - Application should start without SmartDot
+     - Graceful degradation for missing components
+
+[  ] test_application_handles_network_disconnect()
+     - Should handle network going offline
+     - Should queue operations for later
+     - Should inform user of disconnect
+
+[  ] test_application_recovers_from_errors()
+     - Application should recover from operation failures
+     - User should be able to retry operations
+     - No persistent error states
+
+[  ] test_cloud_api_error_handling()
+     - Should handle network timeouts
+     - Should handle authentication failures
+     - Should handle data format errors
+
+
+================================================================================
+19. APPLICATION STATE & LIFECYCLE
+================================================================================
+
+--- 19.1 INTEGRATION TESTS - Application State ---
+
+[  ] test_application_state_persistence()
+     - Application state should persist across pages
+     - Settings should be remembered
+     - User preferences should be maintained
+
+[  ] test_application_cleanup_on_exit()
+     - All threads should stop
+     - All connections should close
+     - All resources should be released
+     - No lingering processes after exit
+
+[  ] test_ui_workflow_diagnostic()
+     - Should navigate to diagnostic mode
+     - Should execute diagnostic
+     - Should view and save results
+
+[  ] test_ui_workflow_shot()
+     - Should navigate to shot mode
+     - Should input shot parameters
+     - Should execute shot
+     - Should view results
+
+[  ] test_user_workflow_with_navigation_locking()
+     - Navigate with menu locked and unlocked
+     - Locking should prevent menu navigation
+     - Manual navigation should still work
+
+[  ] test_user_workflow_explore_multiple_pages()
+     - Complex navigation path through multiple pages
+     - Application should handle non-linear paths
+     - No memory leaks or performance degradation
+
+[  ] test_data_upload_workflow()
+     - Complete workflow for uploading data to cloud
+     - Data should be formatted correctly
+     - Upload status should be visible
+
+[  ] test_data_round_trip()
+     - Should submit data to cloud
+     - Should retrieve same data
+     - Retrieved data should match original
+
+
+================================================================================
+20. LOGGING & CONFIGURATION
+================================================================================
+
+--- 20.1 UNIT TESTS - Logging ---
+
+[  ] test_logger_setup()
+     - Should configure logger correctly
+     - Should write to log files
+     - Should display in console
+
+[  ] test_logger_levels()
+     - Should respect DEBUG level
+     - Should respect INFO level
+     - Should respect WARNING level
+     - Should respect ERROR level
+
+--- 20.2 UNIT TESTS - Configuration ---
+
+[  ] test_configuration_loading()
+     - Should load configuration files
+     - Should apply settings
+
+[  ] test_configuration_validation()
+     - Should validate configuration values
+     - Should use defaults for missing values
+
 
 ================================================================================
 TESTING PRIORITY
@@ -662,31 +1224,92 @@ HIGH PRIORITY (Start Here):
 1. Data models (SessionData, SmartDotData, EncoderData, HeatData)
 2. DataController (core business logic)
 3. CloudAPI (data persistence)
-4. iMotor/Motor implementations (hardware control)
+4. Motor Control Interface (hardware abstraction)
+5. SmartDot Sensor Interface (hardware abstraction)
 
 MEDIUM PRIORITY:
-1. SmartDot sensor handling
-2. UI page navigation
-3. Graph display
+1. Main Window & Page Navigation
+2. Front Page & Page Switching
+3. Graph Display & Visualization
+4. Dialog & Popup Handling
+5. Diagnostic & Shot Mode Workflows
 
 LOW PRIORITY (Nice to Have):
-1. Dialog edge cases
-2. Logging edge cases
-3. Performance tests
+1. Keyboard shortcuts & special key handling
+2. Window resizing & responsiveness
+3. Performance optimizations
+4. Logging edge cases
+
+CRITICAL PATH FOR MVP:
+1. Data Models (all unit tests)
+2. CloudAPI + DataController (unit tests)
+3. Motor abstraction (unit tests)
+4. Main Window navigation (integration tests)
+5. Shot/Diagnostic workflows (integration tests)
 
 
 ================================================================================
 NOTES FOR TESTING
 ================================================================================
 
-- Use pytest fixtures for setup/teardown
-- Mock cloud API calls in unit tests
-- Use mock GPIO for motor tests
-- Use mock SmartDot for sensor tests
-- Integration tests can use real API (with test account)
-- Use pytest-qt for PyQt6 UI tests
-- Aim for >80% code coverage
-- Run tests in CI/CD pipeline
-- Keep tests isolated and independent
+Organization Principles:
+- Group tests by SYSTEM/COMPONENT, not by test type
+- For each system, list UNIT tests first, then INTEGRATION tests
+- This allows understanding all test coverage for a feature in one place
+- Makes it easy to see what's fully tested vs partially tested
 
-================================================================================
+Unit Test Guidelines:
+- Use pytest fixtures for setup/teardown
+- Mock cloud API calls
+- Mock GPIO for motor tests
+- Mock SmartDot for sensor tests
+- Use @patch decorators for isolation
+- Location: tests/unit/
+- Should run fast (< 1 second per test)
+
+Integration Test Guidelines:
+- Test real workflows with actual components
+- Use real APIs (with test account) when possible
+- NO @patch decorators (test actual behavior)
+- Simulate real user interactions
+- May be marked @pytest.mark.skip if not ready
+- Location: tests/integration/
+- Can be slower (allow up to 5 seconds per test)
+
+GUI Testing:
+- Use pytest-qt for PyQt6 UI tests
+- Simulate user actions (clicks, key presses)
+- Verify signal emissions
+- Check widget state changes
+- Test page navigation
+- Verify dialog interactions
+
+Code Coverage:
+- Aim for >80% code coverage
+- Priority: Business logic first (models, controllers)
+- Then: API integrations
+- Finally: GUI (visual inspection often sufficient)
+
+CI/CD Integration:
+- Run unit tests on every commit
+- Run integration tests nightly or on demand
+- Use separate test groups for speed
+- Integration tests are allowed to take longer
+- Generate coverage reports
+- Fail the build on test failures
+
+File Location Reference:
+- Unit tests: tests/unit/<module_name>.py
+- Integration tests: tests/integration/<feature_name>.py
+- Configuration: tests/conftest.py (each directory)
+- Documentation: tests/TESTING_CHECKLIST.txt
+
+Running Tests:
+  ./run_unit_tests.sh        # Fast, isolated tests
+  ./run_integration_tests.sh # Real workflows
+  ./run_all_tests.sh         # Complete suite
+  pytest tests/unit/         # Run specific unit tests
+  pytest tests/integration/  # Run specific integration tests
+  pytest -v --tb=short      # Verbose with short tracebacks
+  pytest -k "test_name"     # Run tests matching pattern
+  pytest --cov=backend --cov=frontend --cov=utils  # Coverage report
