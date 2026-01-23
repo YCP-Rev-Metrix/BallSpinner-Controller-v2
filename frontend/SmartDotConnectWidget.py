@@ -291,6 +291,19 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         else:
             self.lblStatus.setText(f"Device {mac_address} not found")
 
+    def refresh(self):
+        """Refresh the device list and emit signals for connected devices from the connection manager"""
+        # Get all current connections from the manager
+        connections = bsc.get_smartdotConnectionManager().get_connections()
+        # Emit signal for each connected device
+        for mac_address in connections:
+            smartdot = bsc.get_smartdotConnectionManager().get_smartdot(mac_address)
+            if smartdot is not None:
+                self.signalSmartDotConnected.emit(smartdot)
+        # Update the disconnect list to show all current connections
+        self.updateDisconnectList()
+
+
 
 if __name__ == "__main__":
     import sys

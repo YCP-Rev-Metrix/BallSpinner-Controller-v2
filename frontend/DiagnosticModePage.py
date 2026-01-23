@@ -14,6 +14,7 @@ from backend.drivers.DiagnosticScript import DiagnosticScript
 #from backend.motors.BDCMotor import BDCMotor
 #from backend.motors.SimMotor import SimMotor
 from frontend.SmartDotViewer import SmartDotViewer
+from frontend.SensorGraphDialog import SensorGraphDialog
 
 import datetime as dt
 
@@ -59,6 +60,49 @@ class DiagnosticModePage(QtWidgets.QWidget):
         #load SmartDotViewer
         self.smartdotViewer = self.findChild(QtWidgets.QWidget, 'SmartDotViewer')
         self.smartdotViewer.hide_buttons()
+
+
+        #Motor Sensor Data Viewer Setup
+        #Current Value Labels
+        self.Spincurv = self.findChild(QtWidgets.QLabel, 'lblSpinCurrent')
+        self.Tiltcurv = self.findChild(QtWidgets.QLabel, 'lblTiltCurrent')
+        self.Anglecurv = self.findChild(QtWidgets.QLabel, 'lblAngleCurrent')
+        #Temp Value Labels
+        self.Spintempv = self.findChild(QtWidgets.QLabel, 'lblSpinTemp')
+        self.Tilttempv = self.findChild(QtWidgets.QLabel, 'lblTiltTemp')
+        self.Angletempv = self.findChild(QtWidgets.QLabel, 'lblAngleTemp')
+
+        #Example Initialization Values
+        """
+        self.Spincurv.setText("0.00 A")
+        self.Tiltcurv.setText("0.00 A")
+        self.Anglecurv.setText("0.00 A")
+        self.Spintempv.setText("25.0 °C")
+        self.Tilttempv.setText("25.0 °C")
+        self.Angletempv.setText("25.0 °C")
+        """
+        #Buttons for graphs
+        self.btnGraphTemp = self.findChild(QtWidgets.QPushButton, 'btnGraphTemp')
+        self.btnGraphCurrent = self.findChild(QtWidgets.QPushButton, 'btnGraphCurrent')
+        #Connect graph buttons
+        self.btnGraphTemp.clicked.connect(self.show_temp_graph)
+        self.btnGraphCurrent.clicked.connect(self.show_current_graph)
+
+        #Sensor Arrays
+        self.spin_temp_values = []
+        self.spin_temp_time = []
+        self.tilt_temp_values = []
+        self.tilt_temp_time = []
+        self.angle_temp_values = []
+        self.angle_temp_time = []
+        
+
+        self.spin_current_values = []
+        self.spin_current_time = []
+        self.tilt_current_values = []
+        self.tilt_current_time = []
+        self.angle_current_values = []
+        self.angle_current_time = []
         
 
 
@@ -135,6 +179,37 @@ class DiagnosticModePage(QtWidgets.QWidget):
         else:
             print("User rejected the dialog.")
             # Handle rejection (e.g., cancel operation)
+    
+    def show_temp_graph(self):
+        """Open a dialog showing temperature graphs for all three motors."""
+        dialog = SensorGraphDialog(
+            title="Temperature Sensor Data",
+            spin_time=self.spin_temp_time,
+            spin_values=self.spin_temp_values,
+            tilt_time=self.tilt_temp_time,
+            tilt_values=self.tilt_temp_values,
+            angle_time=self.angle_temp_time,
+            angle_values=self.angle_temp_values,
+            y_label="Temperature (°C)",
+            parent=self
+        )
+        dialog.exec()
+    
+    def show_current_graph(self):
+        """Open a dialog showing current graphs for all three motors."""
+        dialog = SensorGraphDialog(
+            title="Current Sensor Data",
+            spin_time=self.spin_current_time,
+            spin_values=self.spin_current_values,
+            tilt_time=self.tilt_current_time,
+            tilt_values=self.tilt_current_values,
+            angle_time=self.angle_current_time,
+            angle_values=self.angle_current_values,
+            y_label="Current (A)",
+            parent=self
+        )
+        dialog.exec()
+    
     def toggle_Buttons(self):
             # Use timer activity to decide start/stop state
             if not self._timer.isActive():
