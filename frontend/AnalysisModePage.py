@@ -18,12 +18,12 @@ class AnalysisDialog(QtWidgets.QDialog):
     def __init__(self, parent=None, type: str = None):
         super().__init__(parent)
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'AnalysisDialog.ui'), self, package='frontend')
-        self.label = self.findChild(QtWidgets.QLabel, 'label')
-        self.label.setText(type)
-        self.buttonBox = self.findChild(QtWidgets.QDialogButtonBox, 'buttonBox')
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
-        self.graph = self.findChild(pg.PlotWidget, 'graph')
+        self.lblTitle = self.findChild(QtWidgets.QLabel, 'lblTitle')
+        self.lblTitle.setText(type)
+        self.dbbMain = self.findChild(QtWidgets.QDialogButtonBox, 'dbbMain')
+        self.dbbMain.accepted.connect(self.accept)
+        self.dbbMain.rejected.connect(self.reject)
+        self.graph = self.findChild(pg.PlotWidget, 'grphAnalysis')
         
         self.setWindowTitle("Analysis Options")
         self.setModal(True)
@@ -44,7 +44,7 @@ class AnalysisModePage(QtWidgets.QWidget):
 
         # Load the UI file (module-relative path).
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'AnalysisModePage.ui'), self, package='frontend')
-        self.smartDotGraph = self.findChild(SmartDotGraph, 'SmartDotGraph')
+        self.smartDotGraph = self.findChild(SmartDotGraph, 'grphSmartDot')
         self.motorGraph = self.findChild(MotorGraph, 'MotorGraph')
         self.smartDotGraph.setView(0)  # Set SmartDotGraph to show all data
         self.motorGraph.setView(0)     # Set MotorGraph to show all data

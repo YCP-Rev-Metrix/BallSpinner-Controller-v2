@@ -16,7 +16,7 @@ class MotorGraph(QtWidgets.QWidget):
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'MotorGraph.ui'), self, package='frontend')
 
         # Get references to UI elements
-        self.graph = self.findChild(pg.PlotWidget, 'graphSmartDot')
+        self.graph = self.findChild(pg.PlotWidget, 'grphSmartDot')
 
 
         self.chkSpin = self.findChild(QtWidgets.QCheckBox, 'chkSpin')

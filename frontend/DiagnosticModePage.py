@@ -48,9 +48,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.btnSave = self.findChild(QtWidgets.QPushButton, 'btnSave')
 
         # Additional initialization code can go here
-        self.spinGraph = self.findChild(pg.PlotWidget, 'graphSpin')
-        self.tiltGraph = self.findChild(pg.PlotWidget, 'graphTilt')
-        self.angleGraph = self.findChild(pg.PlotWidget, 'graphAngle')
+        self.spinGraph = self.findChild(pg.PlotWidget, 'grphSpin')
+        self.tiltGraph = self.findChild(pg.PlotWidget, 'grphTilt')
+        self.angleGraph = self.findChild(pg.PlotWidget, 'grphAngle')
 
         #label configurations
         self.labelSpin = self.findChild(QtWidgets.QLabel, 'lblSpin')

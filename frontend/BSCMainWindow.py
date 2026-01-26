@@ -27,17 +27,17 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         self.EStop.setStyleSheet("background-color: red; font-weight: bold; font-size: 16px;")
         
         # This is the container for all pages
-        self.tab = self.findChild(QtWidgets.QStackedWidget, "stackedWidget") 
+        self.tab = self.findChild(QtWidgets.QStackedWidget, "swPages") 
 
         # Find each page by its class type
-        self.frontPage = self.findChild(FrontPage, 'FrontPage')
-        self.diagnosticPage = self.findChild(DiagnosticModePage, 'DiagnosticModePage')
-        self.shotModePage = self.findChild(ShotModePage, 'ShotModePage')
-        self.analysisModePage = self.findChild(AnalysisModePage, 'AnalysisModePage')
-        self.cloudTestPage = self.findChild(CloudTest, 'CloudTestPage')
+        self.frontPage = self.findChild(FrontPage, 'wgtFrontPage')
+        self.diagnosticPage = self.findChild(DiagnosticModePage, 'wgtDiagnosticModePage')
+        self.shotModePage = self.findChild(ShotModePage, 'wgtShotModePage')
+        self.analysisModePage = self.findChild(AnalysisModePage, 'wgtAnalysisModePage')
+        self.cloudTestPage = self.findChild(CloudTest, 'wgtCloudTestPage')
         
-        self.shotViewPage = self.findChild(ShotViewPage, 'ShotViewPage')
-        self.dataViewPage = self.findChild(DataViewPage, 'DataViewPage')
+        self.shotViewPage = self.findChild(ShotViewPage, 'wgtShotViewPage')
+        self.dataViewPage = self.findChild(DataViewPage, 'wgtDataViewPage')
 
         # connect page change signals 
         self.frontPage.changePage.connect(self.switch_to_page) #100% Nescessary
@@ -62,9 +62,9 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         self.switch_to_page(0, "Home")  # Start on FrontPage
 
         # connect to navigation from menu bar if exists
-        self.actionHome = self.findChild(QAction, 'actionHome')
-        self.actionCloudTest = self.findChild(QAction, 'actionCloud_Test')
-        self.actionQuit = self.findChild(QAction, 'actionExit_Application')
+        self.actionHome = self.findChild(QAction, 'actHome')
+        self.actionCloudTest = self.findChild(QAction, 'actCloudTest')
+        self.actionQuit = self.findChild(QAction, 'actExitApplication')
 
         self.actionHome.triggered.connect(lambda: self.switch_to_page(0, "Home"))
         self.actionCloudTest.triggered.connect(lambda: self.switch_to_page(4, "Cloud Test"))
@@ -72,7 +72,7 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         # Open confirmation dialog on quit; only close if confirmed
         self.actionQuit.triggered.connect(self.attempt_exit)
 
-        self.navigation_menu = self.findChild(QtWidgets.QMenu, 'menuNavigation')
+        self.navigation_menu = self.findChild(QtWidgets.QMenu, 'mnuNavigation')
 
     def toggle_navigation(self, enable: bool):
         """Enable or disable the navigation menu."""

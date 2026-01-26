@@ -35,9 +35,9 @@ class ShotModePage(QtWidgets.QWidget):
         # Grab the three InputGraph widgets created by the .ui file and store references
         # The object names come from the .ui: 'inputGraph_RPM', 'InputGraph_Tilt', 'InputGraph_Angle'
 
-        self.graph_rpm = self.findChild(InputGraph, 'inputGraph_RPM')
-        self.graph_tilt = self.findChild(InputGraph, 'InputGraph_Tilt')
-        self.graph_angle = self.findChild(InputGraph, 'InputGraph_Angle')
+        self.graph_rpm = self.findChild(InputGraph, 'grphInputRpm')
+        self.graph_tilt = self.findChild(InputGraph, 'grphInputTilt')
+        self.graph_angle = self.findChild(InputGraph, 'grphInputAngle')
 
         self.graph_rpm.set_graph_title("RPM Input Graph")
         self.graph_tilt.set_graph_title("Tilt Input Graph")
@@ -71,7 +71,7 @@ class ShotModePage(QtWidgets.QWidget):
         self.graph_tilt.set_y_units("°")
         self.graph_angle.set_y_units("°")
 
-        self.SmartDotConnectWidget = self.findChild(SmartDotConnectWidget, 'SmartDotConnectWidget')
+        self.SmartDotConnectWidget = self.findChild(SmartDotConnectWidget, 'wgtSmartDotConnect')
         self.SmartDotConnectWidget.signalSmartDotConnected.connect(self.CheckButtons)
 
 

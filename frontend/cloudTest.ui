@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Form</class>
- <widget class="QWidget" name="Form">
+ <class>CloudTest</class>
+ <widget class="QWidget" name="CloudTest">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,111 +11,111 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Cloud Test</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
     <layout class="QVBoxLayout" name="verticalLayout">
      <item alignment="Qt::AlignHCenter">
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="lblResponse">
        <property name="text">
         <string>Response</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="btnAskCloudForSix">
        <property name="text">
         <string>Ask Cloud for 6</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_2">
+      <widget class="QPushButton" name="btnClearLabel">
        <property name="text">
         <string>Clear Label</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_3">
+      <widget class="QPushButton" name="btnGetSessions">
        <property name="text">
         <string>Get Sessions</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_4">
+      <widget class="QPushButton" name="btnPostSmartDotData">
        <property name="text">
         <string>Post Smart Dot Data</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_5">
+      <widget class="QPushButton" name="btnGetSmartDotData">
        <property name="text">
         <string>Get Smart Dot Data</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_6">
+      <widget class="QPushButton" name="btnGetDiagnosticData">
        <property name="text">
         <string>Get Diagnostic Data</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_7">
+      <widget class="QPushButton" name="btnPostDiagnosticData">
        <property name="text">
         <string>Post Diagnostic Data</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_8">
+      <widget class="QPushButton" name="btnPostShotScriptData">
        <property name="text">
         <string>Post Shot Script Data</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_9">
+      <widget class="QPushButton" name="btnGetShotScriptData">
        <property name="text">
         <string>Get Shot Script Data</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_10">
+      <widget class="QPushButton" name="btnPostEncoderData">
        <property name="text">
         <string>Post Encoder Data</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_11">
+      <widget class="QPushButton" name="btnGetEncoderData">
        <property name="text">
         <string>Get Encoder Data</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_12">
+      <widget class="QPushButton" name="btnPostHeatData">
        <property name="text">
         <string>Post Heat Data</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_13">
+      <widget class="QPushButton" name="btnGetHeatData">
        <property name="text">
         <string>Get Heat Data</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_14">
+      <widget class="QPushButton" name="btnSubmitAllData">
        <property name="text">
         <string>Submit All Data!</string>
        </property>
@@ -124,14 +124,14 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
-        <widget class="QLabel" name="label_sessionId">
+        <widget class="QLabel" name="lblSessionId">
          <property name="text">
           <string>Session ID:</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QSpinBox" name="spinBox_sessionId">
+        <widget class="QSpinBox" name="spnSessionId">
          <property name="minimum">
           <number>1</number>
          </property>
@@ -146,21 +146,21 @@
       </layout>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_15">
+      <widget class="QPushButton" name="btnLoadSessionData">
        <property name="text">
         <string>Load Session Data from Cloud</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QProgressBar" name="progressBar">
+      <widget class="QProgressBar" name="pgbProgress">
        <property name="value">
         <number>0</number>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_16">
+      <widget class="QPushButton" name="btnIncrementProgress">
        <property name="text">
         <string>Increment Progress</string>
        </property>

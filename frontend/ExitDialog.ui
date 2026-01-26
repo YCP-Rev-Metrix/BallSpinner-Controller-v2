@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>dlgExit</class>
+ <widget class="QDialog" name="dlgExit">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -15,14 +15,14 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QLabel" name="label">
+    <widget class="QLabel" name="lblMessage">
      <property name="text">
       <string>Are you sure you want to Quit? Any unsaved progress will be lost.</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QDialogButtonBox" name="buttonBox">
+    <widget class="QDialogButtonBox" name="dbbMain">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
@@ -35,10 +35,10 @@
  </widget>
  <resources/>
  <connections>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>accepted()</signal>
-   <receiver>Dialog</receiver>
+    <connection>
+     <sender>dbbMain</sender>
+     <signal>accepted()</signal>
+     <receiver>dlgExit</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -51,10 +51,10 @@
     </hint>
    </hints>
   </connection>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>rejected()</signal>
-   <receiver>Dialog</receiver>
+    <connection>
+     <sender>dbbMain</sender>
+     <signal>rejected()</signal>
+     <receiver>dlgExit</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

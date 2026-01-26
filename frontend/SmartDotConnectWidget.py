@@ -100,7 +100,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         self.process_runner.errorReceived.connect(self.on_process_error)
         self.process_runner.finished.connect(self.on_process_finished)
 
-        self.scanBtn = self.findChild(QtWidgets.QPushButton, "startScan")
+        self.scanBtn = self.findChild(QtWidgets.QPushButton, "btnStartScan")
         if self.scanBtn:
             self.scanBtn.clicked.connect(self.start_scan)
 

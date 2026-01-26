@@ -23,12 +23,12 @@ class SmartDotViewer(QtWidgets.QWidget):
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'SmartDotViewer.ui'), self, package='frontend')
 
         # Find the embedded SmartDotGraph widget created by the .ui (named SmartDotGraphContainer)
-        self.SmartDotGraph = self.findChild(SmartDotGraph, 'smartDotGraph')
+        self.SmartDotGraph = self.findChild(SmartDotGraph, 'grphSmartDot')
         """
         self.btnDisconnect = self.findChild(QtWidgets.QPushButton, 'btnDisconnect')
         self.btnDisconnect.clicked.connect(self.disconnectSmartDot)
         """
-        self.smartdotConnectWidget = self.findChild(SmartDotConnectWidget, 'SmartDotConnect')
+        self.smartdotConnectWidget = self.findChild(SmartDotConnectWidget, 'wgtSmartDotConnect')
         # self.smartdotConnectWidget.start_scan()
         self.smartdotConnectWidget.signalSmartDotConnected.connect(self.connectSmartDot)
         self.smartdotConnectWidget.signalDeviceDisconnected.connect(self.on_device_disconnected)

@@ -28,7 +28,7 @@
        </widget>
       </item>
       <item>
-       <widget class="SmartDotGraph" name="SmartDotGraph" native="true">
+                <widget class="SmartDotGraph" name="grphSmartDot" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
           <horstretch>0</horstretch>

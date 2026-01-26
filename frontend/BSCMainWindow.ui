@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>wndMain</class>
+ <widget class="QMainWindow" name="wndMain">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -13,10 +13,10 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <widget class="QWidget" name="centralwidget">
+    <widget class="QWidget" name="wgtCentral">
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
-     <widget class="QWidget" name="spacerWidget" native="true">
+    <widget class="QWidget" name="wgtSpacer" native="true">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
         <horstretch>0</horstretch>
@@ -41,21 +41,21 @@
      </widget>
     </item>
     <item>
-     <widget class="QStackedWidget" name="stackedWidget">
+    <widget class="QStackedWidget" name="swPages">
       <property name="currentIndex">
        <number>5</number>
       </property>
       <widget class="QWidget" name="pageFrontPage">
        <layout class="QGridLayout" name="gridLayout">
         <item row="0" column="0">
-         <widget class="FrontPage" name="FrontPage" native="true"/>
+         <widget class="FrontPage" name="wgtFrontPage" native="true"/>
         </item>
        </layout>
       </widget>
       <widget class="QWidget" name="pageDiagnosticMode">
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
-         <widget class="DiagnosticModePage" name="DiagnosticModePage" native="true"/>
+         <widget class="DiagnosticModePage" name="wgtDiagnosticModePage" native="true"/>
         </item>
        </layout>
       </widget>
@@ -64,7 +64,7 @@
         <item>
          <layout class="QGridLayout" name="gridLayout_3">
           <item row="0" column="0">
-           <widget class="ShotModePage" name="ShotModePage" native="true"/>
+           <widget class="ShotModePage" name="wgtShotModePage" native="true"/>
           </item>
          </layout>
         </item>
@@ -79,14 +79,14 @@
        </property>
        <layout class="QGridLayout" name="gridLayout_analysis">
         <item row="0" column="0">
-         <widget class="AnalysisModePage" name="AnalysisModePage" native="true"/>
+         <widget class="AnalysisModePage" name="wgtAnalysisModePage" native="true"/>
         </item>
        </layout>
       </widget>
       <widget class="QWidget" name="pageCloudTest">
        <layout class="QGridLayout" name="gridLayout_cloud">
         <item row="0" column="0">
-         <widget class="CloudTest" name="CloudTestPage" native="true"/>
+         <widget class="CloudTest" name="wgtCloudTestPage" native="true"/>
         </item>
        </layout>
       </widget>
@@ -96,14 +96,14 @@
       <widget class="QWidget" name="pageShotViewPage">
        <layout class="QGridLayout" name="gridLayout_shotview">
         <item row="0" column="0">
-         <widget class="ShotViewPage" name="ShotViewPage" native="true"/>
+         <widget class="ShotViewPage" name="wgtShotViewPage" native="true"/>
         </item>
        </layout>
       </widget>
       <widget class="QWidget" name="pageDataViewPage">
        <layout class="QGridLayout" name="gridLayout_6">
         <item row="0" column="0">
-         <widget class="DataViewPage" name="DataViewPage" native="true">
+         <widget class="DataViewPage" name="wgtDataViewPage" native="true">
           <property name="minimumSize">
            <size>
             <width>0</width>
@@ -127,38 +127,38 @@
      <height>33</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuNavigation">
+    <widget class="QMenu" name="mnuNavigation">
     <property name="title">
      <string>Navigation</string>
     </property>
-    <addaction name="actionHome"/>
-    <addaction name="actionCloud_Test"/>
-    <addaction name="actionExit_Application"/>
+      <addaction name="actHome"/>
+      <addaction name="actCloudTest"/>
+      <addaction name="actExitApplication"/>
    </widget>
-   <addaction name="menuNavigation"/>
+    <addaction name="mnuNavigation"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionHome">
+    <action name="actHome">
    <property name="text">
     <string>Home</string>
    </property>
   </action>
-  <action name="actionDiagnostic_Mode">
+    <action name="actDiagnosticMode">
    <property name="text">
     <string>Diagnostic Mode</string>
    </property>
   </action>
-  <action name="actionAnalysis_Mode">
+    <action name="actAnalysisMode">
    <property name="text">
     <string>Analysis Mode</string>
    </property>
   </action>
-  <action name="actionCloud_Test">
+    <action name="actCloudTest">
    <property name="text">
     <string>Cloud Test</string>
    </property>
   </action>
-  <action name="actionExit_Application">
+    <action name="actExitApplication">
    <property name="text">
     <string>Exit Application</string>
    </property>

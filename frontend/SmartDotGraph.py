@@ -16,7 +16,7 @@ class SmartDotGraph(QtWidgets.QWidget):
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'SmartDotGraph.ui'), self, package='frontend')
 
         # Get references to UI elements
-        self.graph = self.findChild(pg.PlotWidget, 'graphSmartDot')
+        self.graph = self.findChild(pg.PlotWidget, 'grphSmartDot')
 
         self.chkAccelerometer_X = self.findChild(QtWidgets.QCheckBox, 'chkXL_X')
         self.chkAccelerometer_Y = self.findChild(QtWidgets.QCheckBox, 'chkXL_Y')

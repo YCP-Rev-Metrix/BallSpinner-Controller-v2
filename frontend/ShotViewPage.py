@@ -49,7 +49,7 @@ class ShotViewPage(QtWidgets.QWidget):
 
 
         self.motorGraph = self.findChild(MotorGraph, 'MotorGraph')
-        self.SmartDotGraph = self.findChild(SmartDotGraph, 'SmartDotGraph')
+        self.SmartDotGraph = self.findChild(SmartDotGraph, 'grphSmartDot')
         self.btnAnalyze = self.findChild(QtWidgets.QPushButton, 'btnAnalyze')
         self.btnAnalyze.clicked.connect(lambda: self.changePage.emit(3, "SampleText"))  # Go back to Home Page
         self.btnAnalyze.setEnabled(False)  # Disabled during shot view

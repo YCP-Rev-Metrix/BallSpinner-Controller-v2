@@ -10,8 +10,10 @@ class ExitDialog(QtWidgets.QDialog):
         self.setModal(True)
         self.resize(400, 200)
 
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
+        self.dbbMain = self.findChild(QtWidgets.QDialogButtonBox, 'dbbMain')
+        if self.dbbMain:
+            self.dbbMain.accepted.connect(self.accept)
+            self.dbbMain.rejected.connect(self.reject)
 
         self.setWindowTitle("EXIT APPLICATION")
         self.setModal(True)

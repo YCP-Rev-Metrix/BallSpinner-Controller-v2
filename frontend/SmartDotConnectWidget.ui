@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QPushButton" name="startScan">
+    <widget class="QPushButton" name="btnStartScan">
      <property name="text">
       <string>Scan for Smartdot</string>
      </property>
@@ -39,7 +39,7 @@
      <property name="widgetResizable">
       <bool>true</bool>
      </property>
-     <widget class="QWidget" name="scrollAreaWidgetContents">
+     <widget class="QWidget" name="wgtScrollContents">
       <property name="geometry">
        <rect>
         <x>0</x>
@@ -76,7 +76,7 @@
      <property name="widgetResizable">
       <bool>true</bool>
      </property>
-     <widget class="QWidget" name="scrollAreaWidgetContentsDisconnect">
+     <widget class="QWidget" name="wgtScrollContentsDisconnect">
       <property name="geometry">
        <rect>
         <x>0</x>

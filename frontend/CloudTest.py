@@ -15,22 +15,22 @@ class CloudTest(QtWidgets.QWidget):
         super().__init__(parent)
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'cloudTest.ui'), self, package='frontend')
         
-        # Connect button signals to their respective functions
-        self.pushButton.clicked.connect(self.ask_cloud_for_6)
-        self.pushButton_2.clicked.connect(self.clear_label)
-        self.pushButton_3.clicked.connect(self.get_sessions)
-        self.pushButton_4.clicked.connect(self.post_smart_dot_data)
-        self.pushButton_5.clicked.connect(self.get_smart_dot_data)
-        self.pushButton_6.clicked.connect(self.get_diagnostic_data)
-        self.pushButton_7.clicked.connect(self.post_diagnostic_data)
-        self.pushButton_8.clicked.connect(self.post_shot_script_data)
-        self.pushButton_9.clicked.connect(self.get_shot_script_data)
-        self.pushButton_10.clicked.connect(self.post_encoder_data)
-        self.pushButton_11.clicked.connect(self.get_encoder_data)
-        self.pushButton_12.clicked.connect(self.post_heat_data)
-        self.pushButton_13.clicked.connect(self.get_heat_data)
-        self.pushButton_14.clicked.connect(self.submit_all_data)
-        self.pushButton_15.clicked.connect(self.load_session_data_from_cloud)
+        # Connect button signals to their respective functions (Hungarian names)
+        self.findChild(QtWidgets.QPushButton, 'btnAskCloudForSix').clicked.connect(self.ask_cloud_for_6)
+        self.findChild(QtWidgets.QPushButton, 'btnClearLabel').clicked.connect(self.clear_label)
+        self.findChild(QtWidgets.QPushButton, 'btnGetSessions').clicked.connect(self.get_sessions)
+        self.findChild(QtWidgets.QPushButton, 'btnPostSmartDotData').clicked.connect(self.post_smart_dot_data)
+        self.findChild(QtWidgets.QPushButton, 'btnGetSmartDotData').clicked.connect(self.get_smart_dot_data)
+        self.findChild(QtWidgets.QPushButton, 'btnGetDiagnosticData').clicked.connect(self.get_diagnostic_data)
+        self.findChild(QtWidgets.QPushButton, 'btnPostDiagnosticData').clicked.connect(self.post_diagnostic_data)
+        self.findChild(QtWidgets.QPushButton, 'btnPostShotScriptData').clicked.connect(self.post_shot_script_data)
+        self.findChild(QtWidgets.QPushButton, 'btnGetShotScriptData').clicked.connect(self.get_shot_script_data)
+        self.findChild(QtWidgets.QPushButton, 'btnPostEncoderData').clicked.connect(self.post_encoder_data)
+        self.findChild(QtWidgets.QPushButton, 'btnGetEncoderData').clicked.connect(self.get_encoder_data)
+        self.findChild(QtWidgets.QPushButton, 'btnPostHeatData').clicked.connect(self.post_heat_data)
+        self.findChild(QtWidgets.QPushButton, 'btnGetHeatData').clicked.connect(self.get_heat_data)
+        self.findChild(QtWidgets.QPushButton, 'btnSubmitAllData').clicked.connect(self.submit_all_data)
+        self.findChild(QtWidgets.QPushButton, 'btnLoadSessionData').clicked.connect(self.load_session_data_from_cloud)
         self.cloud_api = bsc.get_cloud_api()
 
     def ask_cloud_for_6(self):
@@ -50,7 +50,7 @@ class CloudTest(QtWidgets.QWidget):
     def clear_label(self):
         """Handle the 'Clear Label' button click"""
         # Clear the label text
-        self.label.setText("Response")
+        self.findChild(QtWidgets.QLabel, 'lblResponse').setText("Response")
         print("Label cleared")
     
     def get_sessions(self):
@@ -136,7 +136,7 @@ class CloudTest(QtWidgets.QWidget):
 
     def load_session_data_from_cloud(self):
         print("Load Session Data from Cloud clicked")
-        session_id = self.spinBox_sessionId.value()
+        session_id = self.findChild(QtWidgets.QSpinBox, 'spnSessionId').value()
         bsc.get_data_controller().load_session_data_from_cloud(SessionData(id=session_id, timeStamp=dt.datetime.now().isoformat(), name="Diagnostic Session", isShotMode=False))
         print("Session data loaded from cloud")
 

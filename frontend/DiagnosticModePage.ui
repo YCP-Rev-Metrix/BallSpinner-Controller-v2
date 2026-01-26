@@ -386,13 +386,13 @@
       <item>
        <layout class="QGridLayout" name="gridLayout">
         <item row="0" column="1">
-         <widget class="PlotWidget" name="graphTilt" native="true"/>
+         <widget class="PlotWidget" name="grphTilt" native="true"/>
         </item>
         <item row="0" column="0">
-         <widget class="PlotWidget" name="graphSpin" native="true"/>
+         <widget class="PlotWidget" name="grphSpin" native="true"/>
         </item>
         <item row="0" column="2">
-         <widget class="PlotWidget" name="graphAngle" native="true"/>
+         <widget class="PlotWidget" name="grphAngle" native="true"/>
         </item>
         <item row="2" column="2">
          <widget class="QDial" name="dialAngle"/>

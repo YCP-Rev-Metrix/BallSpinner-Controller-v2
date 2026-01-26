@@ -31,7 +31,7 @@
     </spacer>
    </item>
    <item row="3" column="0" colspan="2">
-    <widget class="QDialogButtonBox" name="buttonBox">
+    <widget class="QDialogButtonBox" name="dbbMain">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
@@ -41,14 +41,14 @@
     </widget>
    </item>
    <item row="0" column="0" colspan="2">
-    <widget class="QLabel" name="label">
+    <widget class="QLabel" name="lblPrompt">
      <property name="text">
       <string>Would you like to submit your data?</string>
      </property>
     </widget>
    </item>
    <item row="1" column="0" colspan="2">
-    <widget class="QLabel" name="label_2">
+    <widget class="QLabel" name="lblSessionName">
      <property name="text">
       <string>Session Name:</string>
      </property>
@@ -58,10 +58,10 @@
     </widget>
    </item>
    <item row="2" column="2">
-    <widget class="QTextEdit" name="textEdit"/>
+    <widget class="QTextEdit" name="txtComments"/>
    </item>
    <item row="2" column="1" alignment="Qt::AlignRight|Qt::AlignTop">
-    <widget class="QLabel" name="label_3">
+    <widget class="QLabel" name="lblComments">
      <property name="text">
       <string>Comments:</string>
      </property>
@@ -72,9 +72,9 @@
  <resources/>
  <connections>
   <connection>
-   <sender>buttonBox</sender>
+    <sender>dbbMain</sender>
    <signal>accepted()</signal>
-   <receiver>Dialog</receiver>
+    <receiver>Dialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -88,7 +88,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>buttonBox</sender>
+    <sender>dbbMain</sender>
    <signal>rejected()</signal>
    <receiver>Dialog</receiver>
    <slot>reject()</slot>

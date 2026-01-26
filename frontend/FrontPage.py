@@ -16,9 +16,9 @@ class FrontPage(QtWidgets.QWidget):
         self.btnData = self.findChild(QtWidgets.QPushButton, 'btnAnalysis')
 
         """
-         self.label = self.findChild(QtWidgets.QLabel, 'label')
+         self.lblLogo = self.findChild(QtWidgets.QLabel, 'lblLogo')
         self.logo = QPixmap('BSC_Logo.png') 
-        self.label.setPixmap(self.logo)
+        self.lblLogo.setPixmap(self.logo)
         """
 
         self.btnDiagnostics.clicked.connect(lambda: self.changePage.emit(1, "Diagnostics"))

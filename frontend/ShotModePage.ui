@@ -21,17 +21,17 @@
        <widget class="QWidget" name="widget_4" native="true">
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
-          <widget class="InputGraph" name="inputGraph_RPM" native="true"/>
+          <widget class="InputGraph" name="grphInputRpm" native="true"/>
          </item>
          <item>
-          <widget class="InputGraph" name="InputGraph_Angle" native="true">
+          <widget class="InputGraph" name="grphInputAngle" native="true">
            <property name="styleSheet">
             <string notr="true"/>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="InputGraph" name="InputGraph_Tilt" native="true"/>
+          <widget class="InputGraph" name="grphInputTilt" native="true"/>
          </item>
         </layout>
        </widget>
@@ -96,7 +96,7 @@
     </widget>
    </item>
    <item>
-    <widget class="SmartDotConnectWidget" name="SmartDotConnectWidget" native="true"/>
+    <widget class="SmartDotConnectWidget" name="wgtSmartDotConnect" native="true"/>
    </item>
   </layout>
  </widget>

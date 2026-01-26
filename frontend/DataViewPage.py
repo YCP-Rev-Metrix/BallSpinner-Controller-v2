@@ -27,19 +27,19 @@ class DataViewPage(QtWidgets.QWidget):
         self.cloud_api = bsc.get_cloud_api()
 
 
-        self.tableview = self.findChild(QtWidgets.QTableView, 'tableViewData')
+        self.tableview = self.findChild(QtWidgets.QTableView, 'tblData')
 
 
 
         self.btnSearch = self.findChild(QtWidgets.QPushButton, 'btnSearch')
         self.btnAnalyze = self.findChild(QtWidgets.QPushButton, 'btnAnalyze')
         self.btnReplay = self.findChild(QtWidgets.QPushButton, 'btnReplay')
-        self.debugLabel = self.findChild(QtWidgets.QLabel, 'debugLabel')
-        self.debugLabel.setText("haha")
-        self.debugLabel.setScaledContents(True)
-        self.debugLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.debugLabel.setStyleSheet("font-size: 20px; font-weight: bold; color: white;")
-        self.debugLabel.setHidden(True)
+        self.lblDebug = self.findChild(QtWidgets.QLabel, 'lblDebug')
+        self.lblDebug.setText("haha")
+        self.lblDebug.setScaledContents(True)
+        self.lblDebug.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lblDebug.setStyleSheet("font-size: 20px; font-weight: bold; color: white;")
+        self.lblDebug.setHidden(True)
 
         self.textSearch = self.findChild(QtWidgets.QLineEdit, 'txtSearch')
 
@@ -202,8 +202,8 @@ class DataViewPage(QtWidgets.QWidget):
         print(f"Type of start_time: {type(start_time)}, Type of end_time: {type(end_time)}")
         
 
-        self.debugLabel.setText("Fetching data from the cloud...")
-        self.debugLabel.setHidden(False)
+        self.lblDebug.setText("Fetching data from the cloud...")
+        self.lblDebug.setHidden(False)
         QtWidgets.QApplication.processEvents()  # Force UI update before blocking call
 
         result = self.cloud_api.get_sessions_in_time_range(start_time, end_time)
@@ -211,9 +211,9 @@ class DataViewPage(QtWidgets.QWidget):
 
         #Implement Error catching here
         if 'error' in result:
-            self.debugLabel.setText("Failed to fetch data from the cloud\nDo you have internet?")
+            self.lblDebug.setText("Failed to fetch data from the cloud\nDo you have internet?")
         else:
-            self.debugLabel.setHidden(True)
+            self.lblDebug.setHidden(True)
 
         #Implement data parsing here
         if result['status_code'] == 200:
@@ -232,8 +232,8 @@ class DataViewPage(QtWidgets.QWidget):
                         row.append(item)
                     self.model.appendRow(row)
             else:
-                self.debugLabel.setHidden(False)
-                self.debugLabel.setText("No shots were found in the time range")
+                self.lblDebug.setHidden(False)
+                self.lblDebug.setText("No shots were found in the time range")
 
        
 
@@ -269,16 +269,16 @@ class DataViewPage(QtWidgets.QWidget):
     def analyze_data(self):
         print("Analyze Data Clicked")
         if(self.load_data() == -1):
-            self.debugLabel.setHidden(False)
-            self.debugLabel.setText("Please select a session to analyze.")
+            self.lblDebug.setHidden(False)
+            self.lblDebug.setText("Please select a session to analyze.")
             return
         self.changePage.emit(3, bsc.get_data_controller())
        
     def replay_data(self):
         print("Replay Data Clicked")
         if(self.load_data() == -1):
-            self.debugLabel.setHidden(False)
-            self.debugLabel.setText("Please select a session to replay.")
+            self.lblDebug.setHidden(False)
+            self.lblDebug.setText("Please select a session to replay.")
             return
         self.changePage.emit(6, bsc.get_data_controller())
        
