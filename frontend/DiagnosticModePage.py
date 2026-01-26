@@ -85,10 +85,11 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.btnGraphTemp = self.findChild(QtWidgets.QPushButton, 'btnGraphTemp')
         self.btnGraphCurrent = self.findChild(QtWidgets.QPushButton, 'btnGraphCurrent')
         #Connect graph buttons
-        self.btnGraphTemp.clicked.connect(self.show_temp_graph)
-        self.btnGraphCurrent.clicked.connect(self.show_current_graph)
+        self.btnGraphTemp.clicked.connect(self.show_temp_graph) #see method at bottom
+        self.btnGraphCurrent.clicked.connect(self.show_current_graph) #see method at bottom
 
         #Sensor Arrays
+        """example data arrays for input to graph dialog, feel free to use your own data collection methods"""
         self.spin_temp_values = []
         self.spin_temp_time = []
         self.tilt_temp_values = []
@@ -96,7 +97,6 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.angle_temp_values = []
         self.angle_temp_time = []
         
-
         self.spin_current_values = []
         self.spin_current_time = []
         self.tilt_current_values = []
