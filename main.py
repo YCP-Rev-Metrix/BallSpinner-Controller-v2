@@ -41,37 +41,31 @@ setup_logging()
 #Device.pin_factory = MockFactory(pin_class=MockPWMPin)
 
 if __name__ == '__main__':
-
-    # Create a temporary application to get screen info for scaling
+    # Get screen info before creating the app to set scaling
     temp_app = QtWidgets.QApplication([])
     screen = QGuiApplication.screenAt(QCursor.pos()) or temp_app.primaryScreen()
-    scale = 1.0
     size = screen.size()
-    try:
-        #Get height and width relative to 1920x1080
-        width = float(size.width())/1920.0
-        height = float(size.height())/1080.0
-        scale = min(width, height)
-        #scale = 0.5 #test value for debugging
-        print(f"Screen scale factor: {scale:.2f}")
-        os.environ["QT_SCALE_FACTOR"] = f"{scale:.2f}"
-        os.environ.setdefault("QT_AUTO_SCREEN_SCALE_FACTOR", "1")
-    except Exception as e:
-        print(f"Error determining screen size: {e}")
-        scale = 1.0
-    finally:
-        #always attempt to clean up temp app
-        try:
-            temp_app.quit()
-            del temp_app
-        except Exception:
-            #If something else goes wrong, just pass
-            pass
-
-
+    width_scale = size.width() / 1920.0
+    height_scale = size.height() / 1080.0
+    scale = min(width_scale, height_scale)
+    
+    print(f"Screen resolution: {size.width()}x{size.height()}")
+    print(f"Scale factor: {scale:.2f}")
+    
+    # Set Qt scale factor before creating the main app
+    os.environ["QT_SCALE_FACTOR"] = f"{scale:.2f}"
+    temp_app.quit()
+    del temp_app
+    
+    # Qt 6 enables high DPI scaling by default; only set menu bar behavior explicitly
     QtWidgets.QApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_DontUseNativeMenuBar, True)
 
     app = QtWidgets.QApplication([])
+    
+    # Re-get screen info after app creation
+    screen = QGuiApplication.screenAt(QCursor.pos()) or app.primaryScreen()
+    size = screen.size()
+    
     app.setStyle("MacOs")  # Use Windows style for consistency across platforms
 
 
@@ -81,9 +75,34 @@ if __name__ == '__main__':
     app.setPalette(qdarktheme.load_palette("dark"))
 
     window = BSCMainWindow()
-    window.show()
-
-    #Make window full screen
+    
+    # Calculate the largest 16:9 window that fits within the screen
+    screen_geometry = screen.geometry()
+    screen_width = screen_geometry.width()
+    screen_height = screen_geometry.height()
+    
+    # Try fitting by width
+    fit_by_width_height = int(screen_width * 9 / 16)
+    # Try fitting by height
+    fit_by_height_width = int(screen_height * 16 / 9)
+    
+    if fit_by_width_height <= screen_height:
+        # Width-constrained: use full width, calculate height
+        window_width = screen_width
+        window_height = fit_by_width_height
+    else:
+        # Height-constrained: use full height, calculate width
+        window_width = fit_by_height_width
+        window_height = screen_height
+    
+    # Resize to maintain aspect ratio
+    window.resize(window_width, window_height)
+    
+    # Move window to the target screen
+    window.move(screen_geometry.x(), screen_geometry.y())
+    window.setScreen(screen)
+    
+    # Make window fullscreen
     window.showFullScreen()
 
     QtWidgets.QApplication.exec()
