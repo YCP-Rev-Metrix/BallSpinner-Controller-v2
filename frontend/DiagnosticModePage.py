@@ -53,6 +53,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.labelSpin = self.findChild(QtWidgets.QLabel, 'lblSpin')
         self.labelTilt = self.findChild(QtWidgets.QLabel, 'lblTilt')
         self.labelAngle = self.findChild(QtWidgets.QLabel, 'lblAngle')
+        #Spin boxes for values
+        self.dsbSpin = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbSpinValue')
+        self.dsbTilt = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbTiltValue')
+        self.dsbAngle = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbAngleValue')
 
         #load SmartDotViewer
         self.smartdotViewer = self.findChild(QtWidgets.QWidget, 'SmartDotViewer')
@@ -101,8 +105,6 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.angle_current_values = []
         self.angle_current_time = []
         
-
-
         #Configure Save Button
         self.btnSave.clicked.connect(self.openPostDialog)
 
@@ -144,6 +146,12 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.spinDial.valueChanged.connect(self._update_dial_labels)
         self.tiltDial.valueChanged.connect(self._update_dial_labels)
         self.angleDial.valueChanged.connect(self._update_dial_labels)
+        
+        # Also update dials when spin boxes change
+        self.dsbSpin.valueChanged.connect(self._update_dials_from_spinboxes)
+        self.dsbTilt.valueChanged.connect(self._update_dials_from_spinboxes)
+        self.dsbAngle.valueChanged.connect(self._update_dials_from_spinboxes)
+        
         self._update_dial_labels()
 
         self.btnStart.clicked.connect(lambda: self.toggle_Buttons())
@@ -342,13 +350,19 @@ class DiagnosticModePage(QtWidgets.QWidget):
 
 
     def _update_dial_labels(self):
-        """Update motor labels to reflect current dial values regardless of timer state."""
+        """Update motor spin boxes to reflect current dial values regardless of timer state."""
         spin_v = float(self.spinDial.value())
         tilt_v = float(self.tiltDial.value())
         angle_v = float(self.angleDial.value())
-        self.labelSpin.setText(f"Spin Rate: {spin_v:.2f} RPM")
-        self.labelTilt.setText(f"Tilt Angle: {tilt_v:.2f} Degrees")
-        self.labelAngle.setText(f"Angle: {angle_v:.2f} Degrees")
+        self.dsbSpin.setValue(spin_v)
+        self.dsbTilt.setValue(tilt_v)
+        self.dsbAngle.setValue(angle_v)
+
+    def _update_dials_from_spinboxes(self):
+        """Update dials to reflect current spin box values."""
+        self.spinDial.setValue(int(self.dsbSpin.value()))
+        self.tiltDial.setValue(int(self.dsbTilt.value()))
+        self.angleDial.setValue(int(self.dsbAngle.value()))
 
 
 
@@ -410,6 +424,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
             self.spinDial.setRange(0, 1200)  # Set dial range from 0 to 1200
             self.tiltDial.setRange(-359, 359)  # Set dial range from -359 to 359
             self.angleDial.setRange(-359, 359)  # Set dial range from -359 to 359
+            # extend spin box ranges accordingly
+            self.dsbSpin.setRange(0, 1200)
+            self.dsbTilt.setRange(-359, 359)
+            self.dsbAngle.setRange(-359, 359)
             #update graph Y ranges
             self.spinGraph.setYRange(0,1250)
             self.tiltGraph.setYRange(-400,400)
@@ -424,6 +442,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
             self.spinDial.setRange(0, 600)  # Set dial range from 0 to 600
             self.tiltDial.setRange(-90, 90)  # Set dial range from -90 to 90
             self.angleDial.setRange(-45, 45)  # Set dial range from -45 to 45
+            # reset spin box ranges accordingly
+            self.dsbSpin.setRange(0, 600)
+            self.dsbTilt.setRange(-90, 90)
+            self.dsbAngle.setRange(-45, 45)
             #update graph Y ranges
             self.spinGraph.setYRange(0,620)
             self.tiltGraph.setYRange(-100,100)
