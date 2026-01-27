@@ -11,16 +11,17 @@ This document explains how the BSC Qt UI is structured and how to add new pages.
 Key points
 - **Main UI:** `BSCMainWindow.ui` (loaded by `BSCMainWindow.py`)
 - **Pages:** Each page should have a `.ui` file and a corresponding `.py` file
-- **Navigation:** `BSCMainWindow` contains a `QStackedWidget` where each page is a child widget
+- **Navigation:** `BSCMainWindow` contains a stacked widget (`swPages`) where each page is a child widget
 
 How to add a page (summary)
-1. Create `YourPage.ui` in `frontend/` using Qt Designer
+1. Create `YourPage.ui` in `frontend/` using Qt Designer with Hungarian notation for all object names
 2. Create `YourPage.py` with a QWidget subclass that loads the `.ui` via `uic.loadUi` and exposes a `changePage` signal if needed
-3. Promote the widget in `BSCMainWindow.ui` to use your new class or instantiate and add it in code
-4. Wire any signals to `BSCMainWindow.switch_to_page`
+3. Promote the widget in `BSCMainWindow.ui` to use your new class (objectName should follow pattern `wgtYourPage`)
+4. Wire the `changePage` signal to `BSCMainWindow.switch_to_page` in `BSCMainWindow.py`
 
 Notes
-- Use `self.findChild(YourPageClass, 'NameInUi')` in `BSCMainWindow` to obtain references to pages defined in the UI file
+- Use `self.findChild(YourPageClass, 'wgtYourPageName')` in `BSCMainWindow` to obtain references to pages defined in the UI file
+- Use Hungarian notation for all object names: buttons (`btn*`), labels (`lbl*`), spinboxes (`spn*`, `dsb*`), combos (`cbo*`), dialogs (`dlg*`), menus (`mnu*`), actions (`act*`), widgets/containers (`wgt*`), stacked widgets (`sw*`), progress bars (`pgb*`), tables (`tbl*`), dialog button boxes (`dbb*`), graphs (`grph*`)
 - Update `BSCMainWindow.ui` in Qt Designer and save it after promoting widgets
 
 If you want, I can restore additional tutorial sections from the previous file, but this smaller guide keeps the repo references consistent with the new `BSCMainWindow` name.
@@ -215,33 +216,40 @@ The .py files are what allow us to have any functionality whatsoever on a page, 
 
 ### The BSCMainWindow
 
-The main UI file in the BSC is called *BSCMainWindow.ui*. This file contains an E-stop button and a QStackedWidget. This QStackedWidget contains a set of header widgets labeled in the form of *page[Your Page Name]*. Within these widgets should only be a single widget, promoted to the class of the screen you want to create. 
+The main UI file in the BSC is called *BSCMainWindow.ui*. This file contains a menu bar and a stacked widget (`swPages`). The stacked widget contains a set of header widgets (pages) with objectNames following the pattern `wgt[PageName]`. Within each page should only be a single widget, promoted to the class of the screen you want to create. 
 
-	BSCMainWindow
-		btnEStop (QPushButton)
-		StackedWidget (QStackedWidget)
-			Page[SamplePage1] (Qwidget)
-				[samplePage1]([SamplePage1])
-				Page[SamplePage2] (Qwidget)
-					[samplePage2]([SamplePage2])
+	BSCMainWindow (wndMain)
+		Menu Bar (mnuNavigation)
+			Actions: actHome, actDiagnosticMode, actAnalysisMode, actCloudTest, actExitApplication
+		Stacked Widget (swPages)
+			Page 0 (wgtFrontPage)
+			Page 1 (wgtDiagnosticModePage)
+			Page 2 (wgtShotModePage)
+			Page 3 (wgtAnalysisModePage)
+			Page 4 (wgtCloudTestPage)
+			Page 5 (wgtSmartDotViewer)
+			Page 6 (wgtShotViewPage)
+			Page 7 (wgtDataViewPage)
 					
 
 
 *BSCMainWindow.py* is the Python file that loads and draws *BSCMainWindow.ui* and handles navigation. This Widget exists to contain and manage the various pages in the app. All pages added should be properly defined in the BSCMainWindow. Below is a piece of example code.
 
-	self.[Page name] = self.findChild([Class of new page], '[name of page in BSCMainWindow.ui]')
+	self.wgtYourNewPage = self.findChild(YourNewPageClass, 'wgtYourNewPage')
 	
-Page navigation is handled by the signal changePage connected to the method switch_to_page(self, index, data): (see tutorial)
+Page navigation is handled by the signal `changePage` connected to the method `switch_to_page(self, index, data)` in BSCMainWindow.py (see tutorial).
 
-index is the page you want to go to. The following is an example list of indexes. if you create a page, add its index to the list at the bottom of *HomePage.py*
+index is the page you want to go to. The following is the order of pages in `swPages`:
 
-	Order of pages in stackedWidget:
-	0 - FrontPage
-	1 - DiagnosticModePage
-	2 - ShotModePage
-	3 - AnalysisModePage
-	4 - Cloud Test 
-	5 - SmartDotViewer (Currently not used, can be replaced)
+	Order of pages in swPages:
+	0 - wgtFrontPage (FrontPage)
+	1 - wgtDiagnosticModePage (DiagnosticModePage)
+	2 - wgtShotModePage (ShotModePage)
+	3 - wgtAnalysisModePage (AnalysisModePage)
+	4 - wgtCloudTestPage (CloudTest)
+	5 - wgtSmartDotViewer (SmartDotViewer)
+	6 - wgtShotViewPage (ShotViewPage)
+	7 - wgtDataViewPage (DataViewPage)
 	
 data is used if additional data needs to be sent to another page.
 
@@ -259,14 +267,15 @@ Every class requires the following imports
 A page can be created either by using a .ui file or simply hardcoding it in Python [see ShotGraph.py] This approach is not recommended as it makes it harder to visualize
 
 ####UI file tips
-1. Ensure you name everything. Use Hungarian notation for the names. If there is no Hungarian equivalent then you can simply leave the name in front of the element
+1. **Ensure you name everything using Hungarian notation.** Buttons: `btn*`, Labels: `lbl*`, Spinboxes: `spn*` (int) or `dsb*` (double), Combos: `cbo*`, Dialogs: `dlg*`, Menus: `mnu*`, Actions: `act*`, Widgets/Containers: `wgt*`, Stacked widgets: `sw*`, Progress bars: `pgb*`, Tables: `tbl*`, Dialog button boxes: `dbb*`, Graphs/Plots: `grph*`. If there is no Hungarian equivalent, use a descriptive name.
 2. Wait until all items are in a page before applying formatting. Widgets can get stuck inside each other if you don't wait.
 3. Imported/promoted widgets won't be visible in the editor, so ensure you are looking at the right item
 
 ####Python file tips
-1. If you are using an element, it needs to be imported
+1. If you are using an element, locate it using `findChild` with the Hungarian notation name:
 
-	self.[elementName] = self.findChild([elementType], '[elementName]')
+	self.btnMyButton = self.findChild(QtWidgets.QPushButton, 'btnMyButton')
+	self.lblMyLabel = self.findChild(QtWidgets.QLabel, 'lblMyLabel')
 
 1. If something needs to be accessed on the page make an accessor method. If you are unsure make one anyway
 2. Make a main method within your page for testing purposes
@@ -334,13 +343,13 @@ Import the following alongside whatever you need for your page
 	
 From there create your page's class, use the following code as a template
 
-	class [YourPage](QtWidgets.QWidget):
+	class YourPage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object) 
-	 # Insert your other signals here if applicable
+    # Insert your other signals here if applicable
     def __init__(self, parent=None):
         super().__init__(parent)
         # load the .ui file (name matches file in repo)
-        uic.loadUi('[YourUiFile]', self)
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'YourPage.ui'), self, package='frontend')
         
         
 Add relevant logic to the page, more detail above
@@ -350,66 +359,67 @@ Make sure you create a main in your Python file to test that your page works
 ###Step 3: Implementing the page into the rest of the navigation.
 
 ####Step 3a: Qt Designer
-1. Open *HomePage.ui* in Qt Designer and go to the QStackedWidget named stackedWidget.
-2. Within the pages in the QStackedWidget left-click on the last one
-2. Right-click on the stacked widget to open the menu. Ensure it says Page N out of N, if not retry step 2 
-3. Click on insert page after current
-4. Ensure the new page is at the bottom. If not delete it and retry from step 2
-5. If it is the rename the page to page[YourNewPageName]
-6. then drag a widget into that page, you should see it inside the page you just made in the inspector
-7. Rename that widget to your new page name
-8. Left-click on the widget and select "promote to..."
-9. Enter the Python file you just created (excluding the .py) into class name field and  frontend. that filename and header file field and then click add
-11. Select the option you just created in the promoted widgets box and click promote
-12. Once that is done save *HomePage.ui*
+1. Open *BSCMainWindow.ui* in Qt Designer and go to the stacked widget named `swPages`.
+2. Within the pages in the stacked widget, left-click on the last one
+3. Right-click on the stacked widget to open the menu. Ensure it says "Page N out of N", if not retry step 2 
+4. Click on "Insert page after current"
+5. Ensure the new page is at the bottom. If not delete it and retry from step 3
+6. Rename the page to `wgtYourNewPageName` (use Hungarian notation with `wgt` prefix for widget containers)
+7. Drag a QWidget into that page; you should see it inside the page in the object inspector
+8. Rename that widget to your class name (e.g., `YourNewPage`)
+9. Left-click on the widget and select "Promote to..."
+10. Enter the Python file you just created (e.g., `YourNewPage`) into the **Class Name** field and `frontend.YourNewPage` into the **Header File** field, then click **Add**
+11. Select the option you just created in the promoted widgets box and click **Promote**
+12. Once that is done, save *BSCMainWindow.ui*
 
 
 ####Step 3b: Python
-1. Open *HomePage.py*
-2. Go to the part of the file declaring all of the pages and declare your page in the following form
+1. Open *BSCMainWindow.py*
+2. Go to the part of the `__init__` method declaring all of the pages and declare your page in the following form:
     
-        #previous page declaration
-        self.[YourNewPage] = self.findChild([ClassOfYourNewPage], '[NameOfYourNewPageInUiFile]')
+        # previous page declaration
+        self.wgtYourNewPage = self.findChild(YourNewPageClass, 'wgtYourNewPage')
         
-1. Connect to your new page's changePage signal in the following form
+3. Connect to your new page's `changePage` signal in the following form:
 
-        #previous page declaration
-        self.[YourNewPage].changePage.connect(self.switch_to_page)
-        #Any additional signal connections
-1. Add an entry to the match case in `switch_to_page()` with your new page and any incoming data it may need
+        # previous page declaration
+        self.wgtYourNewPage.changePage.connect(self.switch_to_page)
+        # Any additional signal connections
+        
+4. Add an entry to the match case in `switch_to_page()` with your new page index and any incoming data it may need
 
 ###Step 4: Navigating to your new page
 
-There are 2 methods of creating navigation to the new page, top menu and adding a button to a page
+There are 2 methods of creating navigation to the new page: menu bar actions and page buttons.
 
-For both methods take note of the index of the page you created. Remember the page count in Qt Designer starts at 1 and the indexes start at 0
+For both methods, take note of the index of the page you created (see the page order listed above). Remember: page count in Qt Designer starts at 1, but page indexes are 0-based.
 
-####Step 4a: Button
-This is the main method for navigating to your widget
+####Step 4a: Button (Primary Method)
+This is the main method for navigating to your widget.
 
-1. Open the .ui file of the page you want to navigate from
-2. Add the button to the page
-3. Open the Python file of the page you want to navigate from
-4. Declare the variable for the button you made
-5. Connect the button's onclick to the page's changePage signal
+1. Open the .ui file of the page you want to navigate from (e.g., `FrontPage.ui`)
+2. Add a QPushButton to the page and name it following Hungarian notation (e.g., `btnGoToNewPage`)
+3. Open the Python file of the page (e.g., `FrontPage.py`)
+4. Declare the button variable and connect it:
 
-        self.[YourButtonName].clicked.connect(lambda: self.changePage.emit([PageIndex], "[Data if applicable]"))
+        self.btnGoToNewPage = self.findChild(QtWidgets.QPushButton, 'btnGoToNewPage')
+        self.btnGoToNewPage.clicked.connect(lambda: self.changePage.emit([PageIndex], "[Data if applicable]"))
 
-####Step 4b: Menubar
-This navigation method is secondary; use this for a static reference such as Home
+####Step 4b: Menu Bar (Secondary Method)
+This navigation method is for static references such as Home or main sections.
 
-1. Open *HomePage.ui*
-2. In the Menu bar click navigation
-3. Click on the "type here" text within the navigation menu
-4. Type in the name of the page **Take note of the name in the object inspector**
-5. Open *HomePage.py*
-6. Instantiate your button
+1. Open *BSCMainWindow.ui* in Qt Designer
+2. Click on the menu bar and select the appropriate menu (e.g., `mnuNavigation`)
+3. Click on the "type here" text within the menu
+4. Type in the action name **Take note of the objectName in the object inspector (use `act*` prefix)**
+5. Open *BSCMainWindow.py*
+6. Instantiate your action:
 
-        self.[YourAction] = self.findChild(QAction, '[YourAction]')
+        self.actYourNewPage = self.findChild(QAction, 'actYourNewPage')
     
-7. Connect your button to the switch_to_page method
+7. Connect your action to the `switch_to_page` method:
 
-        self.[YourAction].triggered.connect(lambda: self.switch_to_page([PageIndex], "[Data if applicable]"))
+        self.actYourNewPage.triggered.connect(lambda: self.switch_to_page([PageIndex], "[Data if applicable]"))
     
      
     
