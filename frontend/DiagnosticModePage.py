@@ -15,6 +15,7 @@ from backend.drivers.DiagnosticScript import DiagnosticScript
 #from backend.motors.SimMotor import SimMotor
 from frontend.SmartDotViewer import SmartDotViewer
 from frontend.SensorGraphDialog import SensorGraphDialog
+from frontend.OverrideDialog import OverrideDialog
 
 import datetime as dt
 
@@ -23,17 +24,13 @@ class DiagnosticModePage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
     navigationLock = pyqtSignal(bool) # False = lock, True = unlock
 
+    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         
-
-        # Check if pi, if not then run sim motor
-        '''commenting out motor stuff to test diagnostic
-        if utils.is_raspberry_pi():
-            Motor = BDCMotor(26)
-        else :
-            Motor = SimMotor(26)
-            '''
+        #Set override mode to false initially
+        self.OverrideMode = False
 
         # Load the UI file (module-relative path).
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'DiagnosticModePage.ui'), self, package='frontend')
@@ -109,6 +106,11 @@ class DiagnosticModePage(QtWidgets.QWidget):
         #Configure Save Button
         self.btnSave.clicked.connect(self.openPostDialog)
 
+        #configure OverrideButton
+        self.btnOverride = self.findChild(QtWidgets.QPushButton, 'btnOverride')
+        self.btnOverride.setCheckable(True)
+        self.btnOverride.clicked.connect(self.toggle_override_mode)
+
         #Spin Motor graph setup
         self.spinGraph.setTitle("Diagnostic Spin Graph")
         self.spinGraph.setLabel('left', 'Spin Rate', units='RPM')
@@ -137,6 +139,12 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.spinDial.setRange(0, 600)  # Set dial range from 0 to 600
         self.tiltDial.setRange(-90, 90)  # Set dial range from -90 to 90
         self.angleDial.setRange(-45, 45)  # Set dial range from -45 to 45
+
+        # Always update labels when dials move (even if timer is stopped)
+        self.spinDial.valueChanged.connect(self._update_dial_labels)
+        self.tiltDial.valueChanged.connect(self._update_dial_labels)
+        self.angleDial.valueChanged.connect(self._update_dial_labels)
+        self._update_dial_labels()
 
         self.btnStart.clicked.connect(lambda: self.toggle_Buttons())
         self.btnStop.clicked.connect(lambda: self.toggle_Buttons())
@@ -333,10 +341,27 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.angleCurve.setData(x_view, angle_view)
 
 
+    def _update_dial_labels(self):
+        """Update motor labels to reflect current dial values regardless of timer state."""
+        spin_v = float(self.spinDial.value())
+        tilt_v = float(self.tiltDial.value())
+        angle_v = float(self.angleDial.value())
+        self.labelSpin.setText(f"Spin Rate: {spin_v:.2f} RPM")
+        self.labelTilt.setText(f"Tilt Angle: {tilt_v:.2f} Degrees")
+        self.labelAngle.setText(f"Angle: {angle_v:.2f} Degrees")
+
+
 
     def reset(self):
         # ensure not running and reset UI
         self.smartdotViewer.reset()
+        # Clear SmartDot data from the data controller so we start fresh
+        dc = bsc.get_data_controller()
+        if dc is not None:
+            try:
+                dc.smartdot_data.data_entries.clear()
+            except AttributeError:
+                pass
         self.clear_graphs()
         self.spinDial.setValue(0)
         self.tiltDial.setValue(0)
@@ -356,7 +381,56 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.spinCurve.setData([0.0], [0.0])
         self.tiltCurve.setData([0.0], [0.0])
         self.angleCurve.setData([0.0], [0.0])
-
+    
+    
+    def toggle_override_mode(self):
+        """Open override mode configuration dialog."""
+        dialog = OverrideDialog(self, current_enabled=self.OverrideMode)
+        result = dialog.exec()
+        if result == QtWidgets.QDialog.DialogCode.Accepted:
+            override_enabled = dialog.is_override_enabled()
+            self.toggle_enable_override(override_enabled)
+            self.btnOverride.setChecked(override_enabled)
+        else:
+            # User cancelled, reset button state
+            self.btnOverride.setChecked(self.OverrideMode)
+    
+    def toggle_enable_override(self, enable: bool):
+        self.OverrideMode = enable
+        # Get the main window (top-level parent)
+        main_window = self.window()
+        
+        if self.OverrideMode:
+            print("Override Mode Enabled")
+            # Set main window background to dark red when override mode is enabled
+            main_window.setStyleSheet("background-color: #cc0000;")
+            # Lock navigation when override mode is enabled
+            self.navigationLock.emit(False)
+            # set extended ranges for dials
+            self.spinDial.setRange(0, 1200)  # Set dial range from 0 to 1200
+            self.tiltDial.setRange(-359, 359)  # Set dial range from -359 to 359
+            self.angleDial.setRange(-359, 359)  # Set dial range from -359 to 359
+            #update graph Y ranges
+            self.spinGraph.setYRange(0,1250)
+            self.tiltGraph.setYRange(-400,400)
+            self.angleGraph.setYRange(-400,400)
+        else:
+            print("Override Mode Disabled")
+            # Reset main window background to default when override mode is disabled
+            main_window.setStyleSheet("")
+            # Unlock navigation when override mode is disabled
+            self.navigationLock.emit(True)
+            # reset dials to safe ranges
+            self.spinDial.setRange(0, 600)  # Set dial range from 0 to 600
+            self.tiltDial.setRange(-90, 90)  # Set dial range from -90 to 90
+            self.angleDial.setRange(-45, 45)  # Set dial range from -45 to 45
+            #update graph Y ranges
+            self.spinGraph.setYRange(0,620)
+            self.tiltGraph.setYRange(-100,100)
+            self.angleGraph.setYRange(-50,50)
+            
+        # Reset UI and state whenever override toggles
+        self.reset()
 
 
 
