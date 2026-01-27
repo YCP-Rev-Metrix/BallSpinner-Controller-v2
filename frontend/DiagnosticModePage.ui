@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1244</width>
-    <height>1090</height>
+    <height>1034</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -379,9 +379,9 @@
    </item>
    <item>
     <widget class="QWidget" name="conMainBody" native="true">
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="6,7">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="6,8">
       <item>
-       <layout class="QGridLayout" name="gridLayout">
+       <layout class="QGridLayout" name="gridLayout" columnstretch="1,1,1">
         <item row="0" column="2">
          <widget class="PlotWidget" name="grphAngle" native="true"/>
         </item>
@@ -502,7 +502,14 @@
        </layout>
       </item>
       <item>
-       <widget class="SmartDotViewer" name="SmartDotViewer" native="true"/>
+       <widget class="SmartDotViewer" name="SmartDotViewer" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
