@@ -22,7 +22,7 @@ import datetime as dt
 
 class DiagnosticModePage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
-    navigationLock = pyqtSignal(bool) # False = lock, True = unlock
+    navigationLock = pyqtSignal(bool, str) # False = lock, True = unlock
 
     
 
@@ -231,6 +231,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
             if not self._timer.isActive():
                 # Start
                 self.btnStart.setEnabled(False)
+                self.btnOverride.setEnabled(False)
                 self.btnStop.setEnabled(True)
                 self.diagnostic_script.start_motors([1,2,3])
                 # start timer when entering active state
@@ -243,10 +244,11 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 # Initialize the Session
                 bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Diagnostic Session", isShotMode=False))
                 bsc.set_data_controller(DataController(bsc.get_session()))
-                self.navigationLock.emit(False)
+                self.navigationLock.emit(False,"Motor Running")
             else:
                 # Stop
                 self.btnStart.setEnabled(True)
+                self.btnOverride.setEnabled(True)
                 self.btnStop.setEnabled(False)
                 self.diagnostic_script.stop_motors([1,2,3])
                 bsc.disconnect_all_motors()
@@ -255,7 +257,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 # Stop SmartDotViewer updates if connected
                 if len(bsc.get_smartdotConnectionManager().get_connections()) > 0:
                     self.smartdotViewer.stop_updates()
-                self.navigationLock.emit(True)
+                self.navigationLock.emit(True,"")
 
 
     def EStop(self):
@@ -419,7 +421,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
             # Set main window background to dark red when override mode is enabled
             main_window.setStyleSheet("background-color: #cc0000;")
             # Lock navigation when override mode is enabled
-            self.navigationLock.emit(False)
+            self.navigationLock.emit(False,"Override Mode Enabled")
             # set extended ranges for dials
             self.spinDial.setRange(0, 1200)  # Set dial range from 0 to 1200
             self.tiltDial.setRange(-359, 359)  # Set dial range from -359 to 359
@@ -437,7 +439,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
             # Reset main window background to default when override mode is disabled
             main_window.setStyleSheet("")
             # Unlock navigation when override mode is disabled
-            self.navigationLock.emit(True)
+            self.navigationLock.emit(True,"")
             # reset dials to safe ranges
             self.spinDial.setRange(0, 600)  # Set dial range from 0 to 600
             self.tiltDial.setRange(-90, 90)  # Set dial range from -90 to 90

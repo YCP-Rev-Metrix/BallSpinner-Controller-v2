@@ -73,10 +73,33 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         self.actionQuit.triggered.connect(self.attempt_exit)
 
         self.navigation_menu = self.findChild(QtWidgets.QMenu, 'mnuNavigation')
+        self.menuBar = self.findChild(QtWidgets.QMenuBar, 'menubar')
+        self.NavigationSatus = QtWidgets.QMenu("")
+        self.menuBar.addMenu(self.NavigationSatus)
+        self.statusBar = self.findChild(QtWidgets.QStatusBar, 'statusbar')
+        self.statusBar.show()
+        self.LockCount=0
 
-    def toggle_navigation(self, enable: bool):
+    def toggle_navigation(self, enable: bool, message :str):
         """Enable or disable the navigation menu."""
-        self.navigation_menu.setEnabled(enable)
+        print("Toggling navigation:", enable, message)
+        if enable:
+            self.LockCount -=1
+        else:
+            self.LockCount +=1
+            if self.LockCount == 1:
+                self.NavigationSatus.setTitle("Navigation Locked: " + message)
+
+        
+        
+        if self.LockCount<=0:
+            self.navigation_menu.setEnabled(True)
+            self.statusBar.showMessage("Navigation is enabled.",5000)
+            self.NavigationSatus.setTitle("")
+        else:
+            self.navigation_menu.setEnabled(False)
+            self.statusBar.showMessage("Navigation is disabled while motor is running.", 5000)
+
 
     def attempt_exit(self):
         """Show exit confirmation dialog and close if the user accepts."""

@@ -31,7 +31,7 @@ _logger = get_logger(__name__)
 
 class ShotViewPage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
-    navigationLock = pyqtSignal(bool) # False = lock, True = unlock
+    navigationLock = pyqtSignal(bool, str) # False = lock, True = unlock
     #motor1 = USBBDCMotor()
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -107,7 +107,7 @@ class ShotViewPage(QtWidgets.QWidget):
     def StartShotView(self):
         Controller = bsc.get_data_controller()
         self.btnAnalyze.setEnabled(False)  # Disabled during shot view
-        self.navigationLock.emit(False) # Lock navigation during shot view
+        self.navigationLock.emit(False,"Shot in progress") # Lock navigation during shot view
         print("Packaging motor data for Shot View")
         motor_package = utils.PackageMotorData(self, bsc)
         print("Motor data packaged")
@@ -428,7 +428,7 @@ class ShotViewPage(QtWidgets.QWidget):
             bsc.disconnect_all_motors()
         print("Shot View Ended")
         self.btnAnalyze.setEnabled(True)  # Enable Analyze button after shot view
-        self.navigationLock.emit(True) # Unlock navigation after shot view
+        self.navigationLock.emit(True,"") # Unlock navigation after shot view
         
 
             

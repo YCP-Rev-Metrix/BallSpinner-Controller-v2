@@ -400,6 +400,11 @@
           <layout class="QHBoxLayout" name="horizontalLayout_4">
            <item>
             <widget class="QLabel" name="lblTilt">
+             <property name="font">
+              <font>
+               <pointsize>16</pointsize>
+              </font>
+             </property>
              <property name="text">
               <string>Tilt (Deg):</string>
              </property>
@@ -407,6 +412,17 @@
            </item>
            <item>
             <widget class="QDoubleSpinBox" name="dsbTiltValue">
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>45</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>16</pointsize>
+              </font>
+             </property>
              <property name="minimum">
               <double>-45.000000000000000</double>
              </property>
@@ -461,6 +477,11 @@
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
             <widget class="QLabel" name="lblSpin">
+             <property name="font">
+              <font>
+               <pointsize>16</pointsize>
+              </font>
+             </property>
              <property name="text">
               <string>Spin Rate (RPM): </string>
              </property>
@@ -468,6 +489,17 @@
            </item>
            <item>
             <widget class="QDoubleSpinBox" name="dsbSpinValue">
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>45</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>16</pointsize>
+              </font>
+             </property>
              <property name="maximum">
               <double>600.000000000000000</double>
              </property>
@@ -481,6 +513,11 @@
           <layout class="QHBoxLayout" name="horizontalLayout_5">
            <item>
             <widget class="QLabel" name="lblAngle">
+             <property name="font">
+              <font>
+               <pointsize>16</pointsize>
+              </font>
+             </property>
              <property name="text">
               <string>Angle (Deg):</string>
              </property>
@@ -488,6 +525,17 @@
            </item>
            <item>
             <widget class="QDoubleSpinBox" name="dsbAngleValue">
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>45</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>16</pointsize>
+              </font>
+             </property>
              <property name="minimum">
               <double>-90.000000000000000</double>
              </property>

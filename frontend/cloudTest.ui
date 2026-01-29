@@ -125,6 +125,11 @@
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <widget class="QLabel" name="lblSessionId">
+         <property name="font">
+          <font>
+           <pointsize>16</pointsize>
+          </font>
+         </property>
          <property name="text">
           <string>Session ID:</string>
          </property>
@@ -132,6 +137,17 @@
        </item>
        <item>
         <widget class="QSpinBox" name="spnSessionId">
+         <property name="minimumSize">
+          <size>
+           <width>120</width>
+           <height>45</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>16</pointsize>
+          </font>
+         </property>
          <property name="minimum">
           <number>1</number>
          </property>

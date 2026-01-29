@@ -124,8 +124,19 @@
      <x>0</x>
      <y>0</y>
      <width>1065</width>
-     <height>33</height>
+     <height>50</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>18</pointsize>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QMenuBar { padding: 8px; }
+QMenuBar::item { padding: 10px 15px; }
+QMenu { font-size: 18px; }
+QMenu::item { padding: 12px 25px; min-height: 45px; }</string>
    </property>
     <widget class="QMenu" name="mnuNavigation">
     <property name="title">

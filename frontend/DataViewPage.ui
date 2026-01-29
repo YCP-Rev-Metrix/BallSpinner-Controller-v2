@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1065</width>
+    <width>1080</width>
     <height>892</height>
    </rect>
   </property>
@@ -32,8 +32,16 @@
         <enum>QFrame::Raised</enum>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="spacing">
+         <number>18</number>
+        </property>
         <item>
          <widget class="QLabel" name="lblSearch">
+          <property name="font">
+           <font>
+            <pointsize>18</pointsize>
+           </font>
+          </property>
           <property name="text">
            <string>Search</string>
           </property>
@@ -47,10 +55,26 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>55</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>18</pointsize>
+           </font>
+          </property>
          </widget>
         </item>
         <item>
          <widget class="QLabel" name="lblSessionType">
+          <property name="font">
+           <font>
+            <pointsize>18</pointsize>
+           </font>
+          </property>
           <property name="text">
            <string>Session type</string>
           </property>
@@ -63,6 +87,17 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>55</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>18</pointsize>
+           </font>
           </property>
           <item>
            <property name="text">
@@ -83,24 +118,134 @@
         </item>
         <item>
          <widget class="QLabel" name="lblStartDate">
+          <property name="font">
+           <font>
+            <pointsize>18</pointsize>
+           </font>
+          </property>
           <property name="text">
            <string>Start Date</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QDateTimeEdit" name="dtStartTime">
+         <widget class="QDateEdit" name="dateStartDate">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
-          <property name="currentSection">
-           <enum>QDateTimeEdit::MinuteSection</enum>
+          <property name="minimumSize">
+           <size>
+            <width>140</width>
+            <height>55</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>18</pointsize>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QDateEdit {
+    font-size: 18px;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    padding: 2px 28px 2px 10px;
+    background: transparent;
+}
+QDateEdit::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 24px;
+    border: none;
+}
+QDateEdit::down-arrow {
+    width: 12px;
+    height: 12px;
+}</string>
+          </property>
+          <property name="buttonSymbols">
+           <enum>QAbstractSpinBox::NoButtons</enum>
           </property>
           <property name="displayFormat">
-           <string>M/d/yy hh:mm</string>
+           <string>M/d/yy</string>
+          </property>
+          <property name="calendarPopup">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblStartTime">
+          <property name="font">
+           <font>
+            <pointsize>18</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Start Time</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTimeEdit" name="timeStartTime">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>120</width>
+            <height>55</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>18</pointsize>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QTimeEdit {
+    font-size: 18px;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    padding: 2px 10px;
+    background: transparent;
+}
+QTimeEdit::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    width: 30px;
+    height: 27px;
+}
+QTimeEdit::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    width: 30px;
+    height: 27px;
+}
+QTimeEdit::up-arrow {
+    width: 14px;
+    height: 14px;
+}
+QTimeEdit::down-arrow {
+    width: 14px;
+    height: 14px;
+}</string>
+          </property>
+          <property name="buttonSymbols">
+           <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+          <property name="accelerated">
+           <bool>true</bool>
+          </property>
+          <property name="showGroupSeparator" stdset="0">
+           <bool>true</bool>
+          </property>
+          <property name="displayFormat">
+           <string>hh:mm</string>
           </property>
           <property name="calendarPopup">
            <bool>true</bool>
@@ -109,24 +254,134 @@
         </item>
         <item>
          <widget class="QLabel" name="lblEndDate">
+          <property name="font">
+           <font>
+            <pointsize>18</pointsize>
+           </font>
+          </property>
           <property name="text">
            <string>End Date</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QDateTimeEdit" name="dtEndTime">
+         <widget class="QDateEdit" name="dateEndDate">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
-          <property name="currentSection">
-           <enum>QDateTimeEdit::MinuteSection</enum>
+          <property name="minimumSize">
+           <size>
+            <width>140</width>
+            <height>55</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>18</pointsize>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QDateEdit {
+    font-size: 18px;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    padding: 2px 28px 2px 10px;
+    background: transparent;
+}
+QDateEdit::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 24px;
+    border: none;
+}
+QDateEdit::down-arrow {
+    width: 12px;
+    height: 12px;
+}</string>
+          </property>
+          <property name="buttonSymbols">
+           <enum>QAbstractSpinBox::NoButtons</enum>
           </property>
           <property name="displayFormat">
-           <string>M/d/yy hh:mm</string>
+           <string>M/d/yy</string>
+          </property>
+          <property name="calendarPopup">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblEndTime">
+          <property name="font">
+           <font>
+            <pointsize>18</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>End Time</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTimeEdit" name="timeEndTime">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>120</width>
+            <height>55</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>18</pointsize>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QTimeEdit {
+    font-size: 18px;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    padding: 2px 10px;
+    background: transparent;
+}
+QTimeEdit::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    width: 30px;
+    height: 27px;
+}
+QTimeEdit::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    width: 30px;
+    height: 27px;
+}
+QTimeEdit::up-arrow {
+    width: 14px;
+    height: 14px;
+}
+QTimeEdit::down-arrow {
+    width: 14px;
+    height: 14px;
+}</string>
+          </property>
+          <property name="buttonSymbols">
+           <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+          <property name="accelerated">
+           <bool>true</bool>
+          </property>
+          <property name="showGroupSeparator" stdset="0">
+           <bool>true</bool>
+          </property>
+          <property name="displayFormat">
+           <string>hh:mm</string>
           </property>
           <property name="calendarPopup">
            <bool>true</bool>
@@ -141,6 +396,17 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="minimumSize">
+           <size>
+            <width>110</width>
+            <height>55</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>18</pointsize>
+           </font>
+          </property>
           <property name="text">
            <string>Search</string>
           </property>
@@ -150,7 +416,7 @@
       </widget>
      </item>
      <item>
-    <widget class="QTableView" name="tblData">
+      <widget class="QTableView" name="tblData">
        <property name="sortingEnabled">
         <bool>true</bool>
        </property>
@@ -158,6 +424,9 @@
      </item>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <property name="spacing">
+        <number>20</number>
+       </property>
        <item>
         <widget class="QPushButton" name="btnAnalyze">
          <property name="sizePolicy">
@@ -166,8 +435,19 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="minimumSize">
+          <size>
+           <width>180</width>
+           <height>60</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>18</pointsize>
+          </font>
+         </property>
          <property name="text">
-          <string>     Analyze     </string>
+          <string>Analyze</string>
          </property>
         </widget>
        </item>
@@ -192,8 +472,19 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="minimumSize">
+          <size>
+           <width>180</width>
+           <height>60</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>18</pointsize>
+          </font>
+         </property>
          <property name="text">
-          <string>     Replay     </string>
+          <string>Replay</string>
          </property>
         </widget>
        </item>

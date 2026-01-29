@@ -3,7 +3,7 @@ from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QTableView
 from PyQt6.QtGui import QPixmap, QStandardItemModel, QStandardItem 
 import os
-from PyQt6.QtCore import pyqtSignal, QDateTime, QSortFilterProxyModel, Qt, QRegularExpression
+from PyQt6.QtCore import pyqtSignal, QDateTime, QDate, QTime, QSortFilterProxyModel, Qt, QRegularExpression
 from datetime import datetime, timezone
 import datetime as dt
 from BSC import bsc
@@ -43,35 +43,38 @@ class DataViewPage(QtWidgets.QWidget):
 
         self.textSearch = self.findChild(QtWidgets.QLineEdit, 'txtSearch')
 
-        self.dateStart = self.findChild(QtWidgets.QDateTimeEdit, 'dtStartTime')
-        self.dateEnd = self.findChild(QtWidgets.QDateTimeEdit, 'dtEndTime')
+        self.dateStartDate = self.findChild(QtWidgets.QDateEdit, 'dateStartDate')
+        self.timeStartTime = self.findChild(QtWidgets.QTimeEdit, 'timeStartTime')
+        self.dateEndDate = self.findChild(QtWidgets.QDateEdit, 'dateEndDate')
+        self.timeEndTime = self.findChild(QtWidgets.QTimeEdit, 'timeEndTime')
 
         self.cboSessionType = self.findChild(QtWidgets.QComboBox, 'cboSessionType')
 
-        # Prevent QDateTimeEdit text overflow by setting fixed width and font size
-        self.dateStart.setFixedWidth(200)
-        self.dateEnd.setFixedWidth(200)
-
-        # Keep qdarktheme look while stopping text overhang in the date edits
-        date_edit_style = """
-        QDateTimeEdit {
-            font-size: 15px;
-            font-family: 'Segoe UI', 'Arial', sans-serif;
-            padding: 2px 10px;
-            min-width: 160px;
-            background: transparent;
-        }
-        """
-        self.dateStart.setStyleSheet(date_edit_style)
-        self.dateEnd.setStyleSheet(date_edit_style)
-        # Hide spin buttons to avoid double arrow rendering on some styles
-        self.dateStart.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
-        self.dateEnd.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
+        # Set time pickers to increment by 15 minutes
+        self.timeStartTime.setDisplayFormat("hh:mm")
+        self.timeStartTime.setCurrentSection(QtWidgets.QDateTimeEdit.Section.MinuteSection)
+        from PyQt6.QtCore import QTime
+        self.timeStartTime.setTime(QTime(0, 0))
+        self.timeStartTime.setMinimumTime(QTime(0, 0))
+        self.timeStartTime.setMaximumTime(QTime(23, 59))
+        # Create a custom step for 15-minute increments
+        self.timeStartTime.setWrapping(True)
+        self.timeStartTime.stepBy = lambda steps: self._step_by_15_minutes(self.timeStartTime, steps)
+        
+        self.timeEndTime.setDisplayFormat("hh:mm")
+        self.timeEndTime.setCurrentSection(QtWidgets.QDateTimeEdit.Section.MinuteSection)
+        self.timeEndTime.setTime(QTime(0, 0))
+        self.timeEndTime.setMinimumTime(QTime(0, 0))
+        self.timeEndTime.setMaximumTime(QTime(23, 59))
+        self.timeEndTime.setWrapping(True)
+        self.timeEndTime.stepBy = lambda steps: self._step_by_15_minutes(self.timeEndTime, steps)
 
         # Connect button signals to their respective functions
         self.btnSearch.clicked.connect(
-            lambda: self.refresh_data(self.dateStart.dateTime().toString("yyyyMMddhhmmss"), self.dateEnd.dateTime().toString("yyyyMMddhhmmss"))
-            # lambda: print(int(self.dateStart.dateTime().toString("yyyyMMdd")))
+            lambda: self.refresh_data(
+                self.dateStartDate.date().toString("yyyyMMdd") + self.timeStartTime.time().toString("hhmmss"),
+                self.dateEndDate.date().toString("yyyyMMdd") + self.timeEndTime.time().toString("hhmmss")
+            )
             )
         
         #self.btnSearch.clicked.connect(self.refresh_data)
@@ -81,8 +84,31 @@ class DataViewPage(QtWidgets.QWidget):
 
 
         #Set Up dates 
-        self.dateStart.setDateTime(QDateTime.currentDateTime().addDays(-7).addSecs(-7200))  # Default to one week  and 2 hrs ago
-        self.dateEnd.setDateTime(QDateTime.currentDateTime().addSecs(7200))  # Default to 2 hrs from now
+        current_datetime = QDateTime.currentDateTime()
+        one_week_ago = current_datetime.addDays(-7).addSecs(-7200)  # One week and 2 hrs ago
+        two_hours_future = current_datetime.addSecs(7200)  # 2 hrs from now
+        
+        # Round start time down to nearest 15 minutes
+        start_time = one_week_ago.time()
+        start_mins = start_time.minute()
+        rounded_start_mins = (start_mins // 15) * 15
+        rounded_start_time = QTime(start_time.hour(), rounded_start_mins, 0)
+        
+        # Round end time up to nearest 15 minutes
+        end_time = two_hours_future.time()
+        end_mins = end_time.minute()
+        rounded_end_mins = ((end_mins + 14) // 15) * 15
+        if rounded_end_mins >= 60:
+            rounded_end_time = QTime((end_time.hour() + 1) % 24, 0, 0)
+            if end_time.hour() == 23:
+                two_hours_future = two_hours_future.addDays(1)
+        else:
+            rounded_end_time = QTime(end_time.hour(), rounded_end_mins, 0)
+        
+        self.dateStartDate.setDate(one_week_ago.date())
+        self.timeStartTime.setTime(rounded_start_time)
+        self.dateEndDate.setDate(two_hours_future.date())
+        self.timeEndTime.setTime(rounded_end_time)
         
         # Set up the table model
         self.tableview.setSortingEnabled(True)
@@ -93,18 +119,22 @@ class DataViewPage(QtWidgets.QWidget):
         self.tableview.resizeRowsToContents()
         self.tableview.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
         self.tableview.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
+        self.tableview.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.tableview.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
         self.tableview.horizontalHeader().setStretchLastSection(True)
         self.tableview.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self.tableview.verticalHeader().setDefaultSectionSize(50)  # Minimum row height for touch
+        self.tableview.verticalHeader().setMinimumSectionSize(50)
         self.tableview.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         self.tableview.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
-        # Make table scrollbars larger for easier grabbing
+        # Make table scrollbars larger for easier grabbing and increase row heights for touch
         self.tableview.setStyleSheet("""
-            QScrollBar:vertical { width: 28px; background: transparent; }
-            QScrollBar::handle:vertical { background: rgba(200,200,200,0.9); min-height: 40px; border-radius: 6px; }
+            QScrollBar:vertical { width: 35px; background: transparent; }
+            QScrollBar::handle:vertical { background: rgba(200,200,200,0.9); min-height: 50px; border-radius: 8px; }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
-            QScrollBar:horizontal { height: 18px; background: transparent; }
-            QScrollBar::handle:horizontal { background: rgba(200,200,200,0.9); min-width: 30px; border-radius: 6px; }
+            QTableView { font-size: 16px; }
+            QTableView::item { padding: 8px; min-height: 50px; }
+            QHeaderView::section { font-size: 16px; padding: 8px; min-height: 45px; }
         """)
 
         # Use a custom proxy so we can combine text filtering with a session-type filter
@@ -171,6 +201,20 @@ class DataViewPage(QtWidgets.QWidget):
         self.cboSessionType.currentTextChanged.connect(self.on_session_type_changed)
         # Initialize proxy filter from current combobox value
         self.on_session_type_changed(self.cboSessionType.currentText())
+
+    def _step_by_15_minutes(self, time_edit, steps):
+        """Helper method to step time by 15-minute increments"""
+        current_time = time_edit.time()
+        current_section = time_edit.currentSection()
+        
+        if current_section == QtWidgets.QDateTimeEdit.Section.MinuteSection:
+            # Step by 15 minutes
+            new_time = current_time.addSecs(steps * 15 * 60)
+            time_edit.setTime(new_time)
+        elif current_section == QtWidgets.QDateTimeEdit.Section.HourSection:
+            # Step by 1 hour when in hour section
+            new_time = current_time.addSecs(steps * 60 * 60)
+            time_edit.setTime(new_time)
 
     def on_search_text_changed(self, text: str):
         # Escape the user input so regex metacharacters don't interfere,

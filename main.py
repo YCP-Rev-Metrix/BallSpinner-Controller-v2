@@ -3,6 +3,7 @@ from PyQt6 import QtCore
 from PyQt6.QtGui import QPalette, QColor, QGuiApplication, QCursor
 import io
 import os
+import sys
 
 try:
     import qdarktheme
@@ -48,6 +49,8 @@ if __name__ == '__main__':
     width_scale = size.width() / 1920.0
     height_scale = size.height() / 1080.0
     scale = min(width_scale, height_scale)
+    scale -= 0.05  # Slightly reduce scale to ensure fit
+    scale = max(0.1, scale)  # Prevent too-small scale
     
     print(f"Screen resolution: {size.width()}x{size.height()}")
     print(f"Scale factor: {scale:.2f}")
@@ -103,6 +106,9 @@ if __name__ == '__main__':
     window.setScreen(screen)
     
     # Make window fullscreen
-    window.showFullScreen()
+    if sys.platform != "darwin":
+        window.showFullScreen()
+    else:
+        window.showMaximized()
 
     QtWidgets.QApplication.exec()

@@ -194,6 +194,11 @@
       </item>
       <item>
        <widget class="QLabel" name="lblXMin">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
         <property name="text">
          <string>Min</string>
         </property>
@@ -201,6 +206,17 @@
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="dsbMinX">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>40</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
         <property name="decimals">
          <number>3</number>
         </property>
@@ -214,6 +230,11 @@
       </item>
       <item>
        <widget class="QLabel" name="lblXMax">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
         <property name="text">
          <string>Max</string>
         </property>
@@ -221,6 +242,17 @@
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="dsbMaxX">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>40</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
         <property name="decimals">
          <number>3</number>
         </property>
@@ -234,6 +266,17 @@
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="dsbLookBackSeconds">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>40</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
         <property name="enabled">
          <bool>true</bool>
         </property>
