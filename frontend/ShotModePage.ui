@@ -13,9 +13,15 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout" stretch="7,3">
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="6,4">
    <item>
     <widget class="QWidget" name="widget" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <widget class="QWidget" name="widget_4" native="true">
@@ -96,7 +102,17 @@
     </widget>
    </item>
    <item>
-    <widget class="SmartDotConnectWidget" name="wgtSmartDotConnect" native="true"/>
+    <widget class="SmartDotConnectWidget" name="wgtSmartDotConnect" native="true">
+     <property name="minimumWidth">
+      <number>350</number>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

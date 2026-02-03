@@ -33,7 +33,9 @@ class InputGraph(QtWidgets.QWidget):
         # use a larger reset/refresh symbol for clarity
         self.clear_button = QtWidgets.QPushButton("↺")
         # slightly larger circular red button so the symbol appears bigger
-        self.clear_button.setFixedSize(50, 50)
+        # Use minimum and maximum sizes instead of fixed to allow scaling with parent
+        self.clear_button.setMinimumSize(40, 40)
+        self.clear_button.setMaximumSize(60, 60)
         self.clear_button.setStyleSheet("background-color: #d9534f; color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: bold;")
         # brief tooltip for clarity
         self.clear_button.setToolTip("Reset endpoints and clear points")

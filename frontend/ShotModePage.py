@@ -88,7 +88,8 @@ class ShotModePage(QtWidgets.QWidget):
         self.sliderTime.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBelow)
 
         # Increase the widget height so the groove + handle are easier to touch
-        self.sliderTime.setFixedHeight(44)
+        # Use minimum height instead of fixed to allow scaling with parent container
+        self.sliderTime.setMinimumHeight(44)
         self.sliderTime.setTracking(True)
         self.sliderTime.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
         
