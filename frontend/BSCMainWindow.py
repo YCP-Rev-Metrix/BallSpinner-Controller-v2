@@ -80,6 +80,16 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         self.statusBar.show()
         self.LockCount=0
 
+        # Make simulation menu checkboxes mutually exclusive
+        self.actionSimulatedMotor = self.findChild(QAction, 'actSimMotor')
+        self.actionRealMotor = self.findChild(QAction, 'actRealMotor')
+
+        # Set default to Real Motor
+        self.actionSimulatedMotor.setChecked(True)
+
+        self.actionSimulatedMotor.toggled.connect(lambda checked: self.motorSimulationControl(checked, True))
+        self.actionRealMotor.toggled.connect(lambda checked: self.motorSimulationControl(checked, False))
+
     def toggle_navigation(self, enable: bool, message :str):
         """Enable or disable the navigation menu."""
         print("Toggling navigation:", enable, message)
@@ -93,11 +103,11 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         
         
         if self.LockCount<=0:
-            self.navigation_menu.setEnabled(True)
+            self.menuBar.setEnabled(True)
             self.statusBar.showMessage("Navigation is enabled.",5000)
             self.NavigationSatus.setTitle("")
         else:
-            self.navigation_menu.setEnabled(False)
+            self.menuBar.setEnabled(False)
             self.statusBar.showMessage("Navigation is disabled while motor is running.", 5000)
 
 
@@ -181,6 +191,25 @@ class BSCMainWindow(QtWidgets.QMainWindow):
             if event.size().height() != height:
                 self.resize(width, height)
             super().resizeEvent(event)
+    
+    def motorSimulationControl(self, checked: bool, is_simulated: bool):
+        """Enable or disable motor simulation mode."""
+        if not checked:
+            # If trying to uncheck, check the other option instead
+            if is_simulated:
+                self.actionRealMotor.setChecked(True)
+            else:
+                self.actionSimulatedMotor.setChecked(True)
+            return
+            
+        # Uncheck the other option
+        if is_simulated:
+            self.actionRealMotor.setChecked(False)
+        else:
+            self.actionSimulatedMotor.setChecked(False)
+        
+
+
 
 """
 Order of pages in stackedWidget:
