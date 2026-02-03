@@ -7,13 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>1065</width>
-    <height>892</height>
+    <height>864</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout" stretch="8,2">
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="7,3">
    <item>
     <widget class="QWidget" name="widget" native="true">
      <layout class="QVBoxLayout" name="verticalLayout">

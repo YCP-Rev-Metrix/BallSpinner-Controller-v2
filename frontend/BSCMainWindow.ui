@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1065</width>
-    <height>920</height>
+    <height>864</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,6 +15,19 @@
   </property>
   <widget class="QWidget" name="wgtCentral">
    <layout class="QVBoxLayout" name="verticalLayout_3">
+    <item alignment="Qt::AlignHCenter">
+     <widget class="QPushButton" name="btnEStop">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="text">
+       <string>     E-STOP     </string>
+      </property>
+     </widget>
+    </item>
     <item>
      <widget class="QWidget" name="wgtSpacer" native="true">
       <property name="sizePolicy">
@@ -98,19 +111,6 @@
            </item>
           </layout>
          </widget>
-        </widget>
-       </item>
-       <item alignment="Qt::AlignHCenter">
-        <widget class="QPushButton" name="btnEStop">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>     E-STOP     </string>
-         </property>
         </widget>
        </item>
       </layout>

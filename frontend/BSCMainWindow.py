@@ -1,6 +1,6 @@
 import platform
 from unittest import case
-from PyQt6 import QtWidgets, uic
+from PyQt6 import QtWidgets, QtCore, uic
 import os
 from PyQt6.QtGui import QAction
 
@@ -53,11 +53,14 @@ class BSCMainWindow(QtWidgets.QMainWindow):
 
 
 
-        # connect E-Stop button to diagnostic page E-Stop function
-        self.EStop.clicked.connect(lambda: self.diagnosticPage.EStop())
+        # connect E-Stop button to E-stop method
+        self.EStop.clicked.connect(self.estop)
 
         # lock resolution to 1920x1080 except on macOS
         self.setBaseSize(1920, 1080)  # Set fixed window size to scaled 1920x1080
+        self.setMinimumSize(1920, 1080)  # Prevent window from being resized smaller
+        self.setMaximumSize(1920, 1080)  # Prevent window from being resized larger
+        self.setWindowFlag(QtCore.Qt.WindowType.MSWindowsFixedSizeDialogHint)  # Disable resize handle
     
         self.switch_to_page(0, "Home")  # Start on FrontPage
 
@@ -89,6 +92,14 @@ class BSCMainWindow(QtWidgets.QMainWindow):
 
         self.actionSimulatedMotor.toggled.connect(lambda checked: self.motorSimulationControl(checked, True))
         self.actionRealMotor.toggled.connect(lambda checked: self.motorSimulationControl(checked, False))
+
+    def estop(self):
+        """E-stop function: stops motor and forces navigation enabled."""
+        self.diagnosticPage.EStop()
+        self.LockCount = 0
+        self.menuBar.setEnabled(True)
+        self.statusBar.showMessage("Navigation is enabled by force.",5000)
+        self.NavigationSatus.setTitle("")
 
     def toggle_navigation(self, enable: bool, message :str):
         """Enable or disable the navigation menu."""
