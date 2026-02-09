@@ -12,7 +12,6 @@ Pygments==2.19.2
 PyQt6==6.9.1
 PyQt6-Qt6==6.9.2
 PyQt6_sip==13.10.2
-pyqtdarktheme==0.1.7
 pyqtgraph==0.13.7
 pytest==9.0.2
 pytest-qt==4.5.0

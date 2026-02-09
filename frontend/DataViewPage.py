@@ -47,6 +47,51 @@ class DataViewPage(QtWidgets.QWidget):
         self.timeStartTime = self.findChild(QtWidgets.QTimeEdit, 'timeStartTime')
         self.dateEndDate = self.findChild(QtWidgets.QDateEdit, 'dateEndDate')
         self.timeEndTime = self.findChild(QtWidgets.QTimeEdit, 'timeEndTime')
+        
+        # Style the date pickers to make calendar popup larger
+        date_picker_style = """
+            QDateEdit {
+                font-size: 18px;
+                padding: 8px;
+                min-height: 45px;
+            }
+            QDateEdit::drop-down {
+                width: 40px;
+            }
+            QCalendarWidget QWidget {
+                font-size: 18px;
+            }
+            QCalendarWidget QTableView {
+                font-size: 18px;
+                selection-background-color: rgb(64, 113, 255);
+            }
+            QCalendarWidget QAbstractItemView:enabled {
+                font-size: 18px;
+                min-height: 50px;
+            }
+            QCalendarWidget QMenu {
+                font-size: 18px;
+            }
+            QCalendarWidget QSpinBox {
+                font-size: 18px;
+                min-height: 40px;
+            }
+            QCalendarWidget QToolButton {
+                font-size: 18px;
+                min-height: 45px;
+                min-width: 45px;
+            }
+            QCalendarWidget QWidget#qt_calendar_navigationbar {
+                background-color: rgb(240, 240, 240);
+                min-height: 50px;
+            }
+        """
+        self.dateStartDate.setStyleSheet(date_picker_style)
+        self.dateEndDate.setStyleSheet(date_picker_style)
+        
+        # Make calendar popup larger by setting cell dimensions
+        self.dateStartDate.calendarWidget().setMinimumSize(600, 500)
+        self.dateEndDate.calendarWidget().setMinimumSize(600, 500)
 
         self.cboSessionType = self.findChild(QtWidgets.QComboBox, 'cboSessionType')
 

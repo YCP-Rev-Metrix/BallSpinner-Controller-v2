@@ -24,7 +24,7 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'BSCMainWindow.ui'), self, package='frontend')
 
         self.EStop = self.findChild(QtWidgets.QPushButton, 'btnEStop')
-        self.EStop.setStyleSheet("background-color: red; font-weight: bold; font-size: 16px;")
+        self.EStop.setStyleSheet("background-color: #D32F2F; color: #FFFFFF; font-weight: bold; font-size: 16px; border-radius: 6px; padding: 6px 18px;")
         
         # This is the container for all pages
         self.tab = self.findChild(QtWidgets.QStackedWidget, "swPages") 
@@ -92,6 +92,7 @@ class BSCMainWindow(QtWidgets.QMainWindow):
 
         self.actionSimulatedMotor.toggled.connect(lambda checked: self.motorSimulationControl(checked, True))
         self.actionRealMotor.toggled.connect(lambda checked: self.motorSimulationControl(checked, False))
+
 
     def estop(self):
         """E-stop function: stops motor and forces navigation enabled."""

@@ -13,6 +13,36 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QFrame#frameControls {
+    padding: 8px 12px;
+}
+
+QFrame#frameControls QLabel {
+    min-height: 60px;
+    qproperty-alignment: 'AlignVCenter|AlignLeft';
+}
+
+QFrame#frameControls QLineEdit,
+QFrame#frameControls QComboBox,
+QFrame#frameControls QDateEdit,
+QFrame#frameControls QTimeEdit,
+QFrame#frameControls QPushButton {
+    min-height: 58px;
+    max-height: 58px;
+    padding: 4px 10px;
+    border: 1px solid #3A3A3A;
+    border-radius: 6px;
+}
+
+QFrame#frameControls QComboBox::drop-down,
+QFrame#frameControls QDateEdit::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 24px;
+    border: none;
+}</string>
+  </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
     <widget class="QLabel" name="lblDebug">
@@ -23,8 +53,14 @@
    </item>
    <item row="1" column="0">
     <layout class="QVBoxLayout" name="verticalLayout" stretch="1,16,2">
-     <item>
-      <widget class="QFrame" name="frameControls">
+         <item>
+            <widget class="QFrame" name="frameControls">
+             <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>90</height>
+                </size>
+             </property>
        <property name="frameShape">
         <enum>QFrame::StyledPanel</enum>
        </property>
@@ -58,7 +94,7 @@
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>55</height>
+                        <height>60</height>
            </size>
           </property>
           <property name="font">
@@ -91,7 +127,7 @@
           <property name="minimumSize">
            <size>
             <width>150</width>
-            <height>55</height>
+            <height>70</height>
            </size>
           </property>
           <property name="font">
@@ -138,8 +174,8 @@
           </property>
           <property name="minimumSize">
            <size>
-            <width>140</width>
-            <height>55</height>
+            <width>170</width>
+            <height>70</height>
            </size>
           </property>
           <property name="font">
@@ -151,13 +187,15 @@
            <string notr="true">QDateEdit {
     font-size: 18px;
     font-family: 'Segoe UI', 'Arial', sans-serif;
-    padding: 2px 28px 2px 10px;
+    padding: 6px 36px 6px 10px;
+    min-height: 55px;
+    min-width: 160px;
     background: transparent;
 }
 QDateEdit::drop-down {
     subcontrol-origin: padding;
     subcontrol-position: top right;
-    width: 24px;
+    width: 20px;
     border: none;
 }
 QDateEdit::down-arrow {
@@ -198,8 +236,8 @@ QDateEdit::down-arrow {
           </property>
           <property name="minimumSize">
            <size>
-            <width>120</width>
-            <height>55</height>
+            <width>140</width>
+            <height>70</height>
            </size>
           </property>
           <property name="font">
@@ -211,20 +249,22 @@ QDateEdit::down-arrow {
            <string notr="true">QTimeEdit {
     font-size: 18px;
     font-family: 'Segoe UI', 'Arial', sans-serif;
-    padding: 2px 10px;
+    padding: 6px 40px 6px 10px;
+    min-height: 55px;
+    min-width: 130px;
     background: transparent;
 }
 QTimeEdit::up-button {
     subcontrol-origin: border;
     subcontrol-position: top right;
-    width: 30px;
-    height: 27px;
+    width: 28px;
+    height: 28px;
 }
 QTimeEdit::down-button {
     subcontrol-origin: border;
     subcontrol-position: bottom right;
-    width: 30px;
-    height: 27px;
+    width: 28px;
+    height: 28px;
 }
 QTimeEdit::up-arrow {
     width: 14px;
@@ -274,8 +314,8 @@ QTimeEdit::down-arrow {
           </property>
           <property name="minimumSize">
            <size>
-            <width>140</width>
-            <height>55</height>
+            <width>170</width>
+            <height>70</height>
            </size>
           </property>
           <property name="font">
@@ -287,13 +327,15 @@ QTimeEdit::down-arrow {
            <string notr="true">QDateEdit {
     font-size: 18px;
     font-family: 'Segoe UI', 'Arial', sans-serif;
-    padding: 2px 28px 2px 10px;
+    padding: 6px 36px 6px 10px;
+    min-height: 55px;
+    min-width: 160px;
     background: transparent;
 }
 QDateEdit::drop-down {
     subcontrol-origin: padding;
     subcontrol-position: top right;
-    width: 24px;
+    width: 20px;
     border: none;
 }
 QDateEdit::down-arrow {
@@ -334,8 +376,8 @@ QDateEdit::down-arrow {
           </property>
           <property name="minimumSize">
            <size>
-            <width>120</width>
-            <height>55</height>
+            <width>140</width>
+            <height>70</height>
            </size>
           </property>
           <property name="font">
@@ -347,20 +389,22 @@ QDateEdit::down-arrow {
            <string notr="true">QTimeEdit {
     font-size: 18px;
     font-family: 'Segoe UI', 'Arial', sans-serif;
-    padding: 2px 10px;
+    padding: 6px 40px 6px 10px;
+    min-height: 55px;
+    min-width: 130px;
     background: transparent;
 }
 QTimeEdit::up-button {
     subcontrol-origin: border;
     subcontrol-position: top right;
-    width: 30px;
-    height: 27px;
+    width: 28px;
+    height: 28px;
 }
 QTimeEdit::down-button {
     subcontrol-origin: border;
     subcontrol-position: bottom right;
-    width: 30px;
-    height: 27px;
+    width: 28px;
+    height: 28px;
 }
 QTimeEdit::up-arrow {
     width: 14px;
@@ -399,7 +443,7 @@ QTimeEdit::down-arrow {
           <property name="minimumSize">
            <size>
             <width>110</width>
-            <height>55</height>
+            <height>70</height>
            </size>
           </property>
           <property name="font">
