@@ -75,6 +75,10 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         # load the .ui file (module-relative path)
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'SmartDotConnectWidget.ui'), self, package='frontend')
 
+        # Grab the collapse button
+        self.collapseBtn = self.findChild(QtWidgets.QPushButton, 'btnCollapse')
+        self.collapseBtn.clicked.connect(self.toggle_collapse)
+        
         # Grab the connect button and status label created by the .ui file
         self.btnConnect = self.findChild(QtWidgets.QPushButton, 'btnConnect')
         self.lblStatus = self.findChild(QtWidgets.QLabel, 'lblStatus')
@@ -94,6 +98,9 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         self.conDisconnectDevices = self.findChild(QtWidgets.QScrollArea, 'conDisconnectDevices')
         # Use the scroll area's widget() accessor to get the contained QWidget.
         self.wDisconnectDeviceList = self.conDisconnectDevices.widget()
+        
+        # Track collapse state
+        self.is_collapsed = False
 
         self.process_runner = ProcessRunner()
         self.process_runner.outputReceived.connect(self.on_process_output)
@@ -125,6 +132,37 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         # Update disconnect list to show any existing connections
         self.updateDisconnectList()
         
+        # Store original width for collapse/expand
+        self.original_width = self.width() if self.width() > 0 else 1065
+    
+    def toggle_collapse(self):
+        """Toggle collapse/expand state of the widget"""
+        self.is_collapsed = not self.is_collapsed
+        
+        # Hide/show content
+        self.scanBtn.setVisible(not self.is_collapsed)
+        self.conDevices.setVisible(not self.is_collapsed)
+        self.lblStatus.setVisible(not self.is_collapsed)
+        self.conDisconnectDevices.setVisible(not self.is_collapsed)
+        
+        # Get header labels and hide them too
+        lblHeader = self.findChild(QtWidgets.QLabel, 'lblHeader')
+        lblDisconnectHeader = self.findChild(QtWidgets.QLabel, 'lblDisconnectHeader')
+        if lblHeader:
+            lblHeader.setVisible(not self.is_collapsed)
+        if lblDisconnectHeader:
+            lblDisconnectHeader.setVisible(not self.is_collapsed)
+        
+        # Adjust width
+        if self.is_collapsed:
+            self.setMaximumWidth(150)  # Narrow width when collapsed
+        else:
+            self.setMaximumWidth(16777215)  # Reset to default max width
+        
+        # Update button text
+        self.collapseBtn.setText("▶" if self.is_collapsed else "▼")
+        
+    
     def start_scan(self):
         """Starts the ScanSmartDots.py script using ProcessRunner"""
         self.lblStatus.setText("Scanning for SmartDots...")
