@@ -106,9 +106,6 @@ if __name__ == '__main__':
     window.setScreen(screen)
     
     # Make window fullscreen
-    if sys.platform != "darwin":
-        window.showFullScreen()
-    else:
-        window.showMaximized()
+    window.showMaximized()
 
     QtWidgets.QApplication.exec()

@@ -29,6 +29,7 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.chkMagnetometer_Z = self.findChild(QtWidgets.QCheckBox, 'chkMG_Z')
         self.chkLight = self.findChild(QtWidgets.QCheckBox, 'chkLight')
         self.chkLimitView = self.findChild(QtWidgets.QCheckBox, 'chkLimitView')
+        self.chkHideLegend = self.findChild(QtWidgets.QCheckBox, 'chkHideLegend')
 
         self.btnSelectAll = self.findChild(QtWidgets.QPushButton, 'btnSelectAll')
         self.btnDeselectAll = self.findChild(QtWidgets.QPushButton, 'btnDeselectAll')
@@ -44,7 +45,32 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.dsbMinXValue.valueChanged.connect(self.setRange)
         self.dsbMaxXValue.valueChanged.connect(self.setRange)
         self.dsbLookBackSeconds.valueChanged.connect(self.limitViewBox)
-        # Redraw using updateDataBetter when any checkbox is toggled
+
+        #define colors for checkboxes to match plot colors, set up connections for checkboxes to trigger redraw on toggle
+        self.accxColor = "#ff0000" # red
+        self.accyColor = "#00aa00" # green
+        self.acczColor = "#0000ff" # blue
+        self.gyroxColor = "#00ffff" # cyan
+        self.gyroyColor = "#ff00ff" # magenta
+        self.gyrozColor = "#ffff00" # yellow
+        self.magxColor = "#008080" # teal
+        self.magyColor = "#800000" # maroon
+        self.magzColor = "#800080" # purple
+        self.lightColor = "#777777" # gray
+
+        #Color checkboxes to match the plot colors 
+        self.chkAccelerometer_X.setStyleSheet(f"color: {self.accxColor}")
+        self.chkAccelerometer_Y.setStyleSheet(f"color: {self.accyColor}")
+        self.chkAccelerometer_Z.setStyleSheet(f"color: {self.acczColor}")
+        self.chkGyroscope_X.setStyleSheet(f"color: {self.gyroxColor}")
+        self.chkGyroscope_Y.setStyleSheet(f"color: {self.gyroyColor}")
+        self.chkGyroscope_Z.setStyleSheet(f"color: {self.gyrozColor}")
+        self.chkMagnetometer_X.setStyleSheet(f"color: {self.magxColor}")
+        self.chkMagnetometer_Y.setStyleSheet(f"color: {self.magyColor}")
+        self.chkMagnetometer_Z.setStyleSheet(f"color: {self.magzColor}")
+        self.chkLight.setStyleSheet(f"color: {self.lightColor}")
+
+
         try:
             self.chkAccelerometer_X.toggled.connect(self._on_checkbox_toggled)
             self.chkAccelerometer_Y.toggled.connect(self._on_checkbox_toggled)
@@ -70,21 +96,21 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.graph.setLabel('left', 'Sensor Values', units='Units')
         self.graph.setLabel('bottom', 'Time', units='s')
         self.graph.setMouseEnabled(x=False, y=False)
-        legend = self.graph.addLegend()
-        legend.setColumnCount(2)
+        self.legend = self.graph.addLegend()
+        self.legend.setColumnCount(2)
 
         # Create pens and persistent plot curves to avoid recreating plot items on every update
         self.pens = {
-            'acc_x': pg.mkPen(color='r', width=2),
-            'acc_y': pg.mkPen(color='g', width=2),
-            'acc_z': pg.mkPen(color='b', width=2),
-            'gyro_x': pg.mkPen(color='c', width=2),
-            'gyro_y': pg.mkPen(color='m', width=2),
-            'gyro_z': pg.mkPen(color='y', width=2),
-            'mag_x': pg.mkPen(color='#008080', width=2),
-            'mag_y': pg.mkPen(color='#800000', width=2),
-            'mag_z': pg.mkPen(color='#800080', width=2),
-            'light': pg.mkPen(color='w', width=2),
+            'acc_x': pg.mkPen(color=self.accxColor, width=2),
+            'acc_y': pg.mkPen(color=self.accyColor, width=2),
+            'acc_z': pg.mkPen(color=self.acczColor, width=2),
+            'gyro_x': pg.mkPen(color=self.gyroxColor, width=2),
+            'gyro_y': pg.mkPen(color=self.gyroyColor, width=2),
+            'gyro_z': pg.mkPen(color=self.gyrozColor, width=2),
+            'mag_x': pg.mkPen(color=self.magxColor, width=2),
+            'mag_y': pg.mkPen(color=self.magyColor, width=2),
+            'mag_z': pg.mkPen(color=self.magzColor, width=2),
+            'light': pg.mkPen(color=self.lightColor, width=2),
         }
 
         # Create persistent curves (PlotDataItem) for each series and keep them in a dict
@@ -186,6 +212,18 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.lblGyroscopeData = self.findChild(QtWidgets.QLabel, 'lblGyroscopeData')
         self.lblMagnomaterData = self.findChild(QtWidgets.QLabel, 'lblMagnomaterData')
         self.lblLightData = self.findChild(QtWidgets.QLabel, 'lblLightData')
+
+        # connect the hide legend checkbox
+        self.chkHideLegend.toggled.connect(self._on_hide_legend_toggled)
+    
+    def _on_hide_legend_toggled(self, checked):
+        """Hide or show the legend based on checkbox state."""
+        try:
+            if self.legend is not None:
+                self.legend.setVisible(not checked)
+        except Exception:
+            pass
+    
     def select_all(self):
         self.chkAccelerometer_X.setChecked(True)
         self.chkAccelerometer_Y.setChecked(True)
