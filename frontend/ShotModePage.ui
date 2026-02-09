@@ -31,9 +31,6 @@
          </item>
          <item>
           <widget class="InputGraph" name="grphInputAngle" native="true">
-           <property name="styleSheet">
-            <string notr="true"/>
-           </property>
           </widget>
          </item>
          <item>
@@ -64,9 +61,6 @@
             <font>
              <strikeout>false</strikeout>
             </font>
-           </property>
-           <property name="styleSheet">
-            <string notr="true"/>
            </property>
            <property name="maximum">
             <number>99</number>

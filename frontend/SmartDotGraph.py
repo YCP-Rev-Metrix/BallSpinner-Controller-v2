@@ -58,19 +58,7 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.magzColor = "#800080" # purple
         self.lightColor = "#777777" # gray
 
-        #Color checkboxes to match the plot colors 
-        self.chkAccelerometer_X.setStyleSheet(f"color: {self.accxColor}")
-        self.chkAccelerometer_Y.setStyleSheet(f"color: {self.accyColor}")
-        self.chkAccelerometer_Z.setStyleSheet(f"color: {self.acczColor}")
-        self.chkGyroscope_X.setStyleSheet(f"color: {self.gyroxColor}")
-        self.chkGyroscope_Y.setStyleSheet(f"color: {self.gyroyColor}")
-        self.chkGyroscope_Z.setStyleSheet(f"color: {self.gyrozColor}")
-        self.chkMagnetometer_X.setStyleSheet(f"color: {self.magxColor}")
-        self.chkMagnetometer_Y.setStyleSheet(f"color: {self.magyColor}")
-        self.chkMagnetometer_Z.setStyleSheet(f"color: {self.magzColor}")
-        self.chkLight.setStyleSheet(f"color: {self.lightColor}")
-
-
+        # Checkbox colors are handled in QSS via object names
         try:
             self.chkAccelerometer_X.toggled.connect(self._on_checkbox_toggled)
             self.chkAccelerometer_Y.toggled.connect(self._on_checkbox_toggled)

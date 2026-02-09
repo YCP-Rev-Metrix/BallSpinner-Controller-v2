@@ -38,7 +38,6 @@ class DataViewPage(QtWidgets.QWidget):
         self.lblDebug.setText("haha")
         self.lblDebug.setScaledContents(True)
         self.lblDebug.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lblDebug.setStyleSheet("font-size: 20px; font-weight: bold; color: white;")
         self.lblDebug.setHidden(True)
 
         self.textSearch = self.findChild(QtWidgets.QLineEdit, 'txtSearch')
@@ -139,15 +138,6 @@ class DataViewPage(QtWidgets.QWidget):
         self.tableview.verticalHeader().setMinimumSectionSize(50)
         self.tableview.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         self.tableview.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
-        # Make table scrollbars larger for easier grabbing and increase row heights for touch
-        self.tableview.setStyleSheet("""
-            QScrollBar:vertical { width: 35px; background: transparent; }
-            QScrollBar::handle:vertical { background: rgba(200,200,200,0.9); min-height: 50px; border-radius: 8px; }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
-            QTableView { font-size: 16px; }
-            QTableView::item { padding: 8px; min-height: 50px; }
-            QHeaderView::section { font-size: 16px; padding: 8px; min-height: 45px; }
-        """)
 
         # Use a custom proxy so we can combine text filtering with a session-type filter
         class FilterProxy(QSortFilterProxyModel):

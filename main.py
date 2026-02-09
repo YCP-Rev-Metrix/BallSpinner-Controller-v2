@@ -62,7 +62,7 @@ if __name__ == '__main__':
     screen = QGuiApplication.screenAt(QCursor.pos()) or app.primaryScreen()
     size = screen.size()
     
-    app.setStyle("MacOs")  # Use Windows style for consistency across platforms
+    app.setStyle("Fusion")  # Ensure QSS applies consistently across platforms
 
 
     window = BSCMainWindow()

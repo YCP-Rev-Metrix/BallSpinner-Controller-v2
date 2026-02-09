@@ -36,11 +36,11 @@ class InputGraph(QtWidgets.QWidget):
         header.addStretch()
         # use a larger reset/refresh symbol for clarity
         self.clear_button = QtWidgets.QPushButton("↺")
+        self.clear_button.setObjectName("btnInputGraphClear")
         # slightly larger circular red button so the symbol appears bigger
         # Use minimum and maximum sizes instead of fixed to allow scaling with parent
         self.clear_button.setMinimumSize(40, 40)
         self.clear_button.setMaximumSize(60, 60)
-        self.clear_button.setStyleSheet("background-color: #d9534f; color: white; border: none; border-radius: 25px; font-size: 20px; font-weight: bold;")
         # brief tooltip for clarity
         self.clear_button.setToolTip("Reset endpoints and clear points")
         # The clear button resets the view and clears points
@@ -56,11 +56,9 @@ class InputGraph(QtWidgets.QWidget):
 
         # Start and End Y controls (float) constrained to [0,1]
         self.start_y_label = QtWidgets.QLabel("Start Value:")
-        self.start_y_label.setStyleSheet("font-size: 14px;")
         self.start_y_label.setMinimumWidth(90)
         self.start_y_spin = QtWidgets.QDoubleSpinBox()
         self.start_y_spin.setMinimumHeight(56)
-        self.start_y_spin.setStyleSheet("font-size: 14px; min-width: 90px; padding-right: 6px;")
         self.start_y_spin.setRange(0.0, 1.0)
         self.start_y_spin.setSingleStep(0.01)
         self.start_y_spin.setValue(0.0)
@@ -77,11 +75,9 @@ class InputGraph(QtWidgets.QWidget):
         start_group.addWidget(self.start_y_spin)
 
         self.end_y_label = QtWidgets.QLabel("End Value:")
-        self.end_y_label.setStyleSheet("font-size: 14px;")
         self.end_y_label.setMinimumWidth(90)
         self.end_y_spin = QtWidgets.QDoubleSpinBox()
         self.end_y_spin.setMinimumHeight(56)
-        self.end_y_spin.setStyleSheet("font-size: 14px; min-width: 90px; padding-right: 6px;")
         self.end_y_spin.setRange(0.0, 1.0)
         self.end_y_spin.setSingleStep(0.01)
         self.end_y_spin.setValue(0.0)
@@ -109,10 +105,8 @@ class InputGraph(QtWidgets.QWidget):
 
         # Y mapping controls (output scaling/shifting)
         self.ymin_label = QtWidgets.QLabel("Value min:")
-        self.ymin_label.setStyleSheet("font-size: 14px;")
         self.ymin_spin = QtWidgets.QDoubleSpinBox()
         self.ymin_spin.setMinimumHeight(56)
-        self.ymin_spin.setStyleSheet("font-size: 14px; min-width: 90px; padding-right: 6px;")
         self.ymin_spin.setRange(-10000.0, 10000.0)
         self.ymin_spin.setSingleStep(0.1)
         self.ymin_spin.setValue(0.0)
@@ -121,10 +115,8 @@ class InputGraph(QtWidgets.QWidget):
         controls_hbox.addWidget(self.ymin_spin)
 
         self.ymax_label = QtWidgets.QLabel("Value max:")
-        self.ymax_label.setStyleSheet("font-size: 14px;")
         self.ymax_spin = QtWidgets.QDoubleSpinBox()
         self.ymax_spin.setMinimumHeight(56)
-        self.ymax_spin.setStyleSheet("font-size: 14px; min-width: 90px; padding-right: 6px;")
         self.ymax_spin.setRange(-10000.0, 10000.0)
         self.ymax_spin.setSingleStep(0.1)
         self.ymax_spin.setValue(1.0)
@@ -134,10 +126,8 @@ class InputGraph(QtWidgets.QWidget):
 
         # X mapping controls (output scaling). Constrained to [0,10]
         self.xmin_label = QtWidgets.QLabel("Time min:")
-        self.xmin_label.setStyleSheet("font-size: 14px;")
         self.xmin_spin = QtWidgets.QDoubleSpinBox()
         self.xmin_spin.setMinimumHeight(56)
-        self.xmin_spin.setStyleSheet("font-size: 14px; min-width: 90px; padding-right: 6px;")
         self.xmin_spin.setRange(0.0, 10.0)
         self.xmin_spin.setSingleStep(0.1)
         self.xmin_spin.setValue(0.0)
@@ -146,10 +136,8 @@ class InputGraph(QtWidgets.QWidget):
         controls_hbox.addWidget(self.xmin_spin)
 
         self.xmax_label = QtWidgets.QLabel("Time max:")
-        self.xmax_label.setStyleSheet("font-size: 14px;")
         self.xmax_spin = QtWidgets.QDoubleSpinBox()
         self.xmax_spin.setMinimumHeight(56)
-        self.xmax_spin.setStyleSheet("font-size: 14px; min-width: 90px; padding-right: 6px;")
         self.xmax_spin.setRange(0.0, 10.0)
         self.xmax_spin.setSingleStep(0.1)
         self.xmax_spin.setValue(1.0)
@@ -242,11 +230,9 @@ class InputGraph(QtWidgets.QWidget):
         bottom.addWidget(self.endpoints_container)
         bottom.addStretch()
         self.max_points_label = QtWidgets.QLabel("Max points:")
-        self.max_points_label.setStyleSheet("font-size: 14px;")
         self.max_points_label.setMinimumWidth(90)
         self.max_points_spin = QtWidgets.QSpinBox()
         self.max_points_spin.setMinimumHeight(56)
-        self.max_points_spin.setStyleSheet("font-size: 14px; min-width: 90px; padding-right: 6px;")
         self.max_points_spin.setRange(2, 1000)
         self.max_points_spin.setValue(10)
         self.max_points_spin.valueChanged.connect(self.onMaxPointsChanged)

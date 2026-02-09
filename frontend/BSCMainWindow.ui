@@ -13,53 +13,6 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <property name="styleSheet">
-   <string notr="true">QMainWindow { background-color: #121212; color: #E5E7EB; }
-QWidget#wgtCentral { background-color: #121212; }
-
-QMenuBar {
-    background-color: #1F1F1F;
-    color: #E5E7EB;
-    border-bottom: 1px solid #2E2E2E;
-}
-QMenuBar::item { background: transparent; padding: 8px 14px; }
-QMenuBar::item:selected { background-color: #2A2A2A; border-radius: 4px; }
-
-QMenu {
-    background-color: #1F1F1F;
-    color: #E5E7EB;
-    border: 1px solid #2E2E2E;
-}
-QMenu::item { padding: 8px 16px; }
-QMenu::item:selected { background-color: #2A2A2A; }
-
-QStatusBar {
-    background-color: #1F1F1F;
-    color: #E5E7EB;
-    border-top: 1px solid #2E2E2E;
-}
-
-QPushButton {
-    background-color: #1F1F1F;
-    color: #E5E7EB;
-    border: 1px solid #3A3A3A;
-    border-radius: 6px;
-    padding: 6px 12px;
-}
-QPushButton:hover { background-color: #2A2A2A; }
-QPushButton:pressed { background-color: #333333; }
-
-QAbstractSpinBox::up-button,
-QAbstractSpinBox::down-button {
-    width: 28px;
-    height: 28px;
-}
-QAbstractSpinBox::up-arrow,
-QAbstractSpinBox::down-arrow {
-    width: 14px;
-    height: 14px;
-}</string>
-  </property>
   <widget class="QWidget" name="wgtCentral">
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item alignment="Qt::AlignHCenter">
@@ -178,12 +131,6 @@ QAbstractSpinBox::down-arrow {
     <font>
      <pointsize>18</pointsize>
     </font>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">QMenuBar { padding: 8px; }
-QMenuBar::item { padding: 10px 15px; }
-QMenu { font-size: 18px; }
-QMenu::item { padding: 12px 25px; min-height: 45px; }</string>
    </property>
    <widget class="QMenu" name="mnuNavigation">
     <property name="title">

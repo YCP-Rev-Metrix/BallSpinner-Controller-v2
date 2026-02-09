@@ -22,9 +22,6 @@
      <property name="alignment">
       <set>Qt::AlignmentFlag::AlignCenter</set>
      </property>
-     <property name="styleSheet">
-      <string>font-weight: bold; font-size: 14px;</string>
-     </property>
     </widget>
    </item>
    <item>
@@ -35,9 +32,6 @@
      <property name="wordWrap">
       <bool>true</bool>
      </property>
-     <property name="styleSheet">
-      <string>color: #ff6b6b; background-color: #ffe0e0; padding: 8px; border-radius: 4px; font-weight: bold;</string>
-     </property>
     </widget>
    </item>
    <item>
@@ -45,18 +39,12 @@
      <property name="text">
       <string>Enable Override Mode</string>
      </property>
-     <property name="styleSheet">
-      <string>font-size: 12px;</string>
-     </property>
     </widget>
    </item>
    <item>
     <widget class="QLabel" name="lblOverrideStatus">
      <property name="text">
       <string>Status: Override Mode will be DISABLED</string>
-     </property>
-     <property name="styleSheet">
-      <string>color: red;</string>
      </property>
     </widget>
    </item>

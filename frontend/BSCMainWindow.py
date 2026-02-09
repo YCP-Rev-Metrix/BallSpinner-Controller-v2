@@ -23,8 +23,25 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         # Load the UI file (module-relative path).
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'BSCMainWindow.ui'), self, package='frontend')
 
+        # Load and apply universal stylesheet
+        stylesheet_path = os.path.join(os.path.dirname(__file__), 'style.qss')
+        with open(stylesheet_path, 'r') as f:
+            qss = f.read()
+
+        accent_color = None
+        for line in qss.splitlines():
+            if "ACCENT_COLOR:" in line:
+                accent_color = line.split("ACCENT_COLOR:")[1].split("*/")[0].strip()
+                break
+
+        if accent_color:
+            qss = qss.replace("ACCENT_COLOR", accent_color)
+
+        self.setStyleSheet(qss)
+
+
+
         self.EStop = self.findChild(QtWidgets.QPushButton, 'btnEStop')
-        self.EStop.setStyleSheet("background-color: #D32F2F; color: #FFFFFF; font-weight: bold; font-size: 16px; border-radius: 6px; padding: 6px 18px;")
         
         # This is the container for all pages
         self.tab = self.findChild(QtWidgets.QStackedWidget, "swPages") 

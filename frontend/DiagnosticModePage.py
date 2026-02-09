@@ -458,8 +458,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
         
         if self.OverrideMode:
             print("Override Mode Enabled")
-            # Set main window background to dark red when override mode is enabled
-            main_window.setStyleSheet("background-color: #cc0000;")
+            # Mark override mode for QSS styling
+            main_window.setProperty("override", "true")
+            main_window.style().unpolish(main_window)
+            main_window.style().polish(main_window)
             # Lock navigation when override mode is enabled
             self.navigationLock.emit(False,"Override Mode Enabled")
             # set extended ranges for dials
@@ -476,8 +478,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
             self.angleGraph.setYRange(-400,400)
         else:
             print("Override Mode Disabled")
-            # Reset main window background to default when override mode is disabled
-            main_window.setStyleSheet("")
+            # Clear override mode styling flag
+            main_window.setProperty("override", "false")
+            main_window.style().unpolish(main_window)
+            main_window.style().polish(main_window)
             # Unlock navigation when override mode is disabled
             self.navigationLock.emit(True,"")
             # reset dials to safe ranges

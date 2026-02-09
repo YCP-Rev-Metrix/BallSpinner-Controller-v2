@@ -37,10 +37,13 @@ class OverrideDialog(QtWidgets.QDialog):
         """Update the status label based on checkbox state."""
         if self.chkEnableOverride.isChecked():
             self.lblOverrideStatus.setText("Status: Override Mode will be ENABLED")
-            self.lblOverrideStatus.setStyleSheet("color: green;")
+            self.lblOverrideStatus.setProperty("status", "enabled")
         else:
             self.lblOverrideStatus.setText("Status: Override Mode will be DISABLED")
-            self.lblOverrideStatus.setStyleSheet("color: red;")
+            self.lblOverrideStatus.setProperty("status", "disabled")
+
+        self.lblOverrideStatus.style().unpolish(self.lblOverrideStatus)
+        self.lblOverrideStatus.style().polish(self.lblOverrideStatus)
     
     def is_override_enabled(self):
         """Return whether override mode is enabled."""

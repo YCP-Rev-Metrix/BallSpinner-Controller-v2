@@ -94,13 +94,7 @@ class ShotModePage(QtWidgets.QWidget):
         self.sliderTime.setAttribute(QtCore.Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
         
         
-        # Larger handle and groove via stylesheet for better touch interaction
-        self.sliderTime.setStyleSheet("""
-QSlider::groove:horizontal { height: 14px; border-radius: 7px; background: #e6e6e6; }
-QSlider::sub-page:horizontal { background: #66a3ff; border-radius: 7px; }
-QSlider::add-page:horizontal { background: #e6e6e6; border-radius: 7px; }
-QSlider::handle:horizontal { width: 34px; height: 34px; margin: -10px 0; border-radius: 17px; background: #4285F4; }
-""")
+        # Slider visual styling handled in QSS
 
         # connect slider change to label update if found and initialize label
         self.sliderTime.valueChanged.connect(self.update_shot_duration_label)
