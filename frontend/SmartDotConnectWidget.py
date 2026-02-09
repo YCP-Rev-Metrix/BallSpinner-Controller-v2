@@ -155,9 +155,11 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         
         # Adjust width
         if self.is_collapsed:
-            self.setMaximumWidth(150)  # Narrow width when collapsed
+            self.setMaximumWidth(80)  # Narrow width when collapsed
+            self.resize(80, self.height())  # Force resize to narrow width
         else:
-            self.setMaximumWidth(16777215)  # Reset to default max width
+            self.setMaximumWidth(350)  # Reset to original width
+            self.resize(350, self.height())  # Force resize to original width
         
         # Update button text
         self.collapseBtn.setText("▶" if self.is_collapsed else "▼")

@@ -4,6 +4,7 @@ import numpy as np
 pg.setConfigOptions(antialias=False)
 import os
 from PyQt6.QtCore import pyqtSignal, QTimer
+from array import array
 
 #Database related imports
 from BSC import bsc
@@ -13,9 +14,15 @@ from backend.models.DiagnosticScriptData import DiagnosticScriptDataInstance
 from backend.drivers.DiagnosticScript import DiagnosticScript
 #from backend.motors.BDCMotor import BDCMotor
 #from backend.motors.SimMotor import SimMotor
-from frontend.SmartDotViewer import SmartDotViewer
+from frontend.SmartDotGraph import SmartDotGraph
+from frontend.SmartDotConnectWidget import SmartDotConnectWidget
 from frontend.SensorGraphDialog import SensorGraphDialog
 from frontend.OverrideDialog import OverrideDialog
+import utils
+if utils.is_raspberry_pi():
+    from backend.smartdot.MetaMotionS import MetaMotion
+else:
+    from backend.smartdot.SimSmartDot import SimSmartDot
 
 import datetime as dt
 
@@ -58,9 +65,26 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.dsbTilt = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbTiltValue')
         self.dsbAngle = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbAngleValue')
 
-        #load SmartDotViewer
-        self.smartdotViewer = self.findChild(QtWidgets.QWidget, 'SmartDotViewer')
-        self.smartdotViewer.hide_buttons()
+        # SmartDot initialization
+        self.SmartDot = None  # Placeholder for the connected SmartDot device
+        self.SmartDotGraph = self.findChild(SmartDotGraph, 'grphSmartDot')
+        self.smartdotConnectWidget = self.findChild(SmartDotConnectWidget, 'wgtSmartDotConnect')
+        if self.smartdotConnectWidget:
+            self.smartdotConnectWidget.signalSmartDotConnected.connect(self.connectSmartDot)
+            self.smartdotConnectWidget.signalDeviceDisconnected.connect(self.on_device_disconnected)
+        
+        # SmartDot data arrays
+        self.arrayGeneralTime = array('d', [0.0])
+        self.arrayAccelerometer_X = array('f', [0.0])
+        self.arrayAccelerometer_Y = array('f', [0.0])
+        self.arrayAccelerometer_Z = array('f', [0.0])
+        self.arrayGyroscope_X = array('f', [0.0])
+        self.arrayGyroscope_Y = array('f', [0.0])
+        self.arrayGyroscope_Z = array('f', [0.0])
+        self.arrayMagnetometer_X = array('f', [0.0])
+        self.arrayMagnetometer_Y = array('f', [0.0])
+        self.arrayMagnetometer_Z = array('f', [0.0])
+        self.arrayLight = array('f', [0.0])
 
 
         #Motor Sensor Data Viewer Setup
@@ -154,6 +178,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         
         self._update_dial_labels()
 
+        # Note: btnStart and btnStop are used for motors, not SmartDot updates
         self.btnStart.clicked.connect(lambda: self.toggle_Buttons())
         self.btnStop.clicked.connect(lambda: self.toggle_Buttons())
         self.btnClear.clicked.connect(lambda: self.clear_graphs())
@@ -237,9 +262,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 # start timer when entering active state
                 self._sample_index = 0  # reset counter when starting
                 self._timer.start()
-                # Start SmartDotViewer updates if connected
-                if len(bsc.get_smartdotConnectionManager().get_connections()) > 0:
-                    self.smartdotViewer.start_updates()
+                # Start SmartDot updates if connected
+                if self.SmartDot is not None:
+                    self.start_smartdot_updates()
 
                 # Initialize the Session
                 bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Diagnostic Session", isShotMode=False))
@@ -254,9 +279,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 bsc.disconnect_all_motors()
                 # stop periodic updates
                 self._timer.stop()
-                # Stop SmartDotViewer updates if connected
-                if len(bsc.get_smartdotConnectionManager().get_connections()) > 0:
-                    self.smartdotViewer.stop_updates()
+                # Stop SmartDot updates if connected
+                if self.SmartDot is not None:
+                    self.stop_smartdot_updates()
                 self.navigationLock.emit(True,"")
 
 
@@ -282,6 +307,15 @@ class DiagnosticModePage(QtWidgets.QWidget):
     def _on_timer(self):
         # Runs in main (GUI) thread. Poll dials and update buffers + plots.
         # Called only when the timer is active; no separate `active` flag needed.
+        
+        # Update SmartDot graph if device is connected
+        if self.SmartDot is not None and self.SmartDotGraph is not None:
+            self.SmartDotGraph.updateDataBetter(
+                self.SmartDot.xl_time, self.SmartDot.xl_x, self.SmartDot.xl_y, self.SmartDot.xl_z,
+                self.SmartDot.gy_time, self.SmartDot.gy_x, self.SmartDot.gy_y, self.SmartDot.gy_z,
+                self.SmartDot.mg_time, self.SmartDot.mg_x, self.SmartDot.mg_y, self.SmartDot.mg_z,
+                self.SmartDot.lt_time, self.SmartDot.lt_value
+            )
 
         # Quantized time based on fixed interval (>=50ms)
         t = self._sample_index * self._sample_dt_s
@@ -370,7 +404,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
 
     def reset(self):
         # ensure not running and reset UI
-        self.smartdotViewer.reset()
+        # Stop SmartDot updates if running
+        if self.SmartDot is not None:
+            self.stop_smartdot_updates()
         # Clear SmartDot data from the data controller so we start fresh
         dc = bsc.get_data_controller()
         if dc is not None:
@@ -397,6 +433,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.spinCurve.setData([0.0], [0.0])
         self.tiltCurve.setData([0.0], [0.0])
         self.angleCurve.setData([0.0], [0.0])
+        
+        # Clear SmartDot graph data if available
+        if self.SmartDotGraph is not None:
+            self.SmartDotGraph.clear()
     
     
     def toggle_override_mode(self):
@@ -455,6 +495,34 @@ class DiagnosticModePage(QtWidgets.QWidget):
             
         # Reset UI and state whenever override toggles
         self.reset()
+    
+    def connectSmartDot(self, device):
+        """Called when a SmartDot device is connected."""
+        print("Connecting SmartDot...")
+        self.SmartDot = device
+        print(f"SmartDot: {self.SmartDot}")
+        print(f"Smart dot type: {type(self.SmartDot)}")
+    
+    def on_device_disconnected(self, mac_address):
+        """Called when device disconnects."""
+        print(f"Device disconnected: {mac_address}")
+        # Stop updates if running
+        if self._timer.isActive():
+            self.stop_smartdot_updates()
+        # Clear the SmartDot reference
+        self.SmartDot = None
+    
+    def start_smartdot_updates(self):
+        """Start collecting data from SmartDot."""
+        if self.SmartDot is not None:
+            print("Starting SmartDot data collection")
+            self.SmartDot.startCollecting()
+    
+    def stop_smartdot_updates(self):
+        """Stop collecting data from SmartDot."""
+        if self.SmartDot is not None:
+            print("Stopping SmartDot data collection")
+            self.SmartDot.stopCollecting()
 
 
 
