@@ -49,8 +49,8 @@ if __name__ == '__main__':
     width_scale = size.width() / 1920.0
     height_scale = size.height() / 1080.0
     scale = min(width_scale, height_scale)
-    scale -= 0.05  # Slightly reduce scale to ensure fit
-    scale = max(0.1, scale)  # Prevent too-small scale
+    #scale -= 0.05  # Slightly reduce scale to ensure fit
+    scale = max(0.1, scale)  # Prevent too-small scalex
     
     print(f"Screen resolution: {size.width()}x{size.height()}")
     print(f"Scale factor: {scale:.2f}")
