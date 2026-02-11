@@ -1,7 +1,7 @@
 /* ==================== GLOBAL STYLES ==================== */
 QWidget {
     background-color: #121212;
-    color: #ff00bb;
+    color: #E5E7EB;
 }
 
 /* ==================== ACCENT COLOR ==================== */
@@ -29,7 +29,7 @@ QPushButton {
 
 QPushButton:hover {
     background-color: #2A2A2A;
-    border: 1px solid #4A4A4A;
+    border: 1px solid ACCENT_COLOR;
 }
 
 QPushButton:focus {
@@ -83,6 +83,7 @@ QLabel {
 QLabel#lblTitle {
     font-size: 24pt;
     font-weight: bold;
+    color: ACCENT_COLOR;
 }
 
 QLabel#lblSubtitle {
@@ -123,7 +124,7 @@ QSpinBox::down-button, QDoubleSpinBox::down-button {
 
 QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover,
 QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {
-    background-color: #2A2A2A;
+    background-color: ACCENT_COLOR;
 }
 
 /* ==================== SLIDERS ==================== */
@@ -190,7 +191,7 @@ QComboBox {
 }
 
 QComboBox:hover {
-    border: 1px solid #4A4A4A;
+    border: 1px solid ACCENT_COLOR;
 }
 
 QComboBox:focus {
@@ -266,7 +267,7 @@ QFrame#frameControls QDateEdit::down-arrow {
     border-top: 6px solid #FFFFFF;
 }
 /* ==================== CHECKBOXES ==================== */
-QCheckBox {
+/* QCheckBox {
     color: #E5E7EB;
     spacing: 8px;
     font-size: 14pt;
@@ -287,11 +288,12 @@ QCheckBox::indicator:checked {
     background-color: ACCENT_COLOR;
     border: 1px solid ACCENT_COLOR;
     border-radius: 4px;
+    image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSAxMkw5IDE2TDE5IDYiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+);
 }
 
 QCheckBox::indicator:hover {
     background-color: #2A2A2A;
-}
+} */
 
 /* ==================== TABLES ==================== */
 QTableWidget {
@@ -308,7 +310,8 @@ QTableWidget::item {
 }
 
 QTableWidget::item:selected {
-    background-color: #2A2A2A;
+    background-color: ACCENT_COLOR;
+    color: #121212;
 }
 
 QTableWidget::item:selected:active {
@@ -321,7 +324,7 @@ QHeaderView::section {
     color: #E5E7EB;
     padding: 12px;
     border: none;
-    border-bottom: 1px solid #3A3A3A;
+    border-bottom: 2px solid ACCENT_COLOR;
     font-weight: bold;
     font-size: 14pt;
 }
@@ -333,6 +336,16 @@ QTableView#tblData {
 QTableView#tblData::item {
     padding: 8px;
     min-height: 50px;
+}
+
+QTableView#tblData::item:selected {
+    background-color: ACCENT_COLOR;
+    color: #121212;
+}
+
+QTableView#tblData::item:selected:active {
+    background-color: ACCENT_COLOR;
+    color: #121212;
 }
 
 QTableView#tblData QHeaderView::section {
@@ -371,7 +384,7 @@ QScrollBar::handle:vertical {
 }
 
 QScrollBar::handle:vertical:hover {
-    background-color: #4A4A4A;
+    background-color: ACCENT_COLOR;
 }
 
 QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {
@@ -393,7 +406,7 @@ QScrollBar::handle:horizontal {
 }
 
 QScrollBar::handle:horizontal:hover {
-    background-color: #4A4A4A;
+    background-color: ACCENT_COLOR;
 }
 
 /* ==================== MENU BARS & MENUS ==================== */
@@ -406,7 +419,8 @@ QMenuBar {
 }
 
 QMenuBar::item:selected {
-    background-color: #2A2A2A;
+    background-color: ACCENT_COLOR;
+    color: #121212;
     border-radius: 4px;
 }
 
@@ -461,9 +475,9 @@ QLabel#lblWarning {
     font-weight: bold;
 }
 
-QCheckBox#chkEnableOverride {
+/* QCheckBox#chkEnableOverride {
     font-size: 12pt;
-}
+} */
 
 QLabel#lblOverrideStatus[status="enabled"] {
     color: #10B981;
@@ -496,6 +510,7 @@ QTabBar::tab:selected {
 
 QTabBar::tab:hover {
     background-color: #2A2A2A;
+    border-bottom: 2px solid ACCENT_COLOR;
 }
 
 /* ==================== FRONT PAGE BUTTONS ==================== */
@@ -596,6 +611,57 @@ QTimeEdit::down-arrow {
     height: 14px;
 }
 
+/* ==================== CALENDAR WIDGET ==================== */
+QCalendarWidget {
+    background-color: #121212;
+    color: #E5E7EB;
+}
+
+QCalendarWidget QWidget {
+    alternate-background-color: #1F1F1F;
+}
+
+QCalendarWidget QAbstractItemView {
+    background-color: #121212;
+    color: #E5E7EB;
+    selection-background-color: ACCENT_COLOR;
+    selection-color: #121212;
+}
+
+QCalendarWidget QToolButton {
+    background-color: #1F1F1F;
+    color: #E5E7EB;
+    border: 1px solid #3A3A3A;
+    border-radius: 6px;
+    padding: 8px;
+    min-width: 48px;
+    min-height: 48px;
+    font-size: 18pt;
+    font-weight: bold;
+}
+
+QCalendarWidget QToolButton:hover {
+    background-color: ACCENT_COLOR;
+    color: #121212;
+    border: 1px solid ACCENT_COLOR;
+}
+
+QCalendarWidget QToolButton::menu-indicator {
+    image: none;
+}
+
+QCalendarWidget QMenu {
+    background-color: #1F1F1F;
+    color: #E5E7EB;
+}
+
+QCalendarWidget QSpinBox {
+    background-color: #1F1F1F;
+    color: #E5E7EB;
+    selection-background-color: ACCENT_COLOR;
+    selection-color: #121212;
+}
+
 /* ==================== GROUPBOX ==================== */
 QGroupBox {
     color: #E5E7EB;
@@ -611,6 +677,7 @@ QGroupBox::title {
     subcontrol-origin: margin;
     left: 16px;
     padding: 0px 12px;
+    color: ACCENT_COLOR;
 }
 
 /* ==================== INPUT GRAPH ==================== */
@@ -636,7 +703,7 @@ QPushButton#btnInputGraphClear {
 }
 
 /* ==================== SMARTDOT CHECKBOX COLORS ==================== */
-QCheckBox#chkXL_X { color: #ff0000; }
+/* QCheckBox#chkXL_X { color: #ff0000; }
 QCheckBox#chkXL_Y { color: #00aa00; }
 QCheckBox#chkXL_Z { color: #0000ff; }
 QCheckBox#chkGL_X { color: #00ffff; }
@@ -645,7 +712,7 @@ QCheckBox#chkGL_Z { color: #ffff00; }
 QCheckBox#chkMG_X { color: #008080; }
 QCheckBox#chkMG_Y { color: #800000; }
 QCheckBox#chkMG_Z { color: #800080; }
-QCheckBox#chkLight { color: #777777; }
+QCheckBox#chkLight { color: #777777; } */
 
 /* ==================== OVERRIDE MODE MAIN WINDOW ==================== */
 QMainWindow[override="true"] {

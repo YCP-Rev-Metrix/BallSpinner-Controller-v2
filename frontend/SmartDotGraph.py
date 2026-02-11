@@ -86,6 +86,21 @@ class SmartDotGraph(QtWidgets.QWidget):
         self.graph.setMouseEnabled(x=False, y=False)
         self.legend = self.graph.addLegend()
         self.legend.setColumnCount(2)
+        #set checkbox colors in QSS to match plot colors, using object names for specificity
+        self.setStyleSheet(f"""
+            QCheckBox#chkXL_X {{ color: {self.accxColor}; }}
+            QCheckBox#chkXL_Y{{ color: {self.accyColor}; }}
+            QCheckBox#chkXL_Z{{ color: {self.acczColor}; }}
+            QCheckBox#chkGL_X{{ color: {self.gyroxColor}; }}
+            QCheckBox#chkGL_Y{{ color: {self.gyroyColor}; }}
+            QCheckBox#chkGL_Z{{ color: {self.gyrozColor}; }}
+            QCheckBox#chkMG_X{{ color: {self.magxColor}; }}
+            QCheckBox#chkMG_Y{{ color: {self.magyColor}; }}
+            QCheckBox#chkMG_Z{{ color: {self.magzColor}; }}
+            QCheckBox#chkLight{{ color: {self.lightColor}; }}
+        """)
+
+        
 
         # Create pens and persistent plot curves to avoid recreating plot items on every update
         self.pens = {
