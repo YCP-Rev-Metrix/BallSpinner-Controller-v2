@@ -3,7 +3,7 @@ import pyqtgraph as pg
 import numpy as np
 pg.setConfigOptions(antialias=False)
 import os
-from PyQt6.QtCore import pyqtSignal, QTimer
+from PyQt6.QtCore import pyqtSignal, QTimer, Qt
 from array import array
 
 #Database related imports
@@ -158,25 +158,26 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.angleCurve = self.angleGraph.plot([0.0], [0.0], pen=pg.mkPen(color='g', width=2)) #Extra refrence allows to be manipulated in thread
         self.angleGraph.setYRange(-50,50)
         self.angleGraph.setMouseEnabled(x=False, y=False)
-        #Dial configurations
-        self.spinDial = self.findChild(QtWidgets.QDial, 'dialSpin')
-        self.tiltDial = self.findChild(QtWidgets.QDial, 'dialTilt')
-        self.angleDial = self.findChild(QtWidgets.QDial, 'dialAngle')
-        self.spinDial.setRange(0, 600)  # Set dial range from 0 to 600
-        self.tiltDial.setRange(-90, 90)  # Set dial range from -90 to 90
-        self.angleDial.setRange(-45, 45)  # Set dial range from -45 to 45
+        # Slider configurations (replace dials with horizontal sliders)
+        self.spinSlider = self.findChild(QtWidgets.QSlider, 'sliderSpin')
+        self.tiltSlider = self.findChild(QtWidgets.QSlider, 'sliderTilt')
+        self.angleSlider = self.findChild(QtWidgets.QSlider, 'sliderAngle')
+        # Set slider ranges (orientation is set in UI file)
+        self.spinSlider.setRange(0, 600)
+        self.tiltSlider.setRange(-45, 45)
+        self.angleSlider.setRange(-90, 90)
 
-        # Always update labels when dials move (even if timer is stopped)
-        self.spinDial.valueChanged.connect(self._update_dial_labels)
-        self.tiltDial.valueChanged.connect(self._update_dial_labels)
-        self.angleDial.valueChanged.connect(self._update_dial_labels)
-        
-        # Also update dials when spin boxes change
-        self.dsbSpin.valueChanged.connect(self._update_dials_from_spinboxes)
-        self.dsbTilt.valueChanged.connect(self._update_dials_from_spinboxes)
-        self.dsbAngle.valueChanged.connect(self._update_dials_from_spinboxes)
-        
-        self._update_dial_labels()
+        # Always update labels when sliders move (even if timer is stopped)
+        self.spinSlider.valueChanged.connect(self._update_slider_labels)
+        self.tiltSlider.valueChanged.connect(self._update_slider_labels)
+        self.angleSlider.valueChanged.connect(self._update_slider_labels)
+
+        # Also update sliders when spin boxes change
+        self.dsbSpin.valueChanged.connect(self._update_sliders_from_spinboxes)
+        self.dsbTilt.valueChanged.connect(self._update_sliders_from_spinboxes)
+        self.dsbAngle.valueChanged.connect(self._update_sliders_from_spinboxes)
+
+        self._update_slider_labels()
 
         # Note: btnStart and btnStop are used for motors, not SmartDot updates
         self.btnStart.clicked.connect(lambda: self.toggle_Buttons())
@@ -305,9 +306,8 @@ class DiagnosticModePage(QtWidgets.QWidget):
         dc.add_diagnostic_script_data(data)
 
     def _on_timer(self):
-        # Runs in main (GUI) thread. Poll dials and update buffers + plots.
+        # Runs in main (GUI) thread. Poll sliders and update buffers + plots.
         # Called only when the timer is active; no separate `active` flag needed.
-        
         # Update SmartDot graph if device is connected
         if self.SmartDot is not None and self.SmartDotGraph is not None:
             self.SmartDotGraph.updateDataBetter(
@@ -321,9 +321,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
         t = self._sample_index * self._sample_dt_s
         self._sample_index += 1
 
-        spin_v = float(self.spinDial.value())
-        tilt_v = float(self.tiltDial.value())
-        angle_v = float(self.angleDial.value())
+        spin_v = float(self.spinSlider.value())
+        tilt_v = float(self.tiltSlider.value())
+        angle_v = float(self.angleSlider.value())
 
         # Write into circular numpy buffers (in-place, no allocations)
         idx = self._write_idx
@@ -385,20 +385,20 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.angleCurve.setData(x_view, angle_view)
 
 
-    def _update_dial_labels(self):
-        """Update motor spin boxes to reflect current dial values regardless of timer state."""
-        spin_v = float(self.spinDial.value())
-        tilt_v = float(self.tiltDial.value())
-        angle_v = float(self.angleDial.value())
+    def _update_slider_labels(self):
+        """Update motor spin boxes to reflect current slider values regardless of timer state."""
+        spin_v = float(self.spinSlider.value())
+        tilt_v = float(self.tiltSlider.value())
+        angle_v = float(self.angleSlider.value())
         self.dsbSpin.setValue(spin_v)
         self.dsbTilt.setValue(tilt_v)
         self.dsbAngle.setValue(angle_v)
 
-    def _update_dials_from_spinboxes(self):
-        """Update dials to reflect current spin box values."""
-        self.spinDial.setValue(int(self.dsbSpin.value()))
-        self.tiltDial.setValue(int(self.dsbTilt.value()))
-        self.angleDial.setValue(int(self.dsbAngle.value()))
+    def _update_sliders_from_spinboxes(self):
+        """Update sliders to reflect current spin box values."""
+        self.spinSlider.setValue(int(self.dsbSpin.value()))
+        self.tiltSlider.setValue(int(self.dsbTilt.value()))
+        self.angleSlider.setValue(int(self.dsbAngle.value()))
 
 
 
@@ -415,9 +415,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
             except AttributeError:
                 pass
         self.clear_graphs()
-        self.spinDial.setValue(0)
-        self.tiltDial.setValue(0)
-        self.angleDial.setValue(0)
+        self.spinSlider.setValue(0)
+        self.tiltSlider.setValue(0)
+        self.angleSlider.setValue(0)
         # ensure timer stopped
         self._timer.stop()
     
@@ -436,7 +436,8 @@ class DiagnosticModePage(QtWidgets.QWidget):
         
         # Clear SmartDot graph data if available
         if self.SmartDotGraph is not None:
-            self.SmartDotGraph.clear()
+            if hasattr(self.SmartDotGraph, 'clear'):
+                self.SmartDotGraph.clear()
     
     
     def toggle_override_mode(self):
@@ -464,10 +465,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
             main_window.style().polish(main_window)
             # Lock navigation when override mode is enabled
             self.navigationLock.emit(False,"Override Mode Enabled")
-            # set extended ranges for dials
-            self.spinDial.setRange(0, 1200)  # Set dial range from 0 to 1200
-            self.tiltDial.setRange(-359, 359)  # Set dial range from -359 to 359
-            self.angleDial.setRange(-359, 359)  # Set dial range from -359 to 359
+            # set extended ranges for sliders
+            self.spinSlider.setRange(0, 1200)
+            self.tiltSlider.setRange(-359, 359)
+            self.angleSlider.setRange(-359, 359)
             # extend spin box ranges accordingly
             self.dsbSpin.setRange(0, 1200)
             self.dsbTilt.setRange(-359, 359)
@@ -484,10 +485,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
             main_window.style().polish(main_window)
             # Unlock navigation when override mode is disabled
             self.navigationLock.emit(True,"")
-            # reset dials to safe ranges
-            self.spinDial.setRange(0, 600)  # Set dial range from 0 to 600
-            self.tiltDial.setRange(-90, 90)  # Set dial range from -90 to 90
-            self.angleDial.setRange(-45, 45)  # Set dial range from -45 to 45
+            # reset sliders to safe ranges
+            self.spinSlider.setRange(0, 600)
+            self.tiltSlider.setRange(-90, 90)
+            self.angleSlider.setRange(-45, 45)
             # reset spin box ranges accordingly
             self.dsbSpin.setRange(0, 600)
             self.dsbTilt.setRange(-90, 90)

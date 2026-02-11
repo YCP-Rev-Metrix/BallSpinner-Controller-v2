@@ -162,7 +162,7 @@ class BSCMainWindow(QtWidgets.QMainWindow):
             case 1: #Diagnostic Page
                 self.window().setWindowTitle("Ball Spinner Controller - Diagnostic Mode")
                 self.diagnosticPage.reset()
-                self.diagnosticPage.smartdotViewer.smartdotConnectWidget.refresh()
+                self.diagnosticPage.smartdotConnectWidget.refresh()
                 #No Data Expected
                 pass
             case 2: #Shot Mode Page
