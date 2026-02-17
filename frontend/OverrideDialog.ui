@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>200</height>
+        <width>800</width>
+        <height>400</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,6 +34,19 @@
      </property>
     </widget>
    </item>
+    <item>
+     <widget class="QLabel" name="lblInstruction">
+        <property name="text">
+       <string>Check the box to enable Override Mode, or uncheck it to disable Override Mode.</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignLeft</set>
+        </property>
+     </widget>
+    </item>
    <item>
     <widget class="QCheckBox" name="chkEnableOverride">
      <property name="text">

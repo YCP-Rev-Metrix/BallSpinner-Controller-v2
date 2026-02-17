@@ -28,11 +28,7 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         with open(stylesheet_path, 'r') as f:
             qss = f.read()
 
-        accent_color = None
-        for line in qss.splitlines():
-            if "ACCENT_COLOR:" in line:
-                accent_color = line.split("ACCENT_COLOR:")[1].split("*/")[0].strip()
-                break
+        accent_color = "#2C62A4"  # Default accent color (Rev Metrix blue)
 
         if accent_color:
             qss = qss.replace("ACCENT_COLOR", accent_color)

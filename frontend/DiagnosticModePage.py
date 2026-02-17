@@ -460,9 +460,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         if self.OverrideMode:
             print("Override Mode Enabled")
             # Mark override mode for QSS styling
-            main_window.setProperty("override", "true")
-            main_window.style().unpolish(main_window)
-            main_window.style().polish(main_window)
+            self._apply_override_style(True)
             # Lock navigation when override mode is enabled
             self.navigationLock.emit(False,"Override Mode Enabled")
             # set extended ranges for sliders
@@ -480,9 +478,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         else:
             print("Override Mode Disabled")
             # Clear override mode styling flag
-            main_window.setProperty("override", "false")
-            main_window.style().unpolish(main_window)
-            main_window.style().polish(main_window)
+            self._apply_override_style(False)
             # Unlock navigation when override mode is disabled
             self.navigationLock.emit(True,"")
             # reset sliders to safe ranges
@@ -500,6 +496,17 @@ class DiagnosticModePage(QtWidgets.QWidget):
             
         # Reset UI and state whenever override toggles
         self.reset()
+
+    def _apply_override_style(self, enabled: bool):
+        main_window = self.window()
+        if main_window is None:
+            return
+        main_window.setProperty("override", "true" if enabled else "false")
+        main_window.style().unpolish(main_window)
+        main_window.style().polish(main_window)
+        # Re-apply the stylesheet so descendant selectors re-evaluate.
+        main_window.setStyleSheet(main_window.styleSheet())
+        main_window.update()
     
     def connectSmartDot(self, device):
         """Called when a SmartDot device is connected."""

@@ -46,7 +46,7 @@ class AnalysisDialog(QtWidgets.QDialog):
 
         self.setWindowTitle("Analysis Options")
         self.setModal(False)
-        self.resize(800, 800)
+        self.resize(1200, 900)
 
         self.accxColor = "#ff0000" # red
         self.accyColor = "#00aa00" # green

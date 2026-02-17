@@ -19,7 +19,7 @@ class OverrideDialog(QtWidgets.QDialog):
         
         self.setWindowTitle("Override Mode Settings")
         self.setModal(True)
-        self.resize(400, 250)
+        self.resize(800, 500)
 
         # Reflect current state and messaging
         self.chkEnableOverride.setChecked(current_enabled)

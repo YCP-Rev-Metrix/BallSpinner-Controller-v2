@@ -418,10 +418,21 @@ QMenuBar {
     font-size: 14pt;
 }
 
+QMenuBar:disabled {
+    background-color: #1A1A1A;
+    color: #6B7280;
+    border-bottom: 1px solid #2A2A2A;
+}
+
 QMenuBar::item:selected {
     background-color: ACCENT_COLOR;
     color: #121212;
     border-radius: 4px;
+}
+
+QMenuBar::item:disabled {
+    background-color: transparent;
+    color: #6B7280;
 }
 
 QMenuBar::item {
@@ -436,10 +447,21 @@ QMenu {
     font-size: 18pt;
 }
 
+QMenu:disabled {
+    background-color: #1A1A1A;
+    color: #6B7280;
+    border: 1px solid #2A2A2A;
+}
+
 QMenu::item:selected {
     background-color: ACCENT_COLOR;
     color: #121212;
     padding: 12px 16px;
+}
+
+QMenu::item:disabled {
+    background-color: transparent;
+    color: #6B7280;
 }
 
 QMenu::item {
@@ -473,6 +495,39 @@ QLabel#lblWarning {
     padding: 8px;
     border-radius: 4px;
     font-weight: bold;
+}
+
+QDialog#OverrideDialog QLabel#label {
+    font-size: 24pt;
+    padding: 10px 0;
+}
+
+QDialog#OverrideDialog QLabel#lblWarning {
+    font-size: 19pt;
+    padding: 16px;
+    border-radius: 8px;
+}
+
+QDialog#OverrideDialog QLabel#lblInstruction {
+    font-size: 18pt;
+    color: #f0dede;
+    padding: 10px 0 6px 0;
+}
+
+QDialog#OverrideDialog QCheckBox {
+    font-size: 19pt;
+    padding: 10px 0;
+}
+
+QDialog#OverrideDialog QLabel#lblOverrideStatus {
+    font-size: 18pt;
+    padding: 8px 0;
+}
+
+QDialog#OverrideDialog QDialogButtonBox QPushButton {
+    min-width: 150px;
+    min-height: 64px;
+    font-size: 18pt;
 }
 
 /* QCheckBox#chkEnableOverride {
@@ -716,5 +771,97 @@ QCheckBox#chkLight { color: #777777; } */
 
 /* ==================== OVERRIDE MODE MAIN WINDOW ==================== */
 QMainWindow[override="true"] {
+    background-color: #4a0a0a;
+}
+
+QMainWindow[override="true"] QWidget {
+    background-color: #3a0a0a;
+    color: #f4e9e9;
+}
+
+QMainWindow[override="true"] #wgtCentral,
+QMainWindow[override="true"] #wgtSpacer,
+QMainWindow[override="true"] #swPages {
+    background-color: #4a0a0a;
+}
+
+QMainWindow[override="true"] QFrame,
+QMainWindow[override="true"] QGroupBox {
+    background-color: #2e0a0a;
+    border: 1px solid #6a1a1a;
+}
+
+QMainWindow[override="true"] QGroupBox::title {
+    color: #ffb3b3;
+}
+
+QMainWindow[override="true"] QMenuBar,
+QMainWindow[override="true"] QMenu {
+    background-color: #3a0a0a;
+    color: #f4e9e9;
+    border-color: #6a1a1a;
+}
+
+QMainWindow[override="true"] QMenuBar::item:selected,
+QMainWindow[override="true"] QMenu::item:selected {
+    background-color: #ff4d4d;
+    color: #1a0a0a;
+}
+
+QMainWindow[override="true"] QPushButton {
+    background-color: #5a0f0f;
+    color: #f4e9e9;
+    border: 1px solid #7a1f1f;
+}
+
+QMainWindow[override="true"] QPushButton:hover {
+    background-color: #6a1414;
+    border: 1px solid #ff6b6b;
+}
+
+QMainWindow[override="true"] QLineEdit,
+QMainWindow[override="true"] QTextEdit,
+QMainWindow[override="true"] QPlainTextEdit,
+QMainWindow[override="true"] QSpinBox,
+QMainWindow[override="true"] QDoubleSpinBox,
+QMainWindow[override="true"] QComboBox,
+QMainWindow[override="true"] QDateEdit,
+QMainWindow[override="true"] QTimeEdit {
+    background-color: #4a0f0f;
+    color: #f4e9e9;
+    border: 1px solid #7a1f1f;
+}
+
+QMainWindow[override="true"] QSlider::groove:horizontal {
+    background-color: #5a1414;
+}
+
+QMainWindow[override="true"] QSlider::handle:horizontal {
+    background-color: #ff4d4d;
+    border: 1px solid #7a1f1f;
+}
+
+QMainWindow[override="true"] QStatusBar {
+    background-color: #3a0a0a;
+    color: #f4e9e9;
+    border-top: 1px solid #6a1a1a;
+}
+
+QMainWindow[override="true"] PlotWidget {
+    background-color: #121212;
+    color: #E5E7EB;
+}
+
+QMainWindow[override="true"] #wgtCentral,
+QMainWindow[override="true"] #wgtSpacer,
+QMainWindow[override="true"] #swPages,
+QMainWindow[override="true"] #pageFrontPage,
+QMainWindow[override="true"] #pageDiagnosticMode,
+QMainWindow[override="true"] #pageShotMode,
+QMainWindow[override="true"] #pageAnalysisModePage,
+QMainWindow[override="true"] #pageCloudTest,
+QMainWindow[override="true"] #pagePlaceHolder,
+QMainWindow[override="true"] #pageShotViewPage,
+QMainWindow[override="true"] #pageDataViewPage {
     background-color: #cc0000;
 }
