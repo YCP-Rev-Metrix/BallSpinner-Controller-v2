@@ -21,7 +21,8 @@ How to add a page (summary)
 
 Notes
 - Use `self.findChild(YourPageClass, 'wgtYourPageName')` in `BSCMainWindow` to obtain references to pages defined in the UI file
-- Use Hungarian notation for all object names: buttons (`btn*`), labels (`lbl*`), spinboxes (`spn*`, `dsb*`), combos (`cbo*`), dialogs (`dlg*`), menus (`mnu*`), actions (`act*`), widgets/containers (`wgt*`), stacked widgets (`sw*`), progress bars (`pgb*`), tables (`tbl*`), dialog button boxes (`dbb*`), graphs (`grph*`)
+- Use Hungarian notation for all object names: buttons (`btn*`), labels (`lbl*`), spinboxes (`spn*`, `dsb*`), combos (`cbo*`), dialogs (`dlg*`), menus (`mnu*`), actions (`act*`), widgets/containers (`wgt*`), stacked widgets (`sw*`), progress bars (`pgb*`), tables (`tbl*`), dialog button boxes (`dbb*`), graphs (`grph*`). This is essential for both code reference and styling.
+- **All styling should be defined in `frontend/style.qss`** - never hardcode styles in Python or Qt Designer
 - Update `BSCMainWindow.ui` in Qt Designer and save it after promoting widgets
 
 If you want, I can restore additional tutorial sections from the previous file, but this smaller guide keeps the repo references consistent with the new `BSCMainWindow` name.
@@ -204,14 +205,17 @@ Make sure you create a main in your Python file to test that your page works
 
 ## Part 1: How does the UI work
 
-The BSC UI consists of 2 kinds of files
+The BSC UI consists of 3 kinds of files
 
-1. .ui files, the visual component
-1. .py files, the script component
+1. `.ui` files - the visual component (structure and layout)
+2. `.py` files - the script component (functionality and logic)
+3. `.qss` file - the style component (theming and appearance)
 
 The .ui files are XML-based files that should be edited in the *Qt Designer* almost exclusively. If you are going to edit the files manually, only adjust values within the objects rather than trying to restructure the objects themselves. **Make a backup before manually editing the files**. All UI files are made of widgets. There are some premade widgets within the designer, or you can create UI files to function as widgets within your application.
 
 The .py files are what allow us to have any functionality whatsoever on a page, turning the .ui file into a class that can be used.
+
+The `.qss` file (Qt Style Sheet) is a CSS-like file that handles all visual styling of the application. This includes colors, fonts, borders, padding, and other appearance properties. All style customizations should be made in this file rather than hardcoding styles in Python code or applying them in Qt Designer. This ensures consistent theming across the entire application and makes it easy to make global style changes.
 
 
 ### The BSCMainWindow
@@ -267,9 +271,14 @@ Every class requires the following imports
 A page can be created either by using a .ui file or simply hardcoding it in Python [see ShotGraph.py] This approach is not recommended as it makes it harder to visualize
 
 ####UI file tips
-1. **Ensure you name everything using Hungarian notation.** Buttons: `btn*`, Labels: `lbl*`, Spinboxes: `spn*` (int) or `dsb*` (double), Combos: `cbo*`, Dialogs: `dlg*`, Menus: `mnu*`, Actions: `act*`, Widgets/Containers: `wgt*`, Stacked widgets: `sw*`, Progress bars: `pgb*`, Tables: `tbl*`, Dialog button boxes: `dbb*`, Graphs/Plots: `grph*`. If there is no Hungarian equivalent, use a descriptive name.
+1. **Ensure you name everything using Hungarian notation.** This is critical for two reasons:
+   - **Code reference:** To locate elements in Python using `findChild()` with the correct object name
+   - **Styling:** To apply specific styles from `style.qss` using CSS selectors (e.g., `QPushButton#btnClear`)
+   
+   Standard prefixes: Buttons: `btn*`, Labels: `lbl*`, Spinboxes: `spn*` (int) or `dsb*` (double), Combos: `cbo*`, Dialogs: `dlg*`, Menus: `mnu*`, Actions: `act*`, Widgets/Containers: `wgt*`, Stacked widgets: `sw*`, Progress bars: `pgb*`, Tables: `tbl*`, Dialog button boxes: `dbb*`, Graphs/Plots: `grph*`. If there is no Hungarian equivalent, use a descriptive name.
 2. Wait until all items are in a page before applying formatting. Widgets can get stuck inside each other if you don't wait.
 3. Imported/promoted widgets won't be visible in the editor, so ensure you are looking at the right item
+4. **Do not apply custom styling in Qt Designer** - use the `style.qss` file instead for all visual customizations
 
 ####Python file tips
 1. If you are using an element, locate it using `findChild` with the Hungarian notation name:
@@ -286,6 +295,22 @@ A page can be created either by using a .ui file or simply hardcoding it in Pyth
 	    window = [your class]()
 	    window.show()
 	    sys.exit(app.exec())
+
+###Styling with style.qss
+All styling changes should be defined in the centralized **`style.qss`** file located in the `frontend/` directory. This ensures consistent theming across the entire application and makes it easy to update styles globally.
+
+**Why Hungarian notation matters for styling:**
+Object names follow Hungarian notation specifically so they can be referenced in the `.qss` file. For example:
+- A button named `btnClear` can be styled with `QPushButton#btnClear { ... }`
+- A label named `lblTitle` can be styled with `QLabel#lblTitle { ... }`
+- A widget named `wgtFrontPage` can be styled with `QWidget#wgtFrontPage { ... }`
+
+**Best practices for styling:**
+1. **Always add styles to `style.qss`** unless it's a very specific, one-off case that will never be reused
+2. **Use specific selectors** in `.qss` for custom styles (e.g., `QPushButton#btnClear` instead of `QPushButton`)
+3. **Never hardcode colors or styles in Python** - use the `.qss` file instead
+4. **Reference the style.qss file** in your main window initialization to apply styles globally
+5. **Use custom properties** in Qt Designer (e.g., `accent="text"`) to apply pre-defined style classes to multiple widgets
 
 ###Importing Widgets
 In order to avoid recreating UI elements it is best practice to create a widget for it and import it within your page.
