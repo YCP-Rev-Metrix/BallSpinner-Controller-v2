@@ -550,22 +550,22 @@ class SmartDotGraph(QtWidgets.QWidget):
 
  
     def updateDataBetter(self,
-                        acclerometerTime, acclerometerX, accelerometerY, accelerometerZ,
-                        gyroscoperTime, gyroscopeX, gyroscopeY, gyroscopeZ,
-                        magnometerTime, 
+                        accelerometerTime, accelerometerX, accelerometerY, accelerometerZ,
+                        gyroscopeTime, gyroscopeX, gyroscopeY, gyroscopeZ,
+                        magnetometerTime, 
                         magnetometerX, magnetometerY, magnetometerZ,
                         lightTime, lightValue):
         # Store incoming data as NumPy arrays (do conversion once)
         # Make explicit copies to avoid sharing buffers with producer arrays
-        self.accelerometerTime = np.array(acclerometerTime, dtype=np.float64, copy=True) if acclerometerTime is not None else np.array([])
-        self.accelerometerX = np.array(acclerometerX, dtype=np.float32, copy=True) if acclerometerX is not None else np.array([])
+        self.accelerometerTime = np.array(accelerometerTime, dtype=np.float64, copy=True) if accelerometerTime is not None else np.array([])
+        self.accelerometerX = np.array(accelerometerX, dtype=np.float32, copy=True) if accelerometerX is not None else np.array([])
         self.accelerometerY = np.array(accelerometerY, dtype=np.float32, copy=True) if accelerometerY is not None else np.array([])
         self.accelerometerZ = np.array(accelerometerZ, dtype=np.float32, copy=True) if accelerometerZ is not None else np.array([])
-        self.gyroscopeTime = np.array(gyroscoperTime, dtype=np.float64, copy=True) if gyroscoperTime is not None else np.array([])
+        self.gyroscopeTime = np.array(gyroscopeTime, dtype=np.float64, copy=True) if gyroscopeTime is not None else np.array([])
         self.gyroscopeX = np.array(gyroscopeX, dtype=np.float32, copy=True) if gyroscopeX is not None else np.array([])
         self.gyroscopeY = np.array(gyroscopeY, dtype=np.float32, copy=True) if gyroscopeY is not None else np.array([])
         self.gyroscopeZ = np.array(gyroscopeZ, dtype=np.float32, copy=True) if gyroscopeZ is not None else np.array([])
-        self.magnetometerTime = np.array(magnometerTime, dtype=np.float64, copy=True) if magnometerTime is not None else np.array([])
+        self.magnetometerTime = np.array(magnetometerTime, dtype=np.float64, copy=True) if magnetometerTime is not None else np.array([])
         self.magnetometerX = np.array(magnetometerX, dtype=np.float32, copy=True) if magnetometerX is not None else np.array([])
         self.magnetometerY = np.array(magnetometerY, dtype=np.float32, copy=True) if magnetometerY is not None else np.array([])
         self.magnetometerZ = np.array(magnetometerZ, dtype=np.float32, copy=True) if magnetometerZ is not None else np.array([])

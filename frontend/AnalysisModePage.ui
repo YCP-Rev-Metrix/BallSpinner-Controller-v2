@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1280</width>
-    <height>864</height>
+    <height>836</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -41,30 +41,50 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnOp1">
+       <widget class="QPushButton" name="btnMotorFFT">
         <property name="text">
-         <string>Analysis Operation 1</string>
+         <string>Motor 
+FFT</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnOp2">
+       <widget class="QPushButton" name="btnSDFFT">
         <property name="text">
-         <string>Analysis Operation 2</string>
+         <string>SmartDot 
+FFT</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnOp3">
+       <widget class="QPushButton" name="btnMotor1DER">
         <property name="text">
-         <string>Analysis Operation 3</string>
+         <string>Motor 
+First Dervitive</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnOp4">
+       <widget class="QPushButton" name="btnSD1DER">
         <property name="text">
-         <string>Analysis Operation 4</string>
+         <string>SmartDot 
+First Derivitive</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnMotor2DER">
+        <property name="text">
+         <string>Motor 
+Second Dervitive</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnSD2DER">
+        <property name="text">
+         <string>SmartDot 
+Second Derivitive</string>
         </property>
        </widget>
       </item>

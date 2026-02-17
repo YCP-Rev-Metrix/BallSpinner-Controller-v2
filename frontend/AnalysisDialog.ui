@@ -7,31 +7,266 @@
     <x>0</x>
     <y>0</y>
     <width>1280</width>
-    <height>864</height>
+    <height>808</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="1">
-    <widget class="QDialogButtonBox" name="dbbMain">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
+    <layout class="QHBoxLayout" name="mainLayout">
+   <item>
+        <widget class="QWidget" name="leftPanel" native="true">
+         <layout class="QVBoxLayout" name="leftLayout">
+      <item>
+       <widget class="PlotWidget" name="grphAnalysis" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item>
+    <layout class="QVBoxLayout" name="bottomLayout">
+        <item>
+         <widget class="QLabel" name="lblHighlight">
+          <property name="text">
+           <string>Highlighted: (click the graph)</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+                 <layout class="QHBoxLayout" name="widthLayout">
+          <item>
+                     <widget class="QLabel" name="lblWidth">
+            <property name="text">
+             <string>Width:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="spnRangeWidth">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>0.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>1000000000.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.100000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnRangeReset">
+            <property name="text">
+             <string>Reset</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+     </layout>
     </widget>
    </item>
-   <item row="0" column="0">
-    <widget class="PlotWidget" name="grphAnalysis" native="true"/>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="lblTitle">
-     <property name="text">
-      <string>Sample Analysis</string>
-     </property>
+   <item>
+    <widget class="QWidget" name="rightPanel" native="true">
+     <layout class="QVBoxLayout" name="rightLayout">
+      <item>
+       <widget class="QDialogButtonBox" name="dbbMain">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="standardButtons">
+         <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="grpSeries">
+        <property name="title">
+         <string>Series</string>
+        </property>
+        <layout class="QVBoxLayout" name="seriesLayout">
+         <item>
+          <widget class="QCheckBox" name="chkAccelX">
+           <property name="text">
+            <string>Accel X</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkAccelY">
+           <property name="text">
+            <string>Accel Y</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkAccelZ">
+           <property name="text">
+            <string>Accel Z</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkGyroX">
+           <property name="text">
+            <string>Gyro X</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkGyroY">
+           <property name="text">
+            <string>Gyro Y</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkGyroZ">
+           <property name="text">
+            <string>Gyro Z</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkMagX">
+           <property name="text">
+            <string>Mag X</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkMagY">
+           <property name="text">
+            <string>Mag Y</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkMagZ">
+           <property name="text">
+            <string>Mag Z</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkLight">
+           <property name="text">
+            <string>Light</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkMotorRPM">
+           <property name="text">
+            <string>Motor RPM</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkMotorAngle">
+           <property name="text">
+            <string>Motor Angle</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkMotorTilt">
+           <property name="text">
+            <string>Motor Tilt</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkEncoderRPM">
+           <property name="text">
+            <string>Encoder RPM</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkEncoderAngle">
+           <property name="text">
+            <string>Encoder Angle</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkEncoderTilt">
+           <property name="text">
+            <string>Encoder Tilt</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
   </layout>
@@ -46,11 +281,11 @@
  </customwidgets>
  <resources/>
  <connections>
-    <connection>
-     <sender>dbbMain</sender>
-     <signal>accepted()</signal>
-     <receiver>dlgAnalysis</receiver>
-     <slot>accept()</slot>
+  <connection>
+   <sender>dbbMain</sender>
+   <signal>accepted()</signal>
+   <receiver>dlgAnalysis</receiver>
+   <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>248</x>
@@ -62,11 +297,11 @@
     </hint>
    </hints>
   </connection>
-    <connection>
-     <sender>dbbMain</sender>
-     <signal>rejected()</signal>
-     <receiver>dlgAnalysis</receiver>
-     <slot>reject()</slot>
+  <connection>
+   <sender>dbbMain</sender>
+   <signal>rejected()</signal>
+   <receiver>dlgAnalysis</receiver>
+   <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>316</x>

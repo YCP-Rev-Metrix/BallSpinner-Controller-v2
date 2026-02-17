@@ -29,8 +29,7 @@ class DataViewPage(QtWidgets.QWidget):
 
         self.tableview = self.findChild(QtWidgets.QTableView, 'tblData')
 
-
-
+        self.btnViewAll = self.findChild(QtWidgets.QPushButton, 'btnViewAll')
         self.btnSearch = self.findChild(QtWidgets.QPushButton, 'btnSearch')
         self.btnAnalyze = self.findChild(QtWidgets.QPushButton, 'btnAnalyze')
         self.btnReplay = self.findChild(QtWidgets.QPushButton, 'btnReplay')
@@ -87,6 +86,7 @@ class DataViewPage(QtWidgets.QWidget):
                 self.dateEndDate.date().toString("yyyyMMdd") + self.timeEndTime.time().toString("hhmmss")
             )
             )
+        self.btnViewAll.clicked.connect(lambda: self.refresh_data("", ""))
         
         #self.btnSearch.clicked.connect(self.refresh_data)
         self.btnAnalyze.clicked.connect(self.analyze_data)
