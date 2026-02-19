@@ -4,6 +4,8 @@ colorzero==2.0
 gpiozero==2.0.1
 idna==3.11
 iniconfig==2.3.0
+pyvesc @ git+https://github.com/LiamBindle/PyVESC.git@d2f2076afe91dafa920a38a437528819697e05e3
+crcmod==1.7
 numpy==2.3.3
 packaging==25.0
 pigpio==1.78
