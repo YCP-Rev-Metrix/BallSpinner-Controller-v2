@@ -15,6 +15,7 @@ PyQt6==6.9.1
 PyQt6-Qt6==6.9.2
 PyQt6_sip==13.10.2
 pyqtgraph==0.13.7
+PyWavelets==1.9.0
 pytest==9.0.2
 pytest-qt==4.5.0
 requests==2.32.5

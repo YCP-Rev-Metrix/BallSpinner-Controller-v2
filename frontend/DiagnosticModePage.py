@@ -149,14 +149,14 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.tiltGraph.setLabel('left', 'Tilt Angle', units='Degrees')
         self.tiltGraph.setLabel('bottom', 'Time', units='s')
         self.tiltCurve = self.tiltGraph.plot([0.0], [0.0], pen=pg.mkPen(color='r', width=2)) #Extra refrence allows to be manipulated in thread
-        self.tiltGraph.setYRange(-100,100)
+        self.tiltGraph.setYRange(-45,45)
         self.tiltGraph.setMouseEnabled(x=False, y=False)
         #Angle Motor graph setup
         self.angleGraph.setTitle("Diagnostic Angle Graph")
         self.angleGraph.setLabel('left', 'Angle', units='Degrees')
         self.angleGraph.setLabel('bottom', 'Time', units='s')
         self.angleCurve = self.angleGraph.plot([0.0], [0.0], pen=pg.mkPen(color='g', width=2)) #Extra refrence allows to be manipulated in thread
-        self.angleGraph.setYRange(-50,50)
+        self.angleGraph.setYRange(-100,100)
         self.angleGraph.setMouseEnabled(x=False, y=False)
         # Slider configurations (replace dials with horizontal sliders)
         self.spinSlider = self.findChild(QtWidgets.QSlider, 'sliderSpin')

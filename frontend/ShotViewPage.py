@@ -296,7 +296,7 @@ class ShotViewPage(QtWidgets.QWidget):
                     self.displayedSpinTime.append(self.delta)
                 except Exception:
                     pass
-            elif self.motor_index == 1:
+            elif self.motor_index == 2:
                 try:
                     self.displayedTilt.append(self.value)
                 except Exception:
@@ -305,7 +305,7 @@ class ShotViewPage(QtWidgets.QWidget):
                     self.displayedTiltTime.append(self.delta)
                 except Exception:
                     pass
-            elif self.motor_index == 2:
+            elif self.motor_index == 1:
                 try:
                     self.displayedAngle.append(self.value)
                 except Exception:
