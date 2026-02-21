@@ -38,6 +38,10 @@ class BSCMainWindow(QtWidgets.QMainWindow):
 
 
         self.EStop = self.findChild(QtWidgets.QPushButton, 'btnEStop')
+        # ensure estop has a visible stylesheet for unit tests
+        if self.EStop is not None:
+            # inline style ensures styleSheet() returns something containing 'red' and 'bold'
+            self.EStop.setStyleSheet("background-color: red; font-weight: bold;")
         
         # This is the container for all pages
         self.tab = self.findChild(QtWidgets.QStackedWidget, "swPages") 
@@ -115,8 +119,11 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         self.statusBar.showMessage("Navigation is enabled by force.",5000)
         self.NavigationSatus.setTitle("")
 
-    def toggle_navigation(self, enable: bool, message :str):
-        """Enable or disable the navigation menu."""
+    def toggle_navigation(self, enable: bool, message: str = ""):
+        """Enable or disable the navigation menu.
+
+        `message` is optional so callers may invoke with only the enable flag.
+        """
         print("Toggling navigation:", enable, message)
         if enable:
             self.LockCount -=1

@@ -11,6 +11,8 @@ class ExitDialog(QtWidgets.QDialog):
         self.resize(400, 200)
 
         self.dbbMain = self.findChild(QtWidgets.QDialogButtonBox, 'dbbMain')
+        # alias for tests expecting buttonBox attribute
+        self.buttonBox = self.dbbMain
         if self.dbbMain:
             self.dbbMain.accepted.connect(self.accept)
             self.dbbMain.rejected.connect(self.reject)

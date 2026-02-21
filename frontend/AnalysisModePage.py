@@ -2,7 +2,6 @@ from PyQt6 import QtWidgets, uic
 import os
 from PyQt6.QtCore import Qt
 import numpy as np
-import pywt
 
 from utils import get_series_defs, series_arrays
 from .MotorGraph import MotorGraph
@@ -15,15 +14,12 @@ from .PostDialog import PostDialog
 
 
 class AnalysisModePage(QtWidgets.QWidget):
-    def _ensureWaveletDialog(self):
-        if self.waveletDialog is not None:
-            return
-        self.waveletDialog = WaveletDialog(self)
+    # WaveletDialog removed
     changePage = pyqtSignal(int, str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.waveletDialog = None
+        # self.waveletDialog = None  # WaveletDialog removed
 
         # Load the UI file (module-relative path).
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'AnalysisModePage.ui'), self, package='frontend')
@@ -41,16 +37,12 @@ class AnalysisModePage(QtWidgets.QWidget):
         self.btnSmartDotFirstDerivative = self.findChild(QtWidgets.QPushButton, 'btnSD1DER')
         self.btnMotorSecondDerivative = self.findChild(QtWidgets.QPushButton, 'btnMotor2DER')
         self.btnSmartDotSecondDerivative = self.findChild(QtWidgets.QPushButton, 'btnSD2DER')
-        self.btnMotorWavelet = self.findChild(QtWidgets.QPushButton, 'btnMotorWav')
-        self.btnSmartDotWavelet = self.findChild(QtWidgets.QPushButton, 'btnSDWav')
         self.btnMotorFFT.clicked.connect(lambda: self.openAnalysisDialog("Motor FFT"))
         self.btnSmartDotFFT.clicked.connect(lambda: self.openAnalysisDialog("SmartDot FFT"))
         self.btnMotorFirstDerivative.clicked.connect(lambda: self.openAnalysisDialog("Motor 1st Derivative"))
         self.btnSmartDotFirstDerivative.clicked.connect(lambda: self.openAnalysisDialog("SmartDot 1st Derivative"))
         self.btnMotorSecondDerivative.clicked.connect(lambda: self.openAnalysisDialog("Motor 2nd Derivative"))
         self.btnSmartDotSecondDerivative.clicked.connect(lambda: self.openAnalysisDialog("SmartDot 2nd Derivative"))
-        self.btnMotorWavelet.clicked.connect(lambda: self.openWaveletDialog("Motor Wavelet"))
-        self.btnSmartDotWavelet.clicked.connect(lambda: self.openWaveletDialog("SmartDot Wavelet"))
 
         self.analysisDialog = None
              
@@ -69,8 +61,6 @@ class AnalysisModePage(QtWidgets.QWidget):
             "SmartDot 1st Derivative": (PackageSmartDotData, "deriv", 1),
             "Motor 2nd Derivative": (PackageMotorData, "deriv", 2),
             "SmartDot 2nd Derivative": (PackageSmartDotData, "deriv", 2),
-            "Motor Wavelet": (PackageMotorData, "wavelet", None),
-            "SmartDot Wavelet": (PackageSmartDotData, "wavelet", None),
             "Motor Standard Dev": (PackageMotorData, "stdev", None),
             "SmartDot Standard Dev": (PackageSmartDotData, "stdev", None),
         }
@@ -79,47 +69,22 @@ class AnalysisModePage(QtWidgets.QWidget):
             return
         package_cls, mode, order = action
         data_package = package_cls(self, bsc)
+        print(f"Opening analysis dialog for {type} with mode={mode} and order={order}")
         match mode:
             case "fft":
                 dialog.performFFT(data_package)
             case "deriv":
                 dialog.performDerivative(data_package, order=order)
-            case "wavelet":
-                dialog.performWavelet(data_package)
             case "stdev":
                 dialog.performStandardDev(data_package)
             case _:
                 dialog.graph.setTitle("Unknown analysis mode")
     
-        if mode == "wavelet":
-            dialog.hide()
-            return
-
         dialog.show()
         dialog.raise_()
         dialog.activateWindow()
 
-    def openWaveletDialog(self, type: str): 
-        self._ensureWaveletDialog()
-        dialog = self.waveletDialog
-        dialog.setWindowTitle(type)
-
-        if type == "Motor Wavelet":
-            package = PackageMotorData(self, bsc)
-            defs = dialog.seriesDefs["motor"]
-        elif type == "SmartDot Wavelet":
-            package = PackageSmartDotData(self, bsc)
-            defs = dialog.seriesDefs["smartdot"]
-        else:
-            return
-        
-        series = series_arrays(package, defs)
-        plotted = dialog.render_wavelets(series, defs, selected_keys=None)
-        # Optionally, show feedback in another way if needed
-
-        dialog.show()
-        dialog.raise_()
-        dialog.activateWindow()
+    # openWaveletDialog removed (WaveletDialog removed)
 
     def openPostDialog(self):
         dialog = PostDialog(self)
@@ -212,79 +177,6 @@ class AnalysisModePage(QtWidgets.QWidget):
             lblMotorStdDev.setTextFormat(Qt.TextFormat.RichText)
             lblMotorStdDev.setWordWrap(True)
 
-#-------------------------------------------------
-class WaveletDialog(QtWidgets.QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Wavelet Analysis")
-        self.setModal(False)
-        self.resize(1200, 900)
-        layout = QtWidgets.QVBoxLayout(self)
-        self.tabs = QtWidgets.QTabWidget(self)
-        layout.addWidget(self.tabs)
-        key_label = QtWidgets.QLabel(
-            "Key: X = time (s), Y = frequency (Hz). Color scale: dark = low power, bright = high power.",
-            self
-        )
-        key_label.setWordWrap(True)
-        layout.addWidget(key_label)
-        self.loaded_series = {}
-        self.seriesDefs = get_series_defs(parent)
-
-    def clear_tabs(self):
-        while self.tabs.count() > 0:
-            self.tabs.removeTab(0)
-
-    def add_wavelet_tab(self, title, times, values):
-        plot = pg.PlotWidget()
-        plot.setTitle(f"Wavelet: {title}")
-        plot.setLabel('bottom', 'Time', units='s')
-        plot.setLabel('left', 'Frequency', units='Hz')
-        duration = float(times[-1] - times[0])
-        if duration <= 0:
-            return
-        dt = times[1] - times[0]
-        if dt <= 0:
-            return
-        coeffs, freqs = pywt.cwt(values, scales=np.arange(1, 256), wavelet='morl', sampling_period=dt)
-        power = np.abs(coeffs)
-        img = pg.ImageItem(power)
-        img.setRect(pg.QtCore.QRectF(times[0], freqs[0], times[-1] - times[0], freqs[-1] - freqs[0]))
-        cmap = pg.colormap.get("viridis")
-        img.setLookupTable(cmap.getLookupTable(0.0, 1.0, 256))
-        plot.addItem(img)
-        plot.setLimits(xMin=times[0], xMax=times[-1], yMin=freqs[-1], yMax=freqs[0])
-        #plot.scene().sigMouseClicked.connect(lambda ev: self._on_wavelet_plot_clicked(plot, ev))
-        self.tabs.addTab(plot, title)
-        # Store the data for this plot as a 2D array: [times, values]
-        self.loaded_series[title] = np.column_stack((np.asarray(times), np.asarray(values)))
-
-    def _on_wavelet_plot_clicked(self, plot, event):
-        pt = plot.getPlotItem().getViewBox().mapSceneToView(event.scenePos())
-        idx = self.tabs.indexOf(plot)
-        title = self.tabs.tabText(idx)
-        arr = self.loaded_series.get(title)
-        ##print(f"Wavelet click: {pt.x()}, {pt.y()} | Data for '{title}':\n", arr)
-
-    def render_wavelets(self, series, defs, selected_keys):
-        self.clear_tabs()
-        self.loaded_series = {}
-        keys = [key for key in defs.keys() if key in selected_keys] if selected_keys else list(defs.keys())
-        plotted = 0
-        for key in keys:
-            times, values = series.get(key, (None, None))
-            if times is None or values is None:
-                continue
-            if len(times) == 0:
-                continue
-            self.loaded_series[key] = {
-                "label": defs[key]["label"],
-                "times": np.asarray(times, dtype=np.float64),
-                "values": np.asarray(values, dtype=np.float64),
-            }
-            self.add_wavelet_tab(defs[key]["label"], times, values)
-            plotted += 1
-        return plotted
 #-------------------------------------------------
 class AnalysisDialog(QtWidgets.QDialog):
     def __init__(self, parent=None, type: str = None):
@@ -438,11 +330,6 @@ class AnalysisDialog(QtWidgets.QDialog):
         self.series = {}
         self._hideAllSeriesCheckboxes()
         self._initCursor()
-
-    def _ensureWaveletDialog(self):
-        if self.waveletDialog is not None:
-            return
-        self.waveletDialog = WaveletDialog(self)
 
     def _seriesArrays(self, package, defs):
         
@@ -675,26 +562,12 @@ class AnalysisDialog(QtWidgets.QDialog):
         self._autoRangeAndSync()
     
     def performWavelet(self, package):
-        if isinstance(package, SmartDotDataPackage):
-            defs = self.seriesDefs["smartdot"]
-        elif isinstance(package, MotorDataPackage):
-            defs = self.seriesDefs["motor"]
-        else:
-            return
-        self._ensureWaveletDialog()
-        if self.waveletDialog is None:
-            return
-        series = self._seriesArrays(package, defs)
-        selected_keys = [key for key, checkbox in self.seriesChecks.items() if checkbox is not None and checkbox.isChecked()]
-        plotted = self.waveletDialog.render_wavelets(series, defs, selected_keys)
-        if plotted == 0:
-            self.graph.setTitle("Wavelet: no data available")
-            return
+        # wavelet support removed; placeholder for future implementation
+        self._prepareGraph()
+        self.graph.setTitle("Wavelet analysis not implemented")
+        # data packages can be inspected here once reworked
+        # no plotting is performed at this time
 
-        self.waveletDialog.show()
-        self.waveletDialog.raise_()
-        self.waveletDialog.activateWindow()
-    
     def performStandardDev(self, package):
         # Only show the overall standard deviation as a label, not a plot
         if isinstance(package, SmartDotDataPackage):

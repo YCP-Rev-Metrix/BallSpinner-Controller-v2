@@ -102,22 +102,7 @@ Second Derivitive</string>
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QPushButton" name="btnMotorWav">
-        <property name="text">
-         <string>Motor
-Wavelet</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btnSDWav">
-        <property name="text">
-         <string>SmartDot
-Wavelet</string>
-        </property>
-       </widget>
-      </item>
+
      </layout>
     </widget>
    </item>
