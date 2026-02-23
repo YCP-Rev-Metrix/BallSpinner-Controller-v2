@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>dlgWavelet</class>
+ <widget class="QDialog" name="dlgWavelet">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1280</width>
+    <height>800</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Wavelet Analysis</string>
+  </property>
+  <layout class="QHBoxLayout" name="mainLayout">
+   <item>
+    <widget class="QWidget" name="leftContainer" native="true">
+     <layout class="QVBoxLayout" name="leftContainerLayout">
+      <item>
+       <widget class="QTabWidget" name="tabAnalysis">
+        <widget class="QWidget" name="tabPlaceholder">
+         <layout class="QVBoxLayout" name="placeholderLayout">
+          <item>
+           <widget class="PlotWidget" name="grphPlaceholder" native="true"/>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="lblHighlight">
+        <property name="text">
+         <string>Highlighted: (click the graph)</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="widthLayout">
+        <item>
+         <widget class="QLabel" name="lblWidth">
+          <property name="text">
+           <string>Width:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="spnRangeWidth">
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="minimum">
+           <double>0.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>1000000000.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.100000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnRangeReset">
+          <property name="text">
+           <string>Reset</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+       </layout>
+      </widget>
+     </item>
+   <item>
+    <widget class="QWidget" name="rightPanel" native="true">
+     <layout class="QVBoxLayout" name="rightLayout">
+      <item>
+       <widget class="QDialogButtonBox" name="dbbMain">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="standardButtons">
+         <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="grpSeries">
+        <property name="title">
+         <string>Series</string>
+        </property>
+        <layout class="QVBoxLayout" name="seriesLayout">
+         <item>
+          <widget class="QCheckBox" name="chkAccelX">
+           <property name="text">
+            <string>Accel X</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkAccelY">
+           <property name="text">
+            <string>Accel Y</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkAccelZ">
+           <property name="text">
+            <string>Accel Z</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkGyroX">
+           <property name="text">
+            <string>Gyro X</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkGyroY">
+           <property name="text">
+            <string>Gyro Y</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkGyroZ">
+           <property name="text">
+            <string>Gyro Z</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkMagX">
+           <property name="text">
+            <string>Mag X</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkMagY">
+           <property name="text">
+            <string>Mag Y</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkMagZ">
+           <property name="text">
+            <string>Mag Z</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkLight">
+           <property name="text">
+            <string>Light</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkMotorRPM">
+           <property name="text">
+            <string>Motor RPM</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkMotorAngle">
+           <property name="text">
+            <string>Motor Angle</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkMotorTilt">
+           <property name="text">
+            <string>Motor Tilt</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkEncoderRPM">
+           <property name="text">
+            <string>Encoder RPM</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkEncoderAngle">
+           <property name="text">
+            <string>Encoder Angle</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkEncoderTilt">
+           <property name="text">
+            <string>Encoder Tilt</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QWidget</extends>
+   <header>pyqtgraph</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

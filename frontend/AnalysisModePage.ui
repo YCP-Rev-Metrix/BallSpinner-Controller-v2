@@ -7,37 +7,37 @@
     <x>0</x>
     <y>0</y>
     <width>1372</width>
-    <height>879</height>
+    <height>851</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-        <layout class="QHBoxLayout" name="horizontalLayout">
-         <item>
-                <layout class="QVBoxLayout" name="verticalLayoutMotor">
-                 <item>
-                        <widget class="MotorGraph" name="MotorGraph" native="true">
-                         <property name="sizePolicy">
-                                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-                                 <horstretch>0</horstretch>
-                                 <verstretch>0</verstretch>
-                                </sizepolicy>
-                         </property>
-                        </widget>
-                 </item>
-                 <item>
-                        <widget class="QLabel" name="lblMotorStdDev">
-                         <property name="text">
-                                <string>Motor Standard Deviation: </string>
-                         </property>
-                         <property name="alignment">
-                                <set>Qt::AlignCenter</set>
-                         </property>
-                        </widget>
-                 </item>
-                </layout>
-         </item>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayoutMotor">
+     <item>
+      <widget class="MotorGraph" name="MotorGraph" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="lblMotorStdDev">
+       <property name="text">
+        <string>Motor Standard Deviation: </string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
    <item>
     <widget class="QGroupBox" name="ButtonContainer">
      <property name="sizePolicy">
@@ -102,34 +102,63 @@ Second Derivitive</string>
         </property>
        </widget>
       </item>
-
+      <item>
+       <widget class="QPushButton" name="btnMotorWavelet">
+        <property name="text">
+         <string>Motor Wavelet</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnSDWavelet">
+        <property name="text">
+         <string>SmartDot Wavelet</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnMotorBandpass">
+        <property name="text">
+         <string>Motor
+Bandpass</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnSDBandpass">
+        <property name="text">
+         <string>SmartDot
+Bandpass</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayoutSmartDot">
-          <item>
-                <widget class="SmartDotGraph" name="grphSmartDot" native="true">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
-          </item>
-          <item>
-                <widget class="QLabel" name="lblSmartDotStdDev">
-                 <property name="text">
-                  <string>SmartDot Standard Deviation: </string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-          </item>
-         </layout>
-        </item>
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayoutSmartDot">
+     <item>
+      <widget class="SmartDotGraph" name="grphSmartDot" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="lblSmartDotStdDev">
+       <property name="text">
+        <string>SmartDot Standard Deviation: </string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
   </layout>
  </widget>
  <customwidgets>

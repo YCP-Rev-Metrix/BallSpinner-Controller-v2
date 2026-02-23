@@ -3,7 +3,7 @@ import os
 from PyQt6.QtCore import Qt
 import numpy as np
 
-from utils import get_series_defs, series_arrays
+from utils import get_series_defs, series_arrays, bandpass_wavelet
 from .MotorGraph import MotorGraph
 from .SmartDotGraph import SmartDotGraph
 from PyQt6.QtCore import pyqtSignal
@@ -11,15 +11,16 @@ import pyqtgraph as pg
 from BSC import bsc
 from utils import PackageSmartDotData, SmartDotDataPackage, PackageMotorData, MotorDataPackage
 from .PostDialog import PostDialog
+from .WaveletDialog import WaveletDialog
 
 
 class AnalysisModePage(QtWidgets.QWidget):
-    # WaveletDialog removed
+    # wavelet dialog is still provided for manual inspection
     changePage = pyqtSignal(int, str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        # self.waveletDialog = None  # WaveletDialog removed
+        # no persistent wavelet dialog instance is stored
 
         # Load the UI file (module-relative path).
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'AnalysisModePage.ui'), self, package='frontend')
@@ -44,6 +45,18 @@ class AnalysisModePage(QtWidgets.QWidget):
         self.btnMotorSecondDerivative.clicked.connect(lambda: self.openAnalysisDialog("Motor 2nd Derivative"))
         self.btnSmartDotSecondDerivative.clicked.connect(lambda: self.openAnalysisDialog("SmartDot 2nd Derivative"))
 
+        # wavelet buttons
+        self.btnMotorWavelet = self.findChild(QtWidgets.QPushButton, 'btnMotorWavelet')
+        self.btnSDWavelet = self.findChild(QtWidgets.QPushButton, 'btnSDWavelet')
+        self.btnMotorWavelet.clicked.connect(lambda: self.openWaveletDialog("Motor"))
+        self.btnSDWavelet.clicked.connect(lambda: self.openWaveletDialog("SmartDot"))
+
+        #Bandpass buttons
+        self.btnMotorBandpass = self.findChild(QtWidgets.QPushButton, 'btnMotorBandpass')
+        self.btnSDBandpass = self.findChild(QtWidgets.QPushButton, 'btnSDBandpass')
+        self.btnMotorBandpass.clicked.connect(lambda: self.openAnalysisDialog("Motor Bandpass"))
+        self.btnSDBandpass.clicked.connect(lambda: self.openAnalysisDialog("SmartDot Bandpass")) 
+
         self.analysisDialog = None
              
     def openAnalysisDialog(self, type: str):
@@ -63,6 +76,8 @@ class AnalysisModePage(QtWidgets.QWidget):
             "SmartDot 2nd Derivative": (PackageSmartDotData, "deriv", 2),
             "Motor Standard Dev": (PackageMotorData, "stdev", None),
             "SmartDot Standard Dev": (PackageSmartDotData, "stdev", None),
+            "Motor Bandpass": (PackageMotorData, "bandpass", None),
+            "SmartDot Bandpass": (PackageSmartDotData, "bandpass", None),
         }
         action = actions.get(type)
         if action is None:
@@ -77,9 +92,25 @@ class AnalysisModePage(QtWidgets.QWidget):
                 dialog.performDerivative(data_package, order=order)
             case "stdev":
                 dialog.performStandardDev(data_package)
+            case "bandpass":
+                dialog.performBandpass(data_package)
             case _:
                 dialog.graph.setTitle("Unknown analysis mode")
     
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+
+    def openWaveletDialog(self, data_type: str):
+        """Launch the wavelet analysis dialog for motor or smartdot data."""
+        dialog = WaveletDialog(self)
+        if data_type.startswith("Motor"):
+            pkg = PackageMotorData(self, bsc)
+        else:
+            pkg = PackageSmartDotData(self, bsc)
+        success = dialog.performWavelet(pkg)
+        if not success:
+            return
         dialog.show()
         dialog.raise_()
         dialog.activateWindow()
@@ -496,6 +527,50 @@ class AnalysisDialog(QtWidgets.QDialog):
         self.graph.enableAutoRange(axis='x', enable=True)
         self.graph.autoRange()
         self._syncRangeControls()
+
+    def performBandpass(self, package):
+        self._prepareGraph()
+        # pick definition set by type or heuristic
+        if isinstance(package, SmartDotDataPackage):
+            defs = self.seriesDefs["smartdot"]
+        elif isinstance(package, MotorDataPackage):
+            defs = self.seriesDefs["motor"]
+        else:
+            # not a known package class; inspect for smartdot attributes
+            if hasattr(package, 'accel_x'):
+                defs = self.seriesDefs["smartdot"]
+            else:
+                defs = self.seriesDefs["motor"]
+
+        # gather raw data
+        series = self._seriesArrays(package, defs)
+        if defs is self.seriesDefs["motor"]:
+            motor_time = series.get("motor_rpm", (None,))[0]
+            if motor_time is None or len(motor_time) == 0:
+                self.graph.setTitle("No motor data available")
+                return
+
+        for key, meta in defs.items():
+            # ignore light per instruction
+            if key == "light":
+                continue
+            times, values = series.get(key, (None, None))
+            if times is None or values is None or len(values) == 0:
+                continue
+            # regularize to uniform grid for transform
+            reg = self._regularizeTimeSeries(times, values)
+            if reg is None:
+                continue
+            new_times, new_vals, _ = reg
+            filtered = bandpass_wavelet(new_vals)
+            label = f"{meta['label']} band‑pass"
+            self._plotSeries(key, label, new_times, filtered, meta.get("color"))
+
+        self._autoRangeAndSync()
+        
+
+        
+        
 
     def performDerivative(self, package, order=1):
         self._prepareGraph()

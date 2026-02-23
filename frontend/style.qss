@@ -267,33 +267,39 @@ QFrame#frameControls QDateEdit::down-arrow {
     border-top: 6px solid #FFFFFF;
 }
 /* ==================== CHECKBOXES ==================== */
-/* QCheckBox {
+QCheckBox {
     color: #E5E7EB;
     spacing: 8px;
     font-size: 14pt;
 }
 
 QCheckBox::indicator {
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    border: 2px solid #3A3A3A;
+    background-color: #FFFFFF;
 }
 
 QCheckBox::indicator:unchecked {
-    background-color: #1F1F1F;
-    border: 1px solid #3A3A3A;
-    border-radius: 4px;
+    background-color: #FFFFFF;
+    border: 2px solid #3A3A3A;
 }
 
 QCheckBox::indicator:checked {
-    background-color: ACCENT_COLOR;
-    border: 1px solid ACCENT_COLOR;
-    border-radius: 4px;
+    background-color: #10B981; /* green */
+    border: 2px solid #10B981;
     image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSAxMkw5IDE2TDE5IDYiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+);
+}
+
+/* clearly outline on focus to aid visibility */
+QCheckBox::indicator:focus {
+    border: 2px solid #10B981;
 }
 
 QCheckBox::indicator:hover {
     background-color: #2A2A2A;
-} */
+}
 
 /* ==================== TABLES ==================== */
 QTableWidget {

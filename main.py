@@ -12,6 +12,7 @@ from gpiozero.pins.native import NativeFactory
 from frontend.BSCMainWindow import BSCMainWindow
 
 
+
 def is_raspberry_pi():
     """Checks if the code is running on a Raspberry Pi."""
     try:
@@ -66,6 +67,14 @@ if __name__ == '__main__':
 
 
     window = BSCMainWindow()
+    # ensure all combo boxes use a list view with spacing for their popup
+    def _patch_comboboxes(parent):
+        for cb in parent.findChildren(QtWidgets.QComboBox):
+            view = QtWidgets.QListView(cb)
+            view.setSpacing(16)
+            cb.setView(view)
+    _patch_comboboxes(window)
+    #Combo boxes refuse to cooperate so this is the best option
     
     # Calculate the largest 16:9 window that fits within the screen
     screen_geometry = screen.geometry()

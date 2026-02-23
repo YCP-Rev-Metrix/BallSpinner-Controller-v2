@@ -3,6 +3,7 @@ import io
 import os
 import logging
 from array import array
+import pywt
 logger = logging.getLogger(__name__)
 
 def get_series_defs(parent=None):
@@ -38,6 +39,34 @@ def series_arrays(package, defs):
         series[key] = (time_values, data_values)
     return series
 
+
+
+
+def bandpass_wavelet(values, wavelet='db4', level=2):
+    arr = np.asarray(values, dtype=np.float64)
+    if arr.size == 0:
+        return arr.copy()
+    try:
+        coeffs = pywt.wavedec(arr, wavelet, level=level)
+    except Exception:
+        # if decomposition fails just return original
+        return arr.copy()
+    # keep only the detail coefficients at level-1 (middle band) if available
+    # coeffs structure: [cA_n, cD_n, cD_{n-1}, ..., cD1]
+    # we zero every coefficient except the one at index 2 (cD_{n}) when level=2
+    for i in range(len(coeffs)):
+        if i != 2:
+            coeffs[i] = np.zeros_like(coeffs[i])
+    try:
+        rec = pywt.waverec(coeffs, wavelet)
+    except Exception:
+        return arr.copy()
+    # trim/pad to original length
+    if len(rec) > len(arr):
+        rec = rec[: len(arr)]
+    elif len(rec) < len(arr):
+        rec = np.pad(rec, (0, len(arr) - len(rec)), mode='edge')
+    return rec
 
 
 def is_raspberry_pi():
