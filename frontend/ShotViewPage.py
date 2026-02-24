@@ -337,8 +337,6 @@ class ShotViewPage(QtWidgets.QWidget):
                     self.displayedTiltTime.append(self.delta)
                 except Exception:
                     pass
-            elif self.motor_index == 1:
-                # tilt encoder logging removed per request
             elif self.motor_index == 2:
                 try:
                     self.displayedAngle.append(self.value)
