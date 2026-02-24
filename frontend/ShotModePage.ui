@@ -30,10 +30,10 @@
           <widget class="InputGraph" name="grphInputRpm" native="true"/>
          </item>
          <item>
-          <widget class="InputGraph" name="grphInputTilt" native="true"/>
+          <widget class="InputGraph" name="grphInputAngle" native="true"/>
          </item>
          <item>
-          <widget class="InputGraph" name="grphInputAngle" native="true"/>
+          <widget class="InputGraph" name="grphInputTilt" native="true"/>
          </item>
         </layout>
        </widget>
