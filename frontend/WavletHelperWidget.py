@@ -113,6 +113,14 @@ class WavletHelperWidget(QtWidgets.QDialog):
         # isolation checkboxes per row
         high_chk = QtWidgets.QCheckBox()
         low_chk = QtWidgets.QCheckBox()
+        # make the two isolation checkboxes mutually exclusive
+        from PyQt6.QtCore import Qt as _QtConst
+        def _enforce_exclusive(changed: QtWidgets.QCheckBox, other: QtWidgets.QCheckBox):
+            # when one checkbox is checked, clear the other
+            if changed.isChecked():
+                other.setChecked(False)
+        high_chk.stateChanged.connect(lambda _: _enforce_exclusive(high_chk, low_chk))
+        low_chk.stateChanged.connect(lambda _: _enforce_exclusive(low_chk, high_chk))
         # center the checkboxes by placing them in a widget with centered layout
         high_container = QtWidgets.QWidget()
         low_container = QtWidgets.QWidget()
@@ -120,7 +128,6 @@ class WavletHelperWidget(QtWidgets.QDialog):
         v_layout_h = QtWidgets.QVBoxLayout(high_container)
         v_layout_h.setContentsMargins(0, 0, 0, 0)
         v_layout_h.addStretch()
-        from PyQt6.QtCore import Qt as _QtConst
         v_layout_h.addWidget(high_chk, alignment=_QtConst.AlignmentFlag.AlignCenter)
         v_layout_h.addStretch()
         v_layout_l = QtWidgets.QVBoxLayout(low_container)
@@ -152,8 +159,12 @@ class WavletHelperWidget(QtWidgets.QDialog):
             idx = type_combo.findText(wtype)
             if idx != -1:
                 type_combo.setCurrentIndex(idx)
-        high_chk.setChecked(isolate_high)
-        low_chk.setChecked(isolate_low)
+        # apply isolation flags, respecting exclusivity if both true
+        if isolate_high:
+            high_chk.setChecked(True)
+            low_chk.setChecked(False)
+        elif isolate_low:
+            low_chk.setChecked(True)
         order_spin.setValue(order)
         # adjust row height after inserting the widgets so they fit correctly
         self.tblList.setRowHeight(row, self._row_height)
