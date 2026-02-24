@@ -1,7 +1,6 @@
 from .iMotor import iMotor
 from gpiozero import Device, LED, PWMOutputDevice
 from gpiozero.pins.mock import MockFactory, MockPWMPin
-import random
 
 class SimMotor(iMotor):
     motorID = 0
@@ -38,13 +37,13 @@ class SimMotor(iMotor):
         pass
 
     def setTargetSpeed(self, targetSpeed : float):
-        self.targetSpeed = targetSpeed
+        pass
 
     def setTargetPower(self, targetPower : float):
-        self.targetPower = targetPower
+        pass
 
     def getCurrentSpeed(self):
-        return self.currSpeed + random.uniform(-20, 20) # Simulate some noise in the speed measurement
+        return self.currSpeed
 
     def getTargetSpeed(self):
         return self.targetSpeed
