@@ -120,9 +120,9 @@ class AnalysisDialog(QtWidgets.QDialog):
                 "motor_rpm": {"label": "Motor RPM", "time": "time_rpm", "data": "motor_rpm", "color": self.motorRPMColor, "deriv": True, "fft": True},
                 "motor_angle": {"label": "Motor Angle", "time": "time_angle", "data": "motor_angleDeg", "color": self.motorAngleColor, "deriv": True, "fft": True},
                 "motor_tilt": {"label": "Motor Tilt", "time": "time_tilt", "data": "motor_tiltDeg", "color": self.motorTiltColor, "deriv": True, "fft": True},
-                "encoder_rpm": {"label": "Encoder RPM", "time": "time_encoder_rpm", "data": "encoder_rpm", "color": self.encoderRPMColor, "deriv": True, "fft": True},
-                "encoder_angle": {"label": "Encoder Angle", "time": "time_encoder_angle", "data": "encoder_angle", "color": self.encoderAngleColor, "deriv": True, "fft": True},
-                "encoder_tilt": {"label": "Encoder Tilt", "time": "time_encoder_tilt", "data": "encoder_tilt", "color": self.encoderTiltColor, "deriv": True, "fft": True},
+                "encoder_rpm": {"label": "Encoder RPM", "time": "time_encoder", "data": "encoder_rpm", "color": self.encoderRPMColor, "deriv": True, "fft": True},
+                "encoder_angle": {"label": "Encoder Angle", "time": "time_encoder", "data": "encoder_angle", "color": self.encoderAngleColor, "deriv": True, "fft": True},
+                "encoder_tilt": {"label": "Encoder Tilt", "time": "time_encoder", "data": "encoder_tilt", "color": self.encoderTiltColor, "deriv": True, "fft": True},
             },
         }
 
@@ -493,9 +493,7 @@ class AnalysisModePage(QtWidgets.QWidget):
             motor_package.time_rpm, motor_package.motor_rpm,
             motor_package.time_angle, motor_package.motor_angleDeg,
             motor_package.time_tilt, motor_package.motor_tiltDeg,
-            motor_package.time_encoder_rpm, motor_package.encoder_rpm,
-            motor_package.time_encoder_angle, motor_package.encoder_angle,
-            motor_package.time_encoder_tilt, motor_package.encoder_tilt
+            motor_package.time_encoder, motor_package.encoder_rpm, motor_package.encoder_angle, motor_package.encoder_tilt
         )
 
 if __name__ == '__main__':

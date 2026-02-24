@@ -201,11 +201,6 @@ class SmartDotGraph(QtWidgets.QWidget):
         # Cursor and markers created above and will be reused
         self.select_all()
         self.limitViewBox()
-        # start with a clean slate
-        try:
-            self.reset()
-        except Exception:
-            pass
 
 
         #Select/Deselect All buttons
