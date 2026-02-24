@@ -409,8 +409,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
             self.add_diag_data_instance_to_data_controller(t, 0, spin_v)
             self._last_values['spin'] = spin_v
             self.labelSpin.setText(f"Spin Rate: {spin_v:.2f} RPM")
-            self.diagnostic_script.change_speed(0, spin_v)
+            
         # always refresh encoder label irrespective of change
+        self.diagnostic_script.change_speed(0, spin_v)
         try:
             enc_sp = bsc.motor1.getCurrentSpeed()
         except Exception:
