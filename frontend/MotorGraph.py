@@ -56,13 +56,15 @@ class MotorGraph(QtWidgets.QWidget):
         legend.setColumnCount(3)
 
         # Create pens and persistent plot curves to avoid recreating plot items on every update
+        # motor curves use RPM=red, Angle=green, Tilt=blue
+        # encoder/data overlays use analysis colors: RPM=cyan, Angle=magenta, Tilt=yellow
         self.pens = {
             'spin': pg.mkPen(color=(255, 0, 0), width=2),
             'tilt': pg.mkPen(color=(0, 170, 0), width=2),
             'angle': pg.mkPen(color=(0, 0, 255), width=2),
-            'spin_data': pg.mkPen(color=(255, 0, 0), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),
-            'tilt_data': pg.mkPen(color=(0, 170, 0), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),
-            'angle_data': pg.mkPen(color=(0, 0, 255), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),
+            'spin_data': pg.mkPen(color=(0, 255, 255), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),  # cyan
+            'tilt_data': pg.mkPen(color=(255, 0, 255), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),  # magenta
+            'angle_data': pg.mkPen(color=(255, 255, 0), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),  # yellow
         }
 
         # persistent curves
@@ -107,9 +109,10 @@ class MotorGraph(QtWidgets.QWidget):
             self.marker_spin = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(255,0,0))
             self.marker_tilt = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(0,170,0))
             self.marker_angle = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(0,0,255))
-            self.marker_spin_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,0))
-            self.marker_tilt_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,170,0))
-            self.marker_angle_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,0,255))
+            # encoder markers use cyan/magenta/yellow
+            self.marker_spin_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,255,255))
+            self.marker_tilt_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,255))
+            self.marker_angle_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,255,0))
             for m in (self.marker_spin, self.marker_tilt, self.marker_angle,
                       self.marker_spin_data, self.marker_tilt_data, self.marker_angle_data):
                 m.setVisible(False)
@@ -320,7 +323,8 @@ class MotorGraph(QtWidgets.QWidget):
                     t = float(np.asarray(self.SpinDataTime)[idx])
                     spin_data = float(np.asarray(self.SpinDataArray)[idx]) if (self.SpinDataArray is not None and len(self.SpinDataArray) > idx) else None
                     if self.lblEncoderData is not None:
-                        spin_html = _fmt_html(spin_data, '#ff0000')
+                        # encoder RPM uses cyan
+                        spin_html = _fmt_html(spin_data, '#00ffff')
                         self.lblEncoderData.setText(f"Encoder Data @ t={t:.3f}: Spin={spin_html}")
                     try:
                         if getattr(self, 'marker_spin_data', None) is not None:
@@ -339,7 +343,8 @@ class MotorGraph(QtWidgets.QWidget):
                     t = float(np.asarray(self.AngleDataTime)[idx])
                     angle_data = float(np.asarray(self.AngleDataArray)[idx]) if (self.AngleDataArray is not None and len(self.AngleDataArray) > idx) else None
                     if self.lblEncoderData is not None:
-                        angle_html = _fmt_html(angle_data, '#0000ff')
+                        # encoder Angle uses magenta
+                        angle_html = _fmt_html(angle_data, '#ff00ff')
                         existing = self.lblEncoderData.text() if self.lblEncoderData is not None else ''
                         self.lblEncoderData.setText(existing + f" Angle={angle_html}")
                     try:
@@ -359,7 +364,8 @@ class MotorGraph(QtWidgets.QWidget):
                     t = float(np.asarray(self.TiltDataTime)[idx])
                     tilt_data = float(np.asarray(self.TiltDataArray)[idx]) if (self.TiltDataArray is not None and len(self.TiltDataArray) > idx) else None
                     if self.lblEncoderData is not None:
-                        tilt_html = _fmt_html(tilt_data, '#00aa00')
+                        # encoder Tilt uses yellow
+                        tilt_html = _fmt_html(tilt_data, '#ffff00')
                         existing = self.lblEncoderData.text() if self.lblEncoderData is not None else ''
                         self.lblEncoderData.setText(existing + f" Tilt={tilt_html}")
                     try:
