@@ -103,6 +103,9 @@ if __name__ == '__main__':
     window.setScreen(screen)
     
     # Make window fullscreen
-    window.showMaximized()
+    if scale == 1:
+        window.showFullScreen()
+    else:   
+        window.showMaximized()
 
     QtWidgets.QApplication.exec()
