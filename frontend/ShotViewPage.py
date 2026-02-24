@@ -11,6 +11,7 @@ import os
 import io
 import logging
 import datetime
+from backend.models.EncoderData import EncoderDataInstance
 from backend.models.SmartDotData import SmartDotDataInstance
 import utils
 from PyQt6.QtCore import pyqtSignal, Qt, QTimer, QThread, QThreadPool, QRunnable, QObject
@@ -75,6 +76,14 @@ class ShotViewPage(QtWidgets.QWidget):
         self.displayedSpinTime = array('d')
         self.displayedTiltTime = array('d')
         self.displayedAngleTime = array('d')
+
+        self.displayedSpinEncoder = array('f')
+        self.displayedSpinEncoderTime = array('d')
+        self.displayedTiltEncoder = array('f')
+        self.displayedTiltEncoderTime = array('d')
+        self.displayedAngleEncoder = array('f')
+        self.displayedAngleEncoderTime = array('d')
+
         self.ElapsedTime = 0.0
         self.count = 0
         self.MaxTime = 0.0
@@ -198,27 +207,32 @@ class ShotViewPage(QtWidgets.QWidget):
             raise IndexError(f"UpdateShotView index {self.count} out of range for 'scriptSpin' length {len(self.scriptSpin)}")
 
         # Spawn a worker thread per motor that then calls change_speed_single
+        # compute delta up front so all three shares the same send timestamp
+        now = time.time()
+        delta = now - self.startTime
         try:
-            self.spawn_motor_thread("Spin", 0, self.scriptSpin[self.count])
+            self.spawn_motor_thread("Spin", 0, self.scriptSpin[self.count], delta)
         except Exception as e:
             #print("Error spawning Spin motor thread:", e)
             pass
         
         try:
-            self.spawn_motor_thread("Tilt", 1, self.scriptTilt[self.count])
+            self.spawn_motor_thread("Tilt", 1, self.scriptTilt[self.count], delta)
         except Exception as e:
             pass
         
         try:
-            self.spawn_motor_thread("Angle", 2, self.scriptAngle[self.count])
+            self.spawn_motor_thread("Angle", 2, self.scriptAngle[self.count], delta)
         except Exception as e:
             pass
             
         self.motorGraph.updateDataDiagnostic(
                         self.displayedSpinTime, self.displayedSpin,
-                        self.displayedTiltTime, self.displayedTilt,
                         self.displayedAngleTime, self.displayedAngle,
-                        array('d', [0.0]), array('f', [0.0]),array('f', [0.0]), array('f', [0.0]))    
+                        self.displayedTiltTime, self.displayedTilt,
+                        self.displayedSpinEncoderTime, self.displayedSpinEncoder,
+                        self.displayedAngleEncoderTime, self.displayedAngleEncoder,
+                        self.displayedTiltEncoderTime, self.displayedTiltEncoder)    
         # advance to next index after spawning motor tasks
         self.count += 1
 
@@ -252,10 +266,18 @@ class ShotViewPage(QtWidgets.QWidget):
             except Exception:
                 pass
 
-    def spawn_motor_thread(self, motor: str, motor_index: int, value: float):
-        """Submit a motor command to the QThreadPool as a QRunnable worker."""
+    def spawn_motor_thread(self, motor: str, motor_index: int, value: float, delta: float):
+        """Submit a motor command to the QThreadPool as a QRunnable worker.
+
+        The ``delta`` argument is the elapsed time since start of the shot when
+        the command was issued.  Storing it on the runnable allows
+        ``_on_thread_finished`` to timestamp the response with the send time
+        rather than the receipt time.
+        """
         signals = ShotViewPage.WorkerSignals()
         runnable = ShotViewPage.MotorRunnable(motor_index, value, self.shot_script, signals)
+        # attach time information for later use
+        runnable.delta = delta
         # keep reference so the runnable and its signals are not garbage collected
         self._active_threads.append(runnable)
         signals.finished.connect(lambda data, r=runnable: self._on_thread_finished(r, data))
@@ -272,7 +294,7 @@ class ShotViewPage(QtWidgets.QWidget):
                 pass
         except ValueError:
             pass
-        # compute time delta since last append for this motor and append value and delta
+        # compute time delta since command was queued; prefer pre‑computed value
         try:
             self.motor_index = None
             self.value = None
@@ -283,37 +305,48 @@ class ShotViewPage(QtWidgets.QWidget):
             else:
                 self.motor_index = getattr(data, 'motor_index', None)
                 self.value = getattr(data, 'value', None)
-            self.now = time.time()
-            self.delta = self.now - self.startTime
+            # use delta stored on runnable if available, otherwise fall back to now
+            if hasattr(worker, 'delta'):
+                self.delta = worker.delta
+                # also update now so logging still has a timestamp
+                self.now = self.startTime + self.delta
+            else:
+                self.now = time.time()
+                self.delta = self.now - self.startTime
 
             if self.motor_index == 0:
                 # append motor value and delta to spin lists
                 try:
                     self.displayedSpin.append(self.value)
-                except Exception:
-                    pass
-                try:
                     self.displayedSpinTime.append(self.delta)
                 except Exception:
                     pass
-            elif self.motor_index == 2:
+                # record encoder/telemetry for spin motor
+                try:
+                    #print("Attempting to read Spin motor encoder for logging")
+                    speed = bsc.motor1.getCurrentSpeed()
+                    self.displayedSpinEncoder.append(speed)
+                    self.displayedSpinEncoderTime.append(self.delta)
+                    #print(f"Logged Spin motor encoder data: time={self.delta:.3f} sec, speed={speed:.2f} RPM")
+                except Exception:
+                    print("Failed to read Spin motor encoder for logging")
+                    pass
+            elif self.motor_index == 1:
                 try:
                     self.displayedTilt.append(self.value)
-                except Exception:
-                    pass
-                try:
                     self.displayedTiltTime.append(self.delta)
                 except Exception:
                     pass
             elif self.motor_index == 1:
+                # tilt encoder logging removed per request
+            elif self.motor_index == 2:
                 try:
                     self.displayedAngle.append(self.value)
-                except Exception:
-                    pass
-                try:
                     self.displayedAngleTime.append(self.delta)
                 except Exception:
                     pass
+                # angle encoder logging removed per request
+
 
             # Logging: compute start/end times for the motor call based on reported duration (if available) 
             #_logger.info(f"Motor {self.motor_index} set to {self.value} at elapsed time {self.delta:.3f} sec. Now: {self.now:.3f} StartTime: {self.startTime:.3f}")
@@ -346,9 +379,11 @@ class ShotViewPage(QtWidgets.QWidget):
         #Make graph final update
         self.motorGraph.updateDataDiagnostic(
                         self.displayedSpinTime, self.displayedSpin,
-                        self.displayedTiltTime, self.displayedTilt,
                         self.displayedAngleTime, self.displayedAngle,
-                        array('d', [0.0]), array('f', [0.0]),array('f', [0.0]), array('f', [0.0]))
+                        self.displayedTiltTime, self.displayedTilt,
+                        self.displayedSpinEncoderTime, self.displayedSpinEncoder,
+                        self.displayedAngleEncoderTime, self.displayedAngleEncoder,
+                        self.displayedTiltEncoderTime, self.displayedTiltEncoder)
         # Update SmartDot graph only if SmartDot data is available
         if self.SmartDot:
             try:
@@ -358,7 +393,16 @@ class ShotViewPage(QtWidgets.QWidget):
                                                     self.SmartDot.lt_time, self.SmartDot.lt_value)
             except Exception as e:
                 print("Warning: SmartDotGraph update failed:", e)
-        #Collect SmartDot data into DataController
+
+        #package encoder data for submission to cloud API
+        #Spin motor encoder data packaging
+
+        for i in range(len(self.displayedSpinEncoder)):
+            try:
+                bsc.get_data_controller().add_encoder_data(EncoderDataInstance(time=self.dt*i, pulses=self.displayedSpinEncoder[i], motor_id=1))
+            except Exception as e:
+                print("Error packaging Spin motor encoder data:", e)
+        #Collect SmartDot data into DataController for submission to cloud API
         if self.SmartDot:
             self.SmartDot.stopCollecting()
             #Get datacontroller

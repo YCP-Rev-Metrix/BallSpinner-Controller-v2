@@ -11,6 +11,7 @@ from BSC import bsc
 from backend.models.SessionData import SessionData
 from backend.models.DataController import DataController
 from backend.models.DiagnosticScriptData import DiagnosticScriptDataInstance
+from backend.models.EncoderData import EncoderDataInstance
 from backend.drivers.DiagnosticScript import DiagnosticScript
 #from backend.motors.BDCMotor import BDCMotor
 #from backend.motors.SimMotor import SimMotor
@@ -60,6 +61,33 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.labelSpin = self.findChild(QtWidgets.QLabel, 'lblSpin')
         self.labelTilt = self.findChild(QtWidgets.QLabel, 'lblTilt')
         self.labelAngle = self.findChild(QtWidgets.QLabel, 'lblAngle')
+        # encoder value labels (UILabels may not be present in older UI versions)
+        self.labelSpinEncoder = self.findChild(QtWidgets.QLabel, 'lblSpinEncoder')
+        self.labelTiltEncoder = self.findChild(QtWidgets.QLabel, 'lblTiltEncoder')
+        self.labelAngleEncoder = self.findChild(QtWidgets.QLabel, 'lblAngleEncoder')
+        # if UI didn't provide labels, create them and insert in control rows
+        def _make_label(existing, name, default_text):
+            lbl = existing
+            if lbl is None:
+                lbl = QtWidgets.QLabel(default_text, self)
+                lbl.setFont(self.labelSpin.font() if hasattr(self, 'labelSpin') else lbl.font())
+                lbl.setObjectName(name)
+            return lbl
+        self.labelSpinEncoder = _make_label(self.labelSpinEncoder, 'lblSpinEncoder', 'Enc: 0.0 RPM')
+        self.labelTiltEncoder = _make_label(self.labelTiltEncoder, 'lblTiltEncoder', 'Enc: 0.0 RPM')
+        self.labelAngleEncoder = _make_label(self.labelAngleEncoder, 'lblAngleEncoder', 'Enc: 0.0 RPM')
+        # attach newly created labels into the existing control layouts if needed
+        def _attach_to_layout(label, reference_widget):
+            if reference_widget is None or label is None:
+                return
+            parent = reference_widget.parent()
+            if parent is not None and hasattr(parent, 'layout'):
+                layout = parent.layout()
+                if layout is not None and label not in [layout.itemAt(i).widget() for i in range(layout.count())]:
+                    layout.addWidget(label)
+        _attach_to_layout(self.labelSpinEncoder, self.labelSpin)
+        _attach_to_layout(self.labelTiltEncoder, self.labelTilt)
+        _attach_to_layout(self.labelAngleEncoder, self.labelAngle)
         #Spin boxes for values
         self.dsbSpin = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbSpinValue')
         self.dsbTilt = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbTiltValue')
@@ -141,21 +169,30 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.spinGraph.setTitle("Diagnostic Spin Graph")
         self.spinGraph.setLabel('left', 'Spin Rate', units='RPM')
         self.spinGraph.setLabel('bottom', 'Time', units='s')
-        self.spinCurve = self.spinGraph.plot([0.0], [0.0], pen=pg.mkPen(color='b', width=2)) #Extra refrence allows to be manipulated in thread
+        # align colors with analysis mode: rpm=red, angle=green, tilt=blue
+        self.spinCurve = self.spinGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#ff0000', width=2)) # rpm (spin)
+        # encoder overlay on spin graph (encoder rpm cyan)
+        self.spinEncoderCurve = self.spinGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#00ffff', width=1, style=pg.QtCore.Qt.PenStyle.DashLine), name='Spin Encoder')
+        # tilt encoder overlay (encoder tilt yellow)
+        self.tiltEncoderCurve = self.tiltGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#ffff00', width=1, style=pg.QtCore.Qt.PenStyle.DashLine), name='Tilt Encoder')
+        # angle encoder overlay (encoder angle magenta)
+        self.angleEncoderCurve = self.angleGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#ff00ff', width=1, style=pg.QtCore.Qt.PenStyle.DashLine), name='Angle Encoder')
         self.spinGraph.setYRange(0,620)
         self.spinGraph.setMouseEnabled(x=False, y=False)
         #Tilt Motor graph setup
         self.tiltGraph.setTitle("Diagnostic Tilt Graph")
         self.tiltGraph.setLabel('left', 'Tilt Angle', units='Degrees')
         self.tiltGraph.setLabel('bottom', 'Time', units='s')
-        self.tiltCurve = self.tiltGraph.plot([0.0], [0.0], pen=pg.mkPen(color='r', width=2)) #Extra refrence allows to be manipulated in thread
-        self.tiltGraph.setYRange(-45,45)
+        # tilt acts as motor angle in analysis (green)
+        self.tiltCurve = self.tiltGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#00aa00', width=2)) #Extra refrence allows to be manipulated in thread
+        self.tiltGraph.setYRange(-50,50)
         self.tiltGraph.setMouseEnabled(x=False, y=False)
         #Angle Motor graph setup
         self.angleGraph.setTitle("Diagnostic Angle Graph")
         self.angleGraph.setLabel('left', 'Angle', units='Degrees')
         self.angleGraph.setLabel('bottom', 'Time', units='s')
-        self.angleCurve = self.angleGraph.plot([0.0], [0.0], pen=pg.mkPen(color='g', width=2)) #Extra refrence allows to be manipulated in thread
+        # angle acts as motor tilt in analysis (blue)
+        self.angleCurve = self.angleGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#0000ff', width=2)) #Extra refrence allows to be manipulated in thread
         self.angleGraph.setYRange(-100,100)
         self.angleGraph.setMouseEnabled(x=False, y=False)
         # Slider configurations (replace dials with horizontal sliders)
@@ -197,6 +234,8 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self._N = max(1, self._maxlen)
         self._x = np.zeros(self._N, dtype=np.float64)
         self._spin_arr = np.zeros(self._N, dtype=np.float32)
+        # axis encoder buffer copied alongside spin values
+        self._spin_enc_arr = np.zeros(self._N, dtype=np.float32)
         self._tilt_arr = np.zeros(self._N, dtype=np.float32)
         self._angle_arr = np.zeros(self._N, dtype=np.float32)
         self._write_idx = 0
@@ -308,6 +347,8 @@ class DiagnosticModePage(QtWidgets.QWidget):
     def _on_timer(self):
         # Runs in main (GUI) thread. Poll sliders and update buffers + plots.
         # Called only when the timer is active; no separate `active` flag needed.
+        # grab data controller early for encoder logging
+        dc = bsc.get_data_controller()
         # Update SmartDot graph if device is connected
         if self.SmartDot is not None and self.SmartDotGraph is not None:
             self.SmartDotGraph.updateDataBetter(
@@ -331,29 +372,90 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self._spin_arr[idx] = spin_v
         self._tilt_arr[idx] = tilt_v
         self._angle_arr[idx] = angle_v
+        # sample encoders at same instant
+        try:
+            enc_sp = bsc.motor1.getCurrentSpeed()
+        except Exception:
+            enc_sp = 0.0
+        try:
+            enc_tl = bsc.motor2.getCurrentSpeed()
+        except Exception:
+            enc_tl = 0.0
+        try:
+            enc_ag = bsc.motor3.getCurrentSpeed()
+        except Exception:
+            enc_ag = 0.0
+        self._spin_enc_arr[idx] = enc_sp
+        self._tilt_enc_arr[idx] = enc_tl
+        self._angle_enc_arr[idx] = enc_ag
+        # record encoder readings every tick
+        if dc is not None:
+            dc.add_encoder_data(EncoderDataInstance(time=t, pulses=enc_sp, motor_id=1))
+            dc.add_encoder_data(EncoderDataInstance(time=t, pulses=enc_tl, motor_id=2))
+            dc.add_encoder_data(EncoderDataInstance(time=t, pulses=enc_ag, motor_id=3))
         # advance write index
         self._write_idx = (idx + 1) % self._N
         if self._write_idx == 0:
             self._filled = True
 
-        # Only call change_speed / add data when value has changed
+        # Only call change_speed/add data when value has changed; encoder labels update every tick
         if spin_v != self._last_values['spin']:
+            # record encoder along with motor time when spin changes
+            try:
+                enc_sp = bsc.motor1.getCurrentSpeed()
+            except Exception:
+                enc_sp = 0.0
+            dc.add_encoder_data(EncoderDataInstance(time=t, pulses=enc_sp, motor_id=1))
             self.add_diag_data_instance_to_data_controller(t, 0, spin_v)
             self._last_values['spin'] = spin_v
             self.labelSpin.setText(f"Spin Rate: {spin_v:.2f} RPM")
+            
+        # always refresh encoder label irrespective of change
         self.diagnostic_script.change_speed(0, spin_v)
+        try:
+            enc_sp = bsc.motor1.getCurrentSpeed()
+        except Exception:
+            enc_sp = 0.0
+        if hasattr(self, 'labelSpinEncoder') and self.labelSpinEncoder:
+            self.labelSpinEncoder.setText(f"Enc: {enc_sp:.1f} RPM")
 
         if tilt_v != self._last_values['tilt']:
-            self.diagnostic_script.change_speed(1, tilt_v)
+            # record tilt encoder when tilt value changes
+            try:
+                enc_tl = bsc.motor2.getCurrentSpeed()
+            except Exception:
+                enc_tl = 0.0
+            dc.add_encoder_data(EncoderDataInstance(time=t, pulses=enc_tl, motor_id=2))
             self.add_diag_data_instance_to_data_controller(t, 1, tilt_v)
             self._last_values['tilt'] = tilt_v
             self.labelTilt.setText(f"Tilt Angle: {tilt_v:.2f} Degrees")
+            self.diagnostic_script.change_speed(1, tilt_v)
+        # refresh tilt encoder label every tick
+        try:
+            enc_tl = bsc.motor2.getCurrentSpeed()
+        except Exception:
+            enc_tl = 0.0
+        if hasattr(self, 'labelTiltEncoder') and self.labelTiltEncoder:
+            self.labelTiltEncoder.setText(f"Enc: {enc_tl:.1f} RPM")
 
         if angle_v != self._last_values['angle']:
-            self.diagnostic_script.change_speed(2, angle_v)
+            # record angle encoder when angle value changes
+            try:
+                enc_ag = bsc.motor3.getCurrentSpeed()
+            except Exception:
+                enc_ag = 0.0
+            dc.add_encoder_data(EncoderDataInstance(time=t, pulses=enc_ag, motor_id=3))
             self.add_diag_data_instance_to_data_controller(t, 2, angle_v)
             self._last_values['angle'] = angle_v
             self.labelAngle.setText(f"Angle: {angle_v:.2f} Degrees")
+            self.diagnostic_script.change_speed(2, angle_v)
+        # refresh angle encoder label every tick
+        try:
+            enc_ag = bsc.motor3.getCurrentSpeed()
+        except Exception:
+            enc_ag = 0.0
+        if hasattr(self, 'labelAngleEncoder') and self.labelAngleEncoder:
+            self.labelAngleEncoder.setText(f"Enc: {enc_ag:.1f} RPM")
 
         # Update graph x-ranges to show last ~3s
         # compute latest timestamp from circular buffer
@@ -371,6 +473,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
             spin_view = self._spin_arr[:count]
             tilt_view = self._tilt_arr[:count]
             angle_view = self._angle_arr[:count]
+            enc_view = self._spin_enc_arr[:count]
+            tilt_enc_view = self._tilt_enc_arr[:count]
+            angle_enc_view = self._angle_enc_arr[:count]
         else:
             idx = self._write_idx
             # concatenate tail + head to make chronological arrays
@@ -378,11 +483,27 @@ class DiagnosticModePage(QtWidgets.QWidget):
             spin_view = np.concatenate((self._spin_arr[idx:], self._spin_arr[:idx]))
             tilt_view = np.concatenate((self._tilt_arr[idx:], self._tilt_arr[:idx]))
             angle_view = np.concatenate((self._angle_arr[idx:], self._angle_arr[:idx]))
+            enc_view = np.concatenate((self._spin_enc_arr[idx:], self._spin_enc_arr[:idx]))
+            tilt_enc_view = np.concatenate((self._tilt_enc_arr[idx:], self._tilt_enc_arr[:idx]))
+            angle_enc_view = np.concatenate((self._angle_enc_arr[idx:], self._angle_enc_arr[:idx]))
 
         # update plots with numpy arrays (pyqtgraph handles numpy)
         self.spinCurve.setData(x_view, spin_view)
+        # plot encoder overlay if available
+        try:
+            self.spinEncoderCurve.setData(x_view, enc_view)
+        except Exception:
+            pass
         self.tiltCurve.setData(x_view, tilt_view)
+        try:
+            self.tiltEncoderCurve.setData(x_view, tilt_enc_view)
+        except Exception:
+            pass
         self.angleCurve.setData(x_view, angle_view)
+        try:
+            self.angleEncoderCurve.setData(x_view, angle_enc_view)
+        except Exception:
+            pass
 
 
     def _update_slider_labels(self):
@@ -393,14 +514,26 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.dsbSpin.setValue(spin_v)
         self.dsbTilt.setValue(tilt_v)
         self.dsbAngle.setValue(angle_v)
+        # refresh encoder labels even if unchanged
+        try:
+            enc_sp = bsc.motor1.getCurrentSpeed()
+        except Exception:
+            enc_sp = 0.0
+        try:
+            enc_tl = bsc.motor2.getCurrentSpeed()
+        except Exception:
+            enc_tl = 0.0
+        try:
+            enc_ag = bsc.motor3.getCurrentSpeed()
+        except Exception:
+            enc_ag = 0.0
+
 
     def _update_sliders_from_spinboxes(self):
         """Update sliders to reflect current spin box values."""
         self.spinSlider.setValue(int(self.dsbSpin.value()))
         self.tiltSlider.setValue(int(self.dsbTilt.value()))
         self.angleSlider.setValue(int(self.dsbAngle.value()))
-
-
 
     def reset(self):
         # ensure not running and reset UI
@@ -418,6 +551,13 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.spinSlider.setValue(0)
         self.tiltSlider.setValue(0)
         self.angleSlider.setValue(0)
+        # reset encoder labels if present
+        if hasattr(self, 'labelSpinEncoder') and self.labelSpinEncoder:
+            self.labelSpinEncoder.setText("Enc: 0.0 RPM")
+        if hasattr(self, 'labelTiltEncoder') and self.labelTiltEncoder:
+            self.labelTiltEncoder.setText("Enc: 0.0 RPM")
+        if hasattr(self, 'labelAngleEncoder') and self.labelAngleEncoder:
+            self.labelAngleEncoder.setText("Enc: 0.0 RPM")
         # ensure timer stopped
         self._timer.stop()
     
@@ -426,19 +566,25 @@ class DiagnosticModePage(QtWidgets.QWidget):
         # reset buffers and start time
         self._x = np.zeros(self._N, dtype=np.float64)
         self._spin_arr = np.zeros(self._N, dtype=np.float32)
+        self._spin_enc_arr = np.zeros(self._N, dtype=np.float32)
         self._tilt_arr = np.zeros(self._N, dtype=np.float32)
+        self._tilt_enc_arr = np.zeros(self._N, dtype=np.float32)
         self._angle_arr = np.zeros(self._N, dtype=np.float32)
+        self._angle_enc_arr = np.zeros(self._N, dtype=np.float32)
         self._write_idx = 0
         self._filled = False
         self.spinCurve.setData([0.0], [0.0])
         self.tiltCurve.setData([0.0], [0.0])
         self.angleCurve.setData([0.0], [0.0])
+        # also clear encoder overlays
+        self.spinEncoderCurve.setData([0.0], [0.0])
+        self.tiltEncoderCurve.setData([0.0], [0.0])
+        self.angleEncoderCurve.setData([0.0], [0.0])
         
         # Clear SmartDot graph data if available
         if self.SmartDotGraph is not None:
             if hasattr(self.SmartDotGraph, 'clear'):
-                self.SmartDotGraph.clear()
-    
+                self.SmartDotGraph.clear()   
     
     def toggle_override_mode(self):
         """Open override mode configuration dialog."""

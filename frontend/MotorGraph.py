@@ -56,24 +56,43 @@ class MotorGraph(QtWidgets.QWidget):
         legend.setColumnCount(3)
 
         # Create pens and persistent plot curves to avoid recreating plot items on every update
+        # motor curves use RPM=red, Angle=green, Tilt=blue
+        # encoder/data overlays use analysis colors: RPM=cyan, Angle=magenta, Tilt=yellow
         self.pens = {
             'spin': pg.mkPen(color=(255, 0, 0), width=2),
             'tilt': pg.mkPen(color=(0, 170, 0), width=2),
             'angle': pg.mkPen(color=(0, 0, 255), width=2),
-            'spin_data': pg.mkPen(color=(255, 0, 0), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),
-            'tilt_data': pg.mkPen(color=(0, 170, 0), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),
-            'angle_data': pg.mkPen(color=(0, 0, 255), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),
+            'spin_data': pg.mkPen(color=(0, 255, 255), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),  # cyan
+            'tilt_data': pg.mkPen(color=(255, 0, 255), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),  # magenta
+            'angle_data': pg.mkPen(color=(255, 255, 0), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),  # yellow
         }
 
         # persistent curves
         self.curves = {}
-        self.curves['spin'] = self.graph.plot([], [], pen=self.pens['spin'], name='Spin')
-        self.curves['tilt'] = self.graph.plot([], [], pen=self.pens['tilt'], name='Tilt')
-        self.curves['angle'] = self.graph.plot([], [], pen=self.pens['angle'], name='Angle')
-        self.curves['spin_data'] = self.graph.plot([], [], pen=self.pens['spin_data'], name='Spin Data')
-        self.curves['tilt_data'] = self.graph.plot([], [], pen=self.pens['tilt_data'], name='Tilt Data')
-        self.curves['angle_data'] = self.graph.plot([], [], pen=self.pens['angle_data'], name='Angle Data')
-
+        try:
+            self.curves['spin'] = self.graph.plot([], [], pen=self.pens['spin'], name='Spin')
+        except Exception as e:
+            print("Error creating persistent plot curves for Spin:", e)
+        try:
+            self.curves['tilt'] = self.graph.plot([], [], pen=self.pens['tilt'], name='Tilt')
+        except Exception as e:
+            print("Error creating persistent plot curves for Tilt:", e)
+        try:
+            self.curves['angle'] = self.graph.plot([], [], pen=self.pens['angle'], name='Angle')
+        except Exception as e:
+            print("Error creating persistent plot curves for Angle:", e)
+        try:
+            self.curves['spin_data'] = self.graph.plot([], [], pen=self.pens['spin_data'], name='Spin Data')
+        except Exception as e:
+            print("Error creating persistent plot curves for Spin Data:", e)
+        try:
+            self.curves['tilt_data'] = self.graph.plot([], [], pen=self.pens['tilt_data'], name='Tilt Data')
+        except Exception as e:
+            print("Error creating persistent plot curves for Tilt Data:", e)
+        try:
+            self.curves['angle_data'] = self.graph.plot([], [], pen=self.pens['angle_data'], name='Angle Data')
+        except Exception as e:
+            print("Error creating persistent plot curves for Angle Data:", e)
         # Create persistent cursor and markers
         plotItem = self.graph.getPlotItem()
         try:
@@ -90,9 +109,10 @@ class MotorGraph(QtWidgets.QWidget):
             self.marker_spin = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(255,0,0))
             self.marker_tilt = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(0,170,0))
             self.marker_angle = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(0,0,255))
-            self.marker_spin_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,0))
-            self.marker_tilt_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,170,0))
-            self.marker_angle_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,0,255))
+            # encoder markers use cyan/magenta/yellow
+            self.marker_spin_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,255,255))
+            self.marker_tilt_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,255))
+            self.marker_angle_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,255,0))
             for m in (self.marker_spin, self.marker_tilt, self.marker_angle,
                       self.marker_spin_data, self.marker_tilt_data, self.marker_angle_data):
                 m.setVisible(False)
@@ -109,6 +129,9 @@ class MotorGraph(QtWidgets.QWidget):
         self.AngleArray = array('f', [0.0])
 
         self.DataTime = array('d', [0.0])
+        self.SpinDataTime = array('d', [0.0])
+        self.TiltDataTime = array('d', [0.0])
+        self.AngleDataTime = array('d', [0.0])
         self.SpinDataArray = array('f', [0.0])
         self.TiltDataArray = array('f', [0.0])
         self.AngleDataArray = array('f', [0.0])
@@ -138,6 +161,11 @@ class MotorGraph(QtWidgets.QWidget):
         self.chkAngleData.stateChanged.connect(self.updateGraph)
         self.select_all()
         self.limitViewBox()
+        # ensure graph starts empty
+        try:
+            self.reset()
+        except Exception:
+            pass
 
     def select_all(self):
         self.chkAngle.setChecked(True)
@@ -287,29 +315,17 @@ class MotorGraph(QtWidgets.QWidget):
                         pass
 
             # Encoder Data
-            if self.DataTime is not None and len(self.DataTime) > 0:
-                idx = _nearest(self.DataTime, x_click)
+            # Encoder Data – each series has its own time base
+            # spin
+            if self.SpinDataTime is not None and len(self.SpinDataTime) > 0:
+                idx = _nearest(self.SpinDataTime, x_click)
                 if idx is not None:
-                    t = float(np.asarray(self.DataTime)[idx])
+                    t = float(np.asarray(self.SpinDataTime)[idx])
                     spin_data = float(np.asarray(self.SpinDataArray)[idx]) if (self.SpinDataArray is not None and len(self.SpinDataArray) > idx) else None
-                    tilt_data = float(np.asarray(self.TiltDataArray)[idx]) if (self.TiltDataArray is not None and len(self.TiltDataArray) > idx) else None
-                    angle_data = float(np.asarray(self.AngleDataArray)[idx]) if (self.AngleDataArray is not None and len(self.AngleDataArray) > idx) else None
-                    # Update label 
                     if self.lblEncoderData is not None:
-                        # colors match plotting pens: spin=red, tilt=green, angle=blue
-                        spin_html = _fmt_html(spin_data, '#ff0000')
-                        tilt_html = _fmt_html(tilt_data, '#00aa00')
-                        angle_html = _fmt_html(angle_data, '#0000ff')
-                        self.lblEncoderData.setText(
-                            f"Encoder Data @ t={t:.3f} (idx={idx}): Spin={spin_html}, Tilt={tilt_html}, Angle={angle_html}"
-                        )
-                    # place data-series markers at the data-time location using persistent markers
-                    try:
-                        if self.vline is not None:
-                            self.vline.setVisible(True)
-                            self.vline.setPos(x_click)
-                    except Exception:
-                        pass
+                        # encoder RPM uses cyan
+                        spin_html = _fmt_html(spin_data, '#00ffff')
+                        self.lblEncoderData.setText(f"Encoder Data @ t={t:.3f}: Spin={spin_html}")
                     try:
                         if getattr(self, 'marker_spin_data', None) is not None:
                             if spin_data is not None:
@@ -318,13 +334,20 @@ class MotorGraph(QtWidgets.QWidget):
                             else:
                                 self.marker_spin_data.setData(x=[], y=[])
                                 self.marker_spin_data.setVisible(False)
-                        if getattr(self, 'marker_tilt_data', None) is not None:
-                            if tilt_data is not None:
-                                self.marker_tilt_data.setData(x=[t], y=[tilt_data])
-                                self.marker_tilt_data.setVisible(True)
-                            else:
-                                self.marker_tilt_data.setData(x=[], y=[])
-                                self.marker_tilt_data.setVisible(False)
+                    except Exception:
+                        pass
+            # angle
+            if self.AngleDataTime is not None and len(self.AngleDataTime) > 0:
+                idx = _nearest(self.AngleDataTime, x_click)
+                if idx is not None:
+                    t = float(np.asarray(self.AngleDataTime)[idx])
+                    angle_data = float(np.asarray(self.AngleDataArray)[idx]) if (self.AngleDataArray is not None and len(self.AngleDataArray) > idx) else None
+                    if self.lblEncoderData is not None:
+                        # encoder Angle uses magenta
+                        angle_html = _fmt_html(angle_data, '#ff00ff')
+                        existing = self.lblEncoderData.text() if self.lblEncoderData is not None else ''
+                        self.lblEncoderData.setText(existing + f" Angle={angle_html}")
+                    try:
                         if getattr(self, 'marker_angle_data', None) is not None:
                             if angle_data is not None:
                                 self.marker_angle_data.setData(x=[t], y=[angle_data])
@@ -332,6 +355,27 @@ class MotorGraph(QtWidgets.QWidget):
                             else:
                                 self.marker_angle_data.setData(x=[], y=[])
                                 self.marker_angle_data.setVisible(False)
+                    except Exception:
+                        pass
+            # tilt
+            if self.TiltDataTime is not None and len(self.TiltDataTime) > 0:
+                idx = _nearest(self.TiltDataTime, x_click)
+                if idx is not None:
+                    t = float(np.asarray(self.TiltDataTime)[idx])
+                    tilt_data = float(np.asarray(self.TiltDataArray)[idx]) if (self.TiltDataArray is not None and len(self.TiltDataArray) > idx) else None
+                    if self.lblEncoderData is not None:
+                        # encoder Tilt uses yellow
+                        tilt_html = _fmt_html(tilt_data, '#ffff00')
+                        existing = self.lblEncoderData.text() if self.lblEncoderData is not None else ''
+                        self.lblEncoderData.setText(existing + f" Tilt={tilt_html}")
+                    try:
+                        if getattr(self, 'marker_tilt_data', None) is not None:
+                            if tilt_data is not None:
+                                self.marker_tilt_data.setData(x=[t], y=[tilt_data])
+                                self.marker_tilt_data.setVisible(True)
+                            else:
+                                self.marker_tilt_data.setData(x=[], y=[])
+                                self.marker_tilt_data.setVisible(False)
                     except Exception:
                         pass
 
@@ -379,20 +423,20 @@ class MotorGraph(QtWidgets.QWidget):
             else:
                 self.curves['angle'].setVisible(False)
             if self.chkSpinData.isChecked():
-                self.curves['spin_data'].setData(self.DataTime, self.SpinDataArray)
+                self.curves['spin_data'].setData(self.SpinDataTime, self.SpinDataArray)
                 self.curves['spin_data'].setVisible(True)
             else:
                 self.curves['spin_data'].setVisible(False)
-            if self.chkTiltData.isChecked():
-                self.curves['tilt_data'].setData(self.DataTime, self.TiltDataArray)
-                self.curves['tilt_data'].setVisible(True)
-            else:
-                self.curves['tilt_data'].setVisible(False)
             if self.chkAngleData.isChecked():
-                self.curves['angle_data'].setData(self.DataTime, self.AngleDataArray)
+                self.curves['angle_data'].setData(self.AngleDataTime, self.AngleDataArray)
                 self.curves['angle_data'].setVisible(True)
             else:
                 self.curves['angle_data'].setVisible(False)
+            if self.chkTiltData.isChecked():
+                self.curves['tilt_data'].setData(self.TiltDataTime, self.TiltDataArray)
+                self.curves['tilt_data'].setVisible(True)
+            else:
+                self.curves['tilt_data'].setVisible(False)
         except Exception:
             pass
 
@@ -406,26 +450,81 @@ class MotorGraph(QtWidgets.QWidget):
             last = 0
         self.limit_view_change(last)
 
-    def updateDataDiagnostic(self, Spin_time, Spin_array, angle_time, angle_array, tilt_time, tilt_array, DataTime, SpinDataArray, TiltDataArray, AngleDataArray):
-        """Update the graph with new Diagnostic data."""
+    def updateDataDiagnostic(self,
+                         Spin_time, Spin_array,
+                         Angle_time, Angle_array,
+                         Tilt_time, Tilt_array,
+                         SpinData_time, SpinDataArray,
+                         AngleData_time, AngleDataArray,
+                         TiltData_time, TiltDataArray):
+        """Update the graph with new Diagnostic data.
+
+        The order of all series is *spin (rpm), angle, tilt* to stay consistent
+        with the rest of the codebase (``utils.PackageMotorData`` etc).
+        Each curve has its own time base to avoid mismatched shapes.
+        """
         # Store data for click mapping
         self.SpinTime = Spin_time
         self.SpinArray = Spin_array
-        self.AngleTime = angle_time
-        self.AngleArray = angle_array
-        self.TiltTime = tilt_time
-        self.TiltArray = tilt_array
+        self.AngleTime = Angle_time
+        self.AngleArray = Angle_array
+        self.TiltTime = Tilt_time
+        self.TiltArray = Tilt_array
 
-        self.DataTime = DataTime
+        self.SpinDataTime = SpinData_time
         self.SpinDataArray = SpinDataArray
-        self.TiltDataArray = TiltDataArray
+        self.AngleDataTime = AngleData_time
         self.AngleDataArray = AngleDataArray
+        self.TiltDataTime = TiltData_time
+        self.TiltDataArray = TiltDataArray
 
         # Plot data based on checkbox states
         self.updateGraph()
         
     def setView(self,viewIndex:int):
         self.cbolimitView.setCurrentIndex(viewIndex)
+
+    def reset(self):
+        """Clear all stored data and refresh the plot.
+
+        This can be called when the page containing the graph is loaded or when
+        starting a new shot/diagnostic run so that old data does not remain on
+        the display.  After resetting the internal arrays we call
+        ``updateGraph`` to hide all curves.
+        """
+        # zero-length arrays for every series
+        self.SpinTime = array('d')
+        self.TiltTime = array('d')
+        self.AngleTime = array('d')
+        self.SpinArray = array('f')
+        self.TiltArray = array('f')
+        self.AngleArray = array('f')
+
+        self.SpinDataTime = array('d')
+        self.AngleDataTime = array('d')
+        self.TiltDataTime = array('d')
+        self.SpinDataArray = array('f')
+        self.AngleDataArray = array('f')
+        self.TiltDataArray = array('f')
+
+        # clear any markers/cursor
+        try:
+            if self.vline is not None:
+                self.vline.setVisible(False)
+        except Exception:
+            pass
+        for m in ('spin', 'tilt', 'angle', 'spin_data', 'tilt_data', 'angle_data'):
+            try:
+                if m in self.curves:
+                    self.curves[m].setData([], [])
+                    self.curves[m].setVisible(False)
+            except Exception:
+                pass
+        # redraw (will effectively clear plot)
+        try:
+            self.updateGraph()
+        except Exception:
+            pass
     
 
 if __name__ == '__main__':

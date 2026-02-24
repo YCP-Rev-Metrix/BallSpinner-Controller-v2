@@ -297,9 +297,28 @@ class AnalysisDialog(QtWidgets.QDialog):
             "encoder_angle": self.encoderAngleColor,
             "encoder_tilt": self.encoderTiltColor,
         }
-        self.seriesDefs = get_series_defs(self)
-
-        self.waveletDialog = None
+        self.seriesDefs = {
+            "smartdot": {
+                "accel_x": {"label": "Accel X", "time": "time_accel", "data": "accel_x", "color": self.accxColor, "deriv": True, "fft": True},
+                "accel_y": {"label": "Accel Y", "time": "time_accel", "data": "accel_y", "color": self.accyColor, "deriv": True, "fft": True},
+                "accel_z": {"label": "Accel Z", "time": "time_accel", "data": "accel_z", "color": self.acczColor, "deriv": True, "fft": True},
+                "gyro_x": {"label": "Gyro X", "time": "time_gyro", "data": "gyro_x", "color": self.gyroxColor, "deriv": True, "fft": True},
+                "gyro_y": {"label": "Gyro Y", "time": "time_gyro", "data": "gyro_y", "color": self.gyroyColor, "deriv": True, "fft": True},
+                "gyro_z": {"label": "Gyro Z", "time": "time_gyro", "data": "gyro_z", "color": self.gyrozColor, "deriv": True, "fft": True},
+                "mag_x": {"label": "Mag X", "time": "time_mag", "data": "mag_x", "color": self.magxColor, "deriv": True, "fft": True},
+                "mag_y": {"label": "Mag Y", "time": "time_mag", "data": "mag_y", "color": self.magyColor, "deriv": True, "fft": True},
+                "mag_z": {"label": "Mag Z", "time": "time_mag", "data": "mag_z", "color": self.magzColor, "deriv": True, "fft": True},
+                "light": {"label": "Light", "time": "time_light", "data": "light", "color": self.lightColor, "deriv": False, "fft": False},
+            },
+            "motor": {
+                "motor_rpm": {"label": "Motor RPM", "time": "time_rpm", "data": "motor_rpm", "color": self.motorRPMColor, "deriv": True, "fft": True},
+                "motor_angle": {"label": "Motor Angle", "time": "time_angle", "data": "motor_angleDeg", "color": self.motorAngleColor, "deriv": True, "fft": True},
+                "motor_tilt": {"label": "Motor Tilt", "time": "time_tilt", "data": "motor_tiltDeg", "color": self.motorTiltColor, "deriv": True, "fft": True},
+                "encoder_rpm": {"label": "Encoder RPM", "time": "time_encoder_rpm", "data": "encoder_rpm", "color": self.encoderRPMColor, "deriv": True, "fft": True},
+                "encoder_angle": {"label": "Encoder Angle", "time": "time_encoder_angle", "data": "encoder_angle", "color": self.encoderAngleColor, "deriv": True, "fft": True},
+                "encoder_tilt": {"label": "Encoder Tilt", "time": "time_encoder_tilt", "data": "encoder_tilt", "color": self.encoderTiltColor, "deriv": True, "fft": True},
+            },
+        }
 
         self._applySeriesStyles()
         self._bindSeriesCheckboxes()
@@ -668,10 +687,31 @@ class AnalysisDialog(QtWidgets.QDialog):
                 self.lblHighlight.setText(summary)
             self.graph.setTitle("Standard Deviation Summary")
         else:
-            if self.lblHighlight is not None:
-                self.lblHighlight.setText("Standard deviation: no data available")
-            self.graph.setTitle("Standard deviation: no data available")
-#-------------------------------------------------
+            print("User rejected the dialog.")
+            # Handle rejection (e.g., cancel operation)
+
+    def loadData(self):
+        dc = bsc.get_data_controller()
+        # Update SmartDot graph
+        smartdot_package = utils.PackageSmartDotData(self, bsc)
+        self.smartDotGraph.updateDataBetter(
+            smartdot_package.time_accel, smartdot_package.accel_x, smartdot_package.accel_y, smartdot_package.accel_z,
+            smartdot_package.time_gyro, smartdot_package.gyro_x, smartdot_package.gyro_y, smartdot_package.gyro_z,
+            smartdot_package.time_mag, smartdot_package.mag_x, smartdot_package.mag_y, smartdot_package.mag_z,
+            smartdot_package.time_light, smartdot_package.light
+        )
+
+        # Update Motor graph
+        motor_package = utils.PackageMotorData(self, bsc)
+        self.motorGraph.updateDataDiagnostic(
+            motor_package.time_rpm, motor_package.motor_rpm,
+            motor_package.time_angle, motor_package.motor_angleDeg,
+            motor_package.time_tilt, motor_package.motor_tiltDeg,
+            motor_package.time_encoder_rpm, motor_package.encoder_rpm,
+            motor_package.time_encoder_angle, motor_package.encoder_angle,
+            motor_package.time_encoder_tilt, motor_package.encoder_tilt
+        )
+
 if __name__ == '__main__':
     # Standard boilerplate for a PyQt application
     import sys
