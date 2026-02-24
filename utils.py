@@ -236,17 +236,51 @@ def PackageMotorData(self,bsc):
 
     
     #TODO: Implement encoder data packaging when available
-    time_encoder = array('d', [0.0])
-    encoder_rpm = array('f', [0.0])
-    encoder_angle = array('f', [0.0])
-    encoder_tilt = array('f', [0.0])
-    logger.debug("Encoder data not yet implemented")
+    # gather encoder entries from the data controller and split by motor
+    time_encoder_rpm = array('d')
+    time_encoder_angle = array('d')
+    time_encoder_tilt = array('d')
+    encoder_rpm = array('f')
+    encoder_angle = array('f')
+    encoder_tilt = array('f')
+
+    try:
+        enc_entries = dc.get_encoder_data()  # returns list of EncoderDataInstance
+        # keep the data in chronological order
+        enc_entries = sorted(enc_entries, key=lambda ee: ee.time)
+        for e in enc_entries:
+            if e.motor_id == 1:
+                time_encoder_rpm.append(e.time)
+                encoder_rpm.append(e.pulses)
+            elif e.motor_id == 3:
+                time_encoder_angle.append(e.time)
+                encoder_angle.append(e.pulses)
+            elif e.motor_id == 2:
+                time_encoder_tilt.append(e.time)
+                encoder_tilt.append(e.pulses)
+    except Exception as e:
+        logger.debug(f"No encoder data packaged: {e}")
+
+    # if nothing was added, ensure arrays contain a dummy zero for compatibility
+    if len(time_encoder_rpm) == 0:
+        time_encoder_rpm.append(0.0)
+        encoder_rpm.append(0.0)
+    if len(time_encoder_angle) == 0:
+        time_encoder_angle.append(0.0)
+        encoder_angle.append(0.0)
+    if len(time_encoder_tilt) == 0:
+        time_encoder_tilt.append(0.0)
+        encoder_tilt.append(0.0)
 
     logger.info("PackageMotorData completed successfully")
     logger.debug(f"Final data: RPM={len(motor_rpm)}, Angle={len(motor_angleDeg)}, Tilt={len(motor_tiltDeg)}")
     return MotorDataPackage(
-        time_rpm, motor_rpm, time_angle, motor_angleDeg, time_tilt, motor_tiltDeg,
-        time_encoder, encoder_rpm, encoder_angle, encoder_tilt
+        time_rpm, motor_rpm,
+        time_angle, motor_angleDeg,
+        time_tilt, motor_tiltDeg,
+        time_encoder_rpm, encoder_rpm,
+        time_encoder_angle, encoder_angle,
+        time_encoder_tilt, encoder_tilt
     )
 
 
@@ -272,15 +306,23 @@ class SmartDotDataPackage:
         self.light = light
 
 class MotorDataPackage:
-    def __init__(self, time_rpm, motor_rpm, time_angle, motor_angleDeg, time_tilt, motor_tiltDeg,
-                 time_encoder, encoder_rpm, encoder_angle, encoder_tilt):
+    def __init__(self,
+                 time_rpm, motor_rpm,
+                 time_angle, motor_angleDeg,
+                 time_tilt, motor_tiltDeg,
+                 time_encoder_rpm, encoder_rpm,
+                 time_encoder_angle, encoder_angle,
+                 time_encoder_tilt, encoder_tilt):
         self.time_rpm = time_rpm
         self.motor_rpm = motor_rpm
         self.time_angle = time_angle
         self.motor_angleDeg = motor_angleDeg
         self.time_tilt = time_tilt
         self.motor_tiltDeg = motor_tiltDeg
-        self.time_encoder = time_encoder
+        # encoder series have independent time bases
+        self.time_encoder_rpm = time_encoder_rpm
         self.encoder_rpm = encoder_rpm
+        self.time_encoder_angle = time_encoder_angle
         self.encoder_angle = encoder_angle
+        self.time_encoder_tilt = time_encoder_tilt
         self.encoder_tilt = encoder_tilt
