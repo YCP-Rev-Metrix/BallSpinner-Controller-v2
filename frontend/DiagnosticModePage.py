@@ -12,6 +12,7 @@ from backend.models.SessionData import SessionData
 from backend.models.DataController import DataController
 from backend.models.DiagnosticScriptData import DiagnosticScriptDataInstance
 from backend.models.EncoderData import EncoderDataInstance
+from backend.models.SmartDotData import SmartDotDataInstance
 from backend.drivers.DiagnosticScript import DiagnosticScript
 #from backend.motors.BDCMotor import BDCMotor
 #from backend.motors.SimMotor import SimMotor
@@ -160,6 +161,13 @@ class DiagnosticModePage(QtWidgets.QWidget):
         #Configure Save Button
         self.btnSave.clicked.connect(self.openPostDialog)
 
+        # configure Analyze button (added via UI)
+        self.btnAnalyze = self.findChild(QtWidgets.QPushButton, 'btnAnalyze')
+        if self.btnAnalyze:
+            self.btnAnalyze.clicked.connect(self.analyze_data)
+            # leave enabled so user can move to analysis at any time
+            self.btnAnalyze.setEnabled(True)
+
         #configure OverrideButton
         self.btnOverride = self.findChild(QtWidgets.QPushButton, 'btnOverride')
         self.btnOverride.setCheckable(True)
@@ -253,6 +261,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
             session_name = dialog.getSessionName()
             print(f"Session Name: {session_name}")
             bsc.get_data_controller().set_session_name(session_name)
+
+            # make sure any collected SmartDot data is moved into the DataController
+            self._package_smartdot_data_to_controller()
+
             print("Submitting data to cloud")
             bsc.get_data_controller().submit_session_data()
             print("Data submitted to cloud")
@@ -660,6 +672,89 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.SmartDot = device
         print(f"SmartDot: {self.SmartDot}")
         print(f"Smart dot type: {type(self.SmartDot)}")
+
+    def _package_smartdot_data_to_controller(self):
+        """Move any buffered SmartDot readings into the shared DataController.
+
+        This mirrors the logic used by :class:`ShotViewPage` so that
+        diagnostic mode also persists SmartDot information before
+        submitting/clearing the session. It is safe to call multiple times.
+        """
+        if self.SmartDot is None:
+            return
+        # stop collecting if still running (ensures arrays are final)
+        try:
+            self.SmartDot.stopCollecting()
+        except Exception:
+            pass
+        dc = bsc.get_data_controller()
+        if dc is None:
+            return
+        # accelerometer samples
+        for i in range(len(self.SmartDot.xl_time)):
+            dc.add_smartdot_data(SmartDotDataInstance(
+                time=self.SmartDot.xl_time[i],
+                data_selector=0,  # Accelerometer
+                accelerometer_x=self.SmartDot.xl_x[i],
+                accelerometer_y=self.SmartDot.xl_y[i],
+                accelerometer_z=self.SmartDot.xl_z[i],
+                gyroscope_x=-1,
+                gyroscope_y=-1,
+                gyroscope_z=-1,
+                magnetometer_x=-1,
+                magnetometer_y=-1,
+                magnetometer_z=-1,
+                light=-1
+            ))
+        # gyroscope samples
+        for i in range(len(self.SmartDot.gy_time)):
+            dc.add_smartdot_data(SmartDotDataInstance(
+                time=self.SmartDot.gy_time[i],
+                data_selector=1,  # Gyroscope
+                accelerometer_x=-1,
+                accelerometer_y=-1,
+                accelerometer_z=-1,
+                gyroscope_x=self.SmartDot.gy_x[i],
+                gyroscope_y=self.SmartDot.gy_y[i],
+                gyroscope_z=self.SmartDot.gy_z[i],
+                magnetometer_x=-1,
+                magnetometer_y=-1,
+                magnetometer_z=-1,
+                light=-1
+            ))
+        # magnetometer samples
+        for i in range(len(self.SmartDot.mg_time)):
+            dc.add_smartdot_data(SmartDotDataInstance(
+                time=self.SmartDot.mg_time[i],
+                data_selector=2,  # Magnetometer
+                accelerometer_x=-1,
+                accelerometer_y=-1,
+                accelerometer_z=-1,
+                gyroscope_x=-1,
+                gyroscope_y=-1,
+                gyroscope_z=-1,
+                magnetometer_x=self.SmartDot.mg_x[i],
+                magnetometer_y=self.SmartDot.mg_y[i],
+                magnetometer_z=self.SmartDot.mg_z[i],
+                light=-1
+            ))
+        # light samples
+        for i in range(len(self.SmartDot.lt_time)):
+            dc.add_smartdot_data(SmartDotDataInstance(
+                time=self.SmartDot.lt_time[i],
+                data_selector=3,  # Light
+                accelerometer_x=-1,
+                accelerometer_y=-1,
+                accelerometer_z=-1,
+                gyroscope_x=-1,
+                gyroscope_y=-1,
+                gyroscope_z=-1,
+                magnetometer_x=-1,
+                magnetometer_y=-1,
+                magnetometer_z=-1,
+                light=self.SmartDot.lt_value[i]
+            ))
+        print("Packaged SmartDot data into DataController")
     
     def on_device_disconnected(self, mac_address):
         """Called when device disconnects."""
@@ -681,6 +776,23 @@ class DiagnosticModePage(QtWidgets.QWidget):
         if self.SmartDot is not None:
             print("Stopping SmartDot data collection")
             self.SmartDot.stopCollecting()
+            # when we stop collecting we can also package what we've gathered
+            self._package_smartdot_data_to_controller()
+
+    def analyze_data(self):
+        """Handler for the Analyze button.
+
+        Packages any remaining SmartDot samples and then transitions to the
+        analysis page by emitting the changePage signal with the active
+        DataController (same behaviour as DataViewPage.analyze_data).
+        """
+        print("Analyze Data Clicked")
+        # ensure collected samples are stored in the controller
+        self._package_smartdot_data_to_controller()
+        dc = bsc.get_data_controller()
+        if dc is None:
+            return
+        self.changePage.emit(3, dc)
 
 
 
