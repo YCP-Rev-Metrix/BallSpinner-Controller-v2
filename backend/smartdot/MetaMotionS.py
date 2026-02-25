@@ -477,7 +477,14 @@ class MetaMotion(iSmartDot):
             self.LT_SampleRate = LTDataRates[dataRate]
             self.LT_IntRate = LTIntegrationTime[dataRate]
     def startCollecting(self):
-        self.setSampleRates(25,25,4,1)
+        # configure the sensors at their maximum supported sample rates
+        # (light included for completeness)
+        self.setSampleRates(
+            XL=max(self.XL_availSampleRate),
+            GY=max(self.GY_availSampleRate),
+            MG=max(self.MG_availSampleRate),
+            LT=min(self.LT_availSampleRate)
+        )
         self.startAccel()
         self.startMag()
         self.startGyro()
@@ -490,18 +497,12 @@ class MetaMotion(iSmartDot):
 if __name__ == "__main__":
     smartdot = MetaMotion(MAC_Address="D0:F2:9D:CA:87:53")
     # smartdot.setSampleRanges()
-    smartdot.setSampleRates(25,25,4,1)
-    smartdot.startAccel()
-    smartdot.startMag()
-    smartdot.startGyro()
-    smartdot.startLight()
+    # manually exercise the new max-rate defaults instead of fixed values
+    smartdot.startCollecting()
 
     time.sleep(5)
 
-    smartdot.stopAccel()
-    smartdot.stopMag()
-    smartdot.stopGyro()
-    smartdot.stopLight()
+    smartdot.stopCollecting()
 
     smartdot.disconnect()
     
