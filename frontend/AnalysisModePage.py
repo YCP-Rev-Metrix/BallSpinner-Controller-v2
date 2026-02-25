@@ -178,7 +178,10 @@ class AnalysisModePage(QtWidgets.QWidget):
             motor_package.time_rpm, motor_package.motor_rpm,
             motor_package.time_angle, motor_package.motor_angleDeg,
             motor_package.time_tilt, motor_package.motor_tiltDeg,
-            motor_package.time_encoder, motor_package.encoder_rpm, motor_package.encoder_angle, motor_package.encoder_tilt
+            motor_package.time_encoder_rpm, motor_package.encoder_rpm,
+            motor_package.time_encoder_angle, motor_package.encoder_angle,
+            motor_package.time_encoder_tilt, motor_package.encoder_tilt
+            #motor_package.time_encoder, motor_package.encoder_rpm, motor_package.encoder_angle, motor_package.encoder_tilt
         )
 
         # Compute and display Motor standard deviations (6 fields)
