@@ -2,6 +2,16 @@ from PyQt6 import QtWidgets
 from PyQt6 import QtCore
 from PyQt6.QtGui import QGuiApplication, QCursor
 import io
+
+# monkey-patch QComboBox constructor so every combo starts with a larger width
+_orig_qcombobox_init = QtWidgets.QComboBox.__init__
+
+def _patched_qcombobox_init(self, *args, **kwargs):
+    _orig_qcombobox_init(self, *args, **kwargs)
+    # schedule width adjustment after the widget has its layout hints
+    QtCore.QTimer.singleShot(0, lambda cb=self: cb.setMinimumWidth(cb.sizeHint().width() * 2))
+
+QtWidgets.QComboBox.__init__ = _patched_qcombobox_init
 import os
 import sys
 
@@ -68,11 +78,16 @@ if __name__ == '__main__':
 
     window = BSCMainWindow()
     # ensure all combo boxes use a list view with spacing for their popup
+    # and double their minimum width so they appear wider
     def _patch_comboboxes(parent):
         for cb in parent.findChildren(QtWidgets.QComboBox):
             view = QtWidgets.QListView(cb)
             view.setSpacing(16)
             cb.setView(view)
+            # adjust width based on current size hint
+            hint = cb.sizeHint().width()
+            if hint > 0:
+                cb.setMinimumWidth(hint * 2)
     _patch_comboboxes(window)
     #Combo boxes refuse to cooperate so this is the best option
     
