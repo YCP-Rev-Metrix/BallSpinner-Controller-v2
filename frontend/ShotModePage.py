@@ -108,9 +108,9 @@ class ShotModePage(QtWidgets.QWidget):
     def start_shot(self):
         print("Shot started!")
         # Todo implement shot logic here based on graph settings and duration.
-        print(self.graph_rpm.sample_spline_display(0.1))
-        print(self.graph_tilt.sample_spline_display(0.1))
-        print(self.graph_angle.sample_spline_display(0.1))
+        #print(self.graph_rpm.sample_spline_display(0.1))
+        #print(self.graph_tilt.sample_spline_display(0.1))
+        #print(self.graph_angle.sample_spline_display(0.1))
         # Assume we have some method or data structure to get the current motor values.
         # For this example, let's get hypothetical current values for each motor:
         '''all of the code below this comment in this function is experimental just for testing my script

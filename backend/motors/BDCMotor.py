@@ -23,8 +23,26 @@ class BDCMotor(iMotor):
     def __init__(self, GPIOPin: int):
         self.GPIO_Pin = GPIOPin
         #print(f"pin: {self.GPIO_Pin}")
-        # Initialize software PWM using gpiozero
-        self.motor = PWMOutputDevice(GPIOPin, frequency=FREQ)
+        # Initialize software PWM using gpiozero.  On non‑Raspberry Pi
+        # environments (unit tests or desktop development) gpiozero will
+        # complain about missing pin factories.  Rather than forcing the
+        # caller to mock out ``PWMOutputDevice`` we provide a lightweight
+        # fallback that mimics enough of the real API so that the rest of
+        # the class can operate without hardware.
+        try:
+            self.motor = PWMOutputDevice(GPIOPin, frequency=FREQ)
+        except Exception as exc:  # covers BadPinFactory and others
+            # log so tests (and developers) can understand why we chose the
+            # dummy implementation.
+            print(f"BDCMotor: could not create real PWM device ({exc}); using dummy")
+            class _DummyPWM:
+                def __init__(self, pin, frequency=None):
+                    self.pin = pin
+                    self.frequency = frequency
+                    self.value = 0.0
+                def close(self):
+                    pass
+            self.motor = _DummyPWM(GPIOPin, frequency=FREQ)
         time.sleep(1)
         self.start()
 
@@ -43,6 +61,7 @@ class BDCMotor(iMotor):
  #       return lo if x < lo else hi if x > hi else x
     	return max(lo, min(x, hi))
     # ---------------- PULSE CONTROL ----------------
+
     def set_pulse(self):
         if self.motor:
             # ESC expects 1050–2000 µs, 50 Hz => duty 0.0525–0.1

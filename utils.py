@@ -1,9 +1,74 @@
+import numpy as np
 import io
 import os
 import logging
 from array import array
-
+import pywt
 logger = logging.getLogger(__name__)
+
+def get_series_defs(parent=None):
+    # Use parent's color attributes if available
+    return {
+        "smartdot": {
+            "accel_x": {"label": "Accel X", "time": "time_accel", "data": "accel_x", "color": getattr(parent, 'accxColor', None), "deriv": True, "fft": True},
+            "accel_y": {"label": "Accel Y", "time": "time_accel", "data": "accel_y", "color": getattr(parent, 'accyColor', None), "deriv": True, "fft": True},
+            "accel_z": {"label": "Accel Z", "time": "time_accel", "data": "accel_z", "color": getattr(parent, 'acczColor', None), "deriv": True, "fft": True},
+            "gyro_x": {"label": "Gyro X", "time": "time_gyro", "data": "gyro_x", "color": getattr(parent, 'gyroxColor', None), "deriv": True, "fft": True},
+            "gyro_y": {"label": "Gyro Y", "time": "time_gyro", "data": "gyro_y", "color": getattr(parent, 'gyroyColor', None), "deriv": True, "fft": True},
+            "gyro_z": {"label": "Gyro Z", "time": "time_gyro", "data": "gyro_z", "color": getattr(parent, 'gyrozColor', None), "deriv": True, "fft": True},
+            "mag_x": {"label": "Mag X", "time": "time_mag", "data": "mag_x", "color": getattr(parent, 'magxColor', None), "deriv": True, "fft": True},
+            "mag_y": {"label": "Mag Y", "time": "time_mag", "data": "mag_y", "color": getattr(parent, 'magyColor', None), "deriv": True, "fft": True},
+            "mag_z": {"label": "Mag Z", "time": "time_mag", "data": "mag_z", "color": getattr(parent, 'magzColor', None), "deriv": True, "fft": True},
+            "light": {"label": "Light", "time": "time_light", "data": "light", "color": getattr(parent, 'lightColor', None), "deriv": False, "fft": False},
+        },
+        "motor": {
+            "motor_rpm": {"label": "Motor RPM", "time": "time_rpm", "data": "motor_rpm", "color": getattr(parent, 'motorRPMColor', None), "deriv": True, "fft": True},
+            "motor_angle": {"label": "Motor Angle", "time": "time_angle", "data": "motor_angleDeg", "color": getattr(parent, 'motorAngleColor', None), "deriv": True, "fft": True},
+            "motor_tilt": {"label": "Motor Tilt", "time": "time_tilt", "data": "motor_tiltDeg", "color": getattr(parent, 'motorTiltColor', None), "deriv": True, "fft": True},
+            "encoder_rpm": {"label": "Encoder RPM", "time": "time_encoder", "data": "encoder_rpm", "color": getattr(parent, 'encoderRPMColor', None), "deriv": True, "fft": True},
+            "encoder_angle": {"label": "Encoder Angle", "time": "time_encoder", "data": "encoder_angle", "color": getattr(parent, 'encoderAngleColor', None), "deriv": True, "fft": True},
+            "encoder_tilt": {"label": "Encoder Tilt", "time": "time_encoder", "data": "encoder_tilt", "color": getattr(parent, 'encoderTiltColor', None), "deriv": True, "fft": True},
+        },
+    }
+
+def series_arrays(package, defs):
+    series = {}
+    for key, meta in defs.items():
+        time_values = np.array(getattr(package, meta["time"], []), dtype=np.float64)
+        data_values = np.array(getattr(package, meta["data"], []), dtype=np.float64)
+        series[key] = (time_values, data_values)
+    return series
+
+
+
+
+def bandpass_wavelet(values, wavelet='db4', level=2):
+    arr = np.asarray(values, dtype=np.float64)
+    if arr.size == 0:
+        return arr.copy()
+    try:
+        coeffs = pywt.wavedec(arr, wavelet, level=level)
+    except Exception:
+        # if decomposition fails just return original
+        return arr.copy()
+    # keep only the detail coefficients at level-1 (middle band) if available
+    # coeffs structure: [cA_n, cD_n, cD_{n-1}, ..., cD1]
+    # we zero every coefficient except the one at index 2 (cD_{n}) when level=2
+    for i in range(len(coeffs)):
+        if i != 2:
+            coeffs[i] = np.zeros_like(coeffs[i])
+    try:
+        rec = pywt.waverec(coeffs, wavelet)
+    except Exception:
+        return arr.copy()
+    # trim/pad to original length
+    if len(rec) > len(arr):
+        rec = rec[: len(arr)]
+    elif len(rec) < len(arr):
+        rec = np.pad(rec, (0, len(arr) - len(rec)), mode='edge')
+    return rec
+
+
 def is_raspberry_pi():
     """Checks if the code is running on a Raspberry Pi."""
     logger.debug("Checking if running on Raspberry Pi")

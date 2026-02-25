@@ -188,6 +188,8 @@ class DataViewPage(QtWidgets.QWidget):
         self.proxy = FilterProxy(self)
         self.proxy.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.proxy.setFilterKeyColumn(-1)  # search all columns
+        # Use UserRole for sorting so it uses correct data types
+        self.proxy.setSortRole(Qt.ItemDataRole.UserRole)
         # make sure we filter on the displayed text
         self.proxy.setFilterRole(Qt.ItemDataRole.DisplayRole)
         # use a dedicated handler so user input is escaped and turned into a regex
@@ -246,14 +248,12 @@ class DataViewPage(QtWidgets.QWidget):
         self.model.clear()
         print(f"Getting sessions in time range: {start_time} to {end_time}")
         print(f"Type of start_time: {type(start_time)}, Type of end_time: {type(end_time)}")
-        
 
         self.lblDebug.setText("Fetching data from the cloud...")
         self.lblDebug.setHidden(False)
         QtWidgets.QApplication.processEvents()  # Force UI update before blocking call
 
         result = self.cloud_api.get_sessions_in_time_range(start_time, end_time)
-
 
         #Implement Error catching here
         if 'error' in result:
@@ -266,16 +266,35 @@ class DataViewPage(QtWidgets.QWidget):
             sessions = result['data']
             print(f"Sessions: {sessions}")
             if len(sessions) > 0:
-                # Set headers
-                headers = list(sessions[0].keys())
-                self.model.setHorizontalHeaderLabels(headers)
+                # Set headers explicitly
+                self.model.setHorizontalHeaderLabels(["id", "timestamp", "name", "isShotMode"])
 
                 for session in sessions:
                     row = []
-                    for key in headers:
-                        item = QStandardItem(str(session[key]))
-                        item.setEditable(False)
-                        row.append(item)
+                    # 1. ID (int)
+                    id_item = QStandardItem(str(session['id']))
+                    id_item.setData(int(session['id']), Qt.ItemDataRole.UserRole)
+                    id_item.setEditable(False)
+                    row.append(id_item)
+
+                    # 2. Timestamp (QDateTime)
+                    ts_item = QStandardItem(session['timeStamp'])
+                    dt = QDateTime.fromString(session['timeStamp'], "yyyy-MM-dd HH:mm:ss")
+                    ts_item.setData(dt, Qt.ItemDataRole.UserRole)
+                    ts_item.setEditable(False)
+                    row.append(ts_item)
+
+                    # 3. Name (string)
+                    name_item = QStandardItem(session['name'])
+                    name_item.setEditable(False)
+                    row.append(name_item)
+
+                    # 4. Is Shot Mode (bool)
+                    shot_item = QStandardItem("Yes" if session['isShotMode'] else "No")
+                    shot_item.setData(bool(session['isShotMode']), Qt.ItemDataRole.UserRole)
+                    shot_item.setEditable(False)
+                    row.append(shot_item)
+
                     self.model.appendRow(row)
             else:
                 self.lblDebug.setHidden(False)

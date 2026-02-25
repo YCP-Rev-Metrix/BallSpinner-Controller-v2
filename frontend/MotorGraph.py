@@ -56,13 +56,15 @@ class MotorGraph(QtWidgets.QWidget):
         legend.setColumnCount(3)
 
         # Create pens and persistent plot curves to avoid recreating plot items on every update
+        # motor curves use RPM=red, Angle=green, Tilt=blue
+        # encoder/data overlays use analysis colors: RPM=cyan, Angle=magenta, Tilt=yellow
         self.pens = {
             'spin': pg.mkPen(color=(255, 0, 0), width=2),
             'tilt': pg.mkPen(color=(0, 170, 0), width=2),
             'angle': pg.mkPen(color=(0, 0, 255), width=2),
-            'spin_data': pg.mkPen(color=(255, 0, 0), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),
-            'tilt_data': pg.mkPen(color=(0, 170, 0), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),
-            'angle_data': pg.mkPen(color=(0, 0, 255), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),
+            'spin_data': pg.mkPen(color=(0, 255, 255), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),  # cyan
+            'tilt_data': pg.mkPen(color=(255, 0, 255), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),  # magenta
+            'angle_data': pg.mkPen(color=(255, 255, 0), width=1, style=pg.QtCore.Qt.PenStyle.DashLine),  # yellow
         }
 
         # persistent curves
@@ -90,9 +92,10 @@ class MotorGraph(QtWidgets.QWidget):
             self.marker_spin = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(255,0,0))
             self.marker_tilt = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(0,170,0))
             self.marker_angle = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(0,0,255))
-            self.marker_spin_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,0))
-            self.marker_tilt_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,170,0))
-            self.marker_angle_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,0,255))
+            # encoder markers use cyan/magenta/yellow
+            self.marker_spin_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(0,255,255))
+            self.marker_tilt_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,0,255))
+            self.marker_angle_data = pg.ScatterPlotItem(size=7, brush=pg.mkBrush(255,255,0))
             for m in (self.marker_spin, self.marker_tilt, self.marker_angle,
                       self.marker_spin_data, self.marker_tilt_data, self.marker_angle_data):
                 m.setVisible(False)
@@ -296,20 +299,9 @@ class MotorGraph(QtWidgets.QWidget):
                     angle_data = float(np.asarray(self.AngleDataArray)[idx]) if (self.AngleDataArray is not None and len(self.AngleDataArray) > idx) else None
                     # Update label 
                     if self.lblEncoderData is not None:
-                        # colors match plotting pens: spin=red, tilt=green, angle=blue
-                        spin_html = _fmt_html(spin_data, '#ff0000')
-                        tilt_html = _fmt_html(tilt_data, '#00aa00')
-                        angle_html = _fmt_html(angle_data, '#0000ff')
-                        self.lblEncoderData.setText(
-                            f"Encoder Data @ t={t:.3f} (idx={idx}): Spin={spin_html}, Tilt={tilt_html}, Angle={angle_html}"
-                        )
-                    # place data-series markers at the data-time location using persistent markers
-                    try:
-                        if self.vline is not None:
-                            self.vline.setVisible(True)
-                            self.vline.setPos(x_click)
-                    except Exception:
-                        pass
+                        # encoder RPM uses cyan
+                        spin_html = _fmt_html(spin_data, '#00ffff')
+                        self.lblEncoderData.setText(f"Encoder Data @ t={t:.3f}: Spin={spin_html}")
                     try:
                         if getattr(self, 'marker_spin_data', None) is not None:
                             if spin_data is not None:
@@ -318,13 +310,20 @@ class MotorGraph(QtWidgets.QWidget):
                             else:
                                 self.marker_spin_data.setData(x=[], y=[])
                                 self.marker_spin_data.setVisible(False)
-                        if getattr(self, 'marker_tilt_data', None) is not None:
-                            if tilt_data is not None:
-                                self.marker_tilt_data.setData(x=[t], y=[tilt_data])
-                                self.marker_tilt_data.setVisible(True)
-                            else:
-                                self.marker_tilt_data.setData(x=[], y=[])
-                                self.marker_tilt_data.setVisible(False)
+                    except Exception:
+                        pass
+            # angle
+            if self.AngleDataTime is not None and len(self.AngleDataTime) > 0:
+                idx = _nearest(self.AngleDataTime, x_click)
+                if idx is not None:
+                    t = float(np.asarray(self.AngleDataTime)[idx])
+                    angle_data = float(np.asarray(self.AngleDataArray)[idx]) if (self.AngleDataArray is not None and len(self.AngleDataArray) > idx) else None
+                    if self.lblEncoderData is not None:
+                        # encoder Angle uses magenta
+                        angle_html = _fmt_html(angle_data, '#ff00ff')
+                        existing = self.lblEncoderData.text() if self.lblEncoderData is not None else ''
+                        self.lblEncoderData.setText(existing + f" Angle={angle_html}")
+                    try:
                         if getattr(self, 'marker_angle_data', None) is not None:
                             if angle_data is not None:
                                 self.marker_angle_data.setData(x=[t], y=[angle_data])
@@ -332,6 +331,27 @@ class MotorGraph(QtWidgets.QWidget):
                             else:
                                 self.marker_angle_data.setData(x=[], y=[])
                                 self.marker_angle_data.setVisible(False)
+                    except Exception:
+                        pass
+            # tilt
+            if self.TiltDataTime is not None and len(self.TiltDataTime) > 0:
+                idx = _nearest(self.TiltDataTime, x_click)
+                if idx is not None:
+                    t = float(np.asarray(self.TiltDataTime)[idx])
+                    tilt_data = float(np.asarray(self.TiltDataArray)[idx]) if (self.TiltDataArray is not None and len(self.TiltDataArray) > idx) else None
+                    if self.lblEncoderData is not None:
+                        # encoder Tilt uses yellow
+                        tilt_html = _fmt_html(tilt_data, '#ffff00')
+                        existing = self.lblEncoderData.text() if self.lblEncoderData is not None else ''
+                        self.lblEncoderData.setText(existing + f" Tilt={tilt_html}")
+                    try:
+                        if getattr(self, 'marker_tilt_data', None) is not None:
+                            if tilt_data is not None:
+                                self.marker_tilt_data.setData(x=[t], y=[tilt_data])
+                                self.marker_tilt_data.setVisible(True)
+                            else:
+                                self.marker_tilt_data.setData(x=[], y=[])
+                                self.marker_tilt_data.setVisible(False)
                     except Exception:
                         pass
 

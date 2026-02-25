@@ -116,6 +116,7 @@ class StepMotor():
 
     def changeSpeed(self, dutyCycle: float, isShotMode: bool):
         angle = dutyCycle # so i dont have to fix imotor lol
+        #This not being fixed lead me down a rabbit 
         if not (isShotMode):
             isClockwise = True
             new_angle = angle - self.prev_angle

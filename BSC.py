@@ -34,12 +34,16 @@ class BSC:
 
         if utils.is_raspberry_pi_5():
             self.h = lgpio.gpiochip_open(0)
+            # motor1 = spin/RPM motor (BLDC via USB)
             self.motor1 = USBBDCMotor() # UNCOMMENT AFTER STEPPER
             #self.motor1 = SimMotor(1)
-            self.motor2 = StepMotor(23, 24, self.h) #Uncomment when step working
-            self.motor3 = StepMotor(27, 17, self.h)
+            # motor2 = tilt-angle stepper (now using earlier motor3 pins)
+            # motor3 = assembly-angle stepper (now using earlier motor2 pins)
+            self.motor2 = StepMotor(27, 17, self.h) # former motor3 pins
+            self.motor3 = StepMotor(23, 24, self.h) # former motor2 pins
             #self.motor2 = SimMotor(2)
         else:
+            # when simulating all three motors are mocks; names are logical
             self.motor1 = SimMotor(2)
             self.motor2 = SimMotor(2)
             self.motor3 = SimMotor(2) #222 fun haha

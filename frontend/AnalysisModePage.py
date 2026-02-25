@@ -1,20 +1,217 @@
-import time
 from PyQt6 import QtWidgets, uic
 import os
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt
 import numpy as np
 
+from utils import get_series_defs, series_arrays, bandpass_wavelet
 from .MotorGraph import MotorGraph
 from .SmartDotGraph import SmartDotGraph
-import math
 from PyQt6.QtCore import pyqtSignal
-from backend.models.SmartDotData import SmartDotDataInstance
 import pyqtgraph as pg
-from BSC import bsc 
-import utils
+from BSC import bsc
 from utils import PackageSmartDotData, SmartDotDataPackage, PackageMotorData, MotorDataPackage
 from .PostDialog import PostDialog
+from .WaveletDialog import WaveletDialog
 
+
+class AnalysisModePage(QtWidgets.QWidget):
+    # wavelet dialog is still provided for manual inspection
+    changePage = pyqtSignal(int, str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        # no persistent wavelet dialog instance is stored
+
+        # Load the UI file (module-relative path).
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'AnalysisModePage.ui'), self, package='frontend')
+        self.smartDotGraph = self.findChild(SmartDotGraph, 'grphSmartDot')
+        self.motorGraph = self.findChild(MotorGraph, 'MotorGraph')
+        self.smartDotGraph.setView(0)  # Set SmartDotGraph to show all data
+        self.motorGraph.setView(0)     # Set MotorGraph to show all data
+
+        self.btnSave = self.findChild(QtWidgets.QPushButton, 'btnSave')
+        self.btnSave.clicked.connect(self.openPostDialog)
+        
+        self.btnMotorFFT = self.findChild(QtWidgets.QPushButton, 'btnMotorFFT')
+        self.btnSmartDotFFT = self.findChild(QtWidgets.QPushButton, 'btnSDFFT')
+        self.btnMotorFirstDerivative = self.findChild(QtWidgets.QPushButton, 'btnMotor1DER')
+        self.btnSmartDotFirstDerivative = self.findChild(QtWidgets.QPushButton, 'btnSD1DER')
+        self.btnMotorSecondDerivative = self.findChild(QtWidgets.QPushButton, 'btnMotor2DER')
+        self.btnSmartDotSecondDerivative = self.findChild(QtWidgets.QPushButton, 'btnSD2DER')
+        self.btnMotorFFT.clicked.connect(lambda: self.openAnalysisDialog("Motor FFT"))
+        self.btnSmartDotFFT.clicked.connect(lambda: self.openAnalysisDialog("SmartDot FFT"))
+        self.btnMotorFirstDerivative.clicked.connect(lambda: self.openAnalysisDialog("Motor 1st Derivative"))
+        self.btnSmartDotFirstDerivative.clicked.connect(lambda: self.openAnalysisDialog("SmartDot 1st Derivative"))
+        self.btnMotorSecondDerivative.clicked.connect(lambda: self.openAnalysisDialog("Motor 2nd Derivative"))
+        self.btnSmartDotSecondDerivative.clicked.connect(lambda: self.openAnalysisDialog("SmartDot 2nd Derivative"))
+
+        # wavelet buttons
+        self.btnMotorWavelet = self.findChild(QtWidgets.QPushButton, 'btnMotorWavelet')
+        self.btnSDWavelet = self.findChild(QtWidgets.QPushButton, 'btnSDWavelet')
+        self.btnMotorWavelet.clicked.connect(lambda: self.openWaveletDialog("Motor"))
+        self.btnSDWavelet.clicked.connect(lambda: self.openWaveletDialog("SmartDot"))
+
+        #Bandpass buttons
+        self.btnMotorBandpass = self.findChild(QtWidgets.QPushButton, 'btnMotorBandpass')
+        self.btnSDBandpass = self.findChild(QtWidgets.QPushButton, 'btnSDBandpass')
+        self.btnMotorBandpass.clicked.connect(lambda: self.openAnalysisDialog("Motor Bandpass"))
+        self.btnSDBandpass.clicked.connect(lambda: self.openAnalysisDialog("SmartDot Bandpass")) 
+
+        self.analysisDialog = None
+             
+    def openAnalysisDialog(self, type: str):
+        if self.analysisDialog is None:
+            self.analysisDialog = AnalysisDialog(self, type)
+        dialog = self.analysisDialog
+        dialog.setWindowTitle(type)
+        if dialog.lblTitle is not None:
+            dialog.lblTitle.setText(type)
+
+        actions = {
+            "Motor FFT": (PackageMotorData, "fft", None),
+            "SmartDot FFT": (PackageSmartDotData, "fft", None),
+            "Motor 1st Derivative": (PackageMotorData, "deriv", 1),
+            "SmartDot 1st Derivative": (PackageSmartDotData, "deriv", 1),
+            "Motor 2nd Derivative": (PackageMotorData, "deriv", 2),
+            "SmartDot 2nd Derivative": (PackageSmartDotData, "deriv", 2),
+            "Motor Standard Dev": (PackageMotorData, "stdev", None),
+            "SmartDot Standard Dev": (PackageSmartDotData, "stdev", None),
+            "Motor Bandpass": (PackageMotorData, "bandpass", None),
+            "SmartDot Bandpass": (PackageSmartDotData, "bandpass", None),
+        }
+        action = actions.get(type)
+        if action is None:
+            return
+        package_cls, mode, order = action
+        data_package = package_cls(self, bsc)
+        print(f"Opening analysis dialog for {type} with mode={mode} and order={order}")
+        match mode:
+            case "fft":
+                dialog.performFFT(data_package)
+            case "deriv":
+                dialog.performDerivative(data_package, order=order)
+            case "stdev":
+                dialog.performStandardDev(data_package)
+            case "bandpass":
+                dialog.performBandpass(data_package)
+            case _:
+                dialog.graph.setTitle("Unknown analysis mode")
+    
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+
+    def openWaveletDialog(self, data_type: str):
+        """Launch the wavelet analysis dialog for motor or smartdot data."""
+        dialog = WaveletDialog(self)
+        if data_type.startswith("Motor"):
+            pkg = PackageMotorData(self, bsc)
+        else:
+            pkg = PackageSmartDotData(self, bsc)
+        success = dialog.performWavelet(pkg)
+        if not success:
+            return
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+
+    # openWaveletDialog removed (WaveletDialog removed)
+
+    def openPostDialog(self):
+        dialog = PostDialog(self)
+        result = dialog.exec()
+        if result == QtWidgets.QDialog.DialogCode.Accepted:
+            print("User accepted the dialog.")
+            session_name = dialog.getSessionName()
+            print(f"Session Name: {session_name}")
+            bsc.get_data_controller().set_session_name(session_name)
+            print("Submitting data to cloud")
+            bsc.get_data_controller().submit_session_data()
+            print("Data submitted to cloud")
+            # Handle acceptance (e.g., save data)
+        else:
+            print("User rejected the dialog.")
+            # Handle rejection (e.g., cancel operation)
+
+    def loadData(self):
+        smartdot_package = PackageSmartDotData(self, bsc)
+        self.smartDotGraph.updateDataBetter(
+            smartdot_package.time_accel, smartdot_package.accel_x, smartdot_package.accel_y, smartdot_package.accel_z,
+            smartdot_package.time_gyro, smartdot_package.gyro_x, smartdot_package.gyro_y, smartdot_package.gyro_z,
+            smartdot_package.time_mag, smartdot_package.mag_x, smartdot_package.mag_y, smartdot_package.mag_z,
+            smartdot_package.time_light, smartdot_package.light
+        )
+
+        # Compute and display SmartDot standard deviations (10 fields)
+        lblSmartDotStdDev = self.findChild(QtWidgets.QLabel, 'lblSmartDotStdDev')
+        smartdot_fields = [
+            ("Accel X", smartdot_package.accel_x, "#ff0000"),
+            ("Accel Y", smartdot_package.accel_y, "#00aa00"),
+            ("Accel Z", smartdot_package.accel_z, "#0000ff"),
+            ("Gyro X", smartdot_package.gyro_x, "#00ffff"),
+            ("Gyro Y", smartdot_package.gyro_y, "#ff00ff"),
+            ("Gyro Z", smartdot_package.gyro_z, "#ffff00"),
+            ("Mag X", smartdot_package.mag_x, "#008080"),
+            ("Mag Y", smartdot_package.mag_y, "#800000"),
+            ("Mag Z", smartdot_package.mag_z, "#800080"),
+            ("Light", smartdot_package.light, "#777777"),
+        ]
+        smartdot_cells = []
+        for label, arr, color in smartdot_fields:
+            if arr is not None and len(arr) > 0:
+                val = f"{np.std(arr):.4f}"
+            else:
+                val = ""
+            smartdot_cells.append(f'<td style="color:{color}; padding: 0 10px 0 0;">{label}: {val}</td>')
+        # Arrange in 2 rows of 5
+        smartdot_rows = ["<tr>" + "".join(smartdot_cells[i:i+5]) + "</tr>" for i in range(0, 10, 5)]
+        smartdot_table = ("<div style='text-align:center; width:100%'>"
+                         "<table style='border:none; margin-left:auto; margin-right:auto;'><tbody>"
+                         + "".join(smartdot_rows) + "</tbody></table></div>")
+        if lblSmartDotStdDev is not None:
+            lblSmartDotStdDev.setText("SmartDot Standard Deviation:" + smartdot_table)
+            lblSmartDotStdDev.setTextFormat(Qt.TextFormat.RichText)
+            lblSmartDotStdDev.setWordWrap(True)
+
+        motor_package = PackageMotorData(self, bsc)
+        self.motorGraph.updateDataDiagnostic(
+            motor_package.time_rpm, motor_package.motor_rpm,
+            motor_package.time_angle, motor_package.motor_angleDeg,
+            motor_package.time_tilt, motor_package.motor_tiltDeg,
+            motor_package.time_encoder_rpm, motor_package.encoder_rpm,
+            motor_package.time_encoder_angle, motor_package.encoder_angle,
+            motor_package.time_encoder_tilt, motor_package.encoder_tilt
+            #motor_package.time_encoder, motor_package.encoder_rpm, motor_package.encoder_angle, motor_package.encoder_tilt
+        )
+
+        # Compute and display Motor standard deviations (6 fields)
+        lblMotorStdDev = self.findChild(QtWidgets.QLabel, 'lblMotorStdDev')
+        motor_fields = [
+            ("Motor RPM", motor_package.motor_rpm, "#ff0000"),
+            ("Motor Angle", motor_package.motor_angleDeg, "#00aa00"),
+            ("Motor Tilt", motor_package.motor_tiltDeg, "#0000ff"),
+            ("Encoder RPM", motor_package.encoder_rpm, "#ff0000"),
+            ("Encoder Angle", motor_package.encoder_angle, "#00aa00"),
+            ("Encoder Tilt", motor_package.encoder_tilt, "#0000ff"),
+        ]
+        motor_cells = []
+        for label, arr, color in motor_fields:
+            if arr is not None and len(arr) > 0:
+                val = f"{np.std(arr):.4f}"
+            else:
+                val = ""
+            motor_cells.append(f'<td style="color:{color}; padding: 0 10px 0 0;">{label}: {val}</td>')
+        # Arrange in 2 rows of 3
+        motor_rows = ["<tr>" + "".join(motor_cells[i:i+3]) + "</tr>" for i in range(0, 6, 3)]
+        motor_table = ("<div style='text-align:center; width:100%'>"
+                      "<table style='border:none; margin-left:auto; margin-right:auto;'><tbody>"
+                      + "".join(motor_rows) + "</tbody></table></div>")
+        if lblMotorStdDev is not None:
+            lblMotorStdDev.setText("Motor Standard Deviation:" + motor_table)
+            lblMotorStdDev.setTextFormat(Qt.TextFormat.RichText)
+            lblMotorStdDev.setWordWrap(True)
+
+#-------------------------------------------------
 class AnalysisDialog(QtWidgets.QDialog):
     def __init__(self, parent=None, type: str = None):
         super().__init__(parent)
@@ -144,6 +341,42 @@ class AnalysisDialog(QtWidgets.QDialog):
             return None
         return np.gradient(values, times)
 
+    def _regularizeTimeSeries(self, times, values, max_points=4096):
+        if times is None or values is None:
+            return None
+        times = np.asarray(times, dtype=np.float64)
+        values = np.asarray(values, dtype=np.float64)
+        if len(times) < 2:
+            return None
+        mask = np.isfinite(times) & np.isfinite(values)
+        times = times[mask]
+        values = values[mask]
+        if len(times) < 2:
+            return None
+        order = np.argsort(times)
+        times = times[order]
+        values = values[order]
+        diffs = np.diff(times)
+        diffs = diffs[diffs > 0]
+        if len(diffs) == 0:
+            return None
+        dt = float(np.median(diffs))
+        if not np.isfinite(dt) or dt <= 0:
+            return None
+        t0, t1 = float(times[0]), float(times[-1])
+        if t1 <= t0:
+            return None
+        n = int(np.floor((t1 - t0) / dt)) + 1
+        if n < 2:
+            return None
+        if n > max_points:
+            step = int(np.ceil(n / max_points))
+            dt = dt * step
+            n = int(np.floor((t1 - t0) / dt)) + 1
+        new_times = t0 + np.arange(n, dtype=np.float64) * dt
+        new_values = np.interp(new_times, times, values)
+        return new_times, new_values, dt
+
     def _prepareGraph(self):
         self.graph.clear()
         self.graph.addLegend()
@@ -152,12 +385,8 @@ class AnalysisDialog(QtWidgets.QDialog):
         self._initCursor()
 
     def _seriesArrays(self, package, defs):
-        series = {}
-        for key, meta in defs.items():
-            time_values = np.array(getattr(package, meta["time"], []), dtype=np.float64)
-            data_values = np.array(getattr(package, meta["data"], []), dtype=np.float64)
-            series[key] = (time_values, data_values)
-        return series
+        
+        return series_arrays(package, defs)
 
     def _ordinalSuffix(self, order):
         return "1st" if order == 1 else "2nd"
@@ -321,6 +550,50 @@ class AnalysisDialog(QtWidgets.QDialog):
         self.graph.autoRange()
         self._syncRangeControls()
 
+    def performBandpass(self, package):
+        self._prepareGraph()
+        # pick definition set by type or heuristic
+        if isinstance(package, SmartDotDataPackage):
+            defs = self.seriesDefs["smartdot"]
+        elif isinstance(package, MotorDataPackage):
+            defs = self.seriesDefs["motor"]
+        else:
+            # not a known package class; inspect for smartdot attributes
+            if hasattr(package, 'accel_x'):
+                defs = self.seriesDefs["smartdot"]
+            else:
+                defs = self.seriesDefs["motor"]
+
+        # gather raw data
+        series = self._seriesArrays(package, defs)
+        if defs is self.seriesDefs["motor"]:
+            motor_time = series.get("motor_rpm", (None,))[0]
+            if motor_time is None or len(motor_time) == 0:
+                self.graph.setTitle("No motor data available")
+                return
+
+        for key, meta in defs.items():
+            # ignore light per instruction
+            if key == "light":
+                continue
+            times, values = series.get(key, (None, None))
+            if times is None or values is None or len(values) == 0:
+                continue
+            # regularize to uniform grid for transform
+            reg = self._regularizeTimeSeries(times, values)
+            if reg is None:
+                continue
+            new_times, new_vals, _ = reg
+            filtered = bandpass_wavelet(new_vals)
+            label = f"{meta['label']} band‑pass"
+            self._plotSeries(key, label, new_times, filtered, meta.get("color"))
+
+        self._autoRangeAndSync()
+        
+
+        
+        
+
     def performDerivative(self, package, order=1):
         self._prepareGraph()
         if isinstance(package, SmartDotDataPackage):
@@ -384,94 +657,38 @@ class AnalysisDialog(QtWidgets.QDialog):
             self._plotSeries(key, label, freqs, np.abs(fft_values), meta["color"])
 
         self._autoRangeAndSync()
-            
-        
+    
+    def performWavelet(self, package):
+        # wavelet support removed; placeholder for future implementation
+        self._prepareGraph()
+        self.graph.setTitle("Wavelet analysis not implemented")
+        # data packages can be inspected here once reworked
+        # no plotting is performed at this time
 
-
-
-
-
-
-
-
-class AnalysisModePage(QtWidgets.QWidget):
-    changePage = pyqtSignal(int, str)
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        # Load the UI file (module-relative path).
-        uic.loadUi(os.path.join(os.path.dirname(__file__), 'AnalysisModePage.ui'), self, package='frontend')
-        self.smartDotGraph = self.findChild(SmartDotGraph, 'grphSmartDot')
-        self.motorGraph = self.findChild(MotorGraph, 'MotorGraph')
-        self.smartDotGraph.setView(0)  # Set SmartDotGraph to show all data
-        self.motorGraph.setView(0)     # Set MotorGraph to show all data
-
-        self.btnSave = self.findChild(QtWidgets.QPushButton, 'btnSave')
-        self.btnSave.clicked.connect(self.openPostDialog)
-        
-        self.btnMotorFFT = self.findChild(QtWidgets.QPushButton, 'btnMotorFFT')
-        self.btnSmartDotFFT = self.findChild(QtWidgets.QPushButton, 'btnSDFFT')
-        self.btnMotorFirstDerivative = self.findChild(QtWidgets.QPushButton, 'btnMotor1DER')
-        self.btnSmartDotFirstDerivative = self.findChild(QtWidgets.QPushButton, 'btnSD1DER')
-        self.btnMotorSecondDerivative = self.findChild(QtWidgets.QPushButton, 'btnMotor2DER')
-        self.btnSmartDotSecondDerivative = self.findChild(QtWidgets.QPushButton, 'btnSD2DER')
-
-        self.btnMotorFFT.clicked.connect(lambda: self.openAnalysisDialog("Motor FFT"))
-        self.btnSmartDotFFT.clicked.connect(lambda: self.openAnalysisDialog("SmartDot FFT"))
-        self.btnMotorFirstDerivative.clicked.connect(lambda: self.openAnalysisDialog("Motor 1st Derivative"))
-        self.btnSmartDotFirstDerivative.clicked.connect(lambda: self.openAnalysisDialog("SmartDot 1st Derivative"))
-        self.btnMotorSecondDerivative.clicked.connect(lambda: self.openAnalysisDialog("Motor 2nd Derivative"))
-        self.btnSmartDotSecondDerivative.clicked.connect(lambda: self.openAnalysisDialog("SmartDot 2nd Derivative"))
-
-        self.analysisDialog = None
-        
-        
-        
-    def openAnalysisDialog(self, type: str):
-        if self.analysisDialog is None:
-            self.analysisDialog = AnalysisDialog(self, type)
-        dialog = self.analysisDialog
-        dialog.setWindowTitle(type)
-        if dialog.lblTitle is not None:
-            dialog.lblTitle.setText(type)
-
-        actions = {
-            "Motor FFT": (PackageMotorData, "fft", None),
-            "SmartDot FFT": (PackageSmartDotData, "fft", None),
-            "Motor 1st Derivative": (PackageMotorData, "deriv", 1),
-            "SmartDot 1st Derivative": (PackageSmartDotData, "deriv", 1),
-            "Motor 2nd Derivative": (PackageMotorData, "deriv", 2),
-            "SmartDot 2nd Derivative": (PackageSmartDotData, "deriv", 2),
-        }
-        action = actions.get(type)
-        if action is None:
-            return
-        package_cls, mode, order = action
-        data_package = package_cls(self, bsc)
-        if mode == "fft":
-            dialog.performFFT(data_package)
+    def performStandardDev(self, package):
+        # Only show the overall standard deviation as a label, not a plot
+        if isinstance(package, SmartDotDataPackage):
+            defs = self.seriesDefs["smartdot"]
+        elif isinstance(package, MotorDataPackage):
+            defs = self.seriesDefs["motor"]
         else:
-            dialog.performDerivative(data_package, order=order)
-        
-        dialog.show()
-        dialog.raise_()
-        dialog.activateWindow()
+            return
 
+        series = self._seriesArrays(package, defs)
+        stddevs = []
+        for key, meta in defs.items():
+            times, values = series.get(key, (None, None))
+            if times is None or values is None or len(values) == 0:
+                continue
+            std_value = float(np.std(values))
+            stddevs.append(f"{meta['label']}: {std_value:.4f}")
 
-    def openPostDialog(self):
-        
-        dialog = PostDialog(self)
-        result = dialog.exec()
-        if result == QtWidgets.QDialog.DialogCode.Accepted:
-            print("User accepted the dialog.")
-            session_name = dialog.getSessionName()
-            print(f"Session Name: {session_name}")
-            bsc.get_data_controller().set_session_name(session_name)
-            print("Submitting data to cloud")
-            bsc.get_data_controller().submit_session_data()
-            print("Data submitted to cloud")
-            # Handle acceptance (e.g., save data)
+        self._prepareGraph()  # Clear the plot area
+        if stddevs:
+            summary = "Standard Deviation:\n" + "\n".join(stddevs)
+            if self.lblHighlight is not None:
+                self.lblHighlight.setText(summary)
+            self.graph.setTitle("Standard Deviation Summary")
         else:
             print("User rejected the dialog.")
             # Handle rejection (e.g., cancel operation)

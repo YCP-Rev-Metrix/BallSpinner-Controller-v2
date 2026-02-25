@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1065</width>
-    <height>864</height>
+    <width>1280</width>
+    <height>780</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -30,8 +30,7 @@
           <widget class="InputGraph" name="grphInputRpm" native="true"/>
          </item>
          <item>
-          <widget class="InputGraph" name="grphInputAngle" native="true">
-          </widget>
+          <widget class="InputGraph" name="grphInputAngle" native="true"/>
          </item>
          <item>
           <widget class="InputGraph" name="grphInputTilt" native="true"/>
