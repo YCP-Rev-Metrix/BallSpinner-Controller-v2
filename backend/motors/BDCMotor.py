@@ -58,8 +58,8 @@ class BDCMotor(iMotor):
 
     # ---------------- UTILITY ----------------
     def clamp(self, x, lo, hi):
- #       return lo if x < lo else hi if x > hi else x
-    	return max(lo, min(x, hi))
+        # return lo if x < lo else hi if x > hi else x
+        return max(lo, min(x, hi))
     # ---------------- PULSE CONTROL ----------------
 
     def set_pulse(self):

@@ -222,6 +222,7 @@ class USBBDCMotor(iMotor):
 
 
         print(f"ERPM: {erpm:9.1f} | RPM: {mech_rpm:9.1f} | I_motor: {vals['motor_current']:6.2f} A | V_in: {vals['v_in']:5.2f} V | Duty: {vals['duty_now']*100:5.1f}% | Fault: {vals['fault']}")
+        return mech_rpm
 
     def rampUp(self):
         while self.currSpeed < self.targetSpeed:

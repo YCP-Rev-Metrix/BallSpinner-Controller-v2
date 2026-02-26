@@ -69,13 +69,30 @@ class MotorGraph(QtWidgets.QWidget):
 
         # persistent curves
         self.curves = {}
-        self.curves['spin'] = self.graph.plot([], [], pen=self.pens['spin'], name='Spin')
-        self.curves['tilt'] = self.graph.plot([], [], pen=self.pens['tilt'], name='Tilt')
-        self.curves['angle'] = self.graph.plot([], [], pen=self.pens['angle'], name='Angle')
-        self.curves['spin_data'] = self.graph.plot([], [], pen=self.pens['spin_data'], name='Spin Data')
-        self.curves['tilt_data'] = self.graph.plot([], [], pen=self.pens['tilt_data'], name='Tilt Data')
-        self.curves['angle_data'] = self.graph.plot([], [], pen=self.pens['angle_data'], name='Angle Data')
-
+        try:
+            self.curves['spin'] = self.graph.plot([], [], pen=self.pens['spin'], name='Spin')
+        except Exception as e:
+            print("Error creating persistent plot curves for Spin:", e)
+        try:
+            self.curves['tilt'] = self.graph.plot([], [], pen=self.pens['tilt'], name='Tilt')
+        except Exception as e:
+            print("Error creating persistent plot curves for Tilt:", e)
+        try:
+            self.curves['angle'] = self.graph.plot([], [], pen=self.pens['angle'], name='Angle')
+        except Exception as e:
+            print("Error creating persistent plot curves for Angle:", e)
+        try:
+            self.curves['spin_data'] = self.graph.plot([], [], pen=self.pens['spin_data'], name='Spin Data')
+        except Exception as e:
+            print("Error creating persistent plot curves for Spin Data:", e)
+        try:
+            self.curves['tilt_data'] = self.graph.plot([], [], pen=self.pens['tilt_data'], name='Tilt Data')
+        except Exception as e:
+            print("Error creating persistent plot curves for Tilt Data:", e)
+        try:
+            self.curves['angle_data'] = self.graph.plot([], [], pen=self.pens['angle_data'], name='Angle Data')
+        except Exception as e:
+            print("Error creating persistent plot curves for Angle Data:", e)
         # Create persistent cursor and markers
         plotItem = self.graph.getPlotItem()
         try:
@@ -112,6 +129,9 @@ class MotorGraph(QtWidgets.QWidget):
         self.AngleArray = array('f', [0.0])
 
         self.DataTime = array('d', [0.0])
+        self.SpinDataTime = array('d', [0.0])
+        self.TiltDataTime = array('d', [0.0])
+        self.AngleDataTime = array('d', [0.0])
         self.SpinDataArray = array('f', [0.0])
         self.TiltDataArray = array('f', [0.0])
         self.AngleDataArray = array('f', [0.0])
@@ -141,6 +161,11 @@ class MotorGraph(QtWidgets.QWidget):
         self.chkAngleData.stateChanged.connect(self.updateGraph)
         self.select_all()
         self.limitViewBox()
+        # ensure graph starts empty
+        try:
+            self.reset()
+        except Exception:
+            pass
 
     def select_all(self):
         self.chkAngle.setChecked(True)
@@ -290,14 +315,13 @@ class MotorGraph(QtWidgets.QWidget):
                         pass
 
             # Encoder Data
-            if self.DataTime is not None and len(self.DataTime) > 0:
-                idx = _nearest(self.DataTime, x_click)
+            # Encoder Data – each series has its own time base
+            # spin
+            if self.SpinDataTime is not None and len(self.SpinDataTime) > 0:
+                idx = _nearest(self.SpinDataTime, x_click)
                 if idx is not None:
-                    t = float(np.asarray(self.DataTime)[idx])
+                    t = float(np.asarray(self.SpinDataTime)[idx])
                     spin_data = float(np.asarray(self.SpinDataArray)[idx]) if (self.SpinDataArray is not None and len(self.SpinDataArray) > idx) else None
-                    tilt_data = float(np.asarray(self.TiltDataArray)[idx]) if (self.TiltDataArray is not None and len(self.TiltDataArray) > idx) else None
-                    angle_data = float(np.asarray(self.AngleDataArray)[idx]) if (self.AngleDataArray is not None and len(self.AngleDataArray) > idx) else None
-                    # Update label 
                     if self.lblEncoderData is not None:
                         # encoder RPM uses cyan
                         spin_html = _fmt_html(spin_data, '#00ffff')
@@ -399,20 +423,20 @@ class MotorGraph(QtWidgets.QWidget):
             else:
                 self.curves['angle'].setVisible(False)
             if self.chkSpinData.isChecked():
-                self.curves['spin_data'].setData(self.DataTime, self.SpinDataArray)
+                self.curves['spin_data'].setData(self.SpinDataTime, self.SpinDataArray)
                 self.curves['spin_data'].setVisible(True)
             else:
                 self.curves['spin_data'].setVisible(False)
-            if self.chkTiltData.isChecked():
-                self.curves['tilt_data'].setData(self.DataTime, self.TiltDataArray)
-                self.curves['tilt_data'].setVisible(True)
-            else:
-                self.curves['tilt_data'].setVisible(False)
             if self.chkAngleData.isChecked():
-                self.curves['angle_data'].setData(self.DataTime, self.AngleDataArray)
+                self.curves['angle_data'].setData(self.AngleDataTime, self.AngleDataArray)
                 self.curves['angle_data'].setVisible(True)
             else:
                 self.curves['angle_data'].setVisible(False)
+            if self.chkTiltData.isChecked():
+                self.curves['tilt_data'].setData(self.TiltDataTime, self.TiltDataArray)
+                self.curves['tilt_data'].setVisible(True)
+            else:
+                self.curves['tilt_data'].setVisible(False)
         except Exception:
             pass
 
@@ -426,26 +450,81 @@ class MotorGraph(QtWidgets.QWidget):
             last = 0
         self.limit_view_change(last)
 
-    def updateDataDiagnostic(self, Spin_time, Spin_array, angle_time, angle_array, tilt_time, tilt_array, DataTime, SpinDataArray, TiltDataArray, AngleDataArray):
-        """Update the graph with new Diagnostic data."""
+    def updateDataDiagnostic(self,
+                         Spin_time, Spin_array,
+                         Angle_time, Angle_array,
+                         Tilt_time, Tilt_array,
+                         SpinData_time, SpinDataArray,
+                         AngleData_time, AngleDataArray,
+                         TiltData_time, TiltDataArray):
+        """Update the graph with new Diagnostic data.
+
+        The order of all series is *spin (rpm), angle, tilt* to stay consistent
+        with the rest of the codebase (``utils.PackageMotorData`` etc).
+        Each curve has its own time base to avoid mismatched shapes.
+        """
         # Store data for click mapping
         self.SpinTime = Spin_time
         self.SpinArray = Spin_array
-        self.AngleTime = angle_time
-        self.AngleArray = angle_array
-        self.TiltTime = tilt_time
-        self.TiltArray = tilt_array
+        self.AngleTime = Angle_time
+        self.AngleArray = Angle_array
+        self.TiltTime = Tilt_time
+        self.TiltArray = Tilt_array
 
-        self.DataTime = DataTime
+        self.SpinDataTime = SpinData_time
         self.SpinDataArray = SpinDataArray
-        self.TiltDataArray = TiltDataArray
+        self.AngleDataTime = AngleData_time
         self.AngleDataArray = AngleDataArray
+        self.TiltDataTime = TiltData_time
+        self.TiltDataArray = TiltDataArray
 
         # Plot data based on checkbox states
         self.updateGraph()
         
     def setView(self,viewIndex:int):
         self.cbolimitView.setCurrentIndex(viewIndex)
+
+    def reset(self):
+        """Clear all stored data and refresh the plot.
+
+        This can be called when the page containing the graph is loaded or when
+        starting a new shot/diagnostic run so that old data does not remain on
+        the display.  After resetting the internal arrays we call
+        ``updateGraph`` to hide all curves.
+        """
+        # zero-length arrays for every series
+        self.SpinTime = array('d')
+        self.TiltTime = array('d')
+        self.AngleTime = array('d')
+        self.SpinArray = array('f')
+        self.TiltArray = array('f')
+        self.AngleArray = array('f')
+
+        self.SpinDataTime = array('d')
+        self.AngleDataTime = array('d')
+        self.TiltDataTime = array('d')
+        self.SpinDataArray = array('f')
+        self.AngleDataArray = array('f')
+        self.TiltDataArray = array('f')
+
+        # clear any markers/cursor
+        try:
+            if self.vline is not None:
+                self.vline.setVisible(False)
+        except Exception:
+            pass
+        for m in ('spin', 'tilt', 'angle', 'spin_data', 'tilt_data', 'angle_data'):
+            try:
+                if m in self.curves:
+                    self.curves[m].setData([], [])
+                    self.curves[m].setVisible(False)
+            except Exception:
+                pass
+        # redraw (will effectively clear plot)
+        try:
+            self.updateGraph()
+        except Exception:
+            pass
     
 
 if __name__ == '__main__':
