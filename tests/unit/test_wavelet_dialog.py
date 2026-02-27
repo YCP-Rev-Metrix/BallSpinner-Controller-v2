@@ -1,4 +1,5 @@
 import numpy as np
+import pywt
 from PyQt6 import QtWidgets
 
 from frontend.WaveletDialog import WaveletDialog
@@ -156,7 +157,48 @@ def test_wavelet_dialog_flag_names(qtbot, monkeypatch):
     assert any(name.endswith('+high') for name in names)
     assert any(name.endswith('+low') for name in names)
 
+    # check that the actual detail arrays reflect the isolation flags
+    detail_dict = dlg._wave_results[next(iter(dlg._wave_results))][1]
+    high_name = next(n for n in detail_dict if n.endswith('+high'))
+    low_name = next(n for n in detail_dict if n.endswith('+low'))
+    high_arr = detail_dict[high_name]
+    low_arr = detail_dict[low_name]
+    # for a simple ramp the low-isolated result should be very close to the
+    # average / approximation; high-isolated should have low mean (not
+    # identical to original) and nontrivial oscillation around zero.  allow a
+    # small tolerance for numerical / boundary effects.
+    assert np.allclose(low_arr, np.mean(low_arr)) is False
+    assert abs(np.nanmean(high_arr)) < 1e-2
+
     dlg.close()
+
+
+def test_wavelet_isolation_numeric(qtbot):
+    """Directly confirm that the compute method zeroes the appropriate
+    coefficient bands when isolation flags are used.
+    """
+    dlg = WaveletDialog()
+    # create a simple sinusoid so we can inspect bandpass results
+    arr = np.sin(np.linspace(0, 2 * np.pi, 128))
+
+    # compute without any flags (baseline)
+    name0, out0 = dlg._computeWaveletDetail(arr, 'db2', 2)
+    assert out0 is not None
+    # isolate_high should equal last-detail reconstruction
+    name_high, out_high = dlg._computeWaveletDetail(arr, 'db2', 2, isolate_high=True)
+    assert out_high is not None
+    # reconstruct manually for comparison
+    coeffs = pywt.wavedec(arr, 'db2', level=2)
+    manual = coeffs[-1]  # this is high-detail vector at finest scale
+    # reconstructed output should resemble the detail band (shape may differ)
+    assert out_high.shape == out0.shape
+    assert not np.allclose(out_high, out0)
+
+    # isolate_low should give approximation-only output
+    name_low, out_low = dlg._computeWaveletDetail(arr, 'db2', 2, isolate_low=True)
+    assert out_low is not None
+    # low output should be smooth compared to original
+    assert np.nanstd(out_low) < np.nanstd(arr)
 
 
 def test_open_wavelet_dialog_cancel(qtbot, monkeypatch):

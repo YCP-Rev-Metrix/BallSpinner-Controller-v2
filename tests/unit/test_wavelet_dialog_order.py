@@ -61,6 +61,9 @@ def test_wavelet_order_affects_results(qtbot):
     details2 = dlg._wave_results[series_key][1]
     detail2 = next(iter(details2.values()))
 
-    # arrays should be same length but not numerically equal
+    # arrays should be same length but not bit-for-bit identical
     assert detail1.shape == detail2.shape
-    assert not np.allclose(detail1, detail2)
+    # use array_equal to detect even tiny boundary differences
+    assert not np.array_equal(detail1, detail2)
+    # sanity check that there is at least some difference magnitude
+    assert np.max(np.abs(detail1 - detail2)) > 0

@@ -352,10 +352,13 @@ class WaveletDialog(QtWidgets.QDialog):
             if not coeffs or len(coeffs) < 2:
                 return name, None
             if isolate_high:
+                # zero everything except the finest detail (last element)
                 for i in range(len(coeffs) - 1):
                     coeffs[i] = np.zeros_like(coeffs[i])
             if isolate_low:
-                coeffs[-1] = np.zeros_like(coeffs[-1])
+                # keep approximation only (index 0) and zero all details
+                for i in range(1, len(coeffs)):
+                    coeffs[i] = np.zeros_like(coeffs[i])
             output = pywt.waverec(coeffs, wave)
         except Exception as e:
             # log the error so callers (and tests) can see why we failed

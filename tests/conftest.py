@@ -185,6 +185,40 @@ def main_window(qapp, mock_device):
     window.close()
 
 
+@pytest.fixture(autouse=True)
+def suppress_wavelet_helper(monkeypatch):
+    """Stub out the wavelet helper dialog for every test.
+
+    The real ``WavletHelperWidget`` pops up a modal dialog when its
+    ``exec()`` method is called.  Tests that invoke ``WaveletDialog.performWavelet``
+    without supplying a ``wavelet`` argument would hang waiting for user input.
+    Some individual tests already monkeypatch the helper to return specific
+    values; this globally applied fixture provides a harmless default so no
+    test ever shows a real dialog.  The dummy returns ``Accepted`` from
+    ``exec()`` and an empty list from ``get_list()``.
+    """
+    from PyQt6 import QtWidgets
+    from frontend import WaveletDialog as _WD
+
+    class DummyHelper:
+        def __init__(self, parent=None):
+            pass
+
+        def exec(self):
+            return QtWidgets.QDialog.DialogCode.Accepted
+
+        def get_list(self):
+            return []
+
+    # also override the concrete helper class itself for tests that import it
+    import frontend.WavletHelperWidget as _WHW
+    def fake_exec(self):
+        return QtWidgets.QDialog.DialogCode.Accepted
+    _WHW.WavletHelperWidget.exec = fake_exec
+
+    monkeypatch.setattr(_WD, 'WavletHelperWidget', DummyHelper)
+
+
 @pytest.fixture
 def sample_fixture():
     """
