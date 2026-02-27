@@ -1,17 +1,7 @@
 from PyQt6 import QtWidgets
 from PyQt6 import QtCore
-from PyQt6.QtGui import QGuiApplication, QCursor
+from PyQt6.QtGui import QGuiApplication, QCursor, QIcon
 import io
-
-# monkey-patch QComboBox constructor so every combo starts with a larger width
-_orig_qcombobox_init = QtWidgets.QComboBox.__init__
-
-def _patched_qcombobox_init(self, *args, **kwargs):
-    _orig_qcombobox_init(self, *args, **kwargs)
-    # schedule width adjustment after the widget has its layout hints
-    QtCore.QTimer.singleShot(0, lambda cb=self: cb.setMinimumWidth(cb.sizeHint().width() * 2))
-
-QtWidgets.QComboBox.__init__ = _patched_qcombobox_init
 import os
 import sys
 
@@ -46,6 +36,9 @@ setup_logging()
 #Device.pin_factory = MockFactory(pin_class=MockPWMPin)
 
 if __name__ == '__main__':
+    # Set up global exception handling to show errors in a PyQt window
+    from ErrorHandling.ErrorHandling import ErrorWindow
+    sys.excepthook = ErrorWindow
     # Get screen info before creating the app to set scaling
     temp_app = QtWidgets.QApplication([])
     screen = QGuiApplication.screenAt(QCursor.pos()) or temp_app.primaryScreen()
@@ -74,6 +67,8 @@ if __name__ == '__main__':
     size = screen.size()
     
     app.setStyle("Fusion")  # Ensure QSS applies consistently across platforms
+    app.setWindowIcon(QIcon("Icons/BSC_Icon.png"))
+    app.setApplicationName("Ball Spinner Controller") 
 
 
     window = BSCMainWindow()
@@ -84,10 +79,6 @@ if __name__ == '__main__':
             view = QtWidgets.QListView(cb)
             view.setSpacing(16)
             cb.setView(view)
-            # adjust width based on current size hint
-            hint = cb.sizeHint().width()
-            if hint > 0:
-                cb.setMinimumWidth(hint * 2)
     _patch_comboboxes(window)
     #Combo boxes refuse to cooperate so this is the best option
     
