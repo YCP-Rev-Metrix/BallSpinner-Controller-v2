@@ -4,6 +4,8 @@ import os
 import logging
 from array import array
 import pywt
+from PyQt6.QtWidgets import QMessageBox, QApplication
+
 logger = logging.getLogger(__name__)
 
 def get_series_defs(parent=None):
@@ -39,7 +41,21 @@ def series_arrays(package, defs):
         series[key] = (time_values, data_values)
     return series
 
+def notify_user(message, title="Notification", type="info", details=None):
 
+    app = QApplication.instance() or QApplication([])  # Ensure we have a QApplication instance
+    msg_box = QMessageBox()
+    if type == "warning":
+        msg_box.setIcon(QMessageBox.Icon.Warning)
+    elif type == "critical":
+        msg_box.setIcon(QMessageBox.Icon.Critical)
+    else:
+        msg_box.setIcon(QMessageBox.Icon.Information)
+    msg_box.setWindowTitle(title)
+    msg_box.setText(message)
+    if details:
+        msg_box.setDetailedText(details)
+    msg_box.exec()
 
 
 def bandpass_wavelet(values, wavelet='db4', level=2):

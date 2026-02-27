@@ -9,6 +9,7 @@ import datetime as dt
 from BSC import bsc
 from backend.models.DataController import DataController
 from backend.models.SessionData import SessionData
+from utils import notify_user
 
 class DataViewPage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
@@ -33,11 +34,11 @@ class DataViewPage(QtWidgets.QWidget):
         self.btnSearch = self.findChild(QtWidgets.QPushButton, 'btnSearch')
         self.btnAnalyze = self.findChild(QtWidgets.QPushButton, 'btnAnalyze')
         self.btnReplay = self.findChild(QtWidgets.QPushButton, 'btnReplay')
-        self.lblDebug = self.findChild(QtWidgets.QLabel, 'lblDebug')
-        self.lblDebug.setText("haha")
-        self.lblDebug.setScaledContents(True)
-        self.lblDebug.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lblDebug.setHidden(True)
+        #self.lblDebug = self.findChild(QtWidgets.QLabel, 'lblDebug')
+        #self.lblDebug.setText("haha")
+        #self.lblDebug.setScaledContents(True)
+        #self.lblDebug.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        #self.lblDebug.setHidden(True)
 
         self.textSearch = self.findChild(QtWidgets.QLineEdit, 'txtSearch')
 
@@ -243,23 +244,22 @@ class DataViewPage(QtWidgets.QWidget):
             self.proxy.setSessionTypeFilter(None)
 
     def refresh_data(self, start_time, end_time):
-        print(start_time, end_time)
+        #print(start_time, end_time)
         # clear the persistent model and refill it; proxy filters this model
         self.model.clear()
-        print(f"Getting sessions in time range: {start_time} to {end_time}")
-        print(f"Type of start_time: {type(start_time)}, Type of end_time: {type(end_time)}")
+        #print(f"Getting sessions in time range: {start_time} to {end_time}")
+        #print(f"Type of start_time: {type(start_time)}, Type of end_time: {type(end_time)}")
 
-        self.lblDebug.setText("Fetching data from the cloud...")
-        self.lblDebug.setHidden(False)
+        #self.lblDebug.setText("Fetching data from the cloud...")
+        #self.lblDebug.setHidden(False)
         QtWidgets.QApplication.processEvents()  # Force UI update before blocking call
 
         result = self.cloud_api.get_sessions_in_time_range(start_time, end_time)
 
         #Implement Error catching here
         if 'error' in result:
-            self.lblDebug.setText("Failed to fetch data from the cloud\nDo you have internet?")
-        else:
-            self.lblDebug.setHidden(True)
+            notify_user("Failed to fetch data from the cloud. Please check your internet connection and try again.", title="No Data Found", type="critical", details=result['error'])
+
 
         #Implement data parsing here
         if result['status_code'] == 200:
@@ -297,9 +297,7 @@ class DataViewPage(QtWidgets.QWidget):
 
                     self.model.appendRow(row)
             else:
-                self.lblDebug.setHidden(False)
-                self.lblDebug.setText("No shots were found in the time range")
-
+                notify_user("No sessions found in the specified time range, please adjust your filters and try again.", title="No Data Found", type="info")
        
 
 
@@ -307,7 +305,7 @@ class DataViewPage(QtWidgets.QWidget):
         
         sel = self.tableview.selectionModel().selectedRows()
         if not sel:
-            print("No row selected")
+            notify_user("Please select a session to load.", title="No Session Selected", type="warning")
             return -1
         rowidx = self.proxy.mapToSource(sel[0])
         session_id_index = self.model.index(rowidx.row(), 0)  # Assuming first column is session ID
@@ -327,7 +325,7 @@ class DataViewPage(QtWidgets.QWidget):
         bsc.set_data_controller(DataController(bsc.get_session()))
         bsc.get_data_controller().load_session_data_from_cloud(bsc.get_session())
 
-        
+       
 
 
 

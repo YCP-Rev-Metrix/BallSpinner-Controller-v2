@@ -1,6 +1,7 @@
 import sys
 import traceback
 from PyQt6.QtWidgets import QMessageBox, QApplication
+from PyQt6.QtGui import QPixmap
 import json
 
 def ErrorWindow(exctype, value, tb):
@@ -13,7 +14,8 @@ def ErrorWindow(exctype, value, tb):
     ErrorBox = QMessageBox()
     ErrorBox.setIcon(QMessageBox.Icon.Critical)
     ErrorBox.setWindowTitle("Error")
-    ErrorBox.setText(error_message)
+    ErrorBox.setDetailedText(error_message)
+    ErrorBox.setText("An unexpected error occurred. Please check the details for more information.")
     ErrorBox.raise_()  # Bring the message box to the front
     ErrorBox.exec()
 
