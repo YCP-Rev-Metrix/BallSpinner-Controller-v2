@@ -19,4 +19,14 @@ echo "Current directory $(pwd)"
 
 source venv/bin/activate
 
-python3 main.py
+while true; do
+    if python3 main.py; then
+        echo "main.py finished successfully."
+        break                 # exit the loop
+    else
+        echo "main.py failed (exit $?)."
+        echo "Please Ensure the E-Stop is not pressed."
+        echo "Press ENTER to retry or Ctrl‑C to quit."
+        read -r              # wait for the user to hit Enter
+    fi
+done
