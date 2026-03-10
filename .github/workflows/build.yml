@@ -111,22 +111,29 @@ jobs:
       - name: Ad-hoc sign macOS app bundle with entitlements
         run: |
           set -euo pipefail
-          # Clean up extended attributes and resource forks that can interfere with code signing
-          xattr -rc "dist/BallSpinnerController.app" || true
-          find "dist/BallSpinnerController.app" -name "._*" -delete || true
+          APP_BUNDLE="dist/BallSpinnerController.app"
           
-          # Remove any existing signature
-          codesign --remove-signature "dist/BallSpinnerController.app" || true
+          # Step 1: Clean extended attributes and resource forks (prevents "detritus not allowed" errors)
+          echo "Cleaning extended attributes..."
+          xattr -rc "$APP_BUNDLE" || true
+          find "$APP_BUNDLE" -name "._*" -delete || true
           
-          # Sign the main executable with entitlements
-          codesign --force --sign - --entitlements /tmp/entitlements.plist \
-            "dist/BallSpinnerController.app/Contents/MacOS/BallSpinnerController"
+          # Step 2: Remove any existing signatures
+          echo "Removing existing signatures..."
+          codesign --remove-signature "$APP_BUNDLE" 2>/dev/null || true
           
-          # Sign the framework/bundle
-          codesign --force --sign - "dist/BallSpinnerController.app"
+          # Step 3: Sign all frameworks and nested components with --deep
+          echo "Signing all components (--deep)..."
+          codesign \
+            --force \
+            --deep \
+            --sign - \
+            --entitlements /tmp/entitlements.plist \
+            "$APP_BUNDLE"
           
-          # Verify signature (non-strict for ad-hoc)
-          codesign --verify --verbose=2 "dist/BallSpinnerController.app"
+          # Step 4: Verify signature
+          echo "Verifying signature..."
+          codesign --verify --verbose "$APP_BUNDLE"
 
       - name: Diagnostic - Show executable architecture and details
         run: |
