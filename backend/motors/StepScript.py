@@ -1,4 +1,7 @@
-import lgpio
+try:
+    import lgpio
+except ImportError:
+    lgpio = None
 import time
 
 # ================================

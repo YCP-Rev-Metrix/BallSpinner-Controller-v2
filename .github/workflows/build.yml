@@ -1,0 +1,139 @@
+name: Build Executables
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  # ─────────────────────────────────────────────
+  # macOS build
+  # ─────────────────────────────────────────────
+  build-macos:
+    name: macOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller pillow
+          pip install -r requirements.txt
+
+      - name: Convert icon PNG → icns
+        run: |
+          mkdir -p Icons/BSC_Icon.iconset
+          sips -z 16   16   Icons/BSC_Icon.png --out Icons/BSC_Icon.iconset/icon_16x16.png
+          sips -z 32   32   Icons/BSC_Icon.png --out Icons/BSC_Icon.iconset/icon_16x16@2x.png
+          sips -z 32   32   Icons/BSC_Icon.png --out Icons/BSC_Icon.iconset/icon_32x32.png
+          sips -z 64   64   Icons/BSC_Icon.png --out Icons/BSC_Icon.iconset/icon_32x32@2x.png
+          sips -z 128  128  Icons/BSC_Icon.png --out Icons/BSC_Icon.iconset/icon_128x128.png
+          sips -z 256  256  Icons/BSC_Icon.png --out Icons/BSC_Icon.iconset/icon_128x128@2x.png
+          sips -z 256  256  Icons/BSC_Icon.png --out Icons/BSC_Icon.iconset/icon_256x256.png
+          sips -z 512  512  Icons/BSC_Icon.png --out Icons/BSC_Icon.iconset/icon_256x256@2x.png
+          sips -z 512  512  Icons/BSC_Icon.png --out Icons/BSC_Icon.iconset/icon_512x512.png
+          sips -z 1024 1024 Icons/BSC_Icon.png --out Icons/BSC_Icon.iconset/icon_512x512@2x.png
+          iconutil -c icns Icons/BSC_Icon.iconset -o Icons/BSC_Icon.icns
+
+      - name: Build with PyInstaller
+        run: pyinstaller BallSpinnerController.spec
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BallSpinnerController-macOS
+          path: dist/BallSpinnerController/
+          if-no-files-found: error
+
+  # ─────────────────────────────────────────────
+  # Windows build
+  # ─────────────────────────────────────────────
+  build-windows:
+    name: Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller pillow
+          pip install -r requirements.txt
+
+      - name: Convert icon PNG → ico
+        run: |
+          python -c "
+          from PIL import Image
+          img = Image.open('Icons/BSC_Icon.png').convert('RGBA')
+          img.save('Icons/BSC_Icon.ico', format='ICO',
+                   sizes=[(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)])
+          print('Icon created: Icons/BSC_Icon.ico')
+          "
+
+      - name: Build with PyInstaller
+        run: pyinstaller BallSpinnerController.spec
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BallSpinnerController-Windows
+          path: dist\BallSpinnerController\
+          if-no-files-found: error
+
+  # ─────────────────────────────────────────────
+  # Linux build
+  # ─────────────────────────────────────────────
+  build-linux:
+    name: Linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system Qt/XCB libraries
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y \
+            libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 \
+            libglib2.0-0 libgl1 libegl1 libdbus-1-3
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller pillow
+          pip install -r requirements.txt
+
+      - name: Build with PyInstaller
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: pyinstaller BallSpinnerController.spec
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BallSpinnerController-Linux
+          path: dist/BallSpinnerController/
+          if-no-files-found: error

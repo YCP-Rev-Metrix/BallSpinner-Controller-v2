@@ -1,6 +1,5 @@
 from logs.logger_config import get_logger
 #from motors.BDCMotor import BDCMotor
-from backend.motors.SimMotor import SimMotor
 logger = get_logger(__name__)
 
 class ShotScript:

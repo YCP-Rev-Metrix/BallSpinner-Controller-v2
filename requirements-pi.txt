@@ -1,0 +1,7 @@
+# Raspberry Pi-only dependencies — not needed for desktop builds
+-r requirements.txt
+pigpio==1.78
+pyvesc @ git+https://github.com/LiamBindle/PyVESC.git@d2f2076afe91dafa920a38a437528819697e05e3
+crcmod==1.7
+pyserial
+lgpio
