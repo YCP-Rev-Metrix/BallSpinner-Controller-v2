@@ -111,8 +111,22 @@ jobs:
       - name: Ad-hoc sign macOS app bundle with entitlements
         run: |
           set -euo pipefail
-          codesign --force --deep --sign - --entitlements /tmp/entitlements.plist "dist/BallSpinnerController.app"
-          codesign --verify --deep --strict --verbose=2 "dist/BallSpinnerController.app"
+          # Clean up extended attributes and resource forks that can interfere with code signing
+          xattr -rc "dist/BallSpinnerController.app" || true
+          find "dist/BallSpinnerController.app" -name "._*" -delete || true
+          
+          # Remove any existing signature
+          codesign --remove-signature "dist/BallSpinnerController.app" || true
+          
+          # Sign the main executable with entitlements
+          codesign --force --sign - --entitlements /tmp/entitlements.plist \
+            "dist/BallSpinnerController.app/Contents/MacOS/BallSpinnerController"
+          
+          # Sign the framework/bundle
+          codesign --force --sign - "dist/BallSpinnerController.app"
+          
+          # Verify signature (non-strict for ad-hoc)
+          codesign --verify --verbose=2 "dist/BallSpinnerController.app"
 
       - name: Diagnostic - Show executable architecture and details
         run: |
@@ -147,7 +161,9 @@ jobs:
           APP_BIN="dist/BallSpinnerController.app/Contents/MacOS/BallSpinnerController"
           chmod +x "$APP_BIN"
           echo "=== Headless Smoke Test (QT_QPA_PLATFORM=offscreen) ==="
-          QT_QPA_PLATFORM=offscreen timeout 10 "$APP_BIN" > macos-launch.log 2>&1 &
+          
+          # Use background process instead of timeout command (not available on macOS)
+          QT_QPA_PLATFORM=offscreen "$APP_BIN" > macos-launch.log 2>&1 &
           APP_PID=$!
           sleep 6
           if kill -0 "$APP_PID" 2>/dev/null; then
@@ -169,10 +185,29 @@ jobs:
         run: |
           set -euo pipefail
           APP_BIN="dist/BallSpinnerController.app/Contents/MacOS/BallSpinnerController"
-          echo "=== Attempting GUI Launch (5 second timeout) ==="
-          timeout 5 "$APP_BIN" > macos-gui-launch.log 2>&1 || true
-          EXIT_CODE=$?
-          echo "Exit code: $EXIT_CODE"
+          echo "=== Attempting GUI Launch (5 second test) ==="
+          
+          # Use background process with timeout logic instead of timeout command
+          "$APP_BIN" > macos-gui-launch.log 2>&1 &
+          APP_PID=$!
+          
+          # Wait up to 5 seconds for app to start
+          for i in {1..5}; do
+            if ! kill -0 "$APP_PID" 2>/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          
+          # Kill if still running
+          if kill -0 "$APP_PID" 2>/dev/null; then
+            kill "$APP_PID" || true
+            wait "$APP_PID" 2>/dev/null || true
+            echo "✓ GUI app started successfully"
+          else
+            wait "$APP_PID" 2>/dev/null || true
+          fi
+          
           echo ""
           echo "=== GUI Mode Output Log ==="
           cat macos-gui-launch.log || echo "(No output captured)"

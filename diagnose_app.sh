@@ -80,11 +80,16 @@ echo "🧪 LAUNCH TEST 1: HEADLESS MODE (QT_QPA_PLATFORM=offscreen)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 export QT_QPA_PLATFORM=offscreen
 chmod +x "$APP_BIN"
-if timeout 5 "$APP_BIN" > app_diagnostics/headless_output.log 2>&1; then
-    echo "✓ Headless mode: Success"
+"$APP_BIN" > app_diagnostics/headless_output.log 2>&1 &
+HEADLESS_PID=$!
+sleep 5
+if kill -0 "$HEADLESS_PID" 2>/dev/null; then
+    echo "✓ Headless mode: App running after 5 seconds"
+    kill "$HEADLESS_PID" || true
+    wait "$HEADLESS_PID" 2>/dev/null || true
 else
-    EXIT_CODE=$?
-    echo "✗ Headless mode: Failed (exit code: $EXIT_CODE)"
+    wait "$HEADLESS_PID" 2>/dev/null || true
+    echo "✗ Headless mode: App exited"
 fi
 echo "Output:"
 head -50 app_diagnostics/headless_output.log
@@ -93,11 +98,16 @@ echo ""
 echo "🧪 LAUNCH TEST 2: GUI MODE (default)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 unset QT_QPA_PLATFORM
-if timeout 5 "$APP_BIN" > app_diagnostics/gui_output.log 2>&1; then
-    echo "✓ GUI mode: Success"
+"$APP_BIN" > app_diagnostics/gui_output.log 2>&1 &
+GUI_PID=$!
+sleep 3
+if kill -0 "$GUI_PID" 2>/dev/null; then
+    echo "✓ GUI mode: App running after 3 seconds"
+    kill "$GUI_PID" || true
+    wait "$GUI_PID" 2>/dev/null || true
 else
-    EXIT_CODE=$?
-    echo "✗ GUI mode: Failed (exit code: $EXIT_CODE)"
+    wait "$GUI_PID" 2>/dev/null || true
+    echo "✗ GUI mode: App exited"
 fi
 echo "Output:"
 head -50 app_diagnostics/gui_output.log
@@ -107,11 +117,16 @@ echo "🧪 LAUNCH TEST 3: WITH DEBUG OUTPUT"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 export DYLD_PRINT_LIBRARIES=1
 export QT_DEBUG_PLUGINS=1
-if timeout 5 "$APP_BIN" > app_diagnostics/debug_output.log 2>&1; then
-    echo "✓ Debug mode: Success"
+"$APP_BIN" > app_diagnostics/debug_output.log 2>&1 &
+DEBUG_PID=$!
+sleep 3
+if kill -0 "$DEBUG_PID" 2>/dev/null; then
+    echo "✓ Debug mode: App running after 3 seconds"
+    kill "$DEBUG_PID" || true
+    wait "$DEBUG_PID" 2>/dev/null || true
 else
-    EXIT_CODE=$?
-    echo "✗ Debug mode: Failed (exit code: $EXIT_CODE)"
+    wait "$DEBUG_PID" 2>/dev/null || true
+    echo "✗ Debug mode: App exited"
 fi
 echo "Output (first 100 lines):"
 head -100 app_diagnostics/debug_output.log
@@ -119,12 +134,17 @@ head -100 app_diagnostics/debug_output.log
 echo ""
 echo "🧪 LAUNCH TEST 4: USING 'open' COMMAND"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Running: open -W '$APP_PATH' --args"
-if timeout 5 open -W "$APP_PATH" --args > app_diagnostics/open_output.log 2>&1; then
-    echo "✓ open command: Success"
+echo "Running: open '$APP_PATH'"
+open "$APP_PATH" > app_diagnostics/open_output.log 2>&1 &
+OPEN_PID=$!
+sleep 3
+if kill -0 "$OPEN_PID" 2>/dev/null; then
+    echo "✓ open command: App launched"
+    kill "$OPEN_PID" 2>/dev/null || true
+    wait "$OPEN_PID" 2>/dev/null || true
 else
-    EXIT_CODE=$?
-    echo "✗ open command: Failed (exit code: $EXIT_CODE)"
+    wait "$OPEN_PID" 2>/dev/null || true
+    echo "✗ open command: Process exited"
 fi
 echo "Output:"
 cat app_diagnostics/open_output.log || echo "(No output)"
