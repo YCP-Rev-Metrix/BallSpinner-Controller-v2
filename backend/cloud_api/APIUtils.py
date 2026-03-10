@@ -38,7 +38,7 @@ class APIUtils:
                 data = response.text
                 logger.debug("Response is not JSON, using text format")
                 
-            logger.info(f"Successfully retrieved data from {url}{f"with url params: {url_params}" if url_params else ""}")
+            logger.info(f"Successfully retrieved data from {url}{' with url params: ' + str(url_params) if url_params else ''}")
             return {
                 'status_code': response.status_code,
                 'data': data,

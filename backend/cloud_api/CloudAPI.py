@@ -1,7 +1,5 @@
 import requests
 import json
-import importlib.util
-import os
 from backend.models.ShotScriptData import ShotScriptData
 from logs.logger_config import get_logger
 from .iCloud import iCloud
@@ -21,16 +19,51 @@ except ModuleNotFoundError:
     try:
         from .APIUtils import APIUtils
     except ModuleNotFoundError:
-        try:
-            from backend.cloud_api.APIUtils import APIUtils
-        except ModuleNotFoundError:
-            _apiutils_path = os.path.join(os.path.dirname(__file__), 'APIUtils.py')
-            _apiutils_spec = importlib.util.spec_from_file_location('backend.cloud_api.APIUtils', _apiutils_path)
-            if _apiutils_spec is None or _apiutils_spec.loader is None:
-                raise
-            _apiutils_module = importlib.util.module_from_spec(_apiutils_spec)
-            _apiutils_spec.loader.exec_module(_apiutils_module)
-            APIUtils = _apiutils_module.APIUtils
+        class APIUtils:
+            @staticmethod
+            def make_get_request(url, url_params=None):
+                logger.debug(f"Making GET request to: {url}")
+                try:
+                    if url_params is not None:
+                        response = requests.get(url, params=url_params, timeout=7)
+                    else:
+                        response = requests.get(url, timeout=7)
+                    response.raise_for_status()
+                    try:
+                        data = response.json()
+                    except json.JSONDecodeError:
+                        data = response.text
+                    return {
+                        'status_code': response.status_code,
+                        'data': data,
+                        'headers': dict(response.headers),
+                    }
+                except requests.exceptions.RequestException as e:
+                    return {
+                        'error': str(e),
+                        'status_code': getattr(e.response, 'status_code', None) if hasattr(e, 'response') else None,
+                    }
+
+            @staticmethod
+            def make_post_request(url, data):
+                logger.debug(f"Making POST request to: {url}")
+                try:
+                    response = requests.post(url, json=data, timeout=7)
+                    response.raise_for_status()
+                    try:
+                        payload = response.json()
+                    except json.JSONDecodeError:
+                        payload = response.text
+                    return {
+                        'status_code': response.status_code,
+                        'data': payload,
+                        'headers': dict(response.headers),
+                    }
+                except requests.exceptions.RequestException as e:
+                    return {
+                        'error': str(e),
+                        'status_code': getattr(e.response, 'status_code', None) if hasattr(e, 'response') else None,
+                    }
 
 class CloudAPI(iCloud):
     def __init__(self) -> None:
