@@ -1,5 +1,7 @@
 import requests
 import json
+import importlib.util
+import os
 from backend.models.ShotScriptData import ShotScriptData
 from logs.logger_config import get_logger
 from .iCloud import iCloud
@@ -13,7 +15,22 @@ from backend.models.SmartDotData import SmartDotData
 from backend.models.EncoderData import EncoderData
 from backend.models.HeatData import HeatData
 
-from .APIUtils import APIUtils
+try:
+    from .apiutils import APIUtils
+except ModuleNotFoundError:
+    try:
+        from .APIUtils import APIUtils
+    except ModuleNotFoundError:
+        try:
+            from backend.cloud_api.APIUtils import APIUtils
+        except ModuleNotFoundError:
+            _apiutils_path = os.path.join(os.path.dirname(__file__), 'APIUtils.py')
+            _apiutils_spec = importlib.util.spec_from_file_location('backend.cloud_api.APIUtils', _apiutils_path)
+            if _apiutils_spec is None or _apiutils_spec.loader is None:
+                raise
+            _apiutils_module = importlib.util.module_from_spec(_apiutils_spec)
+            _apiutils_spec.loader.exec_module(_apiutils_module)
+            APIUtils = _apiutils_module.APIUtils
 
 class CloudAPI(iCloud):
     def __init__(self) -> None:

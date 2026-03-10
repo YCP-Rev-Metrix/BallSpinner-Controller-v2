@@ -65,6 +65,7 @@ all_hiddens = (
     + gpiozero_hiddens
     + colorzero_hiddens
     + pywt_hiddens
+    + collect_submodules('backend.cloud_api')
     + [
         # PyQt6 dynamic UI loading
         'PyQt6.uic',
@@ -83,6 +84,7 @@ all_hiddens = (
         'ErrorHandling.ErrorHandling',
         # Cloud API package modules
         'backend.cloud_api.APIUtils',
+        'backend.cloud_api.apiutils',
         'backend.cloud_api.CloudAPI',
         'backend.cloud_api.iCloud',
         # Motor interface + SimMotor (used on all platforms)

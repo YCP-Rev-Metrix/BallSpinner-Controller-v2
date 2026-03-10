@@ -1,6 +1,7 @@
 from backend.smartdot.SmartDotConnectionManager import SmartDotConnectionManager
 # from backend.models.DataController import DataController
 from backend.cloud_api.CloudAPI import CloudAPI
+import backend.cloud_api.APIUtils
 # from backend.models.SessionData import SessionData
 import utils
 from backend.motors.SimMotor import SimMotor
