@@ -92,6 +92,29 @@ jobs:
             exit 1
           fi
 
+      - name: Ad-hoc sign macOS app bundle
+        run: |
+          set -euo pipefail
+          codesign --force --deep --sign - "dist/BallSpinnerController.app"
+          codesign --verify --deep --strict --verbose=2 "dist/BallSpinnerController.app"
+
+      - name: Smoke test app launch
+        run: |
+          set -euo pipefail
+          APP_BIN="dist/BallSpinnerController.app/Contents/MacOS/BallSpinnerController"
+          chmod +x "$APP_BIN"
+          QT_QPA_PLATFORM=offscreen "$APP_BIN" > macos-launch.log 2>&1 &
+          APP_PID=$!
+          sleep 6
+          if ! kill -0 "$APP_PID" 2>/dev/null; then
+            echo "ERROR: App exited during smoke test"
+            cat macos-launch.log || true
+            wait "$APP_PID" || true
+            exit 1
+          fi
+          kill "$APP_PID" || true
+          wait "$APP_PID" || true
+
       - name: Package macOS app bundle
         run: |
           set -euo pipefail
