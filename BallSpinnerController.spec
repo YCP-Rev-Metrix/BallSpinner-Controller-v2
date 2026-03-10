@@ -163,18 +163,10 @@ if sys.platform == 'darwin':
         icon=icon_file,
     )
 
-    coll = COLLECT(
+    app = BUNDLE(
         exe,
         a.binaries,
         a.datas,
-        strip=False,
-        upx=True,
-        upx_exclude=[],
-        name='BallSpinnerController',
-    )
-
-    app = BUNDLE(
-        coll,
         name='BallSpinnerController.app',
         icon=icon_file,
         bundle_identifier='com.ballspinner.controller',
