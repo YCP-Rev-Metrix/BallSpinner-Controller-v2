@@ -158,7 +158,7 @@ if sys.platform == 'darwin':
 
     app = BUNDLE(
         exe,
-        name='Ball Spinner Controller.app',
+        name='BallSpinnerController.app',
         icon=icon_file,
         bundle_identifier='com.ballspinner.controller',
         info_plist={
