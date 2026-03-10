@@ -242,3 +242,125 @@ jobs:
           name: BallSpinnerController-macOS-app
           path: dist/BallSpinnerController-macOS.zip
           if-no-files-found: error
+  # ─────────────────────────────────────────────
+  # Windows build
+  # ─────────────────────────────────────────────
+  build-windows:
+    name: Windows
+    runs-on: windows-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
+          lfs: false
+          clean: true
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller pillow
+          pip install -r requirements.txt
+
+      - name: Clean previous build outputs
+        run: |
+          if exist dist rmdir /s /q dist
+          if exist build rmdir /s /q build
+
+      - name: Convert icon PNG → ICO
+        run: |
+          python -c "from PIL import Image; img = Image.open('Icons/BSC_Icon.png'); img.save('Icons/BSC_Icon.ico', 'ICO', sizes=[(16,16), (32,32), (48,48), (64,64), (128,128), (256,256)])"
+
+      - name: Build with PyInstaller
+        run: pyinstaller --clean --noconfirm BallSpinnerController.spec
+
+      - name: Verify Windows executable exists
+        run: |
+          if not exist "dist\BallSpinnerController\BallSpinnerController.exe" (
+            echo ERROR: Missing executable at dist\BallSpinnerController\BallSpinnerController.exe
+            exit /b 1
+          )
+
+      - name: Package Windows build
+        run: |
+          powershell -Command "Compress-Archive -Path 'dist/BallSpinnerController' -DestinationPath 'dist/BallSpinnerController-Windows.zip' -Force"
+          if not exist "dist\BallSpinnerController-Windows.zip" exit /b 1
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: BallSpinnerController-Windows-app
+          path: dist/BallSpinnerController-Windows.zip
+          if-no-files-found: error
+
+  # ─────────────────────────────────────────────
+  # Linux build
+  # ─────────────────────────────────────────────
+  build-linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
+          lfs: false
+          clean: true
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxcb-cursor0 libxkbcommon-x11-0 libxkbcommon0 libxkb1
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller pillow
+          pip install -r requirements.txt
+
+      - name: Clean previous build outputs
+        run: |
+          rm -rf dist build
+
+      - name: Build with PyInstaller
+        run: pyinstaller --clean --noconfirm BallSpinnerController.spec
+
+      - name: Verify Linux executable exists
+        run: |
+          if [ ! -f "dist/BallSpinnerController/BallSpinnerController" ]; then
+            echo "ERROR: Missing executable at dist/BallSpinnerController/BallSpinnerController"
+            exit 1
+          fi
+
+      - name: Package Linux build
+        run: |
+          cd dist
+          tar -czf BallSpinnerController-Linux.tar.gz BallSpinnerController/
+          test -f BallSpinnerController-Linux.tar.gz
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: BallSpinnerController-Linux-app
+          path: dist/BallSpinnerController-Linux.tar.gz
+          if-no-files-found: error
