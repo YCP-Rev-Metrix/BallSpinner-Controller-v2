@@ -50,6 +50,12 @@ jobs:
           pip install pyinstaller pillow
           pip install -r requirements.txt
 
+      - name: Clean previous build outputs
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          rm -rf build/pyinstaller.macos
+
       - name: Convert icon PNG → icns
         run: |
           set -euo pipefail
@@ -67,7 +73,7 @@ jobs:
           iconutil -c icns Icons/BSC_Icon.iconset -o Icons/BSC_Icon.icns
 
       - name: Build with PyInstaller
-        run: pyinstaller BallSpinnerController.spec
+        run: pyinstaller --clean --noconfirm BallSpinnerController.spec
 
       - name: Verify macOS app bundle exists
         continue-on-error: false
@@ -117,6 +123,12 @@ jobs:
           pip install pyinstaller pillow
           pip install -r requirements.txt
 
+      - name: Clean previous build outputs
+        shell: pwsh
+        run: |
+          if (Test-Path 'dist') { Remove-Item 'dist' -Recurse -Force }
+          if (Test-Path 'build\pyinstaller.windows') { Remove-Item 'build\pyinstaller.windows' -Recurse -Force }
+
       - name: Convert icon PNG → ico
         run: |
           python -c "
@@ -128,7 +140,7 @@ jobs:
           "
 
       - name: Build with PyInstaller
-        run: pyinstaller BallSpinnerController.spec
+        run: pyinstaller --clean --noconfirm BallSpinnerController.spec
 
       - name: Build Windows installer (Inno Setup)
         shell: pwsh
@@ -238,10 +250,16 @@ jobs:
           pip install pyinstaller pillow
           pip install -r requirements.txt
 
+      - name: Clean previous build outputs
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          rm -rf build/pyinstaller.linux
+
       - name: Build with PyInstaller
         env:
           QT_QPA_PLATFORM: offscreen
-        run: pyinstaller BallSpinnerController.spec
+        run: pyinstaller --clean --noconfirm BallSpinnerController.spec
 
       - name: Build AppImage
         run: |
