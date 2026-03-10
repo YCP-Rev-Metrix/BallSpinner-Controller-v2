@@ -50,6 +50,12 @@ jobs:
       - name: Build with PyInstaller
         run: pyinstaller BallSpinnerController.spec
 
+      - name: Verify macOS app bundle exists
+        run: |
+          test -d "dist/Ball Spinner Controller.app"
+          test -f "dist/Ball Spinner Controller.app/Contents/Info.plist"
+          test -f "dist/Ball Spinner Controller.app/Contents/MacOS/BallSpinnerController"
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -96,6 +102,21 @@ jobs:
         shell: pwsh
         run: |
           choco install innosetup -y --no-progress
+          $root = (Get-Location).Path
+          $iconPath = (Resolve-Path (Join-Path $root 'Icons\BSC_Icon.ico')).Path
+          $distDir = (Resolve-Path (Join-Path $root 'dist\BallSpinnerController')).Path
+          $exePath = (Resolve-Path (Join-Path $distDir 'BallSpinnerController.exe')).Path
+          $distPath = Join-Path $distDir '*'
+          $outputDir = (Resolve-Path (Join-Path $root 'dist')).Path
+
+          if (-not (Test-Path $iconPath)) { throw "Missing icon: $iconPath" }
+          if (-not (Test-Path $distDir)) { throw "Missing dist directory: $distDir" }
+          if (-not (Test-Path $exePath)) { throw "Missing built exe: $exePath" }
+
+          Write-Host "Using icon: $iconPath"
+          Write-Host "Using dist: $distDir"
+          Write-Host "Using exe:  $exePath"
+
           @"
           [Setup]
           AppId={{9B8A860A-7AE3-4B33-B8BC-2C88A152D5A9}
@@ -105,11 +126,11 @@ jobs:
           DefaultDirName={autopf}\Ball Spinner Controller
           DefaultGroupName=Ball Spinner Controller
           DisableProgramGroupPage=yes
-          OutputDir=dist
+          OutputDir=$outputDir
           OutputBaseFilename=BallSpinnerController-Windows-Setup
           Compression=lzma
           SolidCompression=yes
-          SetupIconFile=Icons\BSC_Icon.ico
+          SetupIconFile=$iconPath
           WizardStyle=modern
           ArchitecturesAllowed=x64compatible
           ArchitecturesInstallIn64BitMode=x64compatible
@@ -121,16 +142,23 @@ jobs:
           Name: ""desktopicon""; Description: ""{cm:CreateDesktopIcon}""; GroupDescription: ""{cm:AdditionalIcons}""; Flags: unchecked
 
           [Files]
-          Source: ""dist\BallSpinnerController\*""; DestDir: ""{app}""; Flags: ignoreversion recursesubdirs createallsubdirs
+          Source: ""$distPath""; DestDir: ""{app}""; Flags: ignoreversion recursesubdirs createallsubdirs
 
           [Icons]
-          Name: ""{group}\Ball Spinner Controller""; Filename: ""{app}\BallSpinnerController.exe""
-          Name: ""{autodesktop}\Ball Spinner Controller""; Filename: ""{app}\BallSpinnerController.exe""; Tasks: desktopicon
+          Name: ""{group}\Ball Spinner Controller""; Filename: ""{app}\BallSpinnerController.exe""; WorkingDir: ""{app}""
+          Name: ""{autodesktop}\Ball Spinner Controller""; Filename: ""{app}\BallSpinnerController.exe""; WorkingDir: ""{app}""; Tasks: desktopicon
 
           [Run]
           Filename: ""{app}\BallSpinnerController.exe""; Description: ""{cm:LaunchProgram,Ball Spinner Controller}""; Flags: nowait postinstall skipifsilent
-          "@ | Set-Content -Path .github\inno-setup.iss
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" .github\inno-setup.iss
+          "@ | Set-Content -Path inno-setup.iss -Encoding ascii
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" inno-setup.iss
+
+      - name: Verify Windows outputs exist
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'dist\BallSpinnerController')) { throw 'Missing Windows portable output directory' }
+          if (-not (Test-Path 'dist\BallSpinnerController\BallSpinnerController.exe')) { throw 'Missing Windows executable' }
+          if (-not (Test-Path 'dist\BallSpinnerController-Windows-Setup.exe')) { throw 'Missing Windows installer exe' }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -209,6 +237,14 @@ jobs:
           wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool.AppImage
           chmod +x appimagetool.AppImage
           ARCH=x86_64 ./appimagetool.AppImage --appimage-extract-and-run AppDir BallSpinnerController-Linux-x86_64.AppImage
+
+      - name: Verify Linux outputs exist
+        run: |
+          test -d dist/BallSpinnerController
+          test -f dist/BallSpinnerController/BallSpinnerController
+          test -x dist/BallSpinnerController/BallSpinnerController
+          test -f BallSpinnerController-Linux-x86_64.AppImage
+          test -x BallSpinnerController-Linux-x86_64.AppImage
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
