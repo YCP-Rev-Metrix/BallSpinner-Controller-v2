@@ -16,6 +16,8 @@ jobs:
   build-macos:
     name: macOS
     runs-on: macos-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout
@@ -85,7 +87,7 @@ jobs:
           fi
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: BallSpinnerController-macOS-app
           path: dist/BallSpinnerController.app
@@ -97,6 +99,8 @@ jobs:
   build-windows:
     name: Windows
     runs-on: windows-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout
@@ -189,14 +193,14 @@ jobs:
           if (-not (Test-Path 'dist\BallSpinnerController-Windows-Setup.exe')) { throw 'Missing Windows installer exe' }
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: BallSpinnerController-Windows-portable
           path: dist\BallSpinnerController\
           if-no-files-found: error
 
       - name: Upload installer artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: BallSpinnerController-Windows-setup
           path: dist\BallSpinnerController-Windows-Setup.exe
@@ -208,6 +212,8 @@ jobs:
   build-linux:
     name: Linux
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout
@@ -275,14 +281,14 @@ jobs:
           test -x BallSpinnerController-Linux-x86_64.AppImage
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: BallSpinnerController-Linux-portable
           path: dist/BallSpinnerController/
           if-no-files-found: error
 
       - name: Upload AppImage artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: BallSpinnerController-Linux-AppImage
           path: BallSpinnerController-Linux-x86_64.AppImage
