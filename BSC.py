@@ -3,7 +3,49 @@ from backend.smartdot.SmartDotConnectionManager import SmartDotConnectionManager
 from backend.cloud_api.CloudAPI import CloudAPI
 # from backend.models.SessionData import SessionData
 import utils
-from backend.motors.SimMotor import SimMotor
+import random
+
+try:
+    from backend.motors.SimMotor import SimMotor
+except ModuleNotFoundError:
+    class SimMotor:
+        def __init__(self, GPIOPin: int):
+            self.currSpeed = 0.0
+            self.targetSpeed = 0.0
+            self.targetPower = 0.0
+
+        def connect(self, GPIOPin: int):
+            pass
+
+        def disconnect(self, GPIOPin: int = None):
+            pass
+
+        def start(self, dutyCycle=100):
+            self.currSpeed = float(dutyCycle)
+
+        def stop(self):
+            self.currSpeed = 0.0
+
+        def changeSpeed(self, dutyCycle: int, isShotMode: bool):
+            self.currSpeed = float(dutyCycle)
+
+        def rampUp(self):
+            pass
+
+        def setTargetSpeed(self, targetSpeed: float):
+            self.targetSpeed = targetSpeed
+
+        def setTargetPower(self, targetPower: float):
+            self.targetPower = targetPower
+
+        def getCurrentSpeed(self):
+            return self.currSpeed + random.uniform(-20, 20)
+
+        def getTargetSpeed(self):
+            return self.targetSpeed
+
+        def getTargetPower(self):
+            return self.targetPower
 if utils.is_raspberry_pi_5():
     from backend.motors.USBBDCMotor import USBBDCMotor #UNCOMMENT AFTER STEPPER
     import lgpio
