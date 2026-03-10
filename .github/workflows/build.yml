@@ -146,10 +146,10 @@ jobs:
           if-no-files-found: error
 
   # ─────────────────────────────────────────────
-  # Windows build
+  # Windows build (DISABLED)
   # ─────────────────────────────────────────────
-  build-windows:
-    name: Windows
+  # build-windows:
+  #   name: Windows
     runs-on: windows-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -265,10 +265,10 @@ jobs:
           if-no-files-found: error
 
   # ─────────────────────────────────────────────
-  # Linux build
+  # Linux build (DISABLED)
   # ─────────────────────────────────────────────
-  build-linux:
-    name: Linux
+  # build-linux:
+  #   name: Linux
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
