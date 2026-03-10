@@ -68,14 +68,24 @@ jobs:
         run: pyinstaller BallSpinnerController.spec
 
       - name: Verify macOS app bundle exists
+        continue-on-error: false
         run: |
           set -euo pipefail
-          test -d "dist/Ball Spinner Controller.app"
-          test -f "dist/Ball Spinner Controller.app/Contents/Info.plist"
-          test -f "dist/Ball Spinner Controller.app/Contents/MacOS/BallSpinnerController"
+          if [ ! -d "dist/Ball Spinner Controller.app" ]; then
+            echo "ERROR: Missing macOS app bundle at dist/Ball Spinner Controller.app"
+            exit 1
+          fi
+          if [ ! -f "dist/Ball Spinner Controller.app/Contents/Info.plist" ]; then
+            echo "ERROR: Missing Info.plist inside macOS app bundle"
+            exit 1
+          fi
+          if [ ! -f "dist/Ball Spinner Controller.app/Contents/MacOS/BallSpinnerController" ]; then
+            echo "ERROR: Missing executable inside macOS app bundle"
+            exit 1
+          fi
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: BallSpinnerController-macOS-app
           path: dist/Ball Spinner Controller.app
@@ -180,14 +190,14 @@ jobs:
           if (-not (Test-Path 'dist\BallSpinnerController-Windows-Setup.exe')) { throw 'Missing Windows installer exe' }
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: BallSpinnerController-Windows-portable
           path: dist\BallSpinnerController\
           if-no-files-found: error
 
       - name: Upload installer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: BallSpinnerController-Windows-setup
           path: dist\BallSpinnerController-Windows-Setup.exe
@@ -267,14 +277,14 @@ jobs:
           test -x BallSpinnerController-Linux-x86_64.AppImage
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: BallSpinnerController-Linux-portable
           path: dist/BallSpinnerController/
           if-no-files-found: error
 
       - name: Upload AppImage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: BallSpinnerController-Linux-AppImage
           path: BallSpinnerController-Linux-x86_64.AppImage
