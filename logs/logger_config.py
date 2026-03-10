@@ -1,18 +1,30 @@
 import logging
 import logging.handlers
 import os
+import sys
 from datetime import datetime
+from pathlib import Path
 
 def setup_logging():
     """
     Set up logging configuration for the BallSpinner Controller application.
     Creates separate log files for info and debug levels.
+    Uses a platform-appropriate writable directory for logs.
     """
     
-    # Create logs directory if it doesn't exist
-    log_dir = "logs"
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+    # Determine platform-appropriate log directory
+    if sys.platform == 'darwin':
+        # macOS: use ~/Library/Logs
+        log_dir = Path.home() / 'Library' / 'Logs' / 'BallSpinnerController'
+    elif sys.platform == 'win32':
+        # Windows: use %APPDATA%
+        log_dir = Path.home() / 'AppData' / 'Local' / 'BallSpinnerController' / 'logs'
+    else:
+        # Linux/other: use ~/.local/share
+        log_dir = Path.home() / '.local' / 'share' / 'BallSpinnerController' / 'logs'
+    
+    # Create log directory if it doesn't exist
+    log_dir.mkdir(parents=True, exist_ok=True)
     
     # Get current timestamp for log file naming
     timestamp = datetime.now().strftime("%Y%m%d")
@@ -34,7 +46,7 @@ def setup_logging():
     
     # INFO Logger - for general application flow
     info_handler = logging.handlers.RotatingFileHandler(
-        filename=os.path.join(log_dir, f'ballspinner_info_{timestamp}.log'),
+        filename=str(log_dir / f'ballspinner_info_{timestamp}.log'),
         maxBytes=10*1024*1024,  # 10MB
         backupCount=5
     )
@@ -43,7 +55,7 @@ def setup_logging():
     
     # DEBUG Logger - for detailed debugging information
     debug_handler = logging.handlers.RotatingFileHandler(
-        filename=os.path.join(log_dir, f'ballspinner_debug_{timestamp}.log'),
+        filename=str(log_dir / f'ballspinner_debug_{timestamp}.log'),
         maxBytes=10*1024*1024,  # 10MB
         backupCount=5
     )
