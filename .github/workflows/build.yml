@@ -138,7 +138,7 @@ jobs:
           otool -L "$APP_BIN" | head -30
           echo ""
           echo "=== Framework Bundles ==="
-          find "dist/BallSpinnerController.app" -name "*.framework" -o -name "*.so" -o -name "*.dylib" | head -20
+          find "dist/BallSpinnerController.app" \( -name "*.framework" -o -name "*.so" -o -name "*.dylib" \) | head -20 || true
 
       - name: Smoke test app launch with diagnostics
         continue-on-error: true
