@@ -150,15 +150,15 @@ jobs:
   # ─────────────────────────────────────────────
   # build-windows:
   #   name: Windows
-    runs-on: windows-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Set up Python 3.11
+  #   runs-on: windows-latest
+  #   env:
+  #     FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  #
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v5
+  #
+  #     - name: Set up Python 3.11
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
@@ -257,24 +257,24 @@ jobs:
           path: dist\BallSpinnerController\
           if-no-files-found: error
 
-      - name: Upload installer artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: BallSpinnerController-Windows-setup
-          path: dist\BallSpinnerController-Windows-Setup.exe
-          if-no-files-found: error
+  #     - name: Upload installer artifact
+  #       uses: actions/upload-artifact@v6
+  #       with:
+  #         name: BallSpinnerController-Windows-setup
+  #         path: dist\BallSpinnerController-Windows-Setup.exe
+  #         if-no-files-found: error
 
   # ─────────────────────────────────────────────
   # Linux build (DISABLED)
   # ─────────────────────────────────────────────
   # build-linux:
   #   name: Linux
-    runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
-    steps:
-      - name: Checkout
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  #
+  #   steps:
+  #     - name: Checkout
         uses: actions/checkout@v5
 
       - name: Set up Python 3.11
@@ -351,9 +351,9 @@ jobs:
           path: dist/BallSpinnerController/
           if-no-files-found: error
 
-      - name: Upload AppImage artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: BallSpinnerController-Linux-AppImage
-          path: BallSpinnerController-Linux-x86_64.AppImage
-          if-no-files-found: error
+  #     - name: Upload AppImage artifact
+  #       uses: actions/upload-artifact@v6
+  #       with:
+  #         name: BallSpinnerController-Linux-AppImage
+  #         path: BallSpinnerController-Linux-x86_64.AppImage
+  #         if-no-files-found: error
