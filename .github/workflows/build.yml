@@ -53,8 +53,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BallSpinnerController-macOS
-          path: dist/BallSpinnerController/
+          name: BallSpinnerController-macOS-app
+          path: dist/Ball Spinner Controller.app
           if-no-files-found: error
 
   # ─────────────────────────────────────────────
@@ -92,11 +92,58 @@ jobs:
       - name: Build with PyInstaller
         run: pyinstaller BallSpinnerController.spec
 
+      - name: Build Windows installer (Inno Setup)
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+          @"
+          [Setup]
+          AppId={{9B8A860A-7AE3-4B33-B8BC-2C88A152D5A9}
+          AppName=Ball Spinner Controller
+          AppVersion=1.0.0
+          AppPublisher=Ball Spinner
+          DefaultDirName={autopf}\Ball Spinner Controller
+          DefaultGroupName=Ball Spinner Controller
+          DisableProgramGroupPage=yes
+          OutputDir=dist
+          OutputBaseFilename=BallSpinnerController-Windows-Setup
+          Compression=lzma
+          SolidCompression=yes
+          SetupIconFile=Icons\BSC_Icon.ico
+          WizardStyle=modern
+          ArchitecturesAllowed=x64compatible
+          ArchitecturesInstallIn64BitMode=x64compatible
+
+          [Languages]
+          Name: ""english""; MessagesFile: ""compiler:Default.isl""
+
+          [Tasks]
+          Name: ""desktopicon""; Description: ""{cm:CreateDesktopIcon}""; GroupDescription: ""{cm:AdditionalIcons}""; Flags: unchecked
+
+          [Files]
+          Source: ""dist\BallSpinnerController\*""; DestDir: ""{app}""; Flags: ignoreversion recursesubdirs createallsubdirs
+
+          [Icons]
+          Name: ""{group}\Ball Spinner Controller""; Filename: ""{app}\BallSpinnerController.exe""
+          Name: ""{autodesktop}\Ball Spinner Controller""; Filename: ""{app}\BallSpinnerController.exe""; Tasks: desktopicon
+
+          [Run]
+          Filename: ""{app}\BallSpinnerController.exe""; Description: ""{cm:LaunchProgram,Ball Spinner Controller}""; Flags: nowait postinstall skipifsilent
+          "@ | Set-Content -Path .github\inno-setup.iss
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" .github\inno-setup.iss
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BallSpinnerController-Windows
+          name: BallSpinnerController-Windows-portable
           path: dist\BallSpinnerController\
+          if-no-files-found: error
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BallSpinnerController-Windows-setup
+          path: dist\BallSpinnerController-Windows-Setup.exe
           if-no-files-found: error
 
   # ─────────────────────────────────────────────
@@ -134,9 +181,45 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: pyinstaller BallSpinnerController.spec
 
+      - name: Build AppImage
+        run: |
+          set -eux
+          mkdir -p AppDir/usr/lib/BallSpinnerController
+          cp -r dist/BallSpinnerController/* AppDir/usr/lib/BallSpinnerController/
+
+          cat > AppDir/AppRun << 'EOF'
+          #!/bin/sh
+          HERE="$(dirname "$(readlink -f "$0")")"
+          exec "$HERE/usr/lib/BallSpinnerController/BallSpinnerController" "$@"
+          EOF
+          chmod +x AppDir/AppRun
+
+          cp Icons/BSC_Icon.png AppDir/ballspinnercontroller.png
+
+          cat > AppDir/ballspinnercontroller.desktop << 'EOF'
+          [Desktop Entry]
+          Type=Application
+          Name=Ball Spinner Controller
+          Exec=AppRun
+          Icon=ballspinnercontroller
+          Categories=Utility;
+          Terminal=false
+          EOF
+
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool.AppImage
+          chmod +x appimagetool.AppImage
+          ARCH=x86_64 ./appimagetool.AppImage --appimage-extract-and-run AppDir BallSpinnerController-Linux-x86_64.AppImage
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BallSpinnerController-Linux
+          name: BallSpinnerController-Linux-portable
           path: dist/BallSpinnerController/
+          if-no-files-found: error
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BallSpinnerController-Linux-AppImage
+          path: BallSpinnerController-Linux-x86_64.AppImage
           if-no-files-found: error
