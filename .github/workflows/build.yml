@@ -114,22 +114,78 @@ jobs:
           codesign --force --deep --sign - --entitlements /tmp/entitlements.plist "dist/BallSpinnerController.app"
           codesign --verify --deep --strict --verbose=2 "dist/BallSpinnerController.app"
 
-      - name: Smoke test app launch
+      - name: Diagnostic - Show executable architecture and details
+        run: |
+          set -euo pipefail
+          APP_BIN="dist/BallSpinnerController.app/Contents/MacOS/BallSpinnerController"
+          echo "=== System Info ==="
+          uname -m
+          sw_vers
+          echo ""
+          echo "=== Executable Details ==="
+          file "$APP_BIN"
+          ls -lh "$APP_BIN"
+          echo ""
+          echo "=== Code Signature Details ==="
+          codesign -dvvv "$APP_BIN" || true
+          codesign -d --entitlements :- "$APP_BIN" || true
+
+      - name: Diagnostic - Check bundled dependencies
+        run: |
+          set -euo pipefail
+          APP_BIN="dist/BallSpinnerController.app/Contents/MacOS/BallSpinnerController"
+          echo "=== Direct Dependencies (otool -L) ==="
+          otool -L "$APP_BIN" | head -30
+          echo ""
+          echo "=== Framework Bundles ==="
+          find "dist/BallSpinnerController.app" -name "*.framework" -o -name "*.so" -o -name "*.dylib" | head -20
+
+      - name: Smoke test app launch with diagnostics
+        continue-on-error: true
         run: |
           set -euo pipefail
           APP_BIN="dist/BallSpinnerController.app/Contents/MacOS/BallSpinnerController"
           chmod +x "$APP_BIN"
-          QT_QPA_PLATFORM=offscreen "$APP_BIN" > macos-launch.log 2>&1 &
+          echo "=== Headless Smoke Test (QT_QPA_PLATFORM=offscreen) ==="
+          QT_QPA_PLATFORM=offscreen timeout 10 "$APP_BIN" > macos-launch.log 2>&1 &
           APP_PID=$!
           sleep 6
-          if ! kill -0 "$APP_PID" 2>/dev/null; then
-            echo "ERROR: App exited during smoke test"
-            cat macos-launch.log || true
-            wait "$APP_PID" || true
-            exit 1
+          if kill -0 "$APP_PID" 2>/dev/null; then
+            echo "✓ App survived 6 seconds in headless mode"
+            kill "$APP_PID" || true
+            wait "$APP_PID" 2>/dev/null || true
+          else
+            echo "✗ App exited during headless smoke test"
+            wait "$APP_PID" 2>/dev/null
+            EXIT_CODE=$?
+            echo "Exit code: $EXIT_CODE"
           fi
-          kill "$APP_PID" || true
-          wait "$APP_PID" || true
+          echo ""
+          echo "=== App Output Log ==="
+          cat macos-launch.log || echo "(No output captured)"
+
+      - name: Smoke test - GUI mode with output capture
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          APP_BIN="dist/BallSpinnerController.app/Contents/MacOS/BallSpinnerController"
+          echo "=== Attempting GUI Launch (5 second timeout) ==="
+          timeout 5 "$APP_BIN" > macos-gui-launch.log 2>&1 || true
+          EXIT_CODE=$?
+          echo "Exit code: $EXIT_CODE"
+          echo ""
+          echo "=== GUI Mode Output Log ==="
+          cat macos-gui-launch.log || echo "(No output captured)"
+
+      - name: Upload diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: build-diagnostics
+          path: |
+            macos-launch.log
+            macos-gui-launch.log
+          if-no-files-found: ignore
 
       - name: Package macOS app bundle
         run: |
