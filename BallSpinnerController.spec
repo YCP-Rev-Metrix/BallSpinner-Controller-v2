@@ -162,19 +162,12 @@ exe = EXE(
     icon=icon_file,
 )
 
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.datas,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    name='BallSpinnerController',
-)
-
 if sys.platform == 'darwin':
+    # macOS: BUNDLE directly organizes the app structure
     app = BUNDLE(
-        coll,
+        exe,
+        a.binaries,
+        a.datas,
         name='BallSpinnerController.app',
         icon=icon_file,
         bundle_identifier='com.ballspinner.controller',
@@ -185,4 +178,15 @@ if sys.platform == 'darwin':
             'NSHighResolutionCapable': True,
             'NSBluetoothAlwaysUsageDescription': 'Required to connect to SmartDot sensors.',
         },
+    )
+else:
+    # Windows/Linux: use COLLECT for one-dir distribution
+    coll = COLLECT(
+        exe,
+        a.binaries,
+        a.datas,
+        strip=False,
+        upx=True,
+        upx_exclude=[],
+        name='BallSpinnerController',
     )
