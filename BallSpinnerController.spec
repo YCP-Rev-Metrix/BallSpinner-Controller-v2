@@ -7,11 +7,13 @@ import sys
 import os
 from PyInstaller.utils.hooks import collect_all, collect_data_files, collect_submodules
 
-# ---------------------------------------------------------------------------
 # Platform-specific icon
-# ---------------------------------------------------------------------------
 if sys.platform == 'darwin':
-    icon_file = 'Icons/BSC_Icon.icns'   # produced by CI icon-conversion step
+    # Try to use .icns, fall back to .png
+    if os.path.exists('Icons/BSC_Icon.icns'):
+        icon_file = 'Icons/BSC_Icon.icns'
+    else:
+        icon_file = 'Icons/BSC_Icon.png'
 elif sys.platform == 'win32':
     icon_file = 'Icons/BSC_Icon.ico'    # produced by CI icon-conversion step
 else:
@@ -145,9 +147,8 @@ if sys.platform == 'darwin':
     exe = EXE(
         pyz,
         a.scripts,
-        a.binaries,
-        a.datas,
         [],
+        exclude_binaries=True,
         name='BallSpinnerController',
         debug=False,
         bootloader_ignore_signals=False,
@@ -162,8 +163,18 @@ if sys.platform == 'darwin':
         icon=icon_file,
     )
 
-    app = BUNDLE(
+    coll = COLLECT(
         exe,
+        a.binaries,
+        a.datas,
+        strip=False,
+        upx=True,
+        upx_exclude=[],
+        name='BallSpinnerController',
+    )
+
+    app = BUNDLE(
+        coll,
         name='BallSpinnerController.app',
         icon=icon_file,
         bundle_identifier='com.ballspinner.controller',
