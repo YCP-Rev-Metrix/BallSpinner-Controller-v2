@@ -92,11 +92,18 @@ jobs:
             exit 1
           fi
 
+      - name: Package macOS app bundle
+        run: |
+          set -euo pipefail
+          rm -f dist/BallSpinnerController-macOS.zip
+          ditto -c -k --sequesterRsrc --keepParent "dist/BallSpinnerController.app" "dist/BallSpinnerController-macOS.zip"
+          test -f "dist/BallSpinnerController-macOS.zip"
+
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
           name: BallSpinnerController-macOS-app
-          path: dist/BallSpinnerController.app
+          path: dist/BallSpinnerController-macOS.zip
           if-no-files-found: error
 
   # ─────────────────────────────────────────────
