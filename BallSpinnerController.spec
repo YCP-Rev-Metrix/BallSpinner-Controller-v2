@@ -81,6 +81,10 @@ all_hiddens = (
         # Local packages
         'logs.logger_config',
         'ErrorHandling.ErrorHandling',
+        # Cloud API package modules
+        'backend.cloud_api.APIUtils',
+        'backend.cloud_api.CloudAPI',
+        'backend.cloud_api.iCloud',
         # Motor interface + SimMotor (used on all platforms)
         'backend.motors.iMotor',
         'backend.motors.SimMotor',
