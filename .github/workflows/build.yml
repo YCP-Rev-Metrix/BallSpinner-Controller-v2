@@ -20,6 +20,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
+          lfs: false
+          clean: true
+          set-safe-directory: true
+
+      - name: Verify git checkout
+        run: |
+          set -euo pipefail
+          which git
+          git --version
+          git rev-parse --is-inside-work-tree
+          git rev-parse HEAD
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v6
@@ -28,12 +43,14 @@ jobs:
 
       - name: Install Python dependencies
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           pip install pyinstaller pillow
           pip install -r requirements.txt
 
       - name: Convert icon PNG → icns
         run: |
+          set -euo pipefail
           mkdir -p Icons/BSC_Icon.iconset
           sips -z 16   16   Icons/BSC_Icon.png --out Icons/BSC_Icon.iconset/icon_16x16.png
           sips -z 32   32   Icons/BSC_Icon.png --out Icons/BSC_Icon.iconset/icon_16x16@2x.png
@@ -52,6 +69,7 @@ jobs:
 
       - name: Verify macOS app bundle exists
         run: |
+          set -euo pipefail
           test -d "dist/Ball Spinner Controller.app"
           test -f "dist/Ball Spinner Controller.app/Contents/Info.plist"
           test -f "dist/Ball Spinner Controller.app/Contents/MacOS/BallSpinnerController"
@@ -69,6 +87,7 @@ jobs:
   build-windows:
     name: Windows
     runs-on: windows-latest
+    needs: build-macos
 
     steps:
       - name: Checkout
@@ -180,6 +199,7 @@ jobs:
   build-linux:
     name: Linux
     runs-on: ubuntu-latest
+    needs: build-windows
 
     steps:
       - name: Checkout
