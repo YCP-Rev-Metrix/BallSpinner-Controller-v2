@@ -343,7 +343,10 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxcb-cursor0 libxkbcommon-x11-0 libxkbcommon0 libxcb-xinerama0 libgl1-mesa-glx
+          # Install core X11/display packages needed for Qt6
+          sudo apt-get install -y libxcb-cursor0 libxkbcommon-x11-0 libxkbcommon0 libxcb-xinerama0
+          # Optional: Try to install OpenGL support if available
+          sudo apt-get install -y libglu1-mesa || true
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v6
