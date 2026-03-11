@@ -16,6 +16,9 @@ if sys.platform == 'darwin':
         icon_file = 'Icons/BSC_Icon.png'
 elif sys.platform == 'win32':
     icon_file = 'Icons/BSC_Icon.ico'    # produced by CI icon-conversion step
+    if not os.path.exists(icon_file):
+        print(f"WARNING: Icon file not found at {icon_file}, falling back to PNG")
+        icon_file = 'Icons/BSC_Icon.png'
 else:
     icon_file = 'Icons/BSC_Icon.png'
 
@@ -34,6 +37,10 @@ pywt_datas,    pywt_binaries,    pywt_hiddens    = collect_all('pywt')
 # Application data files (non-Python assets that must ship with the bundle)
 # ---------------------------------------------------------------------------
 import glob
+
+# Ensure icon file exists
+if not os.path.exists(icon_file):
+    raise FileNotFoundError(f"Icon file not found: {icon_file}")
 
 ui_files  = [(f, 'frontend') for f in glob.glob('frontend/*.ui')]
 qss_files = [('frontend/style.qss', 'frontend')]

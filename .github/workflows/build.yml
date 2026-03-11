@@ -280,6 +280,22 @@ jobs:
       - name: Convert icon PNG → ICO
         run: |
           python -c "from PIL import Image; img = Image.open('Icons/BSC_Icon.png'); img.save('Icons/BSC_Icon.ico', 'ICO', sizes=[(16,16), (32,32), (48,48), (64,64), (128,128), (256,256)])"
+          if (-not (Test-Path 'Icons/BSC_Icon.ico')) {
+            Write-Error 'Failed to convert icon to ICO format'
+            exit 1
+          }
+          Write-Output '✓ ICO icon created successfully'
+
+      - name: Verify icon file exists before build
+        run: |
+          $iconPath = 'Icons/BSC_Icon.ico'
+          if (Test-Path $iconPath) {
+            $size = (Get-Item $iconPath).Length
+            Write-Output "✓ Icon file verified: $iconPath ($size bytes)"
+          } else {
+            Write-Error "Icon file not found: $iconPath"
+            exit 1
+          }
 
       - name: Build with PyInstaller
         run: pyinstaller --clean --noconfirm BallSpinnerController.spec
@@ -327,7 +343,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxcb-cursor0 libxkbcommon-x11-0 libxkbcommon0 libxkb1
+          sudo apt-get install -y libxcb-cursor0 libxkbcommon-x11-0 libxkbcommon0 libxcb-xinerama0 libgl1-mesa-glx
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v6
