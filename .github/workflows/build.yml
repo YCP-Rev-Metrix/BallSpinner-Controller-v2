@@ -274,8 +274,8 @@ jobs:
 
       - name: Clean previous build outputs
         run: |
-          if exist dist rmdir /s /q dist
-          if exist build rmdir /s /q build
+          if (Test-Path dist) { Remove-Item -Path dist -Recurse -Force }
+          if (Test-Path build) { Remove-Item -Path build -Recurse -Force }
 
       - name: Convert icon PNG → ICO
         run: |
@@ -286,15 +286,17 @@ jobs:
 
       - name: Verify Windows executable exists
         run: |
-          if not exist "dist\BallSpinnerController\BallSpinnerController.exe" (
-            echo ERROR: Missing executable at dist\BallSpinnerController\BallSpinnerController.exe
-            exit /b 1
-          )
+          if (-not (Test-Path "dist\BallSpinnerController\BallSpinnerController.exe")) {
+            Write-Error "Missing executable at dist\BallSpinnerController\BallSpinnerController.exe"
+            exit 1
+          }
 
       - name: Package Windows build
         run: |
-          powershell -Command "Compress-Archive -Path 'dist/BallSpinnerController' -DestinationPath 'dist/BallSpinnerController-Windows.zip' -Force"
-          if not exist "dist\BallSpinnerController-Windows.zip" exit /b 1
+          Compress-Archive -Path "dist/BallSpinnerController" -DestinationPath "dist/BallSpinnerController-Windows.zip" -Force
+          if (-not (Test-Path "dist\BallSpinnerController-Windows.zip")) {
+            exit 1
+          }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
