@@ -10,6 +10,7 @@ from gpiozero import Device
 from gpiozero.pins.mock import MockFactory, MockPWMPin
 from gpiozero.pins.native import NativeFactory
 from frontend.BSCMainWindow import BSCMainWindow
+from ErrorHandling.ErrorHandling import ErrorWindow
 
 
 
@@ -38,73 +39,28 @@ setup_logging()
 def get_icon_path():
     """
     Find the application icon in both bundled and development environments.
-    PyInstaller bundles resources in the _internal folder or uses sys._MEIPASS
-    Handles macOS .app bundles, Windows bundles, and Linux bundles.
     """
-    # When running as a PyInstaller bundle, use the bundle's resource path
     if getattr(sys, 'frozen', False):
-        base_path = sys._MEIPASS  # PyInstaller temp folder
-        is_bundled = True
+        base_path = sys._MEIPASS
     else:
-        base_path = os.path.dirname(os.path.abspath(__file__))  # Current directory
-        is_bundled = False
-    
-    # Debug output
-    if is_bundled:
-        print(f"DEBUG: Bundled app detected")
-        print(f"  sys._MEIPASS: {base_path}")
-        # List contents of base_path to debug
-        try:
-            contents = os.listdir(base_path)
-            print(f"  Contents of sys._MEIPASS: {contents[:10]}{'...' if len(contents) > 10 else ''}")  # Show first 10
-            if 'Icons' in contents:
-                icons_path = os.path.join(base_path, 'Icons')
-                icon_contents = os.listdir(icons_path)
-                print(f"  Contents of Icons/: {icon_contents}")
-        except Exception as e:
-            print(f"  Error listing directory: {e}")
-    else:
-        print(f"DEBUG: Running from source")
-        print(f"  base_path: {base_path}")
+        base_path = os.path.dirname(os.path.abspath(__file__))
     
     # Try multiple icon formats and locations
     icon_candidates = [
-        # PNG (works on all platforms)
         os.path.join(base_path, 'Icons', 'BSC_Icon.png'),
-        # ICO (Windows native)
         os.path.join(base_path, 'Icons', 'BSC_Icon.ico'),
-        # ICNS (macOS native, but usually bundled in .app)
         os.path.join(base_path, 'Icons', 'BSC_Icon.icns'),
     ]
     
-    # On bundled Linux/Windows, also check one level up and _internal subfolder
-    if is_bundled:
-        parent_path = os.path.dirname(base_path)
-        # Check if there's an _internal folder (some PyInstaller builds use this)
-        internal_path = os.path.join(base_path, '_internal')
-        if os.path.exists(internal_path):
-            icon_candidates.extend([
-                os.path.join(internal_path, 'Icons', 'BSC_Icon.png'),
-                os.path.join(internal_path, 'Icons', 'BSC_Icon.ico'),
-            ])
-    
-    print(f"DEBUG: Checking {len(icon_candidates)} icon locations:")
     for icon_path in icon_candidates:
-        exists = os.path.exists(icon_path)
-        status = "✓" if exists else "✗"
-        print(f"  {status} {icon_path}")
-        if exists:
-            print(f"✓ Icon found at: {icon_path}")
+        if os.path.exists(icon_path):
             return icon_path
     
-    # If no icon found, return None and let Qt use default
-    print("WARNING: Application icon not found in any candidate location")
     return None
 
 
 if __name__ == '__main__':
     # Set up global exception handling to show errors in a PyQt window
-    from ErrorHandling.ErrorHandling import ErrorWindow
     sys.excepthook = ErrorWindow
     # Get screen info before creating the app to set scaling
     temp_app = QtWidgets.QApplication([])
@@ -131,24 +87,13 @@ if __name__ == '__main__':
     
     # Load and set application icon
     icon_path = get_icon_path()
-    app_icon = None
-    
     if icon_path:
         try:
             app_icon = QIcon(icon_path)
-            # Verify the icon loaded successfully (has non-null pixmap)
             if not app_icon.isNull():
                 app.setWindowIcon(app_icon)
-                print(f"✓ Application icon set from: {icon_path}")
-            else:
-                print(f"⚠ Icon file exists but failed to load: {icon_path}")
-                app_icon = None
         except Exception as e:
-            print(f"⚠ Error loading icon: {e}")
-            app_icon = None
-    
-    if app_icon is None:
-        print("INFO: Running without custom application icon")
+            pass
     
     # Re-get screen info after app creation
     screen = QGuiApplication.screenAt(QCursor.pos()) or app.primaryScreen()
@@ -160,16 +105,12 @@ if __name__ == '__main__':
 
     window = BSCMainWindow()
     
-    # Set window icon (important for Windows taskbar and title bar)
-    if app_icon is not None:
-        window.setWindowIcon(app_icon)
-    elif icon_path:  # Try loading again for window-specific cases
+    # Set window icon (important for Windows taskbar)
+    if icon_path:
         try:
-            icon = QIcon(icon_path)
-            if not icon.isNull():
-                window.setWindowIcon(icon)
-        except Exception as e:
-            print(f"DEBUG: Could not set window icon: {e}")
+            window.setWindowIcon(QIcon(icon_path))
+        except Exception:
+            pass
     
     # ensure all combo boxes use a list view with spacing for their popup
     # and double their minimum width so they appear wider

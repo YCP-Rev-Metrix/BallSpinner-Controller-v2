@@ -6,18 +6,24 @@ import json
 
 def ErrorWindow(exctype, value, tb):
     # Log the exception or perform other actions
-    traceback_format = "".join(traceback.format_exception(exctype, value, tb))
-    # Show a message box with the error details
-    app = QApplication.instance() or QApplication(sys.argv)  # Ensure we have a QApplication instance
+    try:
+        traceback_format = "".join(traceback.format_exception(exctype, value, tb))
+
+        # Show a message box with the error details
+        app = QApplication.instance() or QApplication(sys.argv)  # Ensure we have a QApplication instance
     
-    error_message = f"An unexpected error occurred:\n{str(value)}\n\nDetails:\n{traceback_format}"
-    ErrorBox = QMessageBox()
-    ErrorBox.setIcon(QMessageBox.Icon.Critical)
-    ErrorBox.setWindowTitle("Error")
-    ErrorBox.setDetailedText(error_message)
-    ErrorBox.setText("An unexpected error occurred. Please check the details for more information.")
-    ErrorBox.raise_()  # Bring the message box to the front
-    ErrorBox.exec()
+        error_message = f"An unexpected error occurred:\n{str(value)}\n\nDetails:\n{traceback_format}"
+        ErrorBox = QMessageBox()
+        ErrorBox.setIcon(QMessageBox.Icon.Critical)
+        ErrorBox.setWindowTitle("Error")
+        ErrorBox.setDetailedText(error_message)
+        ErrorBox.setText("An unexpected error occurred. Please check the details for more information.")
+        ErrorBox.raise_()  # Bring the message box to the front
+        ErrorBox.exec()
+    except Exception as e:
+        # If an error occurs while trying to show the error message, log it to the console
+        print(f"Failed to display error message: {e}")
+        print(f"Original exception: {traceback_format}")
 
     # Call the default excepthook to ensure the program exits after showing the message box
     sys.__excepthook__(exctype, value, tb)
