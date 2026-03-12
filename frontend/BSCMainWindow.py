@@ -104,6 +104,10 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         self.actionSimulatedMotor = self.findChild(QAction, 'actSimMotor')
         self.actionRealMotor = self.findChild(QAction, 'actRealMotor')
 
+        #Lock to simulated motor by default; this ensures the application
+        self.actionSimulatedMotor.setDisabled(True)
+        self.actionRealMotor.setDisabled(True)
+
         # Set default to Real Motor
         self.actionSimulatedMotor.setChecked(True)
 

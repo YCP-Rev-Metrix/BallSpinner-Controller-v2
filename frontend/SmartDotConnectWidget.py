@@ -75,6 +75,10 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         # load the .ui file (module-relative path)
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'SmartDotConnectWidget.ui'), self, package='frontend')
 
+        # set a smaller font for all buttons in this widget (including dynamically created ones)
+        # using Qt style sheet ensures the size applies globally here
+        self.setStyleSheet("QPushButton { font-size: 12pt; }")
+
         # Grab the collapse button
         self.collapseBtn = self.findChild(QtWidgets.QPushButton, 'btnCollapse')
         self.collapseBtn.clicked.connect(self.toggle_collapse)
@@ -284,7 +288,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
             layout = QtWidgets.QVBoxLayout(self.wDeviceList)
 
         for device in self.Devices:
-            btn = QtWidgets.QPushButton(f"Connect to {device}")
+            btn = QtWidgets.QPushButton(f"Connect to \n{device}")
             layout.addWidget(btn)
             btn.clicked.connect(lambda _, d=device: self.connect_to_smartdot(d))
 
