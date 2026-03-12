@@ -6,21 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1623</width>
-    <height>865</height>
+    <width>1773</width>
+    <height>837</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <widget class="QLabel" name="lblDebug">
-     <property name="text">
-      <string>Debug Label</string>
-     </property>
-    </widget>
-   </item>
    <item>
     <widget class="QFrame" name="frameControls">
      <property name="minimumSize">

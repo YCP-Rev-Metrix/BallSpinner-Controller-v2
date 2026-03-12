@@ -33,8 +33,6 @@ class DiagnosticModePage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
     navigationLock = pyqtSignal(bool, str) # False = lock, True = unlock
 
-    
-
     def __init__(self, parent=None):
         super().__init__(parent)
         
@@ -66,37 +64,11 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.labelSpinEncoder = self.findChild(QtWidgets.QLabel, 'lblSpinEncoder')
         self.labelTiltEncoder = self.findChild(QtWidgets.QLabel, 'lblTiltEncoder')
         self.labelAngleEncoder = self.findChild(QtWidgets.QLabel, 'lblAngleEncoder')
-        # if UI didn't provide labels, create them and insert in control rows
-        def _make_label(existing, name, default_text):
-            lbl = existing
-            if lbl is None:
-                lbl = QtWidgets.QLabel(default_text, self)
-                lbl.setFont(self.labelSpin.font() if hasattr(self, 'labelSpin') else lbl.font())
-                lbl.setObjectName(name)
-            return lbl
-        self.labelSpinEncoder = _make_label(self.labelSpinEncoder, 'lblSpinEncoder', 'Enc: 0.0 RPM')
-        self.labelTiltEncoder = _make_label(self.labelTiltEncoder, 'lblTiltEncoder', 'Enc: 0.0 RPM')
-        self.labelAngleEncoder = _make_label(self.labelAngleEncoder, 'lblAngleEncoder', 'Enc: 0.0 RPM')
-        # attach newly created labels into the existing control layouts if needed
-        def _attach_to_layout(label, reference_widget):
-            if reference_widget is None or label is None:
-                return
-            parent = reference_widget.parent()
-            if parent is not None and hasattr(parent, 'layout'):
-                layout = parent.layout()
-                if layout is not None and label not in [layout.itemAt(i).widget() for i in range(layout.count())]:
-                    layout.addWidget(label)
-        _attach_to_layout(self.labelSpinEncoder, self.labelSpin)
-        _attach_to_layout(self.labelTiltEncoder, self.labelTilt)
-        _attach_to_layout(self.labelAngleEncoder, self.labelAngle)
-        #Spin boxes for values
-        self.dsbSpin = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbSpinValue')
-        self.dsbTilt = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbTiltValue')
-        self.dsbAngle = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbAngleValue')
 
         # SmartDot initialization
         self.SmartDot = None  # Placeholder for the connected SmartDot device
         self.SmartDotGraph = self.findChild(SmartDotGraph, 'grphSmartDot')
+        #self.SmartDotGraph.setMaximumHeight(200)  # Adjust as needed for layout
         self.smartdotConnectWidget = self.findChild(SmartDotConnectWidget, 'wgtSmartDotConnect')
         if self.smartdotConnectWidget:
             self.smartdotConnectWidget.signalSmartDotConnected.connect(self.connectSmartDot)
@@ -191,7 +163,6 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.tiltGraph.setTitle("Diagnostic Tilt Graph")
         self.tiltGraph.setLabel('left', 'Tilt Angle', units='Degrees')
         self.tiltGraph.setLabel('bottom', 'Time', units='s')
-        # tilt acts as motor angle in analysis (green)
         self.tiltCurve = self.tiltGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#00aa00', width=2)) #Extra refrence allows to be manipulated in thread
         self.tiltGraph.setYRange(-50,50)
         self.tiltGraph.setMouseEnabled(x=False, y=False)
@@ -199,11 +170,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.angleGraph.setTitle("Diagnostic Angle Graph")
         self.angleGraph.setLabel('left', 'Angle', units='Degrees')
         self.angleGraph.setLabel('bottom', 'Time', units='s')
-        # angle acts as motor tilt in analysis (blue)
         self.angleCurve = self.angleGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#0000ff', width=2)) #Extra refrence allows to be manipulated in thread
         self.angleGraph.setYRange(-100,100)
         self.angleGraph.setMouseEnabled(x=False, y=False)
-        # Slider configurations (replace dials with horizontal sliders)
+        # Slider configurations 
         self.spinSlider = self.findChild(QtWidgets.QSlider, 'sliderSpin')
         self.tiltSlider = self.findChild(QtWidgets.QSlider, 'sliderTilt')
         self.angleSlider = self.findChild(QtWidgets.QSlider, 'sliderAngle')
@@ -217,14 +187,22 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.tiltSlider.valueChanged.connect(self._update_slider_labels)
         self.angleSlider.valueChanged.connect(self._update_slider_labels)
 
-        # Also update sliders when spin boxes change
-        self.dsbSpin.valueChanged.connect(self._update_sliders_from_spinboxes)
-        self.dsbTilt.valueChanged.connect(self._update_sliders_from_spinboxes)
-        self.dsbAngle.valueChanged.connect(self._update_sliders_from_spinboxes)
+        #Button connections
+        self.btnSpinIncrease = self.findChild(QtWidgets.QPushButton, 'btnSpinInc')
+        self.btnSpinDecrease = self.findChild(QtWidgets.QPushButton, 'btnSpinDec')
+        self.btnTiltIncrease = self.findChild(QtWidgets.QPushButton, 'btnTiltInc')
+        self.btnTiltDecrease = self.findChild(QtWidgets.QPushButton, 'btnTiltDec')
+        self.btnAngleIncrease = self.findChild(QtWidgets.QPushButton, 'btnAngleInc')
+        self.btnAngleDecrease = self.findChild(QtWidgets.QPushButton, 'btnAngleDec')
 
-        self._update_slider_labels()
+        self.btnSpinIncrease.clicked.connect(lambda: self.adjustSliderWithButton(self.spinSlider, step=10, increase=True))
+        self.btnSpinDecrease.clicked.connect(lambda: self.adjustSliderWithButton(self.spinSlider, step=10, increase=False))
+        self.btnTiltIncrease.clicked.connect(lambda: self.adjustSliderWithButton(self.tiltSlider, step=1, increase=True))
+        self.btnTiltDecrease.clicked.connect(lambda: self.adjustSliderWithButton(self.tiltSlider, step=1, increase=False))
+        self.btnAngleIncrease.clicked.connect(lambda: self.adjustSliderWithButton(self.angleSlider, step=1, increase=True))
+        self.btnAngleDecrease.clicked.connect(lambda: self.adjustSliderWithButton(self.angleSlider, step=1, increase=False))
 
-        # Note: btnStart and btnStop are used for motors, not SmartDot updates
+
         self.btnStart.clicked.connect(lambda: self.toggle_Buttons())
         self.btnStop.clicked.connect(lambda: self.toggle_Buttons())
         self.btnClear.clicked.connect(lambda: self.clear_graphs())
@@ -335,8 +313,6 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 if self.SmartDot is not None:
                     self.stop_smartdot_updates()
                 self.navigationLock.emit(True,"")
-
-
     def EStop(self):
         #Motor.stop() uncomment when motor works
         self.diagnostic_script.stop_motors([1,2,3])
@@ -517,15 +493,11 @@ class DiagnosticModePage(QtWidgets.QWidget):
         except Exception:
             pass
 
-
     def _update_slider_labels(self):
         """Update motor spin boxes to reflect current slider values regardless of timer state."""
         spin_v = float(self.spinSlider.value())
         tilt_v = float(self.tiltSlider.value())
         angle_v = float(self.angleSlider.value())
-        self.dsbSpin.setValue(spin_v)
-        self.dsbTilt.setValue(tilt_v)
-        self.dsbAngle.setValue(angle_v)
         # refresh encoder labels even if unchanged
         try:
             enc_sp = bsc.motor1.getCurrentSpeed()
@@ -539,13 +511,6 @@ class DiagnosticModePage(QtWidgets.QWidget):
             enc_ag = bsc.motor3.getCurrentSpeed()
         except Exception:
             enc_ag = 0.0
-
-
-    def _update_sliders_from_spinboxes(self):
-        """Update sliders to reflect current spin box values."""
-        self.spinSlider.setValue(int(self.dsbSpin.value()))
-        self.tiltSlider.setValue(int(self.dsbTilt.value()))
-        self.angleSlider.setValue(int(self.dsbAngle.value()))
 
     def reset(self):
         # ensure not running and reset UI
@@ -625,10 +590,6 @@ class DiagnosticModePage(QtWidgets.QWidget):
             self.spinSlider.setRange(0, 1200)
             self.tiltSlider.setRange(-359, 359)
             self.angleSlider.setRange(-359, 359)
-            # extend spin box ranges accordingly
-            self.dsbSpin.setRange(0, 1200)
-            self.dsbTilt.setRange(-359, 359)
-            self.dsbAngle.setRange(-359, 359)
             #update graph Y ranges
             self.spinGraph.setYRange(0,1250)
             self.tiltGraph.setYRange(-400,400)
@@ -643,10 +604,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
             self.spinSlider.setRange(0, 600)
             self.tiltSlider.setRange(-90, 90)
             self.angleSlider.setRange(-45, 45)
-            # reset spin box ranges accordingly
-            self.dsbSpin.setRange(0, 600)
-            self.dsbTilt.setRange(-90, 90)
-            self.dsbAngle.setRange(-45, 45)
+
             #update graph Y ranges
             self.spinGraph.setYRange(0,620)
             self.tiltGraph.setYRange(-100,100)
@@ -794,7 +752,16 @@ class DiagnosticModePage(QtWidgets.QWidget):
             return
         self.changePage.emit(3, dc)
 
-
+    def adjustSliderWithButton(self, slider: QtWidgets.QSlider, step: int, increase: bool):
+        """Utility to adjust a slider by a fixed step when a button is clicked."""
+        current_value = slider.value()
+        if increase:
+            new_value = current_value + step
+        else:
+            new_value = current_value - step
+        # Clamp to slider range
+        new_value = max(slider.minimum(), min(slider.maximum(), new_value))
+        slider.setValue(new_value)
 
 if __name__ == '__main__':
     # Standard boilerplate for a PyQt application
