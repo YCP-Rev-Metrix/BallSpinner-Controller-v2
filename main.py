@@ -53,7 +53,6 @@ def get_icon_path():
     ]
     
     for icon_path in icon_candidates:
-        print(f"Checking for icon at: {icon_path}")
         if os.path.exists(icon_path):
             return icon_path
     
