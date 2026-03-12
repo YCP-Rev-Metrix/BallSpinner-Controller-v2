@@ -35,6 +35,32 @@ else:
 setup_logging()
 #Device.pin_factory = MockFactory(pin_class=MockPWMPin)
 
+def get_icon_path():
+    """
+    Find the application icon in both bundled and development environments.
+    PyInstaller bundles resources in the _internal folder or uses sys._MEIPASS
+    """
+    # When running as a PyInstaller bundle, use the bundle's resource path
+    if getattr(sys, 'frozen', False):
+        base_path = sys._MEIPASS  # PyInstaller temp folder
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))  # Current directory
+    
+    # Try platform-specific icons first, then fall back to PNG
+    icon_candidates = [
+        os.path.join(base_path, 'Icons', 'BSC_Icon.png'),
+        os.path.join(base_path, 'Icons', 'BSC_Icon.ico'),
+    ]
+    
+    for icon_path in icon_candidates:
+        if os.path.exists(icon_path):
+            return icon_path
+    
+    # If no icon found, return None and let Qt use default
+    print("WARNING: Application icon not found")
+    return None
+
+
 if __name__ == '__main__':
     # Set up global exception handling to show errors in a PyQt window
     from ErrorHandling.ErrorHandling import ErrorWindow
@@ -62,16 +88,27 @@ if __name__ == '__main__':
 
     app = QtWidgets.QApplication([])
     
+    # Load and set application icon
+    icon_path = get_icon_path()
+    if icon_path:
+        app_icon = QIcon(icon_path)
+        app.setWindowIcon(app_icon)
+        print(f"✓ Application icon loaded: {icon_path}")
+    
     # Re-get screen info after app creation
     screen = QGuiApplication.screenAt(QCursor.pos()) or app.primaryScreen()
     size = screen.size()
     
     app.setStyle("Fusion")  # Ensure QSS applies consistently across platforms
-    app.setWindowIcon(QIcon("Icons/BSC_Icon.png"))
     app.setApplicationName("Ball Spinner Controller") 
 
 
     window = BSCMainWindow()
+    
+    # Set window icon (important for Windows taskbar and title bar)
+    if icon_path:
+        window.setWindowIcon(QIcon(icon_path))
+    
     # ensure all combo boxes use a list view with spacing for their popup
     # and double their minimum width so they appear wider
     def _patch_comboboxes(parent):
