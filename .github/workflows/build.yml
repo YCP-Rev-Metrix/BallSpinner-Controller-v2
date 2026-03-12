@@ -228,6 +228,7 @@ jobs:
             macos-launch.log
             macos-gui-launch.log
           if-no-files-found: ignore
+          retention-days: 1
 
       - name: Package macOS app bundle
         run: |
@@ -242,6 +243,7 @@ jobs:
           name: BallSpinnerController-macOS-app
           path: dist/BallSpinnerController-macOS.zip
           if-no-files-found: error
+          retention-days: 1
   # ─────────────────────────────────────────────
   # Windows build
   # ─────────────────────────────────────────────
@@ -322,6 +324,7 @@ jobs:
           name: BallSpinnerController-Windows-app
           path: dist/BallSpinnerController-Windows.zip
           if-no-files-found: error
+          retention-days: 1
 
   # ─────────────────────────────────────────────
   # Linux build
@@ -401,3 +404,4 @@ jobs:
           name: BallSpinnerController-Linux-app
           path: dist/BallSpinnerController-Linux.tar.gz
           if-no-files-found: error
+          retention-days: 1
