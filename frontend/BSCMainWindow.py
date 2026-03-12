@@ -216,13 +216,17 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         super().closeEvent(event)
 
     def resizeEvent(self, event):
-            """Lock window to 16:9 aspect ratio on resize."""
-            width = event.size().width()
-            height = int(width * 9 / 16)
-            # Prevent recursion by only resizing if height is not already correct
-            if event.size().height() != height:
-                self.resize(width, height)
-            super().resizeEvent(event)
+        """Window is fixed size; ignore external resize attempts.
+
+        The UI already sets minimum/maximum/base sizes to 1920x1080, so
+        there is no need to enforce an aspect ratio manually.  Keeping the
+        previous code caused a recursion error when a resize event was
+        generated during window teardown.
+        """
+        # Do not attempt to change the size here – it only triggers more
+        # resize events and can overflow the recursion limit.  Let Qt handle
+        # the fixed-size policy that was set in __init__.
+        super().resizeEvent(event)
     
     def motorSimulationControl(self, checked: bool, is_simulated: bool):
         """Enable or disable motor simulation mode."""
