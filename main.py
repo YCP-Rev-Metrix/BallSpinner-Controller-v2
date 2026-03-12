@@ -85,16 +85,16 @@ if __name__ == '__main__':
 
     app = QtWidgets.QApplication([])
     
-    # Load and set application icon using QPixmap for better Linux compatibility
+    # Load and set application icon
     icon_path = get_icon_path()
     if icon_path:
         try:
-            pixmap = QPixmap(icon_path)
-            if not pixmap.isNull():
-                app_icon = QIcon(pixmap)
+            app_icon = QIcon(icon_path)
+            if not app_icon.isNull():
                 app.setWindowIcon(app_icon)
-        except Exception:
+        except Exception as e:
             pass
+    
     
     # Re-get screen info after app creation
     screen = QGuiApplication.screenAt(QCursor.pos()) or app.primaryScreen()
@@ -109,9 +109,7 @@ if __name__ == '__main__':
     # Set window icon (important for Windows taskbar)
     if icon_path:
         try:
-            pixmap = QPixmap(icon_path)
-            if not pixmap.isNull():
-                window.setWindowIcon(QIcon(pixmap))
+            window.setWindowIcon(QIcon(icon_path))
         except Exception:
             pass
     
