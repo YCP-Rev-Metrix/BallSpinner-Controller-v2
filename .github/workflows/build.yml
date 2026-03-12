@@ -309,8 +309,10 @@ jobs:
 
       - name: Package Windows build
         run: |
-          Compress-Archive -Path "dist/BallSpinnerController" -DestinationPath "dist/BallSpinnerController-Windows.zip" -Force
-          if (-not (Test-Path "dist\BallSpinnerController-Windows.zip")) {
+          cd dist/BallSpinnerController
+          Compress-Archive -Path "*" -DestinationPath "../BallSpinnerController-Windows.zip" -Force
+          cd ..
+          if (-not (Test-Path "BallSpinnerController-Windows.zip")) {
             exit 1
           }
 
@@ -375,8 +377,9 @@ jobs:
 
       - name: Package Linux build
         run: |
-          cd dist
-          tar -czf BallSpinnerController-Linux.tar.gz BallSpinnerController/
+          cd dist/BallSpinnerController
+          tar -czf ../BallSpinnerController-Linux.tar.gz *
+          cd ..
           test -f BallSpinnerController-Linux.tar.gz
 
       - name: Upload artifact
