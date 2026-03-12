@@ -20,13 +20,15 @@ def ErrorWindow(exctype, value, tb):
         ErrorBox.setText("An unexpected error occurred. Please check the details for more information.")
         ErrorBox.raise_()  # Bring the message box to the front
         ErrorBox.exec()
+        # Call the default excepthook to ensure the program exits after showing the message box
+        sys.__excepthook__(exctype, value, tb)
     except Exception as e:
         # If an error occurs while trying to show the error message, log it to the console
         print(f"Failed to display error message: {e}")
         print(f"Original exception: {traceback_format}")
 
-    # Call the default excepthook to ensure the program exits after showing the message box
-    sys.__excepthook__(exctype, value, tb)
+    
+    
 
 def LoadErrorDatabase():
     try:
