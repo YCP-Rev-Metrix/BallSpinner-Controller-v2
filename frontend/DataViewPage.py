@@ -34,11 +34,7 @@ class DataViewPage(QtWidgets.QWidget):
         self.btnSearch = self.findChild(QtWidgets.QPushButton, 'btnSearch')
         self.btnAnalyze = self.findChild(QtWidgets.QPushButton, 'btnAnalyze')
         self.btnReplay = self.findChild(QtWidgets.QPushButton, 'btnReplay')
-        #self.lblDebug = self.findChild(QtWidgets.QLabel, 'lblDebug')
-        #self.lblDebug.setText("haha")
-        #self.lblDebug.setScaledContents(True)
-        #self.lblDebug.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        #self.lblDebug.setHidden(True)
+
 
         self.textSearch = self.findChild(QtWidgets.QLineEdit, 'txtSearch')
 
@@ -250,8 +246,6 @@ class DataViewPage(QtWidgets.QWidget):
         #print(f"Getting sessions in time range: {start_time} to {end_time}")
         #print(f"Type of start_time: {type(start_time)}, Type of end_time: {type(end_time)}")
 
-        #self.lblDebug.setText("Fetching data from the cloud...")
-        #self.lblDebug.setHidden(False)
         QtWidgets.QApplication.processEvents()  # Force UI update before blocking call
 
         result = self.cloud_api.get_sessions_in_time_range(start_time, end_time)
@@ -332,16 +326,12 @@ class DataViewPage(QtWidgets.QWidget):
     def analyze_data(self):
         print("Analyze Data Clicked")
         if(self.load_data() == -1):
-            self.lblDebug.setHidden(False)
-            self.lblDebug.setText("Please select a session to analyze.")
             return
         self.changePage.emit(3, bsc.get_data_controller())
        
     def replay_data(self):
         print("Replay Data Clicked")
         if(self.load_data() == -1):
-            self.lblDebug.setHidden(False)
-            self.lblDebug.setText("Please select a session to replay.")
             return
         self.changePage.emit(6, bsc.get_data_controller())
        
