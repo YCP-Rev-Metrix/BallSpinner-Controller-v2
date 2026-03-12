@@ -375,6 +375,19 @@ jobs:
             exit 1
           fi
 
+      - name: Verify Icons are bundled (Linux debug)
+        run: |
+          echo "Contents of dist/BallSpinnerController directory:"
+          ls -la dist/BallSpinnerController/
+          echo ""
+          if [ -d "dist/BallSpinnerController/Icons" ]; then
+            echo "✓ Icons folder found"
+            ls -la dist/BallSpinnerController/Icons/
+          else
+            echo "✗ Icons folder NOT found - this will cause icon display issue"
+            exit 1
+          fi
+
       - name: Package Linux build
         run: |
           cd dist/BallSpinnerController
