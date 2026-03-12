@@ -302,17 +302,21 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 self.navigationLock.emit(False,"Motor Running")
             else:
                 # Stop
-                self.btnStart.setEnabled(True)
-                self.btnOverride.setEnabled(True)
-                self.btnStop.setEnabled(False)
-                self.diagnostic_script.stop_motors([1,2,3])
-                bsc.disconnect_all_motors()
-                # stop periodic updates
-                self._timer.stop()
-                # Stop SmartDot updates if connected
-                if self.SmartDot is not None:
-                    self.stop_smartdot_updates()
-                self.navigationLock.emit(True,"")
+                try:
+                    self.btnStart.setEnabled(True)
+                    self.btnOverride.setEnabled(True)
+                    self.btnStop.setEnabled(False)
+                    self.diagnostic_script.stop_motors([1,2,3])
+                    bsc.disconnect_all_motors()
+                    # stop periodic updates
+                    self._timer.stop()
+                    # Stop SmartDot updates if connected
+                    if self.SmartDot is not None:
+                        self.stop_smartdot_updates()
+                except Exception as e:
+                    print(f"Error during stopping motors: {e}")
+                finally:
+                    self.navigationLock.emit(True,"")
     def EStop(self):
         #Motor.stop() uncomment when motor works
         self.diagnostic_script.stop_motors([1,2,3])
