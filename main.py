@@ -47,9 +47,9 @@ def get_icon_path():
     
     # Try multiple icon formats and locations
     icon_candidates = [
-        os.path.join(base_path, 'Icons', 'BSC_Icon.png'),
-        os.path.join(base_path, 'Icons', 'BSC_Icon.ico'),
-        os.path.join(base_path, 'Icons', 'BSC_Icon.icns'),
+        os.path.join(base_path, 'Icons', 'LogoTemp.png'),
+        os.path.join(base_path, 'Icons', 'LogoTemp.ico'),
+        os.path.join(base_path, 'Icons', 'LogoTemp.icns'),
     ]
     
     for icon_path in icon_candidates:
@@ -80,7 +80,6 @@ if __name__ == '__main__':
     temp_app.quit()
     del temp_app
     
-    # Qt 6 enables high DPI scaling by default; only set menu bar behavior explicitly
     QtWidgets.QApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_DontUseNativeMenuBar, True)
 
     app = QtWidgets.QApplication([])
