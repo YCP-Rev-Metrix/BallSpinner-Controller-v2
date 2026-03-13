@@ -34,6 +34,8 @@ class DataViewPage(QtWidgets.QWidget):
         self.btnSearch = self.findChild(QtWidgets.QPushButton, 'btnSearch')
         self.btnAnalyze = self.findChild(QtWidgets.QPushButton, 'btnAnalyze')
         self.btnReplay = self.findChild(QtWidgets.QPushButton, 'btnReplay')
+        self.btnEdit = self.findChild(QtWidgets.QPushButton, 'btnEdit')
+    
 
 
         self.textSearch = self.findChild(QtWidgets.QLineEdit, 'txtSearch')
@@ -43,7 +45,6 @@ class DataViewPage(QtWidgets.QWidget):
         self.dateEndDate = self.findChild(QtWidgets.QDateEdit, 'dateEndDate')
         self.timeEndTime = self.findChild(QtWidgets.QTimeEdit, 'timeEndTime')
         
-        # Date picker dropdown styling is in the UI file
         
         # Make calendar popup larger by setting cell dimensions
         self.dateStartDate.setCalendarPopup(True)
@@ -88,6 +89,7 @@ class DataViewPage(QtWidgets.QWidget):
         #self.btnSearch.clicked.connect(self.refresh_data)
         self.btnAnalyze.clicked.connect(self.analyze_data)
         self.btnReplay.clicked.connect(self.replay_data)
+        self.btnEdit.clicked.connect(self.edit_data)
 
 
 
@@ -302,18 +304,15 @@ class DataViewPage(QtWidgets.QWidget):
             notify_user("Please select a session to load.", title="No Session Selected", type="warning")
             return -1
         rowidx = self.proxy.mapToSource(sel[0])
-        session_id_index = self.model.index(rowidx.row(), 0)  # Assuming first column is session ID
+        session_id_index = self.model.index(rowidx.row(), 0) 
         session_id = int(self.model.data(session_id_index))
-        timeStamp_index = self.model.index(rowidx.row(), 1)  # Assuming second column is timestamp
+        timeStamp_index = self.model.index(rowidx.row(), 1) 
         timeStamp_str = self.model.data(timeStamp_index)
-        name_index = self.model.index(rowidx.row(), 2)  # Assuming third column
+        name_index = self.model.index(rowidx.row(), 2)  
         name_str = self.model.data(name_index)
-        isShotMode_index = self.model.index(rowidx.row(), 3)  # Assuming
+        isShotMode_index = self.model.index(rowidx.row(), 3)  
         isShotMode_str = self.model.data(isShotMode_index)
         isShotMode = isShotMode_str.strip().lower() in ('true', '1', 'yes')
-
-
-
 
         bsc.set_session(SessionData(id=session_id, timeStamp=timeStamp_str, name=name_str, isShotMode=isShotMode))
         bsc.set_data_controller(DataController(bsc.get_session()))
@@ -334,6 +333,12 @@ class DataViewPage(QtWidgets.QWidget):
         if(self.load_data() == -1):
             return
         self.changePage.emit(6, bsc.get_data_controller())
+    
+    def edit_data(self):
+        print("Edit Data Clicked")
+        if(self.load_data() == -1):
+            return
+        self.changePage.emit(2, bsc.get_data_controller())
        
 
 

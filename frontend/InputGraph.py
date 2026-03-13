@@ -1244,6 +1244,50 @@ class InputGraph(QtWidgets.QWidget):
     def get_graph_title(self) -> str:
         """Return the last set graph title (may be empty string)."""
         return getattr(self, '_graph_title', '')
+    
+    def get_current_points(self):
+        """Return the current list of points as a list of (x_raw, y_raw) tuples."""
+        #Get the start and end points as well, since they are part of the curve definition
+        start_point = (0.0, self.start_y)
+        end_point = (1.0, self.end_y)
+        return [start_point] + list(zip(self.xPoints, self.yPoints)) + [end_point]
+
+    def set_current_points(self, points):
+        """Set the current list of points from a list of (x_raw, y_raw) tuples.
+
+        This replaces the existing points with the provided list, updates the
+        marker positions, and regenerates the curve. Points with x_raw outside
+        [0,1] are ignored.
+        """
+        #Set the start and end points from the provided list if they exist
+        self.start_y = float(points[0][1]) 
+        self.end_y = float(points[-1][1])
+        #Update the endpoint spinboxes to reflect the new start and end Y values
+        self._safe_block(self.start_y_spin, True)
+        self._safe_block(self.end_y_spin, True)
+        self._safe_set_spin_value(self.start_y_spin, self._map_y(self.start_y))
+        self._safe_set_spin_value(self.end_y_spin, self._map_y(self.end_y))
+        self._safe_block(self.start_y_spin, False)
+        self._safe_block(self.end_y_spin, False)
+
+        #remove the start and end points from the list of points to be plotted as markers
+        points = points[1:-1]
+        new_xs = []
+        new_ys = []
+        for pt in points:
+            try:
+                x_raw = float(pt[0])
+                y_raw = float(pt[1])
+                if 0.0 <= x_raw <= 1.0:
+                    new_xs.append(x_raw)
+                    new_ys.append(y_raw)
+            except Exception:
+                continue
+        self.xPoints = new_xs
+        self.yPoints = new_ys
+        self._update_markers_mapped()
+        self.generate_and_plot_curve()
+
 
 
 

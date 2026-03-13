@@ -97,7 +97,10 @@ class CloudAPI(iCloud):
             "id": session_data.get_id(),
             "timeStamp": session_data.timeStamp,
             "name": session_data.name,
-            "isShotMode": session_data.isShotMode
+            "isShotMode": session_data.isShotMode,
+            "Spin_Instruction_Points": ",".join(session_data.Spin_Instruction_Points),
+            "Tilt_Instruction_Points": ",".join(session_data.Tilt_Instruction_Points),
+            "Angle_Instruction_Points": ",".join(session_data.Angle_Instruction_Points)
         })
         url = "https://api.revmetrix.io/api/posts/PostPiSessions"
         result = APIUtils.make_post_request(url, data=data)

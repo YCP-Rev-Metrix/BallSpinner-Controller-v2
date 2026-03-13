@@ -28,7 +28,6 @@ class ShotScriptData:
     def add_shot_script_data(self, shotScriptData: ShotScriptDataInstance):
         self.shot_script_data_entries.append(shotScriptData)
         # print(f"Added ssdataInstance: {self.shot_script_data_entries[len(self.shot_script_data_entries)-1]}")
-        
     
     def get_shot_script_data_entries(self):
         return self.shot_script_data_entries

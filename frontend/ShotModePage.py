@@ -107,38 +107,6 @@ class ShotModePage(QtWidgets.QWidget):
 
     def start_shot(self):
         print("Shot started!")
-        # Todo implement shot logic here based on graph settings and duration.
-        #print(self.graph_rpm.sample_spline_display(0.1))
-        #print(self.graph_tilt.sample_spline_display(0.1))
-        #print(self.graph_angle.sample_spline_display(0.1))
-        # Assume we have some method or data structure to get the current motor values.
-        # For this example, let's get hypothetical current values for each motor:
-        '''all of the code below this comment in this function is experimental just for testing my script
-
-        motor_rpm = self.graph_rpm.sample_spline_display(0.025)  # Get the RPM graph value(s)
-        motor_tilt = self.graph_tilt.sample_spline_display(0.025)  # Get the Tilt graph value(s)
-        motor_angle = self.graph_angle.sample_spline_display(0.025)  # Get the Angle graph value(s)
-        runtime = 0
-        '''
-        # Call shot_script.start_motors before the while loop with the correct motor values
-        # self.shot_script.start_motors([0, 1, 2])
-        '''
-        i = 0
-        try:
-            for Time in motor_rpm:
-                # In the loop, set the speed of each motor to the motor value itself
-                new_rpm = motor_rpm[i]
-                new_tilt = motor_tilt[i]
-                new_angle = motor_angle[i]
-                
-                self.shot_script.change_speed([new_rpm, new_tilt, new_angle])
-                # To prevent freezing, typically you'd have a QEventLoop or sleep, omitted for brevity
-                runtime += 0.025
-                i += 1
-                time.sleep(0.024)
-            # After the while loop, call stop_motors
-        finally:
-            self.shot_script.stop_motors()'''
         #When we start a shot, we need to create a new session data object and its associated data controller
         bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Shot Session", isShotMode=True))
         bsc.set_data_controller(DataController(bsc.get_session()))
@@ -191,10 +159,28 @@ class ShotModePage(QtWidgets.QWidget):
         print("SmartDot list:",bsc.smartdotConnectionManager.get_connections())
 
     def reset(self):
-        self.graph_rpm.reset_view_and_clear()
-        self.graph_tilt.reset_view_and_clear()
-        self.graph_angle.reset_view_and_clear()
-        self.sliderTime.setValue(0)
+        self.session = bsc.get_session()
+        if self.session is None:
+            print("No session found in BSC when resetting ShotModePage.")
+            return
+        if self.session.id == -1:
+            print("Session ID is -1, treating as new session with no data. Resetting graphs and slider to default state.")
+            self.graph_rpm.reset_view_and_clear()
+            self.graph_tilt.reset_view_and_clear()
+            self.graph_angle.reset_view_and_clear()
+            self.sliderTime.setValue(0)
+        else:
+            self.graph_rpm.set_current_points(self.session.get_spin_instruction_points())
+            self.graph_tilt.set_current_points(self.session.get_tilt_instruction_points())
+            self.graph_angle.set_current_points(self.session.get_angle_instruction_points())
+            self.sessionData = self.session.getShotScriptData()
+            self.FinalTime = self.sessionData.get_shot_script_data_entries()[-1].get_time()
+            self.sliderTime.setValue(self.FinalTime/0.02-1)
+
+        
+
+            
+       
 
 
 if __name__ == '__main__':
