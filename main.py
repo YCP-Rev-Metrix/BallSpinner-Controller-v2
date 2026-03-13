@@ -12,6 +12,12 @@ from gpiozero.pins.native import NativeFactory
 from frontend.BSCMainWindow import BSCMainWindow
 from ErrorHandling.ErrorHandling import ErrorWindow
 
+# Version Numbering: Major.Milestone.Patch
+# Major: Significant changes, possibly breaking compatibility (e.g., 2.0.0)
+# Milestone: After a milestone presentation, increment this (e.g., 1.1.0)
+# Patch: any build after a milestone, increment this for bug fixes and minor improvements (e.g., 1.1.1, 1.1.2, etc.)
+
+
 
 
 def is_raspberry_pi():
