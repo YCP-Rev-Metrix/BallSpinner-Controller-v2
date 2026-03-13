@@ -16,6 +16,7 @@ from ErrorHandling.ErrorHandling import ErrorWindow
 # Major: Significant changes, possibly breaking compatibility (e.g., 2.0.0)
 # Milestone: After a milestone presentation, increment this (e.g., 1.1.0)
 # Patch: any build after a milestone, increment this for bug fixes and minor improvements (e.g., 1.1.1, 1.1.2, etc.)
+# Make sure you add version before pushing to main
 
 
 
