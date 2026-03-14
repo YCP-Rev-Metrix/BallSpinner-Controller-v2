@@ -79,7 +79,15 @@ class TestCloudAPIPostSessionData:
         """Test that session data is formatted correctly for API"""
         mock_post.return_value = {'status_code': 201, 'data': {}}
 
-        session_data = SessionData(id=42, timeStamp=dt.datetime(2026, 1, 22, 12, 0), name="Test", isShotMode=False)
+        session_data = SessionData(
+            id=42,
+            timeStamp=dt.datetime(2026, 1, 22, 12, 0),
+            name="Test",
+            isShotMode=False,
+            Spin_Instruction_Points=[(0.0, 0.0), (1.0, 100.0)],
+            Tilt_Instruction_Points=[(0.0, -30.0), (1.0, 30.0)],
+            Angle_Instruction_Points=[(0.0, 0.0), (1.0, 90.0)],
+        )
         api = CloudAPI()
         api.post_session_data(session_data)
 
@@ -92,14 +100,19 @@ class TestCloudAPIPostSessionData:
         assert data[0]['name'] == "Test"
         assert data[0]['isShotMode'] == False
 
+        # Confirm that instruction points were serialized into strings
+        assert data[0]['Spin_Instruction_Points'] == "0:0,1:100"
+        assert data[0]['Tilt_Instruction_Points'] == "0:-30,1:30"
+        assert data[0]['Angle_Instruction_Points'] == "0:0,1:90"
+
 
 class TestCloudAPIGetSessionsInTimeRange:
     """Test CloudAPI.get_sessions_in_time_range() method"""
 
-    @patch('backend.cloud_api.CloudAPI.APIUtils.make_post_request')
-    def test_get_sessions_in_time_range_success(self, mock_post):
+    @patch('backend.cloud_api.CloudAPI.APIUtils.make_get_request')
+    def test_get_sessions_in_time_range_success(self, mock_get):
         """Test successful retrieval of sessions in time range"""
-        mock_post.return_value = {
+        mock_get.return_value = {
             'status_code': 200,
             'data': [{"id": 1}, {"id": 2}],
             'headers': {}
@@ -111,10 +124,10 @@ class TestCloudAPIGetSessionsInTimeRange:
         assert result['status_code'] == 200
         assert len(result['data']) == 2
 
-    @patch('backend.cloud_api.CloudAPI.APIUtils.make_post_request')
-    def test_get_sessions_all_sessions(self, mock_post):
+    @patch('backend.cloud_api.CloudAPI.APIUtils.make_get_request')
+    def test_get_sessions_all_sessions(self, mock_get):
         """Test retrieval of all sessions using (0,0) parameters"""
-        mock_post.return_value = {
+        mock_get.return_value = {
             'status_code': 200,
             'data': [{"id": 1}, {"id": 2}, {"id": 3}],
             'headers': {}
@@ -125,10 +138,10 @@ class TestCloudAPIGetSessionsInTimeRange:
 
         assert result['status_code'] == 200
         # Verify API was called with range parameters
-        call_args = mock_post.call_args
-        params = call_args[0][1]
-        assert params['rangeStart'] == 0
-        assert params['rangeEnd'] == 0
+        call_args = mock_get.call_args
+        params = call_args[1]['json_data']
+        assert params['RangeStart'] == 0
+        assert params['RangeEnd'] == 0
 
 
 class TestCloudAPIGetDiagnosticScriptData:

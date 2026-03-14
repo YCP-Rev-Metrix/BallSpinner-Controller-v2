@@ -24,6 +24,7 @@ class DataViewPage(QtWidgets.QWidget):
         self.rowIndex = -1
         self.row_data = []
         self.model = QStandardItemModel()
+        self._cached_sessions = {}
 
         self.cloud_api = bsc.get_cloud_api()
 
@@ -260,6 +261,8 @@ class DataViewPage(QtWidgets.QWidget):
         #Implement data parsing here
         if result['status_code'] == 200:
             sessions = result['data']
+            # cache sessions so we can retrieve full details (including instruction points) later
+            self._cached_sessions = {int(s['id']): s for s in sessions if 'id' in s}
             print(f"Sessions: {sessions}")
             if len(sessions) > 0:
                 # Set headers explicitly
@@ -291,12 +294,25 @@ class DataViewPage(QtWidgets.QWidget):
                     shot_item.setEditable(False)
                     row.append(shot_item)
 
+                    # 5. Instruction points could be added as hidden columns if needed for sorting/filtering, but we'll keep them in the cache for now to avoid cluttering the UI
+                    spin_points_item = QStandardItem(session['spin_Instruction_Points'])
+                    spin_points_item.setEditable(False)
+                    row.append(spin_points_item)
+
+                    tilt_points_item = QStandardItem(session['tilt_Instruction_Points'])
+                    tilt_points_item.setEditable(False)
+                    row.append(tilt_points_item)
+
+                    angle_points_item = QStandardItem(session['angle_Instruction_Points'])
+                    angle_points_item.setEditable(False)
+                    row.append(angle_points_item)
                     self.model.appendRow(row)
             else:
                 notify_user("No sessions found in the specified time range, please adjust your filters and try again.", title="No Data Found", type="info")
-       
-
-
+            #hide instruction points columns for now since we don't want to display them, but we can use them for sorting/filtering if needed
+            self.tableview.setColumnHidden(4, True)
+            self.tableview.setColumnHidden(5, True)
+            self.tableview.setColumnHidden(6, True)
     def load_data(self):
         
         sel = self.tableview.selectionModel().selectedRows()
@@ -313,8 +329,25 @@ class DataViewPage(QtWidgets.QWidget):
         isShotMode_index = self.model.index(rowidx.row(), 3)  
         isShotMode_str = self.model.data(isShotMode_index)
         isShotMode = isShotMode_str.strip().lower() in ('true', '1', 'yes')
+        spinPoinrts_index = self.model.index(rowidx.row(), 4)
+        spin_points_str = self.model.data(spinPoinrts_index)
+        spin_points = SessionData.string_to_instruction_points(spin_points_str)
+        tilt_points_index = self.model.index(rowidx.row(), 5)
+        tilt_points_str = self.model.data(tilt_points_index)
+        tilt_points = SessionData.string_to_instruction_points(tilt_points_str)
+        angle_points_index = self.model.index(rowidx.row(), 6)
+        angle_points_str = self.model.data(angle_points_index)
+        angle_points = SessionData.string_to_instruction_points(angle_points_str)
 
-        bsc.set_session(SessionData(id=session_id, timeStamp=timeStamp_str, name=name_str, isShotMode=isShotMode))
+        bsc.set_session(SessionData(
+            id=session_id,
+            timeStamp=timeStamp_str,
+            name=name_str,
+            isShotMode=isShotMode,
+            Spin_Instruction_Points=spin_points,
+            Angle_Instruction_Points=angle_points,
+            Tilt_Instruction_Points=tilt_points,
+        ))
         bsc.set_data_controller(DataController(bsc.get_session()))
         bsc.get_data_controller().load_session_data_from_cloud(bsc.get_session())
 

@@ -108,8 +108,19 @@ class ShotModePage(QtWidgets.QWidget):
     def start_shot(self):
         print("Shot started!")
         #When we start a shot, we need to create a new session data object and its associated data controller
-        bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Shot Session", isShotMode=True))
+        bsc.set_session(
+            SessionData(
+                id=-1,
+                timeStamp=dt.datetime.now().isoformat(), 
+                name="Shot Session", 
+                isShotMode=True, 
+                Spin_Instruction_Points=self.graph_rpm.get_current_points(), 
+                Angle_Instruction_Points=self.graph_angle.get_current_points(), 
+                Tilt_Instruction_Points=self.graph_tilt.get_current_points()
+                )
+        )
         bsc.set_data_controller(DataController(bsc.get_session()))
+        print(f"Debug: {bsc.get_session().Spin_Instruction_Points}")  # Debug print to verify session data is set correctly
 
         #Access the data controller's ShotModeData and add the three motors 
         sample_interval = 0.050 # 50 ms sample interval, 25 was too short
@@ -160,22 +171,34 @@ class ShotModePage(QtWidgets.QWidget):
 
     def reset(self):
         self.session = bsc.get_session()
+        self.graph_rpm.reset_view_and_clear()
+        self.graph_tilt.reset_view_and_clear()
+        self.graph_angle.reset_view_and_clear()
+        self.sliderTime.setValue(0)
         if self.session is None:
             print("No session found in BSC when resetting ShotModePage.")
             return
-        if self.session.id == -1:
-            print("Session ID is -1, treating as new session with no data. Resetting graphs and slider to default state.")
-            self.graph_rpm.reset_view_and_clear()
-            self.graph_tilt.reset_view_and_clear()
-            self.graph_angle.reset_view_and_clear()
-            self.sliderTime.setValue(0)
-        else:
+        if self.session.id != -1:
             self.graph_rpm.set_current_points(self.session.get_spin_instruction_points())
             self.graph_tilt.set_current_points(self.session.get_tilt_instruction_points())
             self.graph_angle.set_current_points(self.session.get_angle_instruction_points())
-            self.sessionData = self.session.getShotScriptData()
-            self.FinalTime = self.sessionData.get_shot_script_data_entries()[-1].get_time()
-            self.sliderTime.setValue(self.FinalTime/0.02-1)
+            #Print the points for debugging
+            print("RPM points:", self.session.Spin_Instruction_Points)
+            print("Tilt points:", self.session.Tilt_Instruction_Points)
+            print("Angle points:", self.session.Angle_Instruction_Points)
+
+            # Use the time of the last shot script data entry as the final time.
+            # Guard against empty shot script data so we don't crash on [-1].
+            self.motorData = bsc.get_data_controller().get_shot_script_data() or []
+            if self.motorData:
+                self.FinalTime = self.motorData[-1].get_time()
+            else:
+                self.FinalTime = 0.0
+
+            # Convert final time back into the slider value (same mapping used in update_shot_duration_label)
+            #slider_value = int(round((self.FinalTime - 1.0) / 0.02))
+            slider_value = int(self.FinalTime//0.02 - 1)  # alternative calculation to avoid rounding issues
+            self.sliderTime.setValue(slider_value)
 
         
 

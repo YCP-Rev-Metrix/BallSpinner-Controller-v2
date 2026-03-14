@@ -9,21 +9,12 @@ def setup_logging():
     """
     Set up logging configuration for the BallSpinner Controller application.
     Creates separate log files for info and debug levels.
-    Uses a platform-appropriate writable directory for logs.
+    Uses the repository-local `logs/` folder by default (to keep logs with the app).
     """
-    
-    # Determine platform-appropriate log directory
-    if sys.platform == 'darwin':
-        # macOS: use ~/Library/Logs
-        log_dir = Path.home() / 'Library' / 'Logs' / 'BallSpinnerController'
-    elif sys.platform == 'win32':
-        # Windows: use %APPDATA%
-        log_dir = Path.home() / 'AppData' / 'Local' / 'BallSpinnerController' / 'logs'
-    else:
-        # Linux/other: use ~/.local/share
-        log_dir = Path.home() / '.local' / 'share' / 'BallSpinnerController' / 'logs'
-    
-    # Create log directory if it doesn't exist
+
+    # Write logs to the repository's `logs/` folder (next to this config file).
+    # This makes it easy to find logs when running from source.
+    log_dir = Path(__file__).resolve().parent
     log_dir.mkdir(parents=True, exist_ok=True)
     
     # Get current timestamp for log file naming
@@ -77,11 +68,18 @@ def setup_logging():
 def get_logger(name):
     """
     Get a logger instance for a specific module.
-    
+
+    Ensures logging is configured even if the caller doesn't explicitly
+    initialize logging (e.g., when running a module directly).
+
     Args:
         name (str): Usually __name__ from the calling module
-        
+
     Returns:
         logging.Logger: Configured logger instance
     """
+    root_logger = logging.getLogger()
+    # If logging has not been configured yet, set it up so files are created.
+    if not root_logger.handlers:
+        setup_logging()
     return logging.getLogger(name)

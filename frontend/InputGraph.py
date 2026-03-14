@@ -1259,6 +1259,10 @@ class InputGraph(QtWidgets.QWidget):
         marker positions, and regenerates the curve. Points with x_raw outside
         [0,1] are ignored.
         """
+        if not isinstance(points, (list, tuple)):
+            return
+        if len(points) < 2:
+            return
         #Set the start and end points from the provided list if they exist
         self.start_y = float(points[0][1]) 
         self.end_y = float(points[-1][1])

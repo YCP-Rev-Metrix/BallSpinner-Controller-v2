@@ -6,13 +6,17 @@ logger = get_logger(__name__)
 
 
 class APIUtils:
-    def make_get_request(url, url_params=None):
-        """
-        Make a GET request to the specified URL
-        Optional url_params can be passed in to add to the URL
+    def make_get_request(url, url_params=None, json_data=None):
+        """Make a GET request to the specified URL.
+
+        Optional url_params can be passed in to add to the URL.
+        Optional json_data can be provided as a JSON body (some APIs expect this even for GET).
+
         Args:
             url (str): The URL to make the request to
             url_params (dict): The URL parameters to add to the URL
+            json_data (dict): The JSON body to send with the request
+
         Returns:
             dict: Response data or error information
         """
@@ -20,12 +24,16 @@ class APIUtils:
         
         try:
             # Make the GET request
-            if url_params is not None:
+            if url_params is not None and json_data is not None:
+                response = requests.get(url, params=url_params, json=json_data, timeout=7)
+            elif url_params is not None:
                 response = requests.get(url, params=url_params, timeout=7)
-                logger.debug(f"Response status code: {response.status_code}")
+            elif json_data is not None:
+                response = requests.get(url, json=json_data, timeout=7)
             else:
-                response = requests.get(url)
-                logger.debug(f"Response status code: {response.status_code}")
+                response = requests.get(url, timeout=7)
+
+            logger.debug(f"Response status code: {response.status_code}")
             
             # Check if the request was successful
             response.raise_for_status()
@@ -38,7 +46,7 @@ class APIUtils:
                 data = response.text
                 logger.debug("Response is not JSON, using text format")
                 
-            logger.info(f"Successfully retrieved data from {url}{' with url params: ' + str(url_params) if url_params else ''}")
+            logger.info(f"Successfully retrieved data from {url}{' with url params: ' + str(url_params) if url_params else ''}{' with JSON body' if json_data else ''}")
             return {
                 'status_code': response.status_code,
                 'data': data,

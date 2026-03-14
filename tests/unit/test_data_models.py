@@ -186,6 +186,23 @@ def test_SessionData_string_representation():
     assert "True" in session_str  # isShotMode=True
 
 
+def test_SessionData_instruction_points_roundtrip():
+    """Ensure instruction points serialize/deserialize without losing precision."""
+    points = [(0.0, 0.0), (0.25, 12.5), (1.0, -5.0)]
+
+    # Serialize
+    s = SessionData.instruction_points_to_string(points)
+    assert s == "0:0,0.25:12.5,1:-5"  # format uses g formatting
+
+    # Deserialize
+    parsed = SessionData.string_to_instruction_points(s)
+    assert parsed == points
+
+    # Ensure empty / None round-trips to empty list
+    assert SessionData.string_to_instruction_points("") == []
+    assert SessionData.string_to_instruction_points(None) == []
+
+
 # ============================================================================
 # DATA MODEL TESTS - EncoderData (backend/models/EncoderData.py)
 # ============================================================================

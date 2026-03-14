@@ -21,11 +21,15 @@ except ModuleNotFoundError:
     except ModuleNotFoundError:
         class APIUtils:
             @staticmethod
-            def make_get_request(url, url_params=None):
+            def make_get_request(url, url_params=None, json_data=None):
                 logger.debug(f"Making GET request to: {url}")
                 try:
-                    if url_params is not None:
+                    if url_params is not None and json_data is not None:
+                        response = requests.get(url, params=url_params, json=json_data, timeout=7)
+                    elif url_params is not None:
                         response = requests.get(url, params=url_params, timeout=7)
+                    elif json_data is not None:
+                        response = requests.get(url, json=json_data, timeout=7)
                     else:
                         response = requests.get(url, timeout=7)
                     response.raise_for_status()
@@ -93,14 +97,18 @@ class CloudAPI(iCloud):
         logger.info("post_session_data called")
         print(session_data.get_id())
         data = []
+        timestamp = session_data.timeStamp
+        if hasattr(timestamp, "isoformat"):
+            timestamp = timestamp.isoformat()
+
         data.append({
             "id": session_data.get_id(),
-            "timeStamp": session_data.timeStamp,
+            "timeStamp": timestamp,
             "name": session_data.name,
             "isShotMode": session_data.isShotMode,
-            "Spin_Instruction_Points": ",".join(session_data.Spin_Instruction_Points),
-            "Tilt_Instruction_Points": ",".join(session_data.Tilt_Instruction_Points),
-            "Angle_Instruction_Points": ",".join(session_data.Angle_Instruction_Points)
+            "Spin_Instruction_Points": SessionData.instruction_points_to_string(session_data.Spin_Instruction_Points),
+            "Tilt_Instruction_Points": SessionData.instruction_points_to_string(session_data.Tilt_Instruction_Points),
+            "Angle_Instruction_Points": SessionData.instruction_points_to_string(session_data.Angle_Instruction_Points)
         })
         url = "https://api.revmetrix.io/api/posts/PostPiSessions"
         result = APIUtils.make_post_request(url, data=data)
@@ -118,7 +126,11 @@ class CloudAPI(iCloud):
         logger.info("get_sessions_in_time_range called")
         url = "https://api.revmetrix.io/api/gets/GetAllPiSessions"
         print(f"Getting sessions in time range: {start_time} to {end_time}")
-        result = APIUtils.make_post_request(url, {"rangeStart": start_time, "rangeEnd": end_time})
+        # The endpoint expects a JSON body even on GET (per the existing TestServer usage).
+        result = APIUtils.make_get_request(
+            url,
+            json_data={"RangeStart": start_time, "RangeEnd": end_time},
+        )
         print(f"This is the failed result: {result}")
         return result
 
