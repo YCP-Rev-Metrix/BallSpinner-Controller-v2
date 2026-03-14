@@ -39,37 +39,37 @@ class ShotModePage(QtWidgets.QWidget):
         self.graph_tilt = self.findChild(InputGraph, 'grphInputTilt')
         self.graph_angle = self.findChild(InputGraph, 'grphInputAngle')
 
+        # Configure RPM graph
         self.graph_rpm.set_graph_title("RPM Input Graph")
-        self.graph_tilt.set_graph_title("Tilt Input Graph")
-        self.graph_angle.set_graph_title("Angle Input Graph")
-
         self.graph_rpm.hide_controls()
-        self.graph_tilt.hide_controls()
-        self.graph_angle.hide_controls()
-
         self.graph_rpm.set_bounds(0,1,0,600)
-        self.graph_tilt.set_bounds(0,1,-45,45)
-        self.graph_angle.set_bounds(0,1,-90,90)
-
         self.graph_rpm.set_default_endpoints(0,0,True)
-        self.graph_angle.set_default_endpoints(0,0,True)
-        self.graph_tilt.set_default_endpoints(0,0,True)
-
         self.graph_rpm.set_max_points(10)
-        self.graph_tilt.set_max_points(3)
-        self.graph_angle.set_max_points(3)
-
         self.graph_rpm.reset_view_and_clear()
-        self.graph_tilt.reset_view_and_clear()
-        self.graph_angle.reset_view_and_clear()
-
         self.graph_rpm.set_x_units("sec")
-        self.graph_tilt.set_x_units("sec")
-        self.graph_angle.set_x_units("sec")
-
         self.graph_rpm.set_y_units("RPM")
+        self.graph_rpm.setStepSize(10)  # Set step size to 10 RPM for easier snapping to increments of 10
+
+        # Configure Tilt graph
+        self.graph_tilt.set_graph_title("Tilt Input Graph")
+        self.graph_tilt.hide_controls()
+        self.graph_tilt.set_bounds(0,1,-45,45)
+        self.graph_tilt.set_default_endpoints(0,0,True)
+        self.graph_tilt.set_max_points(3)
+        self.graph_tilt.reset_view_and_clear()
+        self.graph_tilt.set_x_units("sec")
         self.graph_tilt.set_y_units("°")
+        self.graph_tilt.setStepSize(0.5)  # Set step size to 0.5 degrees for easier snapping to increments of 0.5
+        # Configure Angle graph
+        self.graph_angle.set_graph_title("Angle Input Graph")
+        self.graph_angle.hide_controls()
+        self.graph_angle.set_bounds(0,1,-90,90)
+        self.graph_angle.set_default_endpoints(0,0,True)
+        self.graph_angle.set_max_points(3)
+        self.graph_angle.reset_view_and_clear()
+        self.graph_angle.set_x_units("sec")
         self.graph_angle.set_y_units("°")
+        self.graph_angle.setStepSize(1)  # Set step size to 1 degrees for easier snapping to increments of 1
 
         self.SmartDotConnectWidget = self.findChild(SmartDotConnectWidget, 'wgtSmartDotConnect')
         self.SmartDotConnectWidget.signalSmartDotConnected.connect(self.CheckButtons)

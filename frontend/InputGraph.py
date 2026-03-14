@@ -1292,6 +1292,24 @@ class InputGraph(QtWidgets.QWidget):
         self._update_markers_mapped()
         self.generate_and_plot_curve()
 
+    def setStepSize(self, step: float):
+        """Set the step size for the spinboxes controlling mapping bounds and endpoints.
+
+        step: a positive float value to use as the single-step increment for
+        the relevant QDoubleSpinBox widgets. This controls how much the value
+        changes when the user clicks the arrows or uses keyboard input.
+        """
+        try:
+            s = float(step)
+            if s <= 0:
+                return
+        except Exception:
+            return
+        try:
+            self.start_y_spin.setSingleStep(s)
+            self.end_y_spin.setSingleStep(s)
+        except Exception:
+            pass
 
 
 

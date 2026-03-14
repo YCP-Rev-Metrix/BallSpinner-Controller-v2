@@ -158,7 +158,8 @@ if __name__ == '__main__':
     # Make window fullscreen
     if scale == 1:
         window.showFullScreen()
-    else:   
+    else: 
+        window.resize(window_width, window_height)
         window.showMaximized()
 
     QtWidgets.QApplication.exec()
