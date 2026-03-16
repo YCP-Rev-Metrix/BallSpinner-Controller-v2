@@ -81,8 +81,8 @@ class BSC:
             #self.motor1 = SimMotor(1)
             # motor2 = tilt-angle stepper (now using earlier motor3 pins)
             # motor3 = assembly-angle stepper (now using earlier motor2 pins)
-            self.motor2 = StepMotor(27, 17, self.h,5, True) 
-            self.motor3 = StepMotor(23, 24, self.h,6, True) 
+            self.motor2 = StepMotor(27, 17, self.h,5, False) 
+            self.motor3 = StepMotor(23, 24, self.h,6, False) 
             #self.motor2 = SimMotor(2)
         else:
             # when simulating all three motors are mocks; names are logical
