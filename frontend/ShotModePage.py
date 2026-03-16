@@ -17,6 +17,7 @@ from backend.models.ShotScriptData import ShotScriptDataInstance
 
 import datetime as dt
 from backend.smartdot.iSmartDot import iSmartDot
+from utils import notify_user
 
 
 
@@ -179,6 +180,12 @@ class ShotModePage(QtWidgets.QWidget):
             print("No session found in BSC when resetting ShotModePage.")
             return
         if self.session.id != -1:
+            spinPoints = self.session.get_spin_instruction_points()
+            anglePoints = self.session.get_angle_instruction_points()
+            tiltPoints = self.session.get_tilt_instruction_points()
+            if spinPoints == [] or anglePoints == [] or tiltPoints == []:
+                notify_user("Failed to load session instruction points, shot can not be edited.")
+                return
             self.graph_rpm.set_current_points(self.session.get_spin_instruction_points())
             self.graph_tilt.set_current_points(self.session.get_tilt_instruction_points())
             self.graph_angle.set_current_points(self.session.get_angle_instruction_points())
@@ -195,9 +202,8 @@ class ShotModePage(QtWidgets.QWidget):
             else:
                 self.FinalTime = 0.0
 
-            # Convert final time back into the slider value (same mapping used in update_shot_duration_label)
-            #slider_value = int(round((self.FinalTime - 1.0) / 0.02))
-            slider_value = int(self.FinalTime//0.02 - 1)  # alternative calculation to avoid rounding issues
+
+            slider_value = int(self.FinalTime//0.02 - 1)  
             self.sliderTime.setValue(slider_value)
 
         
