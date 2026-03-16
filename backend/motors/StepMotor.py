@@ -57,6 +57,9 @@ class StepMotor():
             try:
                 lgpio.gpio_write(self.h, self.STEP_PIN, 0)
                 lgpio.gpio_write(self.h, self.DIR_PIN, 0)
+                if hasattr(self, "ENABLE_PIN") and self.ENABLE_PIN is not None:
+                    self.disable()
+                    lgpio.gpio_free(self.h, self.ENABLE_PIN)
                 # Free the GPIO pins so they can be claimed again
                 lgpio.gpio_free(self.h, self.STEP_PIN)
                 lgpio.gpio_free(self.h, self.DIR_PIN)
@@ -71,18 +74,45 @@ class StepMotor():
         if(self.connected):
             self.stop()
     
-    def __init__(self, GPIO_Pin, DIR_Pin, h):
+    def __init__(self, GPIO_Pin, DIR_Pin, h, enable_pin=None, enable_active_low=True):
         self.GPIO_Pin = GPIO_Pin
         self.STEP_PIN = GPIO_Pin
         self.DIR_PIN = DIR_Pin
         self.h = h
+        self.ENABLE_PIN = enable_pin
+        self._enable_active_low = enable_active_low
+
         if not (self.connected):
             self.h = lgpio.gpiochip_open(0)
             self.connected = True
+
+        # Setup pins
         lgpio.gpio_claim_output(self.h, self.STEP_PIN, 0)
         lgpio.gpio_claim_output(self.h, self.DIR_PIN, 0)
+        if self.ENABLE_PIN is not None:
+            lgpio.gpio_claim_output(self.h, self.ENABLE_PIN, 1 if self._enable_active_low else 0)
+            # Ensure motor is enabled by default
+            self.enable()
+
         self.movement_in_progress = False  # Track if a movement is currently running
         self.movement_lock = threading.Lock()  # Lock for thread safety
+
+    def _write_enable(self, enabled: bool):
+        """Write to the enable pin (if configured) taking active-low into account."""
+        if self.ENABLE_PIN is None:
+            return
+        if self._enable_active_low:
+            lgpio.gpio_write(self.h, self.ENABLE_PIN, 0 if enabled else 1)
+        else:
+            lgpio.gpio_write(self.h, self.ENABLE_PIN, 1 if enabled else 0)
+
+    def enable(self):
+        """Enable the stepper driver (assert enable pin)."""
+        self._write_enable(True)
+
+    def disable(self):
+        """Disable the stepper driver (deassert enable pin)."""
+        self._write_enable(False)
 
     def start(self, rpm=1):
         # Check if handle is valid, reopen if needed
@@ -111,6 +141,10 @@ class StepMotor():
             lgpio.gpio_claim_output(self.h, self.DIR_PIN, 0)
             self.movement_in_progress = False  # Track if a movement is currently running
             self.movement_lock = threading.Lock()  # Lock for thread safety
+
+        # Ensure enable line is asserted before moving
+        if self.ENABLE_PIN is not None:
+            self.enable()
 
         self.count = 0  # Reset counter for new sequence
         self.movement_in_progress = False
