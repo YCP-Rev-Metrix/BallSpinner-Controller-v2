@@ -175,7 +175,7 @@ class USBBDCMotor(iMotor):
         # ser = serial.Serial(PORT, BAUD, timeout = 0.05)
         self.ser.write(encode(SetDutyCycle(0.0)))
         pass
-
+    #hello
     # ---------------- CONNECT / DISCONNECT ----------------
     def connect(self):
         pass
