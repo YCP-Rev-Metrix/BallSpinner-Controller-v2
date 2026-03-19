@@ -39,11 +39,9 @@ def logged_changeSpeed(self, dutyCycle, isShotMode):
     
     pid_correction = p_term + i_term + d_term
     
-    feedforward_boost = 0.0
-    if target_mech_rpm < 300:
-        boost_ratio = 1.0 - (actual_mech_rpm / LOW_SPEED_BOOST_THRESHOLD)
-        boost_ratio = max(0.0, boost_ratio)
-        feedforward_boost = LOW_SPEED_BOOST_MAGNITUDE * boost_ratio
+    # New smooth boost logic (matches USBBDCMotor.py)
+    boost_strength = max(0.0, 1.0 - (target_mech_rpm / 500.0))
+    feedforward_boost = LOW_SPEED_BOOST_MAGNITUDE * boost_strength
     
     adjusted_mech_rpm = target_mech_rpm + pid_correction + feedforward_boost / ERPM_SCALE
     adjusted_mech_rpm = self.clamp(adjusted_mech_rpm, 0, 2400)
