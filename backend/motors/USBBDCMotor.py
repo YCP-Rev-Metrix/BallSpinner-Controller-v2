@@ -3,7 +3,7 @@ import serial
 import struct
 
 from pyvesc import encode
-from pyvesc.VESC.messages import SetDutyCycle
+from pyvesc.VESC.messages import SetRPM, SetDutyCycle
 
 from .iMotor import iMotor
 from logs.logger_config import get_logger
@@ -18,6 +18,13 @@ RUN_TIME = 10      # seconds
 COMM_GET_VALUES = 4  # VESC command id for "get values"
 
 STEP = 2
+
+# RPM control parameters
+POLE_PAIRS = 2  # Flipsky 5065 4-pole motor = 2 pole pairs
+MAX_RPM = 1200  # Maximum mechanical RPM target (0-600 command → 0-1200 RPM)
+VOLTAGE = 24  # Operating voltage (volts)
+MOTOR_KV = 270  # Motor kV rating
+ERPM_SCALE = POLE_PAIRS  # Convert mechanical RPM to ERPM
 
 # ---------- VESC packet helpers (no pyvesc for GetValues) ----------
 
@@ -163,8 +170,8 @@ def read_mc_values(ser: serial.Serial, timeout: float = 0.2):
     return None
 
 class USBBDCMotor(iMotor):
-    # Default scale factor to convert a 0-600 command value into a VESC duty cycle (0-2.6).
-    DEFAULT_DUTY_CYCLE_SCALE = 0.000043333333
+    # Default scale factor to convert a 0-600 command value into RPM (0-1200).
+    DEFAULT_RPM_SCALE = MAX_RPM / 600.0
 
     motorID = 0
     currSpeed = 0.0
@@ -174,26 +181,26 @@ class USBBDCMotor(iMotor):
     motor = None
     ser = serial.Serial(PORT, BAUD, timeout = 0.05)
 
-    def __init__(self, duty_cycle_scale: float = None):
-        # ser = serial.Serial(PORT, BAUD, timeout = 0.05)
-        self._duty_cycle_scale = (
-            duty_cycle_scale
-            if duty_cycle_scale is not None
-            else self.DEFAULT_DUTY_CYCLE_SCALE
+    def __init__(self, rpm_scale: float = None):
+        self._rpm_scale = (
+            rpm_scale
+            if rpm_scale is not None
+            else self.DEFAULT_RPM_SCALE
         )
-        self.ser.write(encode(SetDutyCycle(0.0)))
+        # Initialize motor to zero RPM
+        self.ser.write(encode(SetRPM(0)))
 
     @property
-    def duty_cycle_scale(self) -> float:
-        """Gets the scale factor used to convert a 0-600 command value into a VESC duty cycle."""
-        return self._duty_cycle_scale
+    def rpm_scale(self) -> float:
+        """Gets the scale factor used to convert a 0-600 command value into mechanical RPM."""
+        return self._rpm_scale
 
-    @duty_cycle_scale.setter
-    def duty_cycle_scale(self, value: float):
-        """Sets the scale factor used in duty cycle conversions."""
+    @rpm_scale.setter
+    def rpm_scale(self, value: float):
+        """Sets the scale factor used in RPM conversions."""
         if value <= 0.0:
-            raise ValueError("duty_cycle_scale must be positive")
-        self._duty_cycle_scale = value
+            raise ValueError("rpm_scale must be positive")
+        self._rpm_scale = value
 
     # ---------------- CONNECT / DISCONNECT ----------------
     def connect(self):
@@ -210,19 +217,38 @@ class USBBDCMotor(iMotor):
 
     def stop(self):
         self.targetSpeed = 0.0
-        self.rampDown()
+        self.ser.write(encode(SetRPM(0)))
 
     def changeSpeed(self, dutyCycle: float, isShotMode: bool):
-        self.targetSpeed = self.clamp(dutyCycle, 0, 600) # Clamp to bounds of graph (in case weird values)
-        '''
-        if(self.currSpeed<self.targetSpeed):
-            self.rampUp()
-        else:
-            self.rampDown()
-        '''
-        self.targetSpeed +=50
-        self.ser.write(encode(SetDutyCycle(self.targetSpeed * self.duty_cycle_scale)))
-        self.currSpeed = self.targetSpeed
+        """
+        Change motor speed using native VESC RPM control.
+        
+        Note: Parameter named 'dutyCycle' for interface compatibility, but now represents
+        an RPM command value (0-600 maps to 0-1200 mechanical RPM) sent to VESC's native
+        closed-loop speed controller instead of raw duty cycle.
+        
+        Args:
+            dutyCycle: RPM command (0-600 maps to 0-1200 mechanical RPM)
+            isShotMode: Flag for shot mode operation (for future extended logic)
+        """
+        # Clamp input to valid range
+        clamped_rpm = self.clamp(dutyCycle, 0, 600)
+        
+        # Convert command (0-600) to mechanical RPM (0-1200)
+        target_mech_rpm = clamped_rpm * self._rpm_scale
+        
+        # Convert mechanical RPM to ERPM (electrical RPM)
+        # For 2 pole pair motor: ERPM = RPM * 2
+        target_erpm = int(target_mech_rpm * ERPM_SCALE)
+        
+        # Send RPM command to VESC (closed-loop control)
+        self.ser.write(encode(SetRPM(target_erpm)))
+        
+        # Update internal state
+        self.targetSpeed = target_mech_rpm
+        self.currSpeed = target_mech_rpm
+        
+        # Optional: Poll current speed for monitoring/feedback
         self.getCurrentSpeed()
 
     def getCurrentSpeed(self):
@@ -244,25 +270,24 @@ class USBBDCMotor(iMotor):
         return mech_rpm
 
     def rampUp(self):
-        while self.currSpeed < self.targetSpeed:
-            self.currSpeed += STEP
-            if self.currSpeed > self.targetSpeed:
-                self.currSpeed = self.targetSpeed
-
-            # Scale input x (0-600) to a range 0-2.6 for SetDutyCycle (which is a tiny eenie weenie bit over 600, like 605 but whatever)
-            self.ser.write(encode(SetDutyCycle(self.currSpeed * self.duty_cycle_scale)))
-            # time.sleep(0.02)
+        """
+        Ramp motor speed up to target (VESC firmware handles this natively).
+        This method is kept for compatibility but delegates to VESC ramping.
+        """
+        # VESC handles ramping internally with native RPM control
+        # Just send the target once; VESC will accelerate smoothly
+        target_erpm = int(self.targetSpeed * ERPM_SCALE)
+        self.ser.write(encode(SetRPM(target_erpm)))
 
     def rampDown(self):
-        while self.currSpeed > self.targetSpeed:
-            self.currSpeed -= STEP
-            if self.currSpeed < self.targetSpeed:
-                self.currSpeed = self.targetSpeed
-
-            # Scale input x (0-600) to a range 0-2.6 for SetDutyCycle (which is a tiny eenie weenie bit over 600, like 605 but whatever)
-            self.ser.write(encode(SetDutyCycle(self.currSpeed * self.duty_cycle_scale)))
-            # time.sleep(0.02)
-        self.ser.write(encode(SetDutyCycle(self.currSpeed * self.duty_cycle_scale)))
+        """
+        Ramp motor speed down to target (VESC firmware handles this natively).
+        This method is kept for compatibility but delegates to VESC ramping.
+        """
+        # VESC handles ramping internally with native RPM control
+        # Just send the target once; VESC will decelerate smoothly
+        target_erpm = int(self.targetSpeed * ERPM_SCALE)
+        self.ser.write(encode(SetRPM(target_erpm)))
 
 
 # ---------- Main program ----------
