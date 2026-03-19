@@ -27,16 +27,16 @@ MOTOR_KV = 270  # Motor kV rating
 ERPM_SCALE = POLE_PAIRS  # Convert mechanical RPM to ERPM
 
 # VESC firmware response scaling: firmware only achieves ~20% of commanded ERPM
-# Test showed 4000 ERPM cmd → 838 ERPM actual, need ~4.77x to compensate
-# Try 5.5x to overcome remaining undershoot
-VESC_ERPM_RESPONSE_FACTOR = 5.5
+# Test showed 4000 ERPM cmd → 838 ERPM actual, so use 5.0x as optimal scaling
+# This is the best balance: reduces undershoot without creating oscillation or saturation
+VESC_ERPM_RESPONSE_FACTOR = 5.0
 
 # PID Controller parameters for low-speed dead zone compensation
 MIN_ERPM_THRESHOLD = 250 * ERPM_SCALE  # ~250 mechanical RPM before VESC responds
-PID_KP = 0.8  # Proportional gain
-PID_KI = 0.65  # Integral gain (between 0.6 and 0.7, optimal sweet spot)
-PID_KD = 0.06  # Derivative gain
-PID_MAX_INTEGRAL = 25000  # Max integral term
+PID_KP = 0.8  # Proportional gain (reduces steady-state error quickly)
+PID_KI = 0.6  # Integral gain (accumulates error for persistent correction)
+PID_KD = 0.06  # Derivative gain (dampens oscillation)
+PID_MAX_INTEGRAL = 25000  # Anti-windup clamp
 SPEED_LOOP_RATE = 0.02  # Update rate (50 Hz)
 
 # Low-speed feedforward boost to overcome VESC dead zone
