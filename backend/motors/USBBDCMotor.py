@@ -263,6 +263,7 @@ class USBBDCMotor(iMotor):
         self._prev_time = now
 
         command = self.targetSpeed + (error * self.Kp) + (d_error * self.Kd)
+        print(f"command before clamp: {command:.2f}")
         duty = self.clamp(command * self.duty_cycle_scale, 0.0, 1.0)
 
         logger.debug(
