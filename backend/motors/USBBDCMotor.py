@@ -213,14 +213,9 @@ class USBBDCMotor(iMotor):
         self.rampDown()
 
     def changeSpeed(self, dutyCycle: float, isShotMode: bool):
-        self.targetSpeed = self.clamp(dutyCycle, 0, 600) # Clamp to bounds of graph (in case weird values)
-        '''
-        if(self.currSpeed<self.targetSpeed):
-            self.rampUp()
-        else:
-            self.rampDown()
-        '''
-        self.targetSpeed +=50
+        self.targetSpeed = self.clamp(dutyCycle, 0, 1200) # Clamp to bounds of graph (in case weird values)
+        self.delta= self.targetSpeed-self.getCurrentSpeed()
+        self.speed = self.targetSpeed + self.delta
         self.ser.write(encode(SetDutyCycle(self.targetSpeed * self.duty_cycle_scale)))
         self.currSpeed = self.targetSpeed
         self.getCurrentSpeed()
