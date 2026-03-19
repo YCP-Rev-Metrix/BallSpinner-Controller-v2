@@ -19,7 +19,7 @@ def CharacterizeMotors(self=None, bsc=None, target_speeds=None, hold_time=5.0, s
 
     results = []
     for speed in target_speeds:
-        results.append(TestMotor(self, bsc, speed, hold_time, sample_interval))
+        results.append(TestMotor(self, bsc, speed, hold_time, bsc.diagnostic_sample_interval_ms / 1000.0))
 
     return results
 
@@ -69,6 +69,72 @@ def TestMotor(self, bsc, target_speed, hold_time, sample_interval):
     }
 
 
+def tune_duty_cycle_scale(
+    self=None,
+    bsc=None,
+    target_speed=300,
+    hold_time=5.0,
+    sample_interval=0.1,
+    scale_candidates=None,
+):
+    """Find the duty cycle scale factor that yields the smallest overshoot for a given target speed."""
+
+    if bsc is None:
+        bsc = BSC()
+
+    if not hasattr(bsc.motor1, "duty_cycle_scale"):
+        print("Motor does not support duty_cycle_scale tuning; skipping scale sweep.")
+        return None
+
+    if scale_candidates is None:
+        # A small range around the default scale used by USBBDCMotor
+        scale_candidates = [
+            0.000035,
+            0.000038,
+            0.000040,
+            0.000042,
+            0.000044,
+            0.000046,
+            0.000048,
+            0.000050,
+        ]
+
+    best = None
+    best_abs_overshoot = float("inf")
+    results = []
+
+    for scale in scale_candidates:
+        bsc.motor1.duty_cycle_scale = scale
+        test_result = TestMotor(self, bsc, target_speed, hold_time, sample_interval)
+        overshoot = test_result["overshoot"]
+        abs_overshoot = abs(overshoot)
+        results.append({
+            "scale": scale,
+            "overshoot": overshoot,
+            "abs_overshoot": abs_overshoot,
+        })
+
+        if abs_overshoot < best_abs_overshoot:
+            best_abs_overshoot = abs_overshoot
+            best = results[-1]
+
+    print("\n===== Duty Cycle Scale Tuning =====")
+    for r in results:
+        print(
+            f"Scale={r['scale']:.9f} | Overshoot={r['overshoot']:.2f} | Abs={r['abs_overshoot']:.2f}"
+        )
+
+    if best is not None:
+        print(
+            f"\nBest scale {best['scale']:.9f} (abs overshoot {best['abs_overshoot']:.2f})"
+        )
+
+    return {
+        "best": best,
+        "results": results,
+    }
+
+
 def main():
     results = CharacterizeMotors(None)
     print("\n===== Motor Characterization Results =====")
@@ -79,6 +145,9 @@ def main():
             f"Overshoot={r['overshoot']:.2f} | "
             f"Runtime={r['runtime']:.2f}s"
         )
+
+    # Example of tuning the duty cycle scale to minimize overshoot.
+    tune_duty_cycle_scale(None)
 
     return results
 

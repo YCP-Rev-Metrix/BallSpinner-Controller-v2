@@ -9,7 +9,7 @@ import pyqtgraph as pg
 from backend.models.EncoderData import EncoderDataInstance
 from backend.models.HeatData import HeatDataInstance
 from backend.models.SessionData import SessionData
-from frontend.MotorTest import CharacterizeMotors
+from frontend.MotorTest import CharacterizeMotors, tune_duty_cycle_scale
 from BSC import bsc
 
 
@@ -75,6 +75,62 @@ class MotorTestGraphDialog(QtWidgets.QDialog):
         layout.addWidget(btn_close)
 
 
+class TuneScaleDialog(QtWidgets.QDialog):
+    """Show tuning results (scale vs overshoot) in a simple graph."""
+
+    def __init__(self, data, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Duty Cycle Scale Tuning")
+        self.resize(800, 600)
+
+        layout = QtWidgets.QVBoxLayout(self)
+
+        best = data.get("best")
+        if best:
+            best_label = QtWidgets.QLabel(
+                f"Best scale: {best['scale']:.9f} | abs overshoot: {best['abs_overshoot']:.2f}"
+            )
+        else:
+            best_label = QtWidgets.QLabel("No best scale found")
+        best_label.setStyleSheet("font-weight: bold; margin-bottom: 8px;")
+        layout.addWidget(best_label)
+
+        plot = pg.PlotWidget()
+        plot.setBackground("w")
+        plot.setLabel("bottom", "Scale")
+        plot.setLabel("left", "Overshoot")
+
+        scales = [r["scale"] for r in data.get("results", [])]
+        overshoots = [r["overshoot"] for r in data.get("results", [])]
+        abs_overshoots = [r["abs_overshoot"] for r in data.get("results", [])]
+
+        plot.plot(scales, overshoots, pen=pg.mkPen(color="#0077cc", width=2), name="Overshoot")
+        plot.plot(
+            scales,
+            abs_overshoots,
+            pen=pg.mkPen(color="#cc0000", width=2, style=QtCore.Qt.PenStyle.DashLine),
+            name="Abs Overshoot",
+        )
+
+        if best:
+            plot.plot(
+                [best["scale"]],
+                [best["overshoot"]],
+                pen=None,
+                symbol="o",
+                symbolBrush="#00aa00",
+                symbolSize=12,
+                name="Best",
+            )
+
+        plot.addLegend()
+        layout.addWidget(plot)
+
+        btn_close = QtWidgets.QPushButton("Close")
+        btn_close.clicked.connect(self.accept)
+        layout.addWidget(btn_close)
+
+
 class _PrintCapture(QtCore.QObject):
     """Capture stdout/stderr and emit it into a Qt signal."""
 
@@ -115,6 +171,34 @@ class MotorTestWorker(QtCore.QThread):
             sys.stdout = old_out
             sys.stderr = old_err
 
+
+class MotorTuneWorker(QtCore.QThread):
+    """Worker thread that runs tune_duty_cycle_scale() and streams output."""
+
+    newText = QtCore.pyqtSignal(str)
+    finished = QtCore.pyqtSignal(object)
+    failed = QtCore.pyqtSignal(str)
+
+    def __init__(self, bsc, parent=None):
+        super().__init__(parent)
+        self._bsc = bsc
+
+    def run(self):
+        old_out, old_err = sys.stdout, sys.stderr
+        capture = _PrintCapture()
+        capture.newText.connect(self.newText)
+        sys.stdout = capture
+        sys.stderr = capture
+
+        try:
+            results = tune_duty_cycle_scale(None, self._bsc)
+            self.finished.emit(results)
+        except Exception as e:
+            self.failed.emit(str(e))
+        finally:
+            sys.stdout = old_out
+            sys.stderr = old_err
+
 class CloudTest(QtWidgets.QWidget):
     changePage = pyqtSignal(int, str)
 
@@ -145,8 +229,11 @@ class CloudTest(QtWidgets.QWidget):
 
         self.btnSpinDiagnosticData = self.findChild(QtWidgets.QPushButton, 'btnSpinDiag')
         self.btnSpinDiagnosticData.clicked.connect(self.spin_diagnostic_data)
+        self.btnTuneScale = self.findChild(QtWidgets.QPushButton, 'btnTuneScale')
+        self.btnTuneScale.clicked.connect(self.tune_duty_cycle_scale)
         self.btnStepperDiagnosticData = self.findChild(QtWidgets.QPushButton, 'btnStepDiag')
         self.btnStepperDiagnosticData.clicked.connect(self.stepper_diagnostic_data)
+
     def spin_diagnostic_data(self):
         """Run the motor diagnostic and show a live log dialog while it runs."""
 
@@ -175,6 +262,53 @@ class CloudTest(QtWidgets.QWidget):
 
             graph_dialog = MotorTestGraphDialog(results, parent=self)
             graph_dialog.exec()
+
+        def _on_failed(error_text):
+            text_edit.append(f"ERROR: {error_text}\n")
+            btn_close.setEnabled(True)
+
+        worker.finished.connect(_on_finished)
+        worker.failed.connect(_on_failed)
+        worker.start()
+
+        dialog.exec()
+
+    def tune_duty_cycle_scale(self):
+        """Run the duty-cycle-scale tuning routine and show graphs + best result."""
+
+        dialog = QtWidgets.QDialog(self)
+        dialog.setWindowTitle("Scale Tuning Output")
+        dialog.setMinimumSize(650, 400)
+
+        layout = QtWidgets.QVBoxLayout(dialog)
+        text_edit = QtWidgets.QTextEdit()
+        text_edit.setReadOnly(True)
+        layout.addWidget(text_edit)
+
+        btn_close = QtWidgets.QPushButton("Close")
+        btn_close.setEnabled(False)
+        btn_close.clicked.connect(dialog.accept)
+        layout.addWidget(btn_close)
+
+        worker = MotorTuneWorker(bsc, parent=self)
+        worker.newText.connect(lambda t: text_edit.moveCursor(QTextCursor.MoveOperation.End) or text_edit.insertPlainText(t))
+
+        def _on_finished(results):
+            if not results:
+                text_edit.append("No tuning results returned.\n")
+                btn_close.setEnabled(True)
+                return
+
+            best = results.get("best")
+            if best:
+                text_edit.append(
+                    f"Best scale: {best['scale']:.9f} (abs overshoot: {best['abs_overshoot']:.2f})\n"
+                )
+
+            graph_dialog = TuneScaleDialog(results, parent=self)
+            graph_dialog.exec()
+
+            btn_close.setEnabled(True)
 
         def _on_failed(error_text):
             text_edit.append(f"ERROR: {error_text}\n")

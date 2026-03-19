@@ -236,6 +236,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="btnTuneScale">
+         <property name="text">
+          <string>Tune Duty Scale</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="btnStepDiag">
          <property name="text">
           <string>Run Stepper Diagnostic</string>

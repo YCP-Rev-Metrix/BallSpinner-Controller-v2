@@ -163,6 +163,9 @@ def read_mc_values(ser: serial.Serial, timeout: float = 0.2):
     return None
 
 class USBBDCMotor(iMotor):
+    # Default scale factor to convert a 0-600 command value into a VESC duty cycle (0-2.6).
+    DEFAULT_DUTY_CYCLE_SCALE = 0.000043333333
+
     motorID = 0
     currSpeed = 0.0
     targetSpeed = 0.0
@@ -171,11 +174,27 @@ class USBBDCMotor(iMotor):
     motor = None
     ser = serial.Serial(PORT, BAUD, timeout = 0.05)
 
-    def __init__(self):
+    def __init__(self, duty_cycle_scale: float = None):
         # ser = serial.Serial(PORT, BAUD, timeout = 0.05)
+        self._duty_cycle_scale = (
+            duty_cycle_scale
+            if duty_cycle_scale is not None
+            else self.DEFAULT_DUTY_CYCLE_SCALE
+        )
         self.ser.write(encode(SetDutyCycle(0.0)))
-        pass
-    #hello
+
+    @property
+    def duty_cycle_scale(self) -> float:
+        """Gets the scale factor used to convert a 0-600 command value into a VESC duty cycle."""
+        return self._duty_cycle_scale
+
+    @duty_cycle_scale.setter
+    def duty_cycle_scale(self, value: float):
+        """Sets the scale factor used in duty cycle conversions."""
+        if value <= 0.0:
+            raise ValueError("duty_cycle_scale must be positive")
+        self._duty_cycle_scale = value
+
     # ---------------- CONNECT / DISCONNECT ----------------
     def connect(self):
         pass
@@ -202,7 +221,7 @@ class USBBDCMotor(iMotor):
             self.rampDown()
         '''
         self.targetSpeed +=50
-        self.ser.write(encode(SetDutyCycle(self.targetSpeed *0.000043333333)))
+        self.ser.write(encode(SetDutyCycle(self.targetSpeed * self.duty_cycle_scale)))
         self.currSpeed = self.targetSpeed
         self.getCurrentSpeed()
 
@@ -231,7 +250,7 @@ class USBBDCMotor(iMotor):
                 self.currSpeed = self.targetSpeed
 
             # Scale input x (0-600) to a range 0-2.6 for SetDutyCycle (which is a tiny eenie weenie bit over 600, like 605 but whatever)
-            self.ser.write(encode(SetDutyCycle(self.currSpeed *0.000043333333)))
+            self.ser.write(encode(SetDutyCycle(self.currSpeed * self.duty_cycle_scale)))
             # time.sleep(0.02)
 
     def rampDown(self):
@@ -241,9 +260,9 @@ class USBBDCMotor(iMotor):
                 self.currSpeed = self.targetSpeed
 
             # Scale input x (0-600) to a range 0-2.6 for SetDutyCycle (which is a tiny eenie weenie bit over 600, like 605 but whatever)
-            self.ser.write(encode(SetDutyCycle(self.currSpeed *0.000043333333)))
+            self.ser.write(encode(SetDutyCycle(self.currSpeed * self.duty_cycle_scale)))
             # time.sleep(0.02)
-        self.ser.write(encode(SetDutyCycle(self.currSpeed *0.000043333333)))
+        self.ser.write(encode(SetDutyCycle(self.currSpeed * self.duty_cycle_scale)))
 
 
 # ---------- Main program ----------
