@@ -26,6 +26,10 @@ VOLTAGE = 24  # Operating voltage (volts)
 MOTOR_KV = 270  # Motor kV rating
 ERPM_SCALE = POLE_PAIRS  # Convert mechanical RPM to ERPM
 
+# VESC firmware response scaling: firmware only achieves ~20% of commanded ERPM
+# Test showed 4000 ERPM cmd → 838 ERPM actual, so multiply commands by ~5x
+VESC_ERPM_RESPONSE_FACTOR = 5.0
+
 # PID Controller parameters for low-speed dead zone compensation
 MIN_ERPM_THRESHOLD = 250 * ERPM_SCALE  # ~250 mechanical RPM before VESC responds
 PID_KP = 0.8  # Proportional gain (reduced slightly to avoid oscillation)
@@ -299,8 +303,8 @@ class USBBDCMotor(iMotor):
         # Clamp to safe limits (0 to ~2x target max)
         adjusted_mech_rpm = self.clamp(adjusted_mech_rpm, 0, MAX_RPM * 2)
         
-        # Convert to ERPM and send to VESC
-        target_erpm = int(adjusted_mech_rpm * ERPM_SCALE)
+        # Convert to ERPM and apply VESC response scaling (firmware only achieves ~20% of command)
+        target_erpm = int(adjusted_mech_rpm * ERPM_SCALE * VESC_ERPM_RESPONSE_FACTOR)
         
         # Log diagnostics at low speeds for debugging
         if target_mech_rpm < 400 and target_mech_rpm > 0:
