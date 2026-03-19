@@ -288,13 +288,10 @@ class USBBDCMotor(iMotor):
         pid_correction = p_term + i_term + d_term
         
         # LOW-SPEED FEEDFORWARD BOOST: Aggressively overcome dead zone
-        # At low target RPM, add extra boost that falls off as speed increases
-        feedforward_boost = 0.0
-        if target_mech_rpm < 300:
-            # Compute boost magnitude (decays with actual speed)
-            boost_ratio = 1.0 - (actual_mech_rpm / LOW_SPEED_BOOST_THRESHOLD)
-            boost_ratio = max(0.0, boost_ratio)  # Don't go negative
-            feedforward_boost = LOW_SPEED_BOOST_MAGNITUDE * boost_ratio
+        # Smooth decay with TARGET speed (not actual speed) to avoid control cliff
+        # boost_strength = 1.0 at 0 RPM, 0.0 at 500 RPM, smooth linear between
+        boost_strength = max(0.0, 1.0 - (target_mech_rpm / 500.0))
+        feedforward_boost = LOW_SPEED_BOOST_MAGNITUDE * boost_strength
         
         # Final ERPM command = target + PID correction + feedforward boost
         adjusted_mech_rpm = target_mech_rpm + pid_correction + feedforward_boost / ERPM_SCALE
