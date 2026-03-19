@@ -11,6 +11,7 @@ class SimMotor(iMotor):
     GPIO_Pin = 26
 
     DEFAULT_KP = 1.0
+    DEFAULT_KD = 0.0
     DEFAULT_DUTY_CYCLE_SCALE = 0.000043333333
 
     def __init__(self, GPIOPin : int):
@@ -18,6 +19,7 @@ class SimMotor(iMotor):
         Device.pin_factory = MockFactory(pin_class=MockPWMPin)
         motor = PWMOutputDevice(self.GPIO_Pin)
         self._Kp = self.DEFAULT_KP
+        self._Kd = self.DEFAULT_KD
         self._duty_cycle_scale = self.DEFAULT_DUTY_CYCLE_SCALE
 
     def connect(self, GPIOPin : int):
@@ -57,6 +59,14 @@ class SimMotor(iMotor):
     @Kp.setter
     def Kp(self, value: float):
         self._Kp = value
+
+    @property
+    def Kd(self) -> float:
+        return self._Kd
+
+    @Kd.setter
+    def Kd(self, value: float):
+        self._Kd = value
 
     @property
     def duty_cycle_scale(self) -> float:

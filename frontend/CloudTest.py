@@ -153,9 +153,10 @@ class MotorTestWorker(QtCore.QThread):
     finished = QtCore.pyqtSignal(object)
     failed = QtCore.pyqtSignal(str)
 
-    def __init__(self, bsc, parent=None):
+    def __init__(self, bsc, hold_time=None, parent=None):
         super().__init__(parent)
         self._bsc = bsc
+        self._hold_time = hold_time
 
     def run(self):
         old_out, old_err = sys.stdout, sys.stderr
@@ -165,7 +166,7 @@ class MotorTestWorker(QtCore.QThread):
         sys.stderr = capture
 
         try:
-            results = CharacterizeMotors(None, self._bsc)
+            results = CharacterizeMotors(None, self._bsc, hold_time=self._hold_time)
             self.finished.emit(results)
         except Exception as e:
             self.failed.emit(str(e))
@@ -238,15 +239,15 @@ class CloudTest(QtWidgets.QWidget):
 
         # Motor parameter controls
         self.spnKp = self.findChild(QtWidgets.QDoubleSpinBox, 'spnKp')
+        self.spnKd = self.findChild(QtWidgets.QDoubleSpinBox, 'spnKd')
         self.spnDutyScale = self.findChild(QtWidgets.QDoubleSpinBox, 'spnDutyScale')
         self.btnApplyMotorParams = self.findChild(QtWidgets.QPushButton, 'btnApplyMotorParams')
         self.btnApplyMotorParams.clicked.connect(self.apply_motor_params)
 
         # Default to the current motor1 configuration
-        
         self.spnKp.setValue(bsc.motor1.Kp)
+        self.spnKd.setValue(getattr(bsc.motor1, 'Kd', 0.0))
         self.spnDutyScale.setValue(bsc.motor1.duty_cycle_scale)
-        
 
     def spin_diagnostic_data(self):
         """Run the motor diagnostic and show a live log dialog while it runs."""
@@ -265,7 +266,8 @@ class CloudTest(QtWidgets.QWidget):
         btn_close.clicked.connect(dialog.accept)
         layout.addWidget(btn_close)
 
-        worker = MotorTestWorker(bsc, parent=self)
+        test_duration = self.findChild(QtWidgets.QSpinBox, 'spnTestDuration').value()
+        worker = MotorTestWorker(bsc, hold_time=test_duration, parent=self)
         worker.newText.connect(lambda t: text_edit.moveCursor(QTextCursor.MoveOperation.End) or text_edit.insertPlainText(t))
 
         def _on_finished(results):
@@ -342,11 +344,15 @@ class CloudTest(QtWidgets.QWidget):
         """Apply Kp and duty cycle scale from the UI to motor1."""
         try:
             kp = self.spnKp.value()
+            kd = self.spnKd.value()
             scale = self.spnDutyScale.value()
             bsc.motor1.Kp = kp
+            # Kd is optional on some motor types
+            if hasattr(bsc.motor1, 'Kd'):
+                bsc.motor1.Kd = kd
             bsc.motor1.duty_cycle_scale = scale
             self.findChild(QtWidgets.QLabel, 'lblResponse').setText(
-                f"Applied Kp={kp:.3f}, duty_scale={scale:.9f}"
+                f"Applied Kp={kp:.3f}, Kd={kd:.3f}, duty_scale={scale:.9f}"
             )
         except Exception as e:
             self.findChild(QtWidgets.QLabel, 'lblResponse').setText(f"Error: {e}")

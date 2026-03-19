@@ -276,6 +276,49 @@
            </widget>
           </item>
           <item>
+           <widget class="QLabel" name="lblKd">
+            <property name="text">
+             <string>Kd:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="spnKd">
+            <property name="minimum">
+             <double>0.0</double>
+            </property>
+            <property name="maximum">
+             <double>10.0</double>
+            </property>
+            <property name="singleStep">
+             <double>0.01</double>
+            </property>
+            <property name="value">
+             <double>0.0</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblTestDuration">
+            <property name="text">
+             <string>Test Duration (s):</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="spnTestDuration">
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>300</number>
+            </property>
+            <property name="value">
+             <number>5</number>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QLabel" name="lblDutyScale">
             <property name="text">
              <string>Duty Scale:</string>

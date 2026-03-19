@@ -187,8 +187,13 @@ class USBBDCMotor(iMotor):
         self._missed_speed_reads = 0
         self._missed_speed_warn_threshold = 10
 
-        # Default proportional gain
+        # Default PID gains
         self.Kp = 0.5
+        self.Kd = 0.0
+
+        # For derivative computation
+        self._prev_error = 0.0
+        self._prev_time = time.time()
 
         self.ser.write(encode(SetDutyCycle(0.0)))
 
@@ -214,6 +219,17 @@ class USBBDCMotor(iMotor):
             raise ValueError("Kp must be non-negative")
         self._Kp = value
 
+    @property
+    def Kd(self) -> float:
+        """Derivative gain used by changeSpeed()."""
+        return self._Kd
+
+    @Kd.setter
+    def Kd(self, value: float):
+        if value < 0.0:
+            raise ValueError("Kd must be non-negative")
+        self._Kd = value
+
     # ---------------- CONNECT / DISCONNECT ----------------
     def connect(self):
         pass
@@ -238,7 +254,15 @@ class USBBDCMotor(iMotor):
         self.currSpeed = self.getCurrentSpeed()
 
         error = self.targetSpeed - self.currSpeed
-        command = self.targetSpeed + (error * self.Kp)
+
+        # Derivative term (d(error)/dt)
+        now = time.time()
+        dt = now - self._prev_time if self._prev_time else 0.0
+        d_error = (error - self._prev_error) / dt if dt > 0.0 else 0.0
+        self._prev_error = error
+        self._prev_time = now
+
+        command = self.targetSpeed + (error * self.Kp) + (d_error * self.Kd)
         duty = self.clamp(command * self.duty_cycle_scale, 0.0, 1.0)
 
         logger.debug(
