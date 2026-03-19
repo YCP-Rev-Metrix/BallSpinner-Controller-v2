@@ -28,7 +28,22 @@ class MotorGraph(QtWidgets.QWidget):
 
         self.btnSelectAll = self.findChild(QtWidgets.QPushButton, 'btnSelectAll')
         self.btnDeselectAll = self.findChild(QtWidgets.QPushButton, 'btnDeselectAll')
+        # Motor parameter controls (Kp + duty scale)
+        from BSC import bsc
+        self.spnKp = self.findChild(QtWidgets.QDoubleSpinBox, 'spnKp')
+        self.spnDutyScale = self.findChild(QtWidgets.QDoubleSpinBox, 'spnDutyScale')
+        self.btnApplyMotorParams = self.findChild(QtWidgets.QPushButton, 'btnApplyMotorParams')
+        self.btnApplyMotorParams.clicked.connect(self.apply_motor_params)
 
+        # Initialize defaults from the current motor state
+        try:
+            self.spnKp.setValue(bsc.motor1.Kp)
+        except Exception:
+            pass
+        try:
+            self.spnDutyScale.setValue(bsc.motor1.duty_cycle_scale)
+        except Exception:
+            pass
         self.dsbLookBackSeconds = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbLookBackSeconds')
         self.cbolimitView = self.findChild(QtWidgets.QComboBox, 'cboLimitView')
         self.dsbMinXValue = self.findChild(QtWidgets.QDoubleSpinBox, 'dsbMinX')
@@ -93,6 +108,10 @@ class MotorGraph(QtWidgets.QWidget):
             self.curves['angle_data'] = self.graph.plot([], [], pen=self.pens['angle_data'], name='Angle Data')
         except Exception as e:
             print("Error creating persistent plot curves for Angle Data:", e)
+
+        # Motor parameter application (Kp/duty tuning)
+        # (Widget controls are created further down for readability)
+        
         # Create persistent cursor and markers
         plotItem = self.graph.getPlotItem()
         try:
@@ -166,6 +185,21 @@ class MotorGraph(QtWidgets.QWidget):
             self.reset()
         except Exception:
             pass
+
+    def apply_motor_params(self):
+        """Apply Kp and duty cycle scale values to the active motor."""
+        from BSC import bsc
+
+        try:
+            kp = self.spnKp.value()
+            scale = self.spnDutyScale.value()
+            bsc.motor1.Kp = kp
+            bsc.motor1.duty_cycle_scale = scale
+            # update the displayed defaults so they match what was applied
+            self.spnKp.setValue(kp)
+            self.spnDutyScale.setValue(scale)
+        except Exception as e:
+            print("Failed to apply motor params:", e)
 
     def select_all(self):
         self.chkAngle.setChecked(True)

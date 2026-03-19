@@ -33,6 +33,9 @@ STEPS_PER_REV = 1600  # adjust if you change microstepping on the driver
 
 class StepMotor():
 
+    DEFAULT_KP = 0.1
+    DEFAULT_DUTY_CYCLE_SCALE = 0.000043333333
+
     motorID = 0
     currSpeed = 0.0
     targetSpeed = 0.0
@@ -69,6 +72,22 @@ class StepMotor():
         # Don't set h to None here - BSC manages the handle
         print(f"GPIO released for motor on pin {self.GPIO_Pin}")
 
+    @property
+    def Kp(self) -> float:
+        return self._Kp
+
+    @Kp.setter
+    def Kp(self, value: float):
+        self._Kp = value
+
+    @property
+    def duty_cycle_scale(self) -> float:
+        return self._duty_cycle_scale
+
+    @duty_cycle_scale.setter
+    def duty_cycle_scale(self, value: float):
+        self._duty_cycle_scale = value
+
     def disconnect(self):
         # Close the gpiochip handle to release resources.
         if(self.connected):
@@ -81,6 +100,10 @@ class StepMotor():
         self.h = h
         self.ENABLE_PIN = enable_pin
         self._enable_active_low = enable_active_low
+
+        # Motor settings (needed for UI controls / interface compatibility)
+        self._Kp = self.DEFAULT_KP
+        self._duty_cycle_scale = self.DEFAULT_DUTY_CYCLE_SCALE
 
         if not (self.connected):
             self.h = lgpio.gpiochip_open(0)

@@ -10,7 +10,7 @@ class SimMotor(iMotor):
     targetPower = 0.0
     GPIO_Pin = 26
 
-    DEFAULT_KP = 0.1
+    DEFAULT_KP = 1.0
     DEFAULT_DUTY_CYCLE_SCALE = 0.000043333333
 
     def __init__(self, GPIOPin : int):

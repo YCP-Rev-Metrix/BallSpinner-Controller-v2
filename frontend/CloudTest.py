@@ -242,6 +242,12 @@ class CloudTest(QtWidgets.QWidget):
         self.btnApplyMotorParams = self.findChild(QtWidgets.QPushButton, 'btnApplyMotorParams')
         self.btnApplyMotorParams.clicked.connect(self.apply_motor_params)
 
+        # Default to the current motor1 configuration
+        
+        self.spnKp.setValue(bsc.motor1.Kp)
+        self.spnDutyScale.setValue(bsc.motor1.duty_cycle_scale)
+        
+
     def spin_diagnostic_data(self):
         """Run the motor diagnostic and show a live log dialog while it runs."""
 

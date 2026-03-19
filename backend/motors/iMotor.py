@@ -38,3 +38,23 @@ class iMotor(metaclass=ABCMeta):
     @abstractmethod
     def rampUp(self):
         pass
+
+    @property
+    @abstractmethod
+    def Kp(self) -> float:
+        pass
+
+    @Kp.setter
+    @abstractmethod
+    def Kp(self, value: float):
+        pass
+
+    @property
+    @abstractmethod
+    def duty_cycle_scale(self) -> float:
+        pass
+
+    @duty_cycle_scale.setter
+    @abstractmethod
+    def duty_cycle_scale(self, value: float):
+        pass
