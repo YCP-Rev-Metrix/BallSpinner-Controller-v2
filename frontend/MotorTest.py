@@ -20,6 +20,8 @@ def CharacterizeMotors(self=None, bsc=None, target_speeds=None, hold_time=5.0, s
     results = []
     for speed in target_speeds:
         results.append(TestMotor(self, bsc, speed, hold_time, bsc.diagnostic_sample_interval_ms / 1000.0))
+        print(f"Completed test for target speed {speed}. Waiting 3 seconds before next test...")
+        time.sleep(3)
 
     return results
 

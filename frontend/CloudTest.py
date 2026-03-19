@@ -35,7 +35,9 @@ class MotorTestGraphDialog(QtWidgets.QDialog):
             target_speed = r.get("target_speed")
             overshoot_pct = None
             if target_speed and target_speed != 0:
-                overshoot_pct = (overshoot + target_speed) / target_speed
+                # Show overshoot as percentage of the target speed.
+                # (e.g., overshoot=181 on target=250 → 72.4%)
+                overshoot_pct = (overshoot / target_speed) * 100
 
             stats_str = (
                 f"Time to target: {time_to_target:.2f}s" if time_to_target is not None else "Time to target: n/a"
