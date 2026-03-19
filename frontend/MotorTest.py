@@ -87,17 +87,11 @@ def tune_duty_cycle_scale(
         return None
 
     if scale_candidates is None:
-        # A small range around the default scale used by USBBDCMotor
-        scale_candidates = [
-            0.000035,
-            0.000038,
-            0.000040,
-            0.000042,
-            0.000044,
-            0.000046,
-            0.000048,
-            0.000050,
-        ]
+        # A wider range around the default scale used by USBBDCMotor.
+        # The best scale may be significantly smaller or larger than the current default.
+        base_scale = 0.000043333333
+        multipliers = [0.25, 0.5, 0.75, 0.9, 1.0, 1.1, 1.25, 1.5, 2.0, 3.0]
+        scale_candidates = [base_scale * m for m in multipliers]
 
     best = None
     best_abs_overshoot = float("inf")
