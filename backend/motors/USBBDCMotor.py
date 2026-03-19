@@ -26,6 +26,19 @@ VOLTAGE = 24  # Operating voltage (volts)
 MOTOR_KV = 270  # Motor kV rating
 ERPM_SCALE = POLE_PAIRS  # Convert mechanical RPM to ERPM
 
+# PID Controller parameters for low-speed dead zone compensation
+MIN_ERPM_THRESHOLD = 250 * ERPM_SCALE  # ~250 mechanical RPM before VESC responds
+PID_KP = 1.0  # Proportional gain (increased for responsiveness)
+PID_KI = 0.3  # Integral gain (increased for dead zone breakthrough)
+PID_KD = 0.1  # Derivative gain (increased for stability)
+PID_MAX_INTEGRAL = 10000  # Max integral term to prevent windup (increased)
+SPEED_LOOP_RATE = 0.02  # Update rate (50 Hz)
+
+# Low-speed feedforward boost to overcome VESC dead zone
+LOW_SPEED_BOOST_THRESHOLD = 300 * ERPM_SCALE  # Apply boost below 300 mech RPM
+LOW_SPEED_BOOST_MAGNITUDE = 500 * ERPM_SCALE  # Aggressively command extra ERPM at low speeds
+LOW_SPEED_BOOST_FALLOFF = 2.0  # How quickly boost decreases at higher speeds
+
 # ---------- VESC packet helpers (no pyvesc for GetValues) ----------
 
 def crc16(data: bytes) -> int:
@@ -189,6 +202,11 @@ class USBBDCMotor(iMotor):
         )
         # Initialize motor to zero RPM
         self.ser.write(encode(SetRPM(0)))
+        
+        # PID controller state
+        self._pid_integral = 0.0
+        self._pid_prev_error = 0.0
+        self._last_speed_poll_time = time.time()
 
     @property
     def rpm_scale(self) -> float:
@@ -217,15 +235,21 @@ class USBBDCMotor(iMotor):
 
     def stop(self):
         self.targetSpeed = 0.0
+        self._pid_integral = 0.0  # Reset integral windup
+        self._pid_prev_error = 0.0
         self.ser.write(encode(SetRPM(0)))
 
     def changeSpeed(self, dutyCycle: float, isShotMode: bool):
         """
-        Change motor speed using native VESC RPM control.
+        Change motor speed using native VESC RPM control with aggressive PID + feedforward.
         
         Note: Parameter named 'dutyCycle' for interface compatibility, but now represents
         an RPM command value (0-600 maps to 0-1200 mechanical RPM) sent to VESC's native
         closed-loop speed controller instead of raw duty cycle.
+        
+        Uses:
+        - Host-side PID controller to reduce overshoot/undershoot
+        - Feedforward boost to overcome low-speed dead zone
         
         Args:
             dutyCycle: RPM command (0-600 maps to 0-1200 mechanical RPM)
@@ -236,56 +260,92 @@ class USBBDCMotor(iMotor):
         
         # Convert command (0-600) to mechanical RPM (0-1200)
         target_mech_rpm = clamped_rpm * self._rpm_scale
-        
-        # Convert mechanical RPM to ERPM (electrical RPM)
-        # For 2 pole pair motor: ERPM = RPM * 2
-        target_erpm = int(target_mech_rpm * ERPM_SCALE)
-        
-        # Send RPM command to VESC (closed-loop control)
-        self.ser.write(encode(SetRPM(target_erpm)))
-        
-        # Update internal state
         self.targetSpeed = target_mech_rpm
-        self.currSpeed = target_mech_rpm
         
-        # Optional: Poll current speed for monitoring/feedback
-        self.getCurrentSpeed()
+        # Poll current speed for PID feedback
+        actual_mech_rpm = self.getCurrentSpeed()
+        
+        if actual_mech_rpm is None:
+            actual_mech_rpm = 0.0
+        
+        # Compute speed error
+        speed_error = target_mech_rpm - actual_mech_rpm
+        
+        # PID controller to adjust ERPM command
+        # P term: proportional to current error
+        p_term = PID_KP * speed_error
+        
+        # I term: accumulate error over time (with anti-windup)
+        self._pid_integral += speed_error * SPEED_LOOP_RATE
+        self._pid_integral = self.clamp(self._pid_integral, -PID_MAX_INTEGRAL, PID_MAX_INTEGRAL)
+        i_term = PID_KI * self._pid_integral
+        
+        # D term: dampen rapid changes (derivative of error)
+        d_term = PID_KD * (speed_error - self._pid_prev_error) / SPEED_LOOP_RATE
+        self._pid_prev_error = speed_error
+        
+        # Compute PID correction (in mechanical RPM)
+        pid_correction = p_term + i_term + d_term
+        
+        # LOW-SPEED FEEDFORWARD BOOST: Aggressively overcome dead zone
+        # At low target RPM, add extra boost that falls off as speed increases
+        feedforward_boost = 0.0
+        if target_mech_rpm < 300:
+            # Compute boost magnitude (decays with actual speed)
+            boost_ratio = 1.0 - (actual_mech_rpm / LOW_SPEED_BOOST_THRESHOLD)
+            boost_ratio = max(0.0, boost_ratio)  # Don't go negative
+            feedforward_boost = LOW_SPEED_BOOST_MAGNITUDE * boost_ratio
+        
+        # Final ERPM command = target + PID correction + feedforward boost
+        adjusted_mech_rpm = target_mech_rpm + pid_correction + feedforward_boost / ERPM_SCALE
+        
+        # Clamp to safe limits (0 to ~2x target max)
+        adjusted_mech_rpm = self.clamp(adjusted_mech_rpm, 0, MAX_RPM * 2)
+        
+        # Convert to ERPM and send to VESC
+        target_erpm = int(adjusted_mech_rpm * ERPM_SCALE)
+        
+        # Log diagnostics at low speeds for debugging
+        if target_mech_rpm < 400 and target_mech_rpm > 0:
+            logger.debug(f"Low-speed: target={target_mech_rpm:.0f} RPM, actual={actual_mech_rpm:.0f}, error={speed_error:.0f}, pid_corr={pid_correction:.0f}, boost={feedforward_boost:.0f}, ERPM_cmd={target_erpm}")
+        
+        self.ser.write(encode(SetRPM(target_erpm)))
+        self.currSpeed = actual_mech_rpm
 
     def getCurrentSpeed(self):
-        '''send_get_values(ser)
-        vals = read_mc_values(ser)
-        if vals is not None:
-            
-            return vals["rpm"]/2.0 #Encoder implement, maybe working'''
+        """
+        Poll VESC telemetry and return actual mechanical RPM.
+        Returns None if telemetry read fails.
+        """
         send_get_values(self.ser)
         vals = read_mc_values(self.ser)
+        
         if vals is not None:
             erpm = vals["rpm"]
-
             # Your 4-pole RC motor = 2 pole pairs → mech RPM = ERPM / 2
-            mech_rpm = erpm / 2.0
-
-
-        print(f"ERPM: {erpm:9.1f} | RPM: {mech_rpm:9.1f} | I_motor: {vals['motor_current']:6.2f} A | V_in: {vals['v_in']:5.2f} V | Duty: {vals['duty_now']*100:5.1f}% | Fault: {vals['fault']}")
-        return mech_rpm
+            mech_rpm = erpm / ERPM_SCALE
+            
+            # Debug output (comment out if too verbose)
+            # print(f"ERPM: {erpm:9.1f} | RPM: {mech_rpm:9.1f} | I_motor: {vals['motor_current']:6.2f} A | V_in: {vals['v_in']:5.2f} V | Duty: {vals['duty_now']*100:5.1f}% | Fault: {vals['fault']}")
+            return mech_rpm
+        
+        return None
 
     def rampUp(self):
         """
-        Ramp motor speed up to target (VESC firmware handles this natively).
-        This method is kept for compatibility but delegates to VESC ramping.
+        Ramp motor speed up to target.
+        PID controller handles smooth acceleration automatically.
         """
-        # VESC handles ramping internally with native RPM control
-        # Just send the target once; VESC will accelerate smoothly
+        # PID handles ramping - just send current target
         target_erpm = int(self.targetSpeed * ERPM_SCALE)
         self.ser.write(encode(SetRPM(target_erpm)))
 
     def rampDown(self):
         """
-        Ramp motor speed down to target (VESC firmware handles this natively).
-        This method is kept for compatibility but delegates to VESC ramping.
+        Ramp motor speed down to target.
+        PID controller handles smooth deceleration automatically.
         """
-        # VESC handles ramping internally with native RPM control
-        # Just send the target once; VESC will decelerate smoothly
+        # PID handles ramping - just send current target
         target_erpm = int(self.targetSpeed * ERPM_SCALE)
         self.ser.write(encode(SetRPM(target_erpm)))
 
