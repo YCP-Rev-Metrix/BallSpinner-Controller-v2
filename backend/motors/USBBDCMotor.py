@@ -32,9 +32,9 @@ VESC_ERPM_RESPONSE_FACTOR = 5.0
 
 # PID Controller parameters for low-speed dead zone compensation
 MIN_ERPM_THRESHOLD = 250 * ERPM_SCALE  # ~250 mechanical RPM before VESC responds
-PID_KP = 1.0  # Proportional gain (increased for faster response now that boost is gone)
-PID_KI = 0.8  # Integral gain (between 0.6 and 1.0, sweet spot)
-PID_KD = 0.05  # Derivative gain (reduced to avoid noise)
+PID_KP = 0.8  # Proportional gain
+PID_KI = 0.7  # Integral gain (0.6 was good, try 0.7 for high-speed improvement)
+PID_KD = 0.06  # Derivative gain (reduced from 0.08)
 PID_MAX_INTEGRAL = 25000  # Max integral term
 SPEED_LOOP_RATE = 0.02  # Update rate (50 Hz)
 
@@ -291,8 +291,11 @@ class USBBDCMotor(iMotor):
         # Compute PID correction (in mechanical RPM)
         pid_correction = p_term + i_term + d_term
         
-        # VESC scaling already fixed low-speed response, no boost needed
+        # Minimal feedforward boost only for very low speeds (below 50 RPM) 
+        # VESC scaling (5x) takes care of most low-speed response
         feedforward_boost = 0.0
+        if target_mech_rpm < 50:
+            feedforward_boost = 200 * ERPM_SCALE  # Only 200 ERPM boost at absolute minimum
         
         # Final ERPM command = target + PID correction + feedforward boost
         adjusted_mech_rpm = target_mech_rpm + pid_correction + feedforward_boost / ERPM_SCALE
