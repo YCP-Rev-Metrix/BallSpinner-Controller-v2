@@ -165,7 +165,7 @@ def read_mc_values(ser: serial.Serial, timeout: float = 0.2):
 class USBBDCMotor(iMotor):
     # Default scale factor to convert a 0-600 command value into a VESC duty cycle (0-2.6).
     DEFAULT_DUTY_CYCLE_SCALE = 0.000043333333
-    Kp = 0.1
+    
 
     motorID = 0
     currSpeed = 0.0
@@ -182,11 +182,13 @@ class USBBDCMotor(iMotor):
             if duty_cycle_scale is not None
             else self.DEFAULT_DUTY_CYCLE_SCALE
         )
-        self._Kp = self.Kp
 
         # Track consecutive failed reads for getCurrentSpeed so we can log a warning
         self._missed_speed_reads = 0
         self._missed_speed_warn_threshold = 10
+
+        # Default proportional gain
+        self.Kp = 0.1
 
         self.ser.write(encode(SetDutyCycle(0.0)))
 
