@@ -28,13 +28,13 @@ ERPM_SCALE = POLE_PAIRS  # Convert mechanical RPM to ERPM
 
 # VESC firmware response scaling: firmware only achieves ~20% of commanded ERPM
 # Test showed 4000 ERPM cmd → 838 ERPM actual, need ~4.77x to compensate
-# Use 4.5x to avoid saturation/overdrive, let PID handle fine-tuning
-VESC_ERPM_RESPONSE_FACTOR = 4.5
+# Try 5.5x to overcome remaining undershoot
+VESC_ERPM_RESPONSE_FACTOR = 5.5
 
 # PID Controller parameters for low-speed dead zone compensation
 MIN_ERPM_THRESHOLD = 250 * ERPM_SCALE  # ~250 mechanical RPM before VESC responds
 PID_KP = 0.8  # Proportional gain
-PID_KI = 0.6  # Integral gain (0.6 was optimal in testing)
+PID_KI = 0.65  # Integral gain (between 0.6 and 0.7, optimal sweet spot)
 PID_KD = 0.06  # Derivative gain
 PID_MAX_INTEGRAL = 25000  # Max integral term
 SPEED_LOOP_RATE = 0.02  # Update rate (50 Hz)
