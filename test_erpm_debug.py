@@ -38,7 +38,7 @@ print("=========================================================================
 print("ERPM Debug Test (printing raw SetRPM ERPM values)")
 print("================================================================================\n")
 
-motor = USBBDCMotor(motorID=0, GPIO_Pin=17)
+motor = USBBDCMotor(rpm_scale=2.0)
 motor.connect()
 time.sleep(0.5)
 
