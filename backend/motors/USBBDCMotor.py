@@ -28,15 +28,15 @@ ERPM_SCALE = POLE_PAIRS  # Convert mechanical RPM to ERPM
 
 # PID Controller parameters for low-speed dead zone compensation
 MIN_ERPM_THRESHOLD = 250 * ERPM_SCALE  # ~250 mechanical RPM before VESC responds
-PID_KP = 1.0  # Proportional gain (increased for responsiveness)
-PID_KI = 0.3  # Integral gain (increased for dead zone breakthrough)
-PID_KD = 0.1  # Derivative gain (increased for stability)
-PID_MAX_INTEGRAL = 10000  # Max integral term to prevent windup (increased)
+PID_KP = 0.8  # Proportional gain (reduced slightly to avoid oscillation)
+PID_KI = 0.6  # Integral gain (INCREASED - was 0.3, now 2x stronger)
+PID_KD = 0.08  # Derivative gain (reduced to prevent high-freq oscillation)
+PID_MAX_INTEGRAL = 20000  # Max integral term (INCREASED from 10000)
 SPEED_LOOP_RATE = 0.02  # Update rate (50 Hz)
 
 # Low-speed feedforward boost to overcome VESC dead zone
-LOW_SPEED_BOOST_THRESHOLD = 300 * ERPM_SCALE  # Apply boost below 300 mech RPM
-LOW_SPEED_BOOST_MAGNITUDE = 500 * ERPM_SCALE  # Aggressively command extra ERPM at low speeds
+LOW_SPEED_BOOST_THRESHOLD = 400 * ERPM_SCALE  # Apply boost below 400 mech RPM (increased from 300)
+LOW_SPEED_BOOST_MAGNITUDE = 800 * ERPM_SCALE  # INCREASED boost (was 500, now 800 ERPM)
 LOW_SPEED_BOOST_FALLOFF = 2.0  # How quickly boost decreases at higher speeds
 
 # ---------- VESC packet helpers (no pyvesc for GetValues) ----------
