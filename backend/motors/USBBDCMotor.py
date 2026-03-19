@@ -216,7 +216,7 @@ class USBBDCMotor(iMotor):
         self.targetSpeed = self.clamp(dutyCycle, 0, 1200) # Clamp to bounds of graph (in case weird values)
         self.delta= self.targetSpeed-self.getCurrentSpeed()
         self.speed = self.targetSpeed + self.delta
-        self.ser.write(encode(SetDutyCycle(self.targetSpeed * self.duty_cycle_scale)))
+        self.ser.write(encode(SetDutyCycle(self.speed * self.duty_cycle_scale)))
         self.currSpeed = self.targetSpeed
         self.getCurrentSpeed()
 
