@@ -165,6 +165,7 @@ def read_mc_values(ser: serial.Serial, timeout: float = 0.2):
 class USBBDCMotor(iMotor):
     # Default scale factor to convert a 0-600 command value into a VESC duty cycle (0-2.6).
     DEFAULT_DUTY_CYCLE_SCALE = 0.000043333333
+    Kp = 0.1
 
     motorID = 0
     currSpeed = 0.0
@@ -181,19 +182,35 @@ class USBBDCMotor(iMotor):
             if duty_cycle_scale is not None
             else self.DEFAULT_DUTY_CYCLE_SCALE
         )
+        self._Kp = self.Kp
+
+        # Track consecutive failed reads for getCurrentSpeed so we can log a warning
+        self._missed_speed_reads = 0
+        self._missed_speed_warn_threshold = 10
+
         self.ser.write(encode(SetDutyCycle(0.0)))
 
     @property
     def duty_cycle_scale(self) -> float:
-        """Gets the scale factor used to convert a 0-600 command value into a VESC duty cycle."""
+        """Scale factor used to convert a 0-600 command value into a VESC duty cycle."""
         return self._duty_cycle_scale
 
     @duty_cycle_scale.setter
     def duty_cycle_scale(self, value: float):
-        """Sets the scale factor used in duty cycle conversions."""
         if value <= 0.0:
             raise ValueError("duty_cycle_scale must be positive")
         self._duty_cycle_scale = value
+
+    @property
+    def Kp(self) -> float:
+        """Proportional gain used by changeSpeed()."""
+        return self._Kp
+
+    @Kp.setter
+    def Kp(self, value: float):
+        if value < 0.0:
+            raise ValueError("Kp must be non-negative")
+        self._Kp = value
 
     # ---------------- CONNECT / DISCONNECT ----------------
     def connect(self):
@@ -213,29 +230,67 @@ class USBBDCMotor(iMotor):
         self.rampDown()
 
     def changeSpeed(self, dutyCycle: float, isShotMode: bool):
-        self.targetSpeed = self.clamp(dutyCycle, 0, 1200) # Clamp to bounds of graph (in case weird values)
-        self.delta= self.targetSpeed-self.getCurrentSpeed()
-        self.speed = self.targetSpeed + self.delta
-        self.ser.write(encode(SetDutyCycle(self.speed * self.duty_cycle_scale)))
-        self.currSpeed = self.targetSpeed
-        self.getCurrentSpeed()
+        """Basic P-style output toward a target speed."""
+
+        self.targetSpeed = self.clamp(dutyCycle, 0, 1200)
+        self.currSpeed = self.getCurrentSpeed()
+
+        error = self.targetSpeed - self.currSpeed
+        command = self.targetSpeed + (error * self.Kp)
+        duty = self.clamp(command * self.duty_cycle_scale, 0.0, 1.0)
+
+        logger.debug(
+            "changeSpeed target=%.1f curr=%.1f err=%.1f cmd=%.1f duty=%.4f shot=%s",
+            self.targetSpeed,
+            self.currSpeed,
+            error,
+            command,
+            duty,
+            isShotMode,
+        )
+
+        self.ser.write(encode(SetDutyCycle(duty)))
 
     def getCurrentSpeed(self):
-        '''send_get_values(ser)
-        vals = read_mc_values(ser)
-        if vals is not None:
-            
-            return vals["rpm"]/2.0 #Encoder implement, maybe working'''
+        '''Request the current speed from the VESC and return the mechanical RPM.
+
+        If the VESC does not reply in time, keep the last-known speed.
+        '''
         send_get_values(self.ser)
         vals = read_mc_values(self.ser)
-        if vals is not None:
-            erpm = vals["rpm"]
+        if vals is None:
+            self._missed_speed_reads += 1
+            if self._missed_speed_reads >= self._missed_speed_warn_threshold:
+                logger.warning(
+                    "No reply from VESC for getCurrentSpeed for %d consecutive reads; keeping last known speed %.1f RPM",
+                    self._missed_speed_reads,
+                    self.currSpeed,
+                )
+            else:
+                logger.debug(
+                    "No reply from VESC for getCurrentSpeed; keeping last known speed %.1f RPM",
+                    self.currSpeed,
+                )
+            return self.currSpeed
 
-            # Your 4-pole RC motor = 2 pole pairs → mech RPM = ERPM / 2
-            mech_rpm = erpm / 2.0
+        # Reset the missed-read counter on a successful read
+        self._missed_speed_reads = 0
 
+        erpm = vals["rpm"]
 
-        print(f"ERPM: {erpm:9.1f} | RPM: {mech_rpm:9.1f} | I_motor: {vals['motor_current']:6.2f} A | V_in: {vals['v_in']:5.2f} V | Duty: {vals['duty_now']*100:5.1f}% | Fault: {vals['fault']}")
+        # Your 4-pole RC motor = 2 pole pairs → mech RPM = ERPM / 2
+        mech_rpm = erpm / 2.0
+
+        self.currSpeed = mech_rpm
+        logger.debug(
+            "ERPM: %9.1f | RPM: %9.1f | I_motor: %6.2f A | V_in: %5.2f V | Duty: %5.1f%% | Fault: %s",
+            erpm,
+            mech_rpm,
+            vals["motor_current"],
+            vals["v_in"],
+            vals["duty_now"] * 100,
+            vals["fault"],
+        )
         return mech_rpm
 
     def rampUp(self):
