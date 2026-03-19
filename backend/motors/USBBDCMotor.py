@@ -32,15 +32,15 @@ VESC_ERPM_RESPONSE_FACTOR = 5.0
 
 # PID Controller parameters for low-speed dead zone compensation
 MIN_ERPM_THRESHOLD = 250 * ERPM_SCALE  # ~250 mechanical RPM before VESC responds
-PID_KP = 0.8  # Proportional gain (reduced slightly to avoid oscillation)
-PID_KI = 0.6  # Integral gain (INCREASED - was 0.3, now 2x stronger)
-PID_KD = 0.08  # Derivative gain (reduced to prevent high-freq oscillation)
-PID_MAX_INTEGRAL = 20000  # Max integral term (INCREASED from 10000)
+PID_KP = 0.8  # Proportional gain
+PID_KI = 1.0  # Integral gain (INCREASED from 0.6, now 1.0 for high-speed tracking)
+PID_KD = 0.08  # Derivative gain
+PID_MAX_INTEGRAL = 30000  # Max integral term (INCREASED from 20000)
 SPEED_LOOP_RATE = 0.02  # Update rate (50 Hz)
 
 # Low-speed feedforward boost to overcome VESC dead zone
-LOW_SPEED_BOOST_THRESHOLD = 400 * ERPM_SCALE  # Apply boost below 400 mech RPM (increased from 300)
-LOW_SPEED_BOOST_MAGNITUDE = 800 * ERPM_SCALE  # INCREASED boost (was 500, now 800 ERPM)
+LOW_SPEED_BOOST_THRESHOLD = 300 * ERPM_SCALE  # Boost threshold (reduced now that VESC scaling helps)
+LOW_SPEED_BOOST_MAGNITUDE = 400 * ERPM_SCALE  # Boost magnitude (reduced from 800 with VESC scaling)
 LOW_SPEED_BOOST_FALLOFF = 2.0  # How quickly boost decreases at higher speeds
 
 # ---------- VESC packet helpers (no pyvesc for GetValues) ----------
@@ -293,8 +293,8 @@ class USBBDCMotor(iMotor):
         
         # LOW-SPEED FEEDFORWARD BOOST: Aggressively overcome dead zone
         # Smooth decay with TARGET speed (not actual speed) to avoid control cliff
-        # boost_strength = 1.0 at 0 RPM, 0.0 at 500 RPM, smooth linear between
-        boost_strength = max(0.0, 1.0 - (target_mech_rpm / 500.0))
+        # boost_strength = 1.0 at 0 RPM, 0.0 at 200 RPM (reduced range since VESC scaling helps)
+        boost_strength = max(0.0, 1.0 - (target_mech_rpm / 200.0))
         feedforward_boost = LOW_SPEED_BOOST_MAGNITUDE * boost_strength
         
         # Final ERPM command = target + PID correction + feedforward boost
