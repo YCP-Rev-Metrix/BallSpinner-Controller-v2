@@ -20,8 +20,14 @@ class BDCMotor(iMotor):
     GPIO_Pin = 26
     motor = None
 
+    DEFAULT_KP = 0.1
+    DEFAULT_DUTY_CYCLE_SCALE = 0.000043333333
+
     def __init__(self, GPIOPin: int):
         self.GPIO_Pin = GPIOPin
+        self._Kp = self.DEFAULT_KP
+        self._duty_cycle_scale = self.DEFAULT_DUTY_CYCLE_SCALE
+
         #print(f"pin: {self.GPIO_Pin}")
         # Initialize software PWM using gpiozero.  On non‑Raspberry Pi
         # environments (unit tests or desktop development) gpiozero will

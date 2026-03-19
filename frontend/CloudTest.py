@@ -236,6 +236,12 @@ class CloudTest(QtWidgets.QWidget):
         self.btnStepperDiagnosticData = self.findChild(QtWidgets.QPushButton, 'btnStepDiag')
         self.btnStepperDiagnosticData.clicked.connect(self.stepper_diagnostic_data)
 
+        # Motor parameter controls
+        self.spnKp = self.findChild(QtWidgets.QDoubleSpinBox, 'spnKp')
+        self.spnDutyScale = self.findChild(QtWidgets.QDoubleSpinBox, 'spnDutyScale')
+        self.btnApplyMotorParams = self.findChild(QtWidgets.QPushButton, 'btnApplyMotorParams')
+        self.btnApplyMotorParams.clicked.connect(self.apply_motor_params)
+
     def spin_diagnostic_data(self):
         """Run the motor diagnostic and show a live log dialog while it runs."""
 
@@ -325,6 +331,20 @@ class CloudTest(QtWidgets.QWidget):
     def stepper_diagnostic_data(self):
         print("Stepper Diagnostic Data clicked")
         # Simulate stepper diagnostic data by updating the label with changing values
+
+    def apply_motor_params(self):
+        """Apply Kp and duty cycle scale from the UI to motor1."""
+        try:
+            kp = self.spnKp.value()
+            scale = self.spnDutyScale.value()
+            bsc.motor1.Kp = kp
+            bsc.motor1.duty_cycle_scale = scale
+            self.findChild(QtWidgets.QLabel, 'lblResponse').setText(
+                f"Applied Kp={kp:.3f}, duty_scale={scale:.9f}"
+            )
+        except Exception as e:
+            self.findChild(QtWidgets.QLabel, 'lblResponse').setText(f"Error: {e}")
+            print(e)
 
 
     def generate_error(self):

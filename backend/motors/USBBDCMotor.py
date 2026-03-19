@@ -188,7 +188,7 @@ class USBBDCMotor(iMotor):
         self._missed_speed_warn_threshold = 10
 
         # Default proportional gain
-        self.Kp = 0.1
+        self.Kp = 0.5
 
         self.ser.write(encode(SetDutyCycle(0.0)))
 
