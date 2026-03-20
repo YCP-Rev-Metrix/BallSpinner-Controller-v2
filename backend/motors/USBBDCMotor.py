@@ -189,9 +189,11 @@ class USBBDCMotor(iMotor):
 
         # Default PID gains
         self.Kp = 0.5
+        self.Ki = 0.0
         self.Kd = 0.0
 
-        # For derivative computation
+        # For integral & derivative computation
+        self._integral = 0.0
         self._prev_error = 0.0
         self._prev_time = time.time()
 
@@ -218,6 +220,17 @@ class USBBDCMotor(iMotor):
         if value < 0.0:
             raise ValueError("Kp must be non-negative")
         self._Kp = value
+
+    @property
+    def Ki(self) -> float:
+        """Integral gain used by changeSpeed()."""
+        return self._Ki
+
+    @Ki.setter
+    def Ki(self, value: float):
+        if value < 0.0:
+            raise ValueError("Ki must be non-negative")
+        self._Ki = value
 
     @property
     def Kd(self) -> float:
@@ -255,19 +268,30 @@ class USBBDCMotor(iMotor):
 
         error = self.targetSpeed - self.currSpeed
 
-        # Derivative term (d(error)/dt)
         now = time.time()
         dt = now - self._prev_time if self._prev_time else 0.0
-        d_error = (error - self._prev_error) / dt if dt > 0.0 else 0.0
+        if dt <= 0.0:
+            dt = 1e-6
+        d_error = (error - self._prev_error) / dt
+
+        # Integral update (always run unless dt is zero) + anti-windup
+        self._integral += error * dt
+        self._integral = self.clamp(self._integral, -1200, 1200)
+
         self._prev_error = error
         self._prev_time = now
-        if self.currSpeed == 0.0 and self.targetSpeed > 0.0:
+
+        if self.currSpeed == 0.0 and self.targetSpeed > 0.0 and False:
             # Motor is stopped give big kick to get it going, then let PID take over
-            command =  0.5
-            duty = 0.5 #run at 50% duty until we get a speed reading, then PID can take over
+            command = 0.5
+            duty = 0.5  # run at 50% duty until we get a speed reading, then PID can take over
         else:
-            command = self.targetSpeed + (error * self.Kp) + (d_error * self.Kd)    
-            #print(f"command before clamp: {command:.2f}")
+            command = (
+                self.targetSpeed
+                + (error * self.Kp)
+                + (self._integral * self.Ki)
+                + (d_error * self.Kd)
+            )
             duty = self.clamp(command * self.duty_cycle_scale, 0.0, 1.0)
 
         logger.debug(

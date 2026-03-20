@@ -239,6 +239,7 @@ class CloudTest(QtWidgets.QWidget):
 
         # Motor parameter controls
         self.spnKp = self.findChild(QtWidgets.QDoubleSpinBox, 'spnKp')
+        self.spnKi = self.findChild(QtWidgets.QDoubleSpinBox, 'spnKi')
         self.spnKd = self.findChild(QtWidgets.QDoubleSpinBox, 'spnKd')
         self.spnDutyScale = self.findChild(QtWidgets.QDoubleSpinBox, 'spnDutyScale')
         self.btnApplyMotorParams = self.findChild(QtWidgets.QPushButton, 'btnApplyMotorParams')
@@ -246,6 +247,7 @@ class CloudTest(QtWidgets.QWidget):
 
         # Default to the current motor1 configuration
         self.spnKp.setValue(bsc.motor1.Kp)
+        self.spnKi.setValue(getattr(bsc.motor1, 'Ki', 0.0))
         self.spnKd.setValue(getattr(bsc.motor1, 'Kd', 0.0))
         self.spnDutyScale.setValue(bsc.motor1.duty_cycle_scale)
 
@@ -344,15 +346,17 @@ class CloudTest(QtWidgets.QWidget):
         """Apply Kp and duty cycle scale from the UI to motor1."""
         try:
             kp = self.spnKp.value()
+            ki = self.spnKi.value()
             kd = self.spnKd.value()
             scale = self.spnDutyScale.value()
             bsc.motor1.Kp = kp
-            # Kd is optional on some motor types
+            if hasattr(bsc.motor1, 'Ki'):
+                bsc.motor1.Ki = ki
             if hasattr(bsc.motor1, 'Kd'):
                 bsc.motor1.Kd = kd
             bsc.motor1.duty_cycle_scale = scale
             self.findChild(QtWidgets.QLabel, 'lblResponse').setText(
-                f"Applied Kp={kp:.3f}, Kd={kd:.3f}, duty_scale={scale:.9f}"
+                f"Applied Kp={kp:.3f}, Ki={ki:.3f}, Kd={kd:.3f}, duty_scale={scale:.9f}"
             )
         except Exception as e:
             self.findChild(QtWidgets.QLabel, 'lblResponse').setText(f"Error: {e}")
