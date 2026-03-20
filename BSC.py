@@ -71,7 +71,7 @@ class BSC:
         self.session = None
         self.data_controller = None
         # Diagnostic sampling interval (milliseconds) used by UI pages
-        self.diagnostic_sample_interval_ms = 50
+        self.diagnostic_sample_interval_ms = 30
         
 
         if utils.is_raspberry_pi_5():
