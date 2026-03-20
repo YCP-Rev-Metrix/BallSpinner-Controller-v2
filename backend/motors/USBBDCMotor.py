@@ -261,10 +261,14 @@ class USBBDCMotor(iMotor):
         d_error = (error - self._prev_error) / dt if dt > 0.0 else 0.0
         self._prev_error = error
         self._prev_time = now
-
-        command = self.targetSpeed + (error * self.Kp) + (d_error * self.Kd)
-        print(f"command before clamp: {command:.2f}")
-        duty = self.clamp(command * self.duty_cycle_scale, 0.0, 1.0)
+        if self.currSpeed == 0.0 and self.targetSpeed > 0.0:
+            # Motor is stopped give big kick to get it going, then let PID take over
+            command =  0.5
+            duty = 0.5 #run at 50% duty until we get a speed reading, then PID can take over
+        else:
+            command = self.targetSpeed + (error * self.Kp) + (d_error * self.Kd)    
+            #print(f"command before clamp: {command:.2f}")
+            duty = self.clamp(command * self.duty_cycle_scale, 0.0, 1.0)
 
         logger.debug(
             "changeSpeed target=%.1f curr=%.1f err=%.1f cmd=%.1f duty=%.4f shot=%s",
