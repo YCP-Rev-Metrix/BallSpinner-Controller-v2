@@ -115,7 +115,7 @@ class StepMotor():
         if self.ENABLE_PIN is not None:
             lgpio.gpio_claim_output(self.h, self.ENABLE_PIN, 1 if self._enable_active_low else 0)
             # Ensure motor is enabled by default
-            self.enable()
+            self.disable()  # Start with motor disabled; caller can enable when ready
 
         self.movement_in_progress = False  # Track if a movement is currently running
         self.movement_lock = threading.Lock()  # Lock for thread safety
