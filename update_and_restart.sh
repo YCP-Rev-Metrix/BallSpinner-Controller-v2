@@ -11,17 +11,12 @@ cd "$PROJECT_DIR"
 
 echo "In $(pwd), pulling latest from GitHub..."
 
-# 3) update from GitHub
-git fetch --all --prune
 # adjust branch as needed (main/master)
 git pull 
 
-# 4) restart; adjust to your actual service restart command
-if [ -x "./restartbluetooth.sh" ]; then
-  echo "Running restartbluetooth.sh..."
-  ./restartbluetooth.sh
-else
-  echo "No restart script found in project root. Please run your restart command manually."
-fi
+echo "Update complete. Rebooting now..."
+# requires sudo (or run as root)
+sudo reboot
 
-echo "Update + restart done."
+
+
