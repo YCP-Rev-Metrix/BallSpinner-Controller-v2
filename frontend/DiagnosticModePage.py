@@ -391,10 +391,11 @@ class DiagnosticModePage(QtWidgets.QWidget):
         try:
             vals = bsc.motor1.get_vals()
             spin_current = vals['input_current']
-            spin_temp = vals['temp_motor']
+            spin_temp = 0.0    #vals['temp_motor']
             self.lblSpinCurrent.setText(f"{spin_current:.2f} A")
             self.lblSpinTemp.setText(f"{spin_temp:.1f} °C")
-        except Exception:
+        except Exception as e:
+            print(f"Error reading motor 1 sensors: {e}")
             self.lblSpinCurrent.setText("N/A Read Error")
             self.lblSpinTemp.setText("N/A Read Error")
         self._spin_enc_arr[idx] = enc_sp
