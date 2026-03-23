@@ -390,13 +390,13 @@ class DiagnosticModePage(QtWidgets.QWidget):
         #Get Temp and Current values, Worry about graph later
         try:
             vals = bsc.motor1.get_vals()
-            spin_current = vals['current']
-            spin_temp = vals['temp']
+            spin_current = vals['input_current']
+            spin_temp = vals['temp_motor']
             self.lblSpinCurrent.setText(f"{spin_current:.2f} A")
             self.lblSpinTemp.setText(f"{spin_temp:.1f} °C")
         except Exception:
-            self.lblSpinCurrent.setText("N/A")
-            self.lblSpinTemp.setText("N/A")
+            self.lblSpinCurrent.setText("N/A Read Error")
+            self.lblSpinTemp.setText("N/A Read Error")
         self._spin_enc_arr[idx] = enc_sp
         self._tilt_enc_arr[idx] = enc_tl
         self._angle_enc_arr[idx] = enc_ag
