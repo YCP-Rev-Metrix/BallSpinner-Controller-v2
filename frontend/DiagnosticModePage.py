@@ -230,6 +230,15 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self._last_values = {'spin': 0.0, 'tilt': 0.0, 'angle': 0.0}
         self._sample_index = 0  # drives quantized 50ms grid
 
+        #Current and Temp Labels
+        self.lblSpinCurrent = self.findChild(QtWidgets.QLabel, 'lblSpinCurrent')
+        self.lblTiltCurrent = self.findChild(QtWidgets.QLabel, 'lblTiltCurrent')
+        self.lblAngleCurrent = self.findChild(QtWidgets.QLabel, 'lblAngleCurrent')
+        self.lblSpinTemp = self.findChild(QtWidgets.QLabel, 'lblSpinTemp')
+        self.lblTiltTemp = self.findChild(QtWidgets.QLabel, 'lblTiltTemp')
+        self.lblAngleTemp = self.findChild(QtWidgets.QLabel, 'lblAngleTemp')
+
+
     def openPostDialog(self):
         from .PostDialog import PostDialog
         dialog = PostDialog(self)
@@ -377,6 +386,17 @@ class DiagnosticModePage(QtWidgets.QWidget):
             enc_ag = bsc.motor3.getCurrentSpeed()
         except Exception:
             enc_ag = 0.0
+
+        #Get Temp and Current values, Worry about graph later
+        try:
+            vals = bsc.motor1.get_vals()
+            spin_current = vals['current']
+            spin_temp = vals['temp']
+            self.lblSpinCurrent.setText(f"{spin_current:.2f} A")
+            self.lblSpinTemp.setText(f"{spin_temp:.1f} °C")
+        except Exception:
+            self.lblSpinCurrent.setText("N/A")
+            self.lblSpinTemp.setText("N/A")
         self._spin_enc_arr[idx] = enc_sp
         self._tilt_enc_arr[idx] = enc_tl
         self._angle_enc_arr[idx] = enc_ag

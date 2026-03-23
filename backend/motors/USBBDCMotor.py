@@ -349,7 +349,25 @@ class USBBDCMotor(iMotor):
             vals["duty_now"] * 100,
             vals["fault"],
         )
-        return mech_rpm
+        return mech_rpm 
+    def getVals(self):
+        send_get_values(self.ser)
+        vals = read_mc_values(self.ser)
+        if vals is None:
+            self._missed_speed_reads += 1
+            if self._missed_speed_reads >= self._missed_speed_warn_threshold:
+                logger.warning(
+                    "No reply from VESC for getCurrentSpeed for %d consecutive reads; keeping last known speed %.1f RPM",
+                    self._missed_speed_reads,
+                    self.currSpeed,
+                )
+            else:
+                logger.debug(
+                    "No reply from VESC for getCurrentSpeed; keeping last known speed %.1f RPM",
+                    self.currSpeed,
+                )
+            return self.currSpeed
+        return vals
 
     def rampUp(self):
         while self.currSpeed < self.targetSpeed:
