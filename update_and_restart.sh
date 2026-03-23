@@ -14,7 +14,7 @@ echo "In $(pwd), pulling latest from GitHub..."
 # 3) update from GitHub
 git fetch --all --prune
 # adjust branch as needed (main/master)
-git pull --ff-only origin main
+git pull 
 
 # 4) restart; adjust to your actual service restart command
 if [ -x "./restartbluetooth.sh" ]; then
