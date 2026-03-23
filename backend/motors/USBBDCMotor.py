@@ -284,7 +284,7 @@ class USBBDCMotor(iMotor):
         
 
 
-        if self.currSpeed < 10.0 and self.targetSpeed > 10.0:
+        if self.currSpeed < self.targetSpeed*0.15:
             # Motor is stopped give big kick to get it going, then let PID take over
             command = 1/self.duty_cycle_scale  # 20 is an empirically chosen "kick" command value
             duty = 1  # run at 100% duty until we get a speed reading, then PID can take over
