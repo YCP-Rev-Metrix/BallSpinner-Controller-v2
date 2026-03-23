@@ -214,8 +214,10 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         bsc.get_smartdotConnectionManager().disconnect_all()
         print("Disconnected from all SmartDots")
         print("SmartDots list should be empty: ", bsc.get_smartdotConnectionManager().get_smartdots())
-
-        bsc.disconnect_all_motors()
+        try:
+            bsc.disconnect_all_motors()
+        except Exception:
+            pass
         super().closeEvent(event)
 
     def resizeEvent(self, event):
