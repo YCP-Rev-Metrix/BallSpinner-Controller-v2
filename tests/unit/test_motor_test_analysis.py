@@ -14,18 +14,13 @@ def test_analyze_motor_response_basic():
         timestamps=timestamps,
         current_speeds=current_speeds,
         sample_interval=sample_interval,
-        settle_threshold=0.05,
-        steady_state_window=3,
+        time_to_target=0.3,
     )
 
-    assert analysis["rise_time"] == pytest.approx(0.3)
-    assert analysis["time_above_target"] == pytest.approx(0.1)
-    assert analysis["time_below_target"] == pytest.approx(0.4)
-    assert analysis["overshoot_pct"] == pytest.approx(2.0)
-    assert analysis["undershoot_pct"] == pytest.approx(100.0 - 0.0)
-    assert analysis["rmse"] is not None
-    assert analysis["iae"] is not None
-    assert analysis["ise"] is not None
+    assert analysis["min_speed"] == pytest.approx(95.0)
+    assert analysis["max_speed"] == pytest.approx(102.0)
+    assert analysis["mean_speed"] == pytest.approx((95.0 + 102.0) / 2)
+    assert analysis["average_error"] == pytest.approx(((95.0 - 100.0) + (102.0 - 100.0)) / 2)
 
 
 def test_analyze_motor_response_empty():
@@ -36,7 +31,4 @@ def test_analyze_motor_response_empty():
         sample_interval=0.1,
     )
 
-    assert analysis["rise_time"] is None
-    assert analysis["settling_time"] is None
-    assert analysis["rmse"] is None
-    assert analysis["ia"+"e"] is None
+    assert analysis == {}

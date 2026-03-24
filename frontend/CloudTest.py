@@ -39,15 +39,50 @@ class MotorTestGraphDialog(QtWidgets.QDialog):
                 # (e.g., overshoot=181 on target=250 → 72.4%)
                 overshoot_pct = (overshoot / target_speed) * 100
 
-            stats_str = (
-                f"Time to target: {time_to_target:.2f}s" if time_to_target is not None else "Time to target: n/a"
+            def fmt_value(val):
+                return f"{val:.2f}" if isinstance(val, (int, float)) else str(val)
+
+            stats_items = []
+            stats_items.append(
+                f"Time to target: {fmt_value(time_to_target)}" if time_to_target is not None else "Time to target: n/a"
             )
             if overshoot is not None:
-                stats_str += f" | Overshoot: {overshoot:.2f}"
+                stats_items.append(f"Overshoot: {fmt_value(overshoot)}")
             if overshoot_pct is not None:
-                stats_str += f" | Overshoot %: {overshoot_pct:.2f}"
+                stats_items.append(f"Overshoot %: {fmt_value(overshoot_pct)}")
 
-            stats_label = QtWidgets.QLabel(stats_str)
+            analysis = r.get('analysis', {}) or {}
+            if analysis:
+                analysis_items = [
+                    f"min_speed: {fmt_value(analysis.get('min_speed', 'n/a'))}",
+                    f"max_speed: {fmt_value(analysis.get('max_speed', 'n/a'))}",
+                    f"mean_speed: {fmt_value(analysis.get('mean_speed', 'n/a'))}",
+                    f"median_speed: {fmt_value(analysis.get('median_speed', 'n/a'))}",
+                    f"std_dev: {fmt_value(analysis.get('standard_deviation', 'n/a'))}",
+                    f"variance: {fmt_value(analysis.get('variance', 'n/a'))}",
+                    f"avg_error: {fmt_value(analysis.get('average_error', 'n/a'))}",
+                    f"avg_abs_error: {fmt_value(analysis.get('average_abs_error', 'n/a'))}",
+                    f"max_error: {fmt_value(analysis.get('max_error', 'n/a'))}",
+                    f"min_error: {fmt_value(analysis.get('min_error', 'n/a'))}",
+                ]
+                stats_items.append("Analysis:")
+                stats_items.extend(analysis_items)
+
+            grouped_lines = []
+            i = 0
+            while i < len(stats_items):
+                group = stats_items[i:i+5]
+                if i == 0 and len(group) == 1 and group[0].startswith("Time to target"):
+                    # Keep the first label alone for clarity when non-analysis only
+                    grouped_lines.append(group[0])
+                else:
+                    # Combine up to 5 items per line
+                    grouped_lines.append(" | ".join(group))
+                i += 5
+
+            stats_text = "\n".join(grouped_lines)
+            stats_label = QtWidgets.QLabel(stats_text)
+            stats_label.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
             stats_label.setStyleSheet("font-weight: bold;")
             tab_layout.addWidget(stats_label)
 
@@ -92,9 +127,32 @@ class MotorTestGraphDialog(QtWidgets.QDialog):
             tab_layout.addWidget(plot)
             tabs.addTab(tab, f"{speed}")
 
+        btn_export = QtWidgets.QPushButton("Export to PNG")
+        btn_export.clicked.connect(self._export_to_png)
+        layout.addWidget(btn_export)
+
         btn_close = QtWidgets.QPushButton("Close")
         btn_close.clicked.connect(self.accept)
         layout.addWidget(btn_close)
+
+    def _export_to_png(self):
+        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self,
+            "Export Motor Test Graphs and Data to PNG",
+            "motor_test_results.png",
+            "PNG Files (*.png)",
+        )
+        if not filename:
+            return
+        if not filename.lower().endswith('.png'):
+            filename += '.png'
+
+        pixmap = self.grab()
+        saved = pixmap.save(filename, 'PNG')
+        if saved:
+            QtWidgets.QMessageBox.information(self, "Export Complete", f"Exported to: {filename}")
+        else:
+            QtWidgets.QMessageBox.warning(self, "Export Failed", f"Could not save to: {filename}")
 
     def _on_motor_test_graph_click(self, event, plot, vline, marker, cursor_label, timestamps, current_speeds, target_speeds):
         try:
@@ -325,10 +383,31 @@ class CloudTest(QtWidgets.QWidget):
         worker = MotorTestWorker(bsc, hold_time=test_duration, parent=self)
         worker.newText.connect(lambda t: text_edit.moveCursor(QTextCursor.MoveOperation.End) or text_edit.insertPlainText(t))
 
+        def _fmt(value):
+            return f"{value:.2f}" if isinstance(value, (int, float)) else str(value)
+
         def _on_finished(results):
             summary = f"Ran {len(results)} speeds, last runtime={results[-1]['runtime']:.2f}s\n"
             text_edit.append(summary)
             self.findChild(QtWidgets.QLabel, 'lblResponse').setText(summary)
+
+            # Add per-speed analysis summary into popup text
+            for r in results:
+                analysis = r.get('analysis', {}) or {}
+                if analysis:
+                    analysis_str = (
+                        f"Speed {r.get('target_speed')}: "
+                        f"min={_fmt(analysis.get('min_speed', 'n/a'))} "
+                        f"max={_fmt(analysis.get('max_speed', 'n/a'))} "
+                        f"mean={_fmt(analysis.get('mean_speed', 'n/a'))} "
+                        f"overshoot={_fmt(r.get('overshoot', 'n/a'))}\n"
+                    )
+                else:
+                    analysis_str = (
+                        f"Speed {r.get('target_speed')}: analysis not available\n"
+                    )
+                text_edit.append(analysis_str)
+
             btn_close.setEnabled(True)
 
             graph_dialog = MotorTestGraphDialog(results, parent=self)

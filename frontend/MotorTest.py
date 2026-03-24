@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import numpy as np
 
 # Ensure the project root is on sys.path so imports like `from BSC import BSC` work
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -79,95 +80,50 @@ def TestMotor(self, bsc, target_speed, hold_time, sample_interval):
     }
 
 
-def AnalyzeMotorResponse(
-    target_speed,
-    timestamps,
-    current_speeds,
-    sample_interval,
-    settle_threshold=0.05,
-    steady_state_window=10,
-):
-    """Compute control metrics for a test waveform."""
-    if not timestamps or not current_speeds:
-        return {
-            "rise_time": None,
-            "settling_time": None,
-            "steady_state_error_mean": None,
-            "steady_state_error_std": None,
-            "rmse": None,
-            "iae": None,
-            "ise": None,
-            "max_error": None,
-            "min_error": None,
-            "time_above_target": 0.0,
-            "time_below_target": 0.0,
-            "overshoot_pct": None,
-            "undershoot_pct": None,
-            "variance": None,
-            "std_dev": None,
-        }
+def AnalyzeMotorResponse(target_speed,timestamps,current_speeds, sample_interval, time_to_target=None):
+    """Analyze the motor response to extract characteristics like rise time, settling time, etc."""
 
-    errors = [target_speed - speed for speed in current_speeds]
-    abs_errors = [abs(e) for e in errors]
-    sq_errors = [e * e for e in errors]
+    if not current_speeds:
+        return {}
 
-    rise_time = None
-    target_90 = 0.9 * target_speed
-    for i, speed in enumerate(current_speeds):
-        if speed >= target_90:
-            rise_time = i * sample_interval
-            break
+    # remove data from before the motor gets to speed
+    if time_to_target is not None:
+        idx = int(round(time_to_target / sample_interval))
+        if idx < 0:
+            idx = 0
+        timestamps = timestamps[idx:]
+        current_speeds = current_speeds[idx:]
 
-    settling_time = None
-    tolerance = settle_threshold * target_speed
-    for i in range(len(current_speeds)):
-        window = current_speeds[i:]
-        if all(abs(v - target_speed) <= tolerance for v in window):
-            settling_time = i * sample_interval
-            break
-
-    steady_samples = current_speeds[-steady_state_window:] if len(current_speeds) >= steady_state_window else current_speeds
-    steady_errors = [target_speed - v for v in steady_samples]
-
-    mean_error = sum(steady_errors) / len(steady_errors) if steady_errors else None
-    variance = (
-        sum((v - (sum(current_speeds) / len(current_speeds))) ** 2 for v in current_speeds) / len(current_speeds)
-        if current_speeds
-        else None
-    )
-    std_dev = variance ** 0.5 if variance is not None else None
-
-    iae = sum(abs_errors) * sample_interval
-    ise = sum(sq_errors) * sample_interval
-    rmse = (sum(sq_errors) / len(sq_errors)) ** 0.5 if sq_errors else None
-
-    time_above_target = sum(1 for v in current_speeds if v > target_speed) * sample_interval
-    time_below_target = sum(1 for v in current_speeds if v < target_speed) * sample_interval
-
-    overshoot = max(current_speeds) - target_speed
-    undershoot = target_speed - min(current_speeds)
-
+    error = [s - target_speed for s in current_speeds]
+    abs_error = [abs(e) for e in error]
+    
+    min_speed = min(current_speeds)
+    max_speed = max(current_speeds)
+    standard_deviation = np.std(current_speeds)
+    variance = np.var(current_speeds)
+    mean_speed = np.mean(current_speeds)
+    median_speed = np.median(current_speeds)
+    average_error = np.mean(error)
+    average_abs_error = np.mean(abs_error)
+    max_error = max(error)
+    min_error = min(error)
+    
     return {
-        "rise_time": rise_time,
-        "settling_time": settling_time,
-        "steady_state_error_mean": mean_error,
-        "steady_state_error_std": (
-            (sum((e - mean_error) ** 2 for e in steady_errors) / len(steady_errors)) ** 0.5
-            if steady_errors and mean_error is not None
-            else None
-        ),
-        "rmse": rmse,
-        "iae": iae,
-        "ise": ise,
-        "max_error": max(errors),
-        "min_error": min(errors),
-        "time_above_target": time_above_target,
-        "time_below_target": time_below_target,
-        "overshoot_pct": (overshoot / target_speed) * 100 if target_speed else None,
-        "undershoot_pct": (undershoot / target_speed) * 100 if target_speed else None,
+        "min_speed": min_speed,
+        "max_speed": max_speed,
+        "mean_speed": mean_speed,
+        "median_speed": median_speed,
+        "standard_deviation": standard_deviation,
         "variance": variance,
-        "std_dev": std_dev,
+        "average_error": average_error,
+        "average_abs_error": average_abs_error,
+        "max_error": max_error,
+        "min_error": min_error,
     }
+    
+
+
+
 
 
 def tune_duty_cycle_scale(
