@@ -125,7 +125,7 @@ class MotorTestGraphDialog(QtWidgets.QDialog):
             )
 
             tab_layout.addWidget(plot)
-            tabs.addTab(tab, f"{speed}")
+            self.tabs.addTab(tab, f"{speed}")
 
         btn_export = QtWidgets.QPushButton("Export to PNG")
         btn_export.clicked.connect(self._export_to_png)
