@@ -2,6 +2,8 @@ from .iMotor import iMotor
 from gpiozero import Device, LED, PWMOutputDevice
 from gpiozero.pins.mock import MockFactory, MockPWMPin
 import random
+import time
+
 
 class SimMotor(iMotor):
     motorID = 0
@@ -14,43 +16,134 @@ class SimMotor(iMotor):
     DEFAULT_KD = 0.0
     DEFAULT_DUTY_CYCLE_SCALE = 0.000043333333
 
-    def __init__(self, GPIOPin : int):
+    def __init__(
+        self,
+        GPIOPin: int,
+        mode: str = "vesc",
+        max_speed: float = 600.0,
+        time_constant: float = 0.1,
+        noise_std: float = 1.5,
+    ):
         factory = MockFactory()
         Device.pin_factory = MockFactory(pin_class=MockPWMPin)
         motor = PWMOutputDevice(self.GPIO_Pin)
+
+        self.GPIO_Pin = GPIOPin
         self._Kp = self.DEFAULT_KP
         self._Kd = self.DEFAULT_KD
         self._duty_cycle_scale = self.DEFAULT_DUTY_CYCLE_SCALE
 
-    def connect(self, GPIOPin : int):
-        pass
+        self.mode = mode
+        self.max_speed = max_speed
+        self.time_constant = time_constant
+        self.noise_std = noise_std
 
-    def disconnect(self, GPIOPin : int = None):
-        pass
+        self._enabled = False
+        self._last_update = time.time()
+        self.targetSpeed = 0.0
+        self.currSpeed = 0.0
+
+    def connect(self, GPIOPin: int = None):
+        self.GPIO_Pin = GPIOPin if GPIOPin is not None else self.GPIO_Pin
+        self._enabled = True
+        return True
+
+    def disconnect(self, GPIOPin: int = None):
+        self._enabled = False
+        return True
 
     # Turns on Motor at Specified Power (Duty Cycle)
-    def start(self, dutyCycle = 100):
-        #print("Motor started in motor object")
-        pass    
+    def start(self, dutyCycle=0):
+        self._enabled = True
+        self.targetSpeed = 0.0
+        self.currSpeed = 0.0
+        self._last_update = time.time()
 
     def stop(self):
-        pass
+        self.targetSpeed = 0.0
+        self.currSpeed = 0.0
+        self._enabled = False
+        self._last_update = time.time()
 
-    def changeSpeed(self, dutyCycle : int, isShotMode: bool):
-        #print("speed changed in motor object")
-        self.currSpeed = dutyCycle
+    def _update_sim(self):
+        now = time.time()
+        dt = max(1e-6, now - self._last_update)
+        self._last_update = now
 
-    def rampUp(self):
-        pass
+        if self.mode == "instant":
+            self.currSpeed = self.targetSpeed
+            return self.currSpeed
+        elif self.mode == "step":
+            # legacy behavior: direct assignment to preserve compatibility
+            self.currSpeed = self.targetSpeed
+            return self.currSpeed
+        else:
+            # first-order dynamic response to simulate inertia and controller action
+            alpha = 1.0 - pow(2.718281828459045, -dt / max(1e-6, self.time_constant))
+            self.currSpeed += (self.targetSpeed - self.currSpeed) * alpha
+            self.currSpeed = max(0.0, min(self.currSpeed, self.max_speed))
 
-    def setTargetSpeed(self, targetSpeed : float):
-        self.targetSpeed = targetSpeed
+            if self.noise_std > 0.0 and self.currSpeed > 0:
+                self.currSpeed += random.gauss(0.0, self.noise_std)
+                self.currSpeed = max(0.0, min(self.currSpeed, self.max_speed))
 
-    def setTargetPower(self, targetPower : float):
+        return self.currSpeed
+
+        return self.currSpeed
+
+    def changeSpeed(self, dutyCycle: float, isShotMode: bool):
+        # Accept the same command range as USBBDCMotor (0-1200), clamp it.
+        new_target = max(0.0, min(dutyCycle, 1200.0))
+
+        # Ensure we can read values without requiring explicit start() first.
+        self._enabled = True
+
+        if self.mode == "step":
+            # Step motor compatibility path remains in BSC-style angle semantics.
+            self.currSpeed = new_target
+            self.targetSpeed = new_target
+            return
+
+        self.targetSpeed = new_target
+        if self.mode == "instant":
+            self.currSpeed = new_target
+        else:
+            self._update_sim()
+
+    def rampUp(self, step: float = 12.0):
+        if self.mode == "step":
+            return
+
+        if self.targetSpeed <= self.currSpeed:
+            return
+
+        # Naive ramp towards target, respecting the max speed and preserving dynamics.
+        self.currSpeed = min(self.targetSpeed, self.currSpeed + step)
+        self.currSpeed = max(0.0, min(self.currSpeed, self.max_speed))
+
+    def rampDown(self, step: float = 12.0):
+        if self.mode == "step":
+            return
+
+        if self.targetSpeed >= self.currSpeed:
+            return
+
+        self.currSpeed = max(self.targetSpeed, self.currSpeed - step)
+        self.currSpeed = max(0.0, min(self.currSpeed, self.max_speed))
+
+    def setTargetSpeed(self, targetSpeed: float):
+        self.targetSpeed = max(0.0, min(targetSpeed, 1200.0))
+
+    def setTargetPower(self, targetPower: float):
         self.targetPower = targetPower
 
     def getCurrentSpeed(self):
-        return self.currSpeed + random.uniform(-20, 20) # Simulate some noise in the speed measurement
+        # Allow current speed reads even if start() hasn't been explicitly called,
+        # for compatibility with existing tests and control flows.
+        if not self._enabled:
+            self._enabled = True
+
+        return self._update_sim()
 
     @property
     def Kp(self) -> float:
@@ -58,6 +151,8 @@ class SimMotor(iMotor):
 
     @Kp.setter
     def Kp(self, value: float):
+        if value < 0.0:
+            raise ValueError("Kp must be non-negative")
         self._Kp = value
 
     @property
@@ -66,6 +161,8 @@ class SimMotor(iMotor):
 
     @Kd.setter
     def Kd(self, value: float):
+        if value < 0.0:
+            raise ValueError("Kd must be non-negative")
         self._Kd = value
 
     @property
@@ -74,6 +171,8 @@ class SimMotor(iMotor):
 
     @duty_cycle_scale.setter
     def duty_cycle_scale(self, value: float):
+        if value <= 0.0:
+            raise ValueError("duty_cycle_scale must be positive")
         self._duty_cycle_scale = value
 
     def set_Kp(self, kp: float):

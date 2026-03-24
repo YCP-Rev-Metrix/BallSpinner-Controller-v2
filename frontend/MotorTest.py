@@ -59,6 +59,13 @@ def TestMotor(self, bsc, target_speed, hold_time, sample_interval):
 
     timestamps = [i * sample_interval for i in range(len(current_speeds))]
 
+    response_analysis = AnalyzeMotorResponse(
+        target_speed=target_speed,
+        timestamps=timestamps,
+        current_speeds=current_speeds,
+        sample_interval=sample_interval,
+    )
+
     return {
         "target_speed": target_speed,
         "target_speeds": target_speeds,
@@ -68,6 +75,98 @@ def TestMotor(self, bsc, target_speed, hold_time, sample_interval):
         "overshoot": overshoot,
         "time_to_target": time_to_target,
         "runtime": end_time - start_time,
+        "analysis": response_analysis,
+    }
+
+
+def AnalyzeMotorResponse(
+    target_speed,
+    timestamps,
+    current_speeds,
+    sample_interval,
+    settle_threshold=0.05,
+    steady_state_window=10,
+):
+    """Compute control metrics for a test waveform."""
+    if not timestamps or not current_speeds:
+        return {
+            "rise_time": None,
+            "settling_time": None,
+            "steady_state_error_mean": None,
+            "steady_state_error_std": None,
+            "rmse": None,
+            "iae": None,
+            "ise": None,
+            "max_error": None,
+            "min_error": None,
+            "time_above_target": 0.0,
+            "time_below_target": 0.0,
+            "overshoot_pct": None,
+            "undershoot_pct": None,
+            "variance": None,
+            "std_dev": None,
+        }
+
+    errors = [target_speed - speed for speed in current_speeds]
+    abs_errors = [abs(e) for e in errors]
+    sq_errors = [e * e for e in errors]
+
+    rise_time = None
+    target_90 = 0.9 * target_speed
+    for i, speed in enumerate(current_speeds):
+        if speed >= target_90:
+            rise_time = i * sample_interval
+            break
+
+    settling_time = None
+    tolerance = settle_threshold * target_speed
+    for i in range(len(current_speeds)):
+        window = current_speeds[i:]
+        if all(abs(v - target_speed) <= tolerance for v in window):
+            settling_time = i * sample_interval
+            break
+
+    steady_samples = current_speeds[-steady_state_window:] if len(current_speeds) >= steady_state_window else current_speeds
+    steady_errors = [target_speed - v for v in steady_samples]
+
+    mean_error = sum(steady_errors) / len(steady_errors) if steady_errors else None
+    variance = (
+        sum((v - (sum(current_speeds) / len(current_speeds))) ** 2 for v in current_speeds) / len(current_speeds)
+        if current_speeds
+        else None
+    )
+    std_dev = variance ** 0.5 if variance is not None else None
+
+    iae = sum(abs_errors) * sample_interval
+    ise = sum(sq_errors) * sample_interval
+    rmse = (sum(sq_errors) / len(sq_errors)) ** 0.5 if sq_errors else None
+
+    time_above_target = sum(1 for v in current_speeds if v > target_speed) * sample_interval
+    time_below_target = sum(1 for v in current_speeds if v < target_speed) * sample_interval
+
+    overshoot = max(current_speeds) - target_speed
+    undershoot = target_speed - min(current_speeds)
+
+    return {
+        "rise_time": rise_time,
+        "settling_time": settling_time,
+        "steady_state_error_mean": mean_error,
+        "steady_state_error_std": (
+            (sum((e - mean_error) ** 2 for e in steady_errors) / len(steady_errors)) ** 0.5
+            if steady_errors and mean_error is not None
+            else None
+        ),
+        "rmse": rmse,
+        "iae": iae,
+        "ise": ise,
+        "max_error": max(errors),
+        "min_error": min(errors),
+        "time_above_target": time_above_target,
+        "time_below_target": time_below_target,
+        "overshoot_pct": (overshoot / target_speed) * 100 if target_speed else None,
+        "undershoot_pct": (undershoot / target_speed) * 100 if target_speed else None,
+        "variance": variance,
+        "std_dev": std_dev,
     }
 
 

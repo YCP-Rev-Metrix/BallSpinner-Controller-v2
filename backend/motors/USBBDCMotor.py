@@ -165,7 +165,7 @@ def read_mc_values(ser: serial.Serial, timeout: float = 0.2):
 class USBBDCMotor(iMotor):
     # Default scale factor to convert a 0-600 command value into a VESC duty cycle (0-2.6).
     #0.000043333333
-    DEFAULT_DUTY_CYCLE_SCALE = 0.000025 # empirically tuned to get ~600 command to correspond to 100% duty cycle; adjust as needed for your motor/ESC combo
+    DEFAULT_DUTY_CYCLE_SCALE = 0.000021 # empirically tuned to get ~600 command to correspond to 100% duty cycle; adjust as needed for your motor/ESC combo
     
 
     motorID = 0

@@ -68,13 +68,66 @@ class MotorTestGraphDialog(QtWidgets.QDialog):
             plot.setLabel("left", "Speed")
             plot.setLabel("bottom", "Time (s)")
             plot.addLegend()
-            tab_layout.addWidget(plot)
 
+            # Add cursor readout and an interactive vertical line + marker
+            cursor_label = QtWidgets.QLabel("Cursor: t=N/A, measured=N/A, target=N/A")
+            tab_layout.addWidget(cursor_label)
+
+            plot_item = plot.getPlotItem()
+            vline = pg.InfiniteLine(angle=90, movable=False,
+                                     pen=pg.mkPen(color=(255, 0, 255), width=1, style=QtCore.Qt.PenStyle.DotLine))
+            vline.setVisible(False)
+            plot_item.addItem(vline, ignoreBounds=True)
+
+            marker = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(255, 0, 255))
+            marker.setVisible(False)
+            plot_item.addItem(marker)
+
+            plot.scene().sigMouseClicked.connect(
+                lambda event, p=plot, v=vline, m=marker, l=cursor_label,
+                       ts=r.get("timestamps", []), cs=r.get("current_speeds", []),
+                       tg=r.get("target_speeds", []): self._on_motor_test_graph_click(event, p, v, m, l, ts, cs, tg)
+            )
+
+            tab_layout.addWidget(plot)
             tabs.addTab(tab, f"{speed}")
 
         btn_close = QtWidgets.QPushButton("Close")
         btn_close.clicked.connect(self.accept)
         layout.addWidget(btn_close)
+
+    def _on_motor_test_graph_click(self, event, plot, vline, marker, cursor_label, timestamps, current_speeds, target_speeds):
+        try:
+            pos = event.scenePos()
+            vb = plot.getPlotItem().getViewBox()
+            data_point = vb.mapSceneToView(pos)
+            x_click = float(data_point.x())
+
+            if not timestamps:
+                return
+
+            idx = min(range(len(timestamps)), key=lambda i: abs(timestamps[i] - x_click))
+            t = timestamps[idx]
+            measured = current_speeds[idx] if idx < len(current_speeds) else None
+            target = target_speeds[idx] if idx < len(target_speeds) else None
+
+            if measured is not None and target is not None:
+                cursor_label.setText(f"Cursor: t={t:.3f}s, measured={measured:.2f}, target={target:.2f}")
+            elif measured is not None:
+                cursor_label.setText(f"Cursor: t={t:.3f}s, measured={measured:.2f}, target=N/A")
+            else:
+                cursor_label.setText(f"Cursor: t={t:.3f}s, measured=N/A, target=N/A")
+
+            if vline is not None:
+                vline.setPos(t)
+                vline.setVisible(True)
+
+            if marker is not None and measured is not None:
+                marker.setData(x=[t], y=[measured])
+                marker.setVisible(True)
+
+        except Exception as e:
+            print("MotorTestGraphDialog cursor error:", e)
 
 
 class TuneScaleDialog(QtWidgets.QDialog):
