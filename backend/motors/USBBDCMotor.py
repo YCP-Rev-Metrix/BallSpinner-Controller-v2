@@ -286,11 +286,12 @@ class USBBDCMotor(iMotor):
 
         self._prev_error = error
         self._prev_time = now
+        
         #target speed * targetspeed/(Max speed) The higher the target speed, the more aggressive the PID output, with a little extra boost as we approach max speed to help overcome friction losses. Adjust the +200 term as needed based on your motor's characteristics.
         if self.currSpeed < self.targetSpeed**2/1200 and self.targetSpeed != 0:
             # Motor is stopped give big kick to get it going, then let PID take over
             command = 1/self.duty_cycle_scale  # Garbage for logging purposes since we're not really using the PID output for this case
-            duty = min(self.targetSpeed/3000, 1.0)  # run at 100% duty until we get a speed reading, then PID can take over
+            duty = min(self.targetSpeed**2/(3000**2), 1.0)  # run at 100% duty until we get a speed reading, then PID can take over
         else:
             command = (
                 self.targetSpeed
