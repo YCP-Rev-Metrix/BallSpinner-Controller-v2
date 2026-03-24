@@ -22,8 +22,8 @@ class MotorTestGraphDialog(QtWidgets.QDialog):
         self.resize(900, 650)
 
         layout = QtWidgets.QVBoxLayout(self)
-        tabs = QtWidgets.QTabWidget()
-        layout.addWidget(tabs)
+        self.tabs = QtWidgets.QTabWidget()
+        layout.addWidget(self.tabs)
 
         for r in results:
             speed = r.get("target_speed")
@@ -136,23 +136,46 @@ class MotorTestGraphDialog(QtWidgets.QDialog):
         layout.addWidget(btn_close)
 
     def _export_to_png(self):
-        filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+        dir_path = QtWidgets.QFileDialog.getExistingDirectory(
             self,
-            "Export Motor Test Graphs and Data to PNG",
-            "motor_test_results.png",
-            "PNG Files (*.png)",
+            "Select folder to export all graphs",
+            "",
+            QtWidgets.QFileDialog.Option.ShowDirsOnly,
         )
-        if not filename:
+        if not dir_path:
             return
-        if not filename.lower().endswith('.png'):
-            filename += '.png'
 
-        pixmap = self.grab()
-        saved = pixmap.save(filename, 'PNG')
-        if saved:
-            QtWidgets.QMessageBox.information(self, "Export Complete", f"Exported to: {filename}")
+        failed = []
+        for idx in range(self.tabs.count()):
+            tab_text = self.tabs.tabText(idx)
+            tab = self.tabs.widget(idx)
+            plot_widget = tab.findChild(pg.PlotWidget)
+            if plot_widget is None:
+                continue
+
+            pixmap = plot_widget.grab()
+            sanitized_speed = tab_text.replace('/', '_').replace(' ', '_')
+            tab_filename = os.path.join(dir_path, f"motor_test_{sanitized_speed}.png")
+            if not pixmap.save(tab_filename, 'PNG'):
+                failed.append(tab_filename)
+
+        # Save the whole dialog as well
+        full_filename = os.path.join(dir_path, "motor_test_full_dialog.png")
+        if not self.grab().save(full_filename, 'PNG'):
+            failed.append(full_filename)
+
+        if failed:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Export Completed with Errors",
+                f"Some files could not be saved:\n" + "\n".join(failed),
+            )
         else:
-            QtWidgets.QMessageBox.warning(self, "Export Failed", f"Could not save to: {filename}")
+            QtWidgets.QMessageBox.information(
+                self,
+                "Export Complete",
+                f"Exported {self.tabs.count()} graph images + full snapshot to {dir_path}",
+            )
 
     def _on_motor_test_graph_click(self, event, plot, vline, marker, cursor_label, timestamps, current_speeds, target_speeds):
         try:
