@@ -165,7 +165,7 @@ def read_mc_values(ser: serial.Serial, timeout: float = 0.2):
 class USBBDCMotor(iMotor):
     # Default scale factor to convert a 0-600 command value into a VESC duty cycle (0-2.6).
     #0.000043333333
-    DEFAULT_DUTY_CYCLE_SCALE = 0.000021 # empirically tuned to get ~600 command to correspond to 100% duty cycle; adjust as needed for your motor/ESC combo
+    DEFAULT_DUTY_CYCLE_SCALE = 0.0000215 # Tuned via testing to give good response across the full speed range without being too aggressive at low speeds. Adjust as needed based on your motor and performance preferences.
     
 
     motorID = 0
@@ -272,26 +272,25 @@ class USBBDCMotor(iMotor):
         self.targetSpeed = self.clamp(dutyCycle, 0, 1200)
         self.currSpeed = self.getCurrentSpeed()
 
-        error = self.targetSpeed - self.currSpeed
-
-        now = time.time()
-        dt = now - self._prev_time if self._prev_time else 0.0
-        if dt <= 0.0:
-            dt = 1e-6
-        d_error = (error - self._prev_error) / dt
-
-        # Integral update (always run unless dt is zero) + anti-windup
-        self._integral += error * dt
-        self._integral = self.clamp(self._integral, -1200, 1200)
-
-        self._prev_error = error
-        self._prev_time = now
         #target speed * targetspeed/(Max speed) The higher the target speed, the more aggressive the PID output, with a little extra boost as we approach max speed to help overcome friction losses. Adjust the +200 term as needed based on your motor's characteristics.
         if self.currSpeed < self.targetSpeed**2/1200 and self.targetSpeed != 0:
             # Motor is stopped give big kick to get it going, then let PID take over
             command = 1/self.duty_cycle_scale  # Garbage for logging purposes since we're not really using the PID output for this case
-            duty = min(self.targetSpeed/6000, 1.0)  # run at 100% duty until we get a speed reading, then PID can take over
-        else:
+            duty = min(self.targetSpeed/5000, 1.0)  # run at 100% duty until we get a speed reading, then PID can take over
+            #5000 is chosen via testing
+            error = self.targetSpeed - self.currSpeed
+            now = time.time()
+            dt = now - self._prev_time if self._prev_time else 0.0
+            if dt <= 0.0:
+                dt = 1e-6
+            d_error = (error - self._prev_error) / dt
+
+            # Integral update (always run unless dt is zero) + anti-windup
+            self._integral += error * dt
+            self._integral = self.clamp(self._integral, -1200, 1200)
+
+            self._prev_error = error
+            self._prev_time = now
             command = (
                 self.targetSpeed
                 + (error * self.Kp)
