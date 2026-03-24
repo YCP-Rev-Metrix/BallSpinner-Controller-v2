@@ -278,6 +278,8 @@ class USBBDCMotor(iMotor):
             command = 1/self.duty_cycle_scale  # Garbage for logging purposes since we're not really using the PID output for this case
             duty = min(self.targetSpeed/5000, 1.0)  # run at 100% duty until we get a speed reading, then PID can take over
             #5000 is chosen via testing
+            
+        else:
             error = self.targetSpeed - self.currSpeed
             now = time.time()
             dt = now - self._prev_time if self._prev_time else 0.0
