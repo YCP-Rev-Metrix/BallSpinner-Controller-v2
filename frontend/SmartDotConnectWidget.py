@@ -77,7 +77,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
 
         # set a smaller font for all buttons in this widget (including dynamically created ones)
         # using Qt style sheet ensures the size applies globally here
-        self.setStyleSheet("QPushButton { font-size: 12pt; }")
+        self.setStyleSheet("QPushButton { font-size: 10pt; }")
 
         # Grab the collapse button
         self.collapseBtn = self.findChild(QtWidgets.QPushButton, 'btnCollapse')

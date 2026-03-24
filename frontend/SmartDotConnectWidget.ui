@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>200</width>
-    <height>893</height>
+    <height>865</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -41,6 +41,11 @@
    </item>
    <item>
     <widget class="QPushButton" name="btnStartScan">
+     <property name="font">
+      <font>
+       <pointsize>11</pointsize>
+      </font>
+     </property>
      <property name="text">
       <string>Scan for Smartdot</string>
      </property>
@@ -70,7 +75,7 @@
         <x>0</x>
         <y>0</y>
         <width>174</width>
-        <height>359</height>
+        <height>345</height>
        </rect>
       </property>
      </widget>
@@ -116,7 +121,7 @@
         <x>0</x>
         <y>0</y>
         <width>174</width>
-        <height>358</height>
+        <height>344</height>
        </rect>
       </property>
      </widget>
