@@ -202,8 +202,14 @@ class ShotModePage(QtWidgets.QWidget):
             else:
                 self.FinalTime = 0.0
 
+            # Convert final time back to slider units (duration = 1 + 0.02 * slider_value)
+            if self.FinalTime <= 1.0:
+                slider_value = 0
+            else:
+                slider_value = round((self.FinalTime - 1.0) / 0.02)
 
-            slider_value = int(self.FinalTime//0.02 - 1)  
+            # clamp to slider valid range
+            slider_value = max(0, min(self.sliderTime.maximum(), slider_value))
             self.sliderTime.setValue(slider_value)
 
         
