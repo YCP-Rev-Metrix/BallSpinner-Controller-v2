@@ -200,6 +200,8 @@ class USBBDCMotor(iMotor):
             else self.DEFAULT_DUTY_CYCLE_SCALE
         )
 
+        logger.info("USBBDCMotor initialized: duty_cycle_scale=%.8f", self._duty_cycle_scale)
+
         # Track consecutive failed reads for getCurrentSpeed so we can log a warning
         self._missed_speed_reads = 0
         self._missed_speed_warn_threshold = 10
@@ -265,20 +267,23 @@ class USBBDCMotor(iMotor):
 
     # ---------------- CONNECT / DISCONNECT ----------------
     def connect(self):
-        pass
+        logger.info("USBBDCMotor.connect() called")
+        # no-op placeholder in this implementation (GPIO VESC managed elsewhere)
 
     def disconnect(self):
+        logger.info("USBBDCMotor.disconnect() called")
         if lgpio:
             lgpio.gpio_release(self.h, self.GPIO_Pin)
-        pass
 
     def clamp(self, x, lo, hi):
         return max(lo, min(x, hi))
 
     def start(self):
-        pass
+        logger.info("USBBDCMotor.start() called")
+        # start is a no-op at the low-level VESC interface here
 
     def stop(self):
+        logger.info("USBBDCMotor.stop() called")
         self.targetSpeed = 0.0
         self.rampDown()
 
@@ -331,6 +336,7 @@ class USBBDCMotor(iMotor):
         )
 
         self.ser.write(encode(SetDutyCycle(duty)))
+        logger.debug("USBBDCMotor.changeSpeed() wrote duty=%.4f", duty)
 
     def getCurrentSpeed(self):
         '''Request the current speed from the VESC and return the mechanical RPM.
@@ -395,25 +401,31 @@ class USBBDCMotor(iMotor):
         return vals
 
     def rampUp(self):
+        logger.debug("USBBDCMotor.rampUp() from %.2f to %.2f", self.currSpeed, self.targetSpeed)
         while self.currSpeed < self.targetSpeed:
             self.currSpeed += STEP
             if self.currSpeed > self.targetSpeed:
                 self.currSpeed = self.targetSpeed
 
             # Scale input x (0-600) to a range 0-2.6 for SetDutyCycle (which is a tiny eenie weenie bit over 600, like 605 but whatever)
-            self.ser.write(encode(SetDutyCycle(self.currSpeed * self.duty_cycle_scale)))
+            duty = self.currSpeed * self.duty_cycle_scale
+            self.ser.write(encode(SetDutyCycle(duty)))
+            logger.debug("USBBDCMotor.rampUp() duty=%.4f currSpeed=%.1f", duty, self.currSpeed)
             # time.sleep(0.02)
 
     def rampDown(self):
+        logger.debug("USBBDCMotor.rampDown() from %.2f to %.2f", self.currSpeed, self.targetSpeed)
         while self.currSpeed > self.targetSpeed:
             self.currSpeed -= STEP
             if self.currSpeed < self.targetSpeed:
                 self.currSpeed = self.targetSpeed
 
-            # Scale input x (0-600) to a range 0-2.6 for SetDutyCycle (which is a tiny eenie weenie bit over 600, like 605 but whatever)
-            self.ser.write(encode(SetDutyCycle(self.currSpeed * self.duty_cycle_scale)))
+            duty = self.currSpeed * self.duty_cycle_scale
+            self.ser.write(encode(SetDutyCycle(duty)))
+            logger.debug("USBBDCMotor.rampDown() duty=%.4f currSpeed=%.1f", duty, self.currSpeed)
             # time.sleep(0.02)
         self.ser.write(encode(SetDutyCycle(self.currSpeed * self.duty_cycle_scale)))
+
 
     def HandleFault(self, faultCode):
         if faultCode == 0:
