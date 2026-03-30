@@ -291,41 +291,70 @@ class DiagnosticModePage(QtWidgets.QWidget):
         dialog.exec()
     
     def toggle_Buttons(self):
-            # Use timer activity to decide start/stop state
-            if not self._timer.isActive():
-                # Start
-                self.btnStart.setEnabled(False)
-                self.btnOverride.setEnabled(False)
-                self.btnStop.setEnabled(True)
-                self.diagnostic_script.start_motors([1,2,3])
-                # start timer when entering active state
-                self._sample_index = 0  # reset counter when starting
-                self._timer.start()
-                # Start SmartDot updates if connected
-                if self.SmartDot is not None:
-                    self.start_smartdot_updates()
+        """Toggle diagnostic mode start/stop state.
 
-                # Initialize the Session
-                bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Diagnostic Session", isShotMode=False))
-                bsc.set_data_controller(DataController(bsc.get_session()))
-                self.navigationLock.emit(False,"Motor Running")
-            else:
-                # Stop
-                try:
-                    self.btnStart.setEnabled(True)
-                    self.btnOverride.setEnabled(True)
-                    self.btnStop.setEnabled(False)
-                    self.diagnostic_script.stop_motors([1,2,3])
-                    bsc.disconnect_all_motors()
-                    # stop periodic updates
-                    self._timer.stop()
-                    # Stop SmartDot updates if connected
-                    if self.SmartDot is not None:
-                        self.stop_smartdot_updates()
-                except Exception as e:
-                    print(f"Error during stopping motors: {e}")
-                finally:
-                    self.navigationLock.emit(True,"")
+        If diagnostics are stopped, start motors and timer.
+        If diagnostics are running, stop motors and timer.
+        """
+        if self._timer.isActive():
+            self._stop_diagnostics()
+        else:
+            self._start_diagnostics()
+
+    def _start_diagnostics(self):
+        self.btnStart.setEnabled(False)
+        self.btnOverride.setEnabled(False)
+        self.btnStop.setEnabled(True)
+
+        self.diagnostic_script.start_motors([1, 2, 3])
+
+        self._sample_index = 0
+        self.clear_graphs()  # also resets buffers and indices
+        self._timer.start()
+
+        if self.SmartDot is not None:
+            self.start_smartdot_updates()
+
+        bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Diagnostic Session", isShotMode=False))
+        bsc.set_data_controller(DataController(bsc.get_session()))
+
+        self.navigationLock.emit(False, "Motor Running")
+
+    def _stop_diagnostics(self):
+        self.btnStart.setEnabled(True)
+        self.btnOverride.setEnabled(True)
+        self.btnStop.setEnabled(False)
+
+        try:
+            self.diagnostic_script.stop_motors([1, 2, 3])
+            bsc.disconnect_all_motors()
+            self._timer.stop()
+
+            if self.SmartDot is not None:
+                self.stop_smartdot_updates()
+
+        except Exception as e:
+            print(f"Error during stopping motors: {e}")
+
+        finally:
+            # Safeguard: attempt to stop motors again even if stop procedure failed above.
+            try:
+                self.diagnostic_script.stop_motors([1, 2, 3])
+            except Exception as inner_e:
+                print(f"Secondary stop_motors call failed: {inner_e}")
+
+            # Ensure master disconnection and timer stop as safe fallback.
+            try:
+                bsc.disconnect_all_motors()
+            except Exception:
+                pass
+            try:
+                self._timer.stop()
+            except Exception:
+                pass
+
+            self.navigationLock.emit(True, "")
+
     def EStop(self):
         #Motor.stop() uncomment when motor works
         self.diagnostic_script.stop_motors([1,2,3])
