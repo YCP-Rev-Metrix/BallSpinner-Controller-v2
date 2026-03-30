@@ -4,7 +4,11 @@ import struct
 
 from pyvesc import encode
 from pyvesc.VESC.messages import SetDutyCycle
-
+import utils
+try:
+    import lgpio
+except ImportError:
+    lgpio = None
 from .iMotor import iMotor
 from logs.logger_config import get_logger
 logger = get_logger(__name__)
@@ -18,6 +22,18 @@ RUN_TIME = 10      # seconds
 COMM_GET_VALUES = 4  # VESC command id for "get values"
 
 STEP = 2
+
+FAULT_CODES = {
+    0: "No fault",
+    1: "Over voltage",
+    2: "Under voltage",
+    3: "Over temperature FETs",
+    4: "Over temperature motor",
+    5: "Motor stalled",
+    6: "Current sensor fault",
+    7: "Encoder fault",
+}
+FAULT_LIGHT_PIN = 25
 
 # ---------- VESC packet helpers (no pyvesc for GetValues) ----------
 
@@ -199,6 +215,8 @@ class USBBDCMotor(iMotor):
         self._prev_time = time.time()
 
         self.ser.write(encode(SetDutyCycle(0.0)))
+        if lgpio:
+            lgpio.gpio_claim_output(self.h, self.GPIO_Pin, 0)
 
     @property
     def duty_cycle_scale(self) -> float:
@@ -249,6 +267,8 @@ class USBBDCMotor(iMotor):
         pass
 
     def disconnect(self):
+        if lgpio:
+            lgpio.gpio_release(self.h, self.GPIO_Pin)
         pass
 
     def clamp(self, x, lo, hi):
@@ -351,6 +371,8 @@ class USBBDCMotor(iMotor):
             vals["duty_now"] * 100,
             vals["fault"],
         )
+        if vals["fault"] != 0:
+            self.HandleFault(vals["fault"])
         return mech_rpm 
     def getVals(self):
         send_get_values(self.ser)
@@ -391,6 +413,18 @@ class USBBDCMotor(iMotor):
             self.ser.write(encode(SetDutyCycle(self.currSpeed * self.duty_cycle_scale)))
             # time.sleep(0.02)
         self.ser.write(encode(SetDutyCycle(self.currSpeed * self.duty_cycle_scale)))
+
+    def HandleFault(self, faultCode):
+        if faultCode == 0:
+            lgpio.gpio_write(self.h, FAULT_LIGHT_PIN, 0)  # turn off fault light
+            return
+        
+        faultDescription = FAULT_CODES.get(faultCode, "Unknown fault")
+        logger.error("VESC fault code: %s (%s)", faultCode, faultDescription)
+        utils.notify_user(f"VESC fault: {faultDescription} (code {faultCode})", title="Primary Motor Fault", urgency="critical")
+        lgpio.gpio_write(self.h, FAULT_LIGHT_PIN, 1)  # turn on fault light
+
+
 
 
 # ---------- Main program ----------
