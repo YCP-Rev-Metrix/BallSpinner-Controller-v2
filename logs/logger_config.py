@@ -18,7 +18,7 @@ def setup_logging():
     log_dir.mkdir(parents=True, exist_ok=True)
     
     # Get current timestamp for log file naming
-    timestamp = datetime.now().strftime("%Y-%b-%d")
+    timestamp = datetime.now().strftime("%Y-%b-%d_%H-%M-%S")
     
     # Configure root logger
     root_logger = logging.getLogger()
@@ -40,7 +40,7 @@ def setup_logging():
     
     # INFO Logger - for general application flow
     info_handler = logging.handlers.RotatingFileHandler(
-        filename=str(log_dir / f'ballspinner_info_{timestamp}.log'),
+        filename=str(log_dir / f'BSC_info_{timestamp}.log'),
         maxBytes=10*1024*1024,  # 10MB
         backupCount=5
     )
@@ -49,7 +49,7 @@ def setup_logging():
     
     # DEBUG Logger - for detailed debugging information
     debug_handler = logging.handlers.RotatingFileHandler(
-        filename=str(log_dir / f'ballspinner_debug_{timestamp}.log'),
+        filename=str(log_dir / f'BSC_debug_{timestamp}.log'),
         maxBytes=10*1024*1024,  # 10MB
         backupCount=5
     )
