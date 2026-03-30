@@ -18,7 +18,7 @@ def setup_logging():
     log_dir.mkdir(parents=True, exist_ok=True)
     
     # Get current timestamp for log file naming
-    timestamp = datetime.now().strftime("%Y%m%d")
+    timestamp = datetime.now().strftime("%Y-%b-%d")
     
     # Configure root logger
     root_logger = logging.getLogger()
@@ -27,12 +27,15 @@ def setup_logging():
     # Clear any existing handlers
     root_logger.handlers.clear()
     
-    # Create formatters
+    # Create formatters with readable timestamp format (e.g., 2025-Mar-30-15:22:05)
+    date_format = "%Y-%b-%d-%H:%M:%S"
     detailed_formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
+        '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s',
+        datefmt=date_format
     )
     simple_formatter = logging.Formatter(
-        '%(asctime)s - %(levelname)s - %(message)s'
+        '%(asctime)s - %(levelname)s - %(message)s',
+        datefmt=date_format
     )
     
     # INFO Logger - for general application flow
