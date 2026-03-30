@@ -77,7 +77,7 @@ class BSC:
         if utils.is_raspberry_pi_5():
             self.h = lgpio.gpiochip_open(0)
             # motor1 = spin/RPM motor (BLDC via USB)
-            self.motor1 = USBBDCMotor() # UNCOMMENT AFTER STEPPER
+            self.motor1 = USBBDCMotor(h = self.h) # UNCOMMENT AFTER STEPPER
             #self.motor1 = SimMotor(1)
             # motor2 = tilt-angle stepper (now using earlier motor3 pins)
             # motor3 = assembly-angle stepper (now using earlier motor2 pins)

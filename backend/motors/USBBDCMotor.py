@@ -192,7 +192,7 @@ class USBBDCMotor(iMotor):
     motor = None
     ser = serial.Serial(PORT, BAUD, timeout = 0.05)
 
-    def __init__(self, duty_cycle_scale: float = None):
+    def __init__(self, duty_cycle_scale: float = None, h=None):
         # ser = serial.Serial(PORT, BAUD, timeout = 0.05)
         self._duty_cycle_scale = (
             duty_cycle_scale
@@ -209,6 +209,7 @@ class USBBDCMotor(iMotor):
         self.Ki = 0.02
         self.Kd = 0.0000
 
+        self.h = h
         # For integral & derivative computation
         self._integral = 0.0
         self._prev_error = 0.0
