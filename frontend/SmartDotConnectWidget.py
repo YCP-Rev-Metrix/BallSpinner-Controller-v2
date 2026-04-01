@@ -271,6 +271,9 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         """Called when connection fails"""
         self.lblStatus.setText(error_message)
         print(f"Connection failed: {error_message}")
+        # Notify user with a modal warning/critical dialog for visibility
+        utils.notify_user(error_message, title="SmartDot Connection Error", type="critical")
+
 
     def setDeviceList(self, devices):
         #remove existing buttons
