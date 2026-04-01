@@ -18,8 +18,18 @@ def ErrorWindow(exctype, value, tb):
         ErrorBox.setWindowTitle("Error")
         ErrorBox.setDetailedText(error_message)
         ErrorBox.setText("An unexpected error occurred. Please check the details for more information.")
+
+        # Add an explicit Quit button for quick exit from error notifications
+        quit_button = ErrorBox.addButton("Quit", QMessageBox.ButtonRole.RejectRole)
+        ErrorBox.addButton(QMessageBox.StandardButton.Close)
+
         ErrorBox.raise_()  # Bring the message box to the front
         ErrorBox.exec()
+
+        if ErrorBox.clickedButton() == quit_button:
+            QApplication.quit()
+            sys.exit(1)
+
         # Call the default excepthook to ensure the program exits after showing the message box
         sys.__excepthook__(exctype, value, tb)
     except Exception as e:
