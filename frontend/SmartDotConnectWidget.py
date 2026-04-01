@@ -1,8 +1,11 @@
+import logging
+
 from PyQt6 import QtWidgets, QtCore, uic
 import os
 from PyQt6.QtCore import pyqtSignal, QThread
 import utils
 
+logger = logging.getLogger(__name__)
 from backend.smartdot.iSmartDot import iSmartDot
 if utils.is_raspberry_pi():
     from backend.smartdot.ScanSmartDots import ScanSmartDot
@@ -31,6 +34,7 @@ class ConnectionWorker(QThread):
         self.is_simulated = is_simulated
     
     def run(self):
+        logger.debug(f"ConnectionWorker.run() start: mac={self.mac_address}, simulated={self.is_simulated}")
         try:
             if utils.is_raspberry_pi() and not self.is_simulated:
                 # Create MetaMotion with autoConnect=False so we can handle retry status
@@ -42,14 +46,17 @@ class ConnectionWorker(QThread):
                     # Pass status callback to connect() so it can notify us when retry happens
                     smartdot.connected = smartdot.connect(self.mac_address, status_callback=lambda msg: self.statusUpdate.emit(msg))
                 except Exception as e:
+                    logger.exception(f"MetaMotion connect exception for {self.mac_address}")
                     # Re-raise to be caught by outer exception handler
                     raise
             else:
                 smartdot = SimSmartDot(self.mac_address)
             
             if smartdot.connected:
+                logger.info(f"ConnectionWorker connected: {self.mac_address}")
                 self.connectionComplete.emit(smartdot)
             else:
+                logger.warning(f"ConnectionWorker failed (no connected flag): {self.mac_address}")
                 self.connectionFailed.emit(f"Failed to connect to {self.mac_address}")
         except Exception as e:
             error_str = str(e)
@@ -74,6 +81,11 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         super().__init__(parent)
         # load the .ui file (module-relative path)
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'SmartDotConnectWidget.ui'), self, package='frontend')
+
+        # connection retry state
+        self.last_connect_target = None
+        self.retry_attempts = 0
+        self.max_retry_attempts = 3
 
         # set a smaller font for all buttons in this widget (including dynamically created ones)
         # using Qt style sheet ensures the size applies globally here
@@ -132,6 +144,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
             self.setDeviceList(["SI:MU:LA:TE:DD:OT"])
 
         print(bsc.get_smartdotConnectionManager())
+        logger.debug(f"Connection manager at init: {bsc.get_smartdotConnectionManager()}")
         
         # Update disconnect list to show any existing connections
         self.updateDisconnectList()
@@ -173,12 +186,14 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         """Starts the ScanSmartDots.py script using ProcessRunner"""
         self.lblStatus.setText("Scanning for SmartDots...")
         print("Starting scan subprocess...")
+        logger.info("Starting scan subprocess")
 
         # You can pass absolute or relative path to ScanSmartDots.py
         self.process_runner.start("python3", ["-u", "backend/smartdot/ScanSmartDots.py"])
     # Handlers for ProcessRunner signals
     def on_process_output(self, text: str):
         print("[Scan Output]", text)
+        logger.debug(f"Scan output: {text}")
 
         if "Found devices:" in text:
             try:
@@ -192,13 +207,16 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
 
                 if isinstance(devices, list):
                     print("Parsed device list:", devices)
+                    logger.info(f"Parsed device list: {devices}")
                     self.lblStatus.setText(f"Found {len(devices)} devices")
                     self.setDeviceList(devices)
                 else:
                     print("Unexpected format for devices:", list_part)
+                    logger.warning(f"Unexpected format for devices: {list_part}")
                     self.lblStatus.setText("Scan complete (no valid devices found)")
             except Exception as e:
                 print("Error parsing device list:", e)
+                logger.exception(f"Error parsing device list: {e}")
                 self.lblStatus.setText("Error parsing scan output")
 
         else:
@@ -207,14 +225,25 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
 
     def on_process_error(self, text: str):
         print("[Scan Error]", text)
+        logger.error(f"Scan error: {text}")
         self.lblStatus.setText(f"Error: {text}")
 
     def on_process_finished(self, code: int, status: int):
         print(f"Scan finished (code={code}, status={status})")
+        logger.info(f"Scan finished: code={code}, status={status}")
         self.lblStatus.setText("Scan complete")
         # You could reload the device list here if the scan outputs it to a file or stdout
 
     def connect_to_smartdot(self, text):
+        # Reset retry counter if switching to different target
+        if self.last_connect_target != text:
+            self.retry_attempts = 0
+
+        # Track target for retry path
+        self.last_connect_target = text
+
+        logger.info(f"connect_to_smartdot start: {text}")
+
         # Update status to show connection attempt
         self.lblStatus.setText(f"Connecting to {text}...")
         
@@ -239,14 +268,16 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
     
     def on_connection_success(self, smartdot):
         """Called when connection succeeds"""
+        device_address = smartdot._MAC_ADDRESS if hasattr(smartdot, '_MAC_ADDRESS') else "device"
+        logger.info(f"Connection success: {device_address}")
         self.smartdot = smartdot
-        device_address = self.smartdot._MAC_ADDRESS if hasattr(self.smartdot, '_MAC_ADDRESS') else "device"
         self.lblStatus.setText(f"Connected to {device_address}")
         self.signalSmartDotConnected.emit(self.smartdot)
 
         #Add the connection to the manager upon successful connection
         bsc.get_smartdotConnectionManager().add_connection(self.smartdot._MAC_ADDRESS, self.smartdot)
         print(f"Connections: {bsc.get_smartdotConnectionManager().get_connections()}")
+        logger.debug(f"Connection list after success: {bsc.get_smartdotConnectionManager().get_connections()}")
         
         # Update disconnect list to show the new connection
         self.updateDisconnectList()
@@ -263,16 +294,44 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         smartdot = bsc.get_smartdotConnectionManager().get_smartdot(mac_address)
         bsc.get_smartdotConnectionManager().remove_connection(mac_address, smartdot)
         print(f"Connections: {bsc.get_smartdotConnectionManager().get_connections()}")
+        logger.debug(f"Connection list after disconnect: {bsc.get_smartdotConnectionManager().get_connections()}")
 
         # Update disconnect list to reflect the disconnection
         self.updateDisconnectList()
     
     def on_connection_failed(self, error_message):
         """Called when connection fails"""
+        logger.warning(f"Connection failed: {error_message}")
         self.lblStatus.setText(error_message)
-        print(f"Connection failed: {error_message}")
+
         # Notify user with a modal warning/critical dialog for visibility
-        utils.notify_user(error_message, title="SmartDot Connection Error", type="critical")
+        try:
+            utils.notify_user(error_message, title="SmartDot Connection Error", type="critical")
+        except Exception as e:
+            print(f"Failed to show error dialog: {e}")
+            logger.exception(f"Failed to show error dialog: {e}")
+
+        # Handle stale BLE condition and retry for common errors
+        recovery_keywords = ["socket connection failed", "Failed to discover GATT services", "Connection failed"]
+        if any(keyword in error_message for keyword in recovery_keywords):
+            if self.last_connect_target:
+                existing = bsc.get_smartdotConnectionManager().get_smartdot(self.last_connect_target)
+                if existing is not None:
+                    try:
+                        existing.disconnect()
+                    except Exception as e:
+                        print(f"Error disconnecting stale SmartDot: {e}")
+                        logger.exception(f"Error disconnecting stale SmartDot: {e}")
+                    bsc.get_smartdotConnectionManager().remove_connection(self.last_connect_target, existing)
+                    self.updateDisconnectList()
+
+            self.retry_attempts += 1
+            if self.retry_attempts <= self.max_retry_attempts and self.last_connect_target:
+                delay_ms = 1000 * self.retry_attempts
+                self.lblStatus.setText(f"Retrying connection ({self.retry_attempts}/{self.max_retry_attempts})...")
+                QtCore.QTimer.singleShot(delay_ms, lambda: self.connect_to_smartdot(self.last_connect_target))
+            else:
+                self.lblStatus.setText("Maximum retries reached. Please restart Bluetooth or device and try again.")
 
 
     def setDeviceList(self, devices):
@@ -334,7 +393,9 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
             # Update disconnect list to reflect the change
             self.updateDisconnectList()
             print(f"Disconnected from {mac_address}")
+            logger.info(f"Disconnected from {mac_address}")
             print(f"Connections: {bsc.get_smartdotConnectionManager().get_connections()}")
+            logger.debug(f"Connections after disconnect: {bsc.get_smartdotConnectionManager().get_connections()}")
         else:
             self.lblStatus.setText(f"Device {mac_address} not found")
 
