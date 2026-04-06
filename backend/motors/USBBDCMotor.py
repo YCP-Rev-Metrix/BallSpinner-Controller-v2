@@ -33,7 +33,7 @@ FAULT_CODES = {
     6: "Current sensor fault",
     7: "Encoder fault",
 }
-FAULT_LIGHT_PIN = 25
+FAULT_LIGHT_PIN = 22
 
 # ---------- VESC packet helpers (no pyvesc for GetValues) ----------
 
