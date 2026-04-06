@@ -218,8 +218,8 @@ class USBBDCMotor(iMotor):
         self._prev_time = time.time()
 
         self.ser.write(encode(SetDutyCycle(0.0)))
-        if lgpio:
-            lgpio.gpio_claim_output(self.h, self.GPIO_Pin, 0)
+        if lgpio and getattr(self, 'h', None) is not None:
+            lgpio.gpio_claim_output(self.h, FAULT_LIGHT_PIN, 0)
 
     @property
     def duty_cycle_scale(self) -> float:
@@ -272,8 +272,8 @@ class USBBDCMotor(iMotor):
 
     def disconnect(self):
         logger.info("USBBDCMotor.disconnect() called")
-        if lgpio:
-            lgpio.gpio_release(self.h, self.GPIO_Pin)
+        if lgpio and getattr(self, 'h', None) is not None:
+            lgpio.gpio_release(self.h, FAULT_LIGHT_PIN)
 
     def clamp(self, x, lo, hi):
         return max(lo, min(x, hi))
