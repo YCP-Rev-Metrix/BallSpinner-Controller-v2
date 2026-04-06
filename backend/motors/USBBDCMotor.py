@@ -33,7 +33,7 @@ FAULT_CODES = {
     6: "Current sensor fault",
     7: "Encoder fault",
 }
-FAULT_LIGHT_PIN = 22
+FAULT_LIGHT_PIN = 25
 
 # ---------- VESC packet helpers (no pyvesc for GetValues) ----------
 
@@ -435,9 +435,9 @@ class USBBDCMotor(iMotor):
         
         faultDescription = FAULT_CODES.get(faultCode, "Unknown fault")
         logger.error("VESC fault code: %s (%s)", faultCode, faultDescription)
-        utils.notify_user(f"VESC fault: {faultDescription} (code {faultCode})", title="Primary Motor Fault", type="critical")
         if lgpio and getattr(self, 'h', None) is not None:
             lgpio.gpio_write(self.h, FAULT_LIGHT_PIN, 1)  # turn on fault light
+        utils.notify_user(f"VESC fault: {faultDescription} (code {faultCode})", title="Primary Motor Fault", type="critical")
 
     def trigger_fault(self, fault_code: int = 5):
         """Trigger a simulated VESC fault via the motor fault handler."""
