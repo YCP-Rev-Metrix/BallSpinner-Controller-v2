@@ -435,7 +435,7 @@ class USBBDCMotor(iMotor):
         
         faultDescription = FAULT_CODES.get(faultCode, "Unknown fault")
         logger.error("VESC fault code: %s (%s)", faultCode, faultDescription)
-        utils.notify_user(f"VESC fault: {faultDescription} (code {faultCode})", title="Primary Motor Fault", urgency="critical")
+        utils.notify_user(f"VESC fault: {faultDescription} (code {faultCode})", title="Primary Motor Fault", type="critical")
         if lgpio and getattr(self, 'h', None) is not None:
             lgpio.gpio_write(self.h, FAULT_LIGHT_PIN, 1)  # turn on fault light
 
