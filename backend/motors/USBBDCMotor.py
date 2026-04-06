@@ -429,13 +429,23 @@ class USBBDCMotor(iMotor):
 
     def HandleFault(self, faultCode):
         if faultCode == 0:
-            lgpio.gpio_write(self.h, FAULT_LIGHT_PIN, 0)  # turn off fault light
+            if lgpio and getattr(self, 'h', None) is not None:
+                lgpio.gpio_write(self.h, FAULT_LIGHT_PIN, 0)  # turn off fault light
             return
         
         faultDescription = FAULT_CODES.get(faultCode, "Unknown fault")
         logger.error("VESC fault code: %s (%s)", faultCode, faultDescription)
         utils.notify_user(f"VESC fault: {faultDescription} (code {faultCode})", title="Primary Motor Fault", urgency="critical")
-        lgpio.gpio_write(self.h, FAULT_LIGHT_PIN, 1)  # turn on fault light
+        if lgpio and getattr(self, 'h', None) is not None:
+            lgpio.gpio_write(self.h, FAULT_LIGHT_PIN, 1)  # turn on fault light
+
+    def trigger_fault(self, fault_code: int = 5):
+        """Trigger a simulated VESC fault via the motor fault handler."""
+        self.HandleFault(fault_code)
+
+    def clear_fault(self):
+        """Clear any active motor fault indicator and fault state."""
+        self.HandleFault(0)
 
 
 

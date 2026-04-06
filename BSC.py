@@ -46,6 +46,12 @@ except ModuleNotFoundError:
 
         def getTargetPower(self):
             return self.targetPower
+
+        def trigger_fault(self, fault_code: int = 5):
+            print(f"Simulated motor fault triggered (code={fault_code})")
+
+        def clear_fault(self):
+            print("Simulated motor fault cleared")
 if utils.is_raspberry_pi_5():
     from backend.motors.USBBDCMotor import USBBDCMotor #UNCOMMENT AFTER STEPPER
     import lgpio

@@ -370,6 +370,9 @@ class CloudTest(QtWidgets.QWidget):
         self.btnTuneScale.clicked.connect(self.tune_duty_cycle_scale)
         self.btnStepperDiagnosticData = self.findChild(QtWidgets.QPushButton, 'btnStepDiag')
         self.btnStepperDiagnosticData.clicked.connect(self.stepper_diagnostic_data)
+        self.btnToggleMotorFault = self.findChild(QtWidgets.QPushButton, 'btnToggleMotorFault')
+        self.btnToggleMotorFault.clicked.connect(self.toggle_motor_fault)
+        self._motor_fault_active = False
 
         # Motor parameter controls
         self.spnKp = self.findChild(QtWidgets.QDoubleSpinBox, 'spnKp')
@@ -516,6 +519,29 @@ class CloudTest(QtWidgets.QWidget):
         except Exception as e:
             self.findChild(QtWidgets.QLabel, 'lblResponse').setText(f"Error: {e}")
             print(e)
+
+
+    def toggle_motor_fault(self):
+        """Toggle a simulated or real USBBDCMotor fault state."""
+        if self._motor_fault_active:
+            if hasattr(bsc.motor1, 'clear_fault'):
+                bsc.motor1.clear_fault()
+            elif hasattr(bsc.motor1, 'HandleFault'):
+                bsc.motor1.HandleFault(0)
+            self.btnToggleMotorFault.setText("Trigger Motor Fault")
+            self.findChild(QtWidgets.QLabel, 'lblResponse').setText("Motor fault cleared")
+            print("Motor fault cleared")
+            self._motor_fault_active = False
+            return
+
+        if hasattr(bsc.motor1, 'trigger_fault'):
+            bsc.motor1.trigger_fault()
+        elif hasattr(bsc.motor1, 'HandleFault'):
+            bsc.motor1.HandleFault(5)
+        self.btnToggleMotorFault.setText("Clear Motor Fault")
+        self.findChild(QtWidgets.QLabel, 'lblResponse').setText("Motor fault triggered")
+        print("Motor fault triggered")
+        self._motor_fault_active = True
 
 
     def generate_error(self):

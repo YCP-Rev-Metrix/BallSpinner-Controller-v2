@@ -250,6 +250,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="btnToggleMotorFault">
+         <property name="text">
+          <string>Trigger Motor Fault</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QWidget" name="widgetMotorParams" native="true">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
