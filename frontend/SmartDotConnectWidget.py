@@ -304,6 +304,10 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         logger.warning(f"Connection failed: {error_message}")
         self.lblStatus.setText(error_message)
 
+        # Remove the failed device from the available connect list
+        if self.last_connect_target:
+            self.removeDeviceFromList(self.last_connect_target)
+
         # Notify user with a modal warning/critical dialog for visibility
         try:
             utils.notify_user(error_message, title="SmartDot Connection Error", type="critical")
@@ -332,6 +336,13 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
                 QtCore.QTimer.singleShot(delay_ms, lambda: self.connect_to_smartdot(self.last_connect_target))
             else:
                 self.lblStatus.setText("Maximum retries reached. Please restart Bluetooth or device and try again.")
+
+
+    def removeDeviceFromList(self, device):
+        """Remove a device from the available SmartDot list and refresh the UI."""
+        if device in self.Devices:
+            self.Devices = [d for d in self.Devices if d != device]
+            self.setDeviceList(self.Devices)
 
 
     def setDeviceList(self, devices):
