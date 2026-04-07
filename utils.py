@@ -4,6 +4,7 @@ import os
 import logging
 from array import array
 import pywt
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox, QApplication
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,9 @@ def notify_user(message, title="Notification", type="info", details=None):
 
     app = QApplication.instance() or QApplication([])  # Ensure we have a QApplication instance
     msg_box = QMessageBox()
+    msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
+    msg_box.setModal(True)
+    msg_box.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
     if type == "warning":
         msg_box.setIcon(QMessageBox.Icon.Warning)
     elif type == "critical":
