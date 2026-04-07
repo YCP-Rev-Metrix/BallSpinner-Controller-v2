@@ -4,6 +4,8 @@ from PyQt6 import QtWidgets, QtCore, uic
 import os
 from PyQt6.QtGui import QAction
 
+import utils
+
 from frontend.DataViewPage import DataViewPage
 from frontend.FrontPage import FrontPage
 from frontend.AnalysisModePage import AnalysisModePage
@@ -108,7 +110,9 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         if self.actionRealMotor is not None:
             self.actionRealMotor.toggled.connect(lambda checked: self.motorSimulationControl(checked, False))
 
+        self._motor_mode_locked_popup_shown = False
         self.update_motor_mode_ui()
+        self.show_motor_mode_locked_popup_if_needed()
 
 
     def estop(self):
@@ -280,7 +284,11 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         if self.actionRealMotor is not None:
             self.actionRealMotor.blockSignals(True)
 
-        if bsc.motor_mode == "real":
+        motor_mode = getattr(bsc, 'motor_mode', 'simulated')
+        if not isinstance(motor_mode, str):
+            motor_mode = 'simulated'
+
+        if motor_mode == "real":
             if self.actionRealMotor is not None:
                 self.actionRealMotor.setChecked(True)
             if self.actionSimulatedMotor is not None:
@@ -291,21 +299,33 @@ class BSCMainWindow(QtWidgets.QMainWindow):
             if self.actionSimulatedMotor is not None:
                 self.actionSimulatedMotor.setChecked(True)
 
+        motor_mode_locked = getattr(bsc, 'motor_mode_locked', False)
+        if not isinstance(motor_mode_locked, bool):
+            motor_mode_locked = False
+        motor_mode_locked_due_to_vesc = getattr(bsc, 'motor_mode_locked_due_to_vesc', False)
+        if not isinstance(motor_mode_locked_due_to_vesc, bool):
+            motor_mode_locked_due_to_vesc = False
+
         if self.actionRealMotor is not None:
-            self.actionRealMotor.setDisabled(getattr(bsc, 'motor_mode_locked', False) or not getattr(bsc, '_real_motor_supported', False))
+            self.actionRealMotor.setDisabled(motor_mode_locked or not getattr(bsc, '_real_motor_supported', False))
         if self.actionSimulatedMotor is not None:
             self.actionSimulatedMotor.setDisabled(False)
 
-        motor_mode_locked = getattr(bsc, 'motor_mode_locked', False)
         motor_mode_locked_reason = getattr(bsc, 'motor_mode_locked_reason', None)
         if motor_mode_locked and motor_mode_locked_reason:
             self.statusBar.showMessage(str(motor_mode_locked_reason), 0)
         else:
-            if hasattr(bsc, 'get_motor_status_message'):
-                status_message = bsc.get_motor_status_message()
-                self.statusBar.showMessage(str(status_message), 5000)
+            status_message = None
+            if hasattr(bsc, 'get_motor_status_message') and callable(getattr(bsc, 'get_motor_status_message')):
+                try:
+                    status_message = bsc.get_motor_status_message()
+                except Exception:
+                    status_message = None
+            if not isinstance(status_message, str):
+                status_message = None
+            if status_message:
+                self.statusBar.showMessage(status_message, 5000)
             else:
-                motor_mode = getattr(bsc, 'motor_mode', 'simulated')
                 default_status = "Using real motors." if motor_mode == 'real' else "Using simulated motors."
                 self.statusBar.showMessage(default_status, 5000)
 
@@ -313,6 +333,30 @@ class BSCMainWindow(QtWidgets.QMainWindow):
             self.actionSimulatedMotor.blockSignals(False)
         if self.actionRealMotor is not None:
             self.actionRealMotor.blockSignals(False)
+
+        self.show_motor_mode_locked_popup_if_needed()
+
+    def show_motor_mode_locked_popup_if_needed(self):
+        if getattr(self, '_motor_mode_locked_popup_shown', False):
+            return
+
+        motor_mode_locked = getattr(bsc, 'motor_mode_locked', False)
+        if not isinstance(motor_mode_locked, bool):
+            motor_mode_locked = False
+        motor_mode_locked_due_to_vesc = getattr(bsc, 'motor_mode_locked_due_to_vesc', False)
+        if not isinstance(motor_mode_locked_due_to_vesc, bool):
+            motor_mode_locked_due_to_vesc = False
+
+        if motor_mode_locked and motor_mode_locked_due_to_vesc:
+            try:
+                utils.notify_user(
+                    str(bsc.motor_mode_locked_reason),
+                    title="Motor Mode Locked",
+                    type="warning",
+                )
+            except Exception:
+                pass
+            self._motor_mode_locked_popup_shown = True
 
 
 """

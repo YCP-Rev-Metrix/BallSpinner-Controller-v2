@@ -264,6 +264,44 @@ def test_BSCMainWindow_base_size(mock_bsc, qtbot):
     assert base_size.height() == 1080
 
 
+@patch('utils.notify_user')
+@patch('frontend.BSCMainWindow.bsc')
+def test_BSCMainWindow_shows_locked_motor_popup(mock_bsc, mock_notify, qtbot):
+    """Test the main window shows a notify_user popup when motors are locked due to VESC failure."""
+    mock_bsc.motor_mode = 'simulated'
+    mock_bsc.motor_mode_locked = True
+    mock_bsc.motor_mode_locked_due_to_vesc = True
+    mock_bsc.motor_mode_locked_reason = 'Simulated motors locked.'
+    mock_bsc._real_motor_supported = False
+    mock_bsc.get_motor_status_message = MagicMock(return_value='Using simulated motors.')
+
+    window = BSCMainWindow()
+    qtbot.addWidget(window)
+
+    mock_notify.assert_called_once_with(
+        'Simulated motors locked.',
+        title='Motor Mode Locked',
+        type='warning',
+    )
+
+
+@patch('utils.notify_user')
+@patch('frontend.BSCMainWindow.bsc')
+def test_BSCMainWindow_does_not_notify_when_simulated_not_due_to_vesc(mock_bsc, mock_notify, qtbot):
+    """Test no popup is shown when simulation is locked for non-VESC reasons."""
+    mock_bsc.motor_mode = 'simulated'
+    mock_bsc.motor_mode_locked = True
+    mock_bsc.motor_mode_locked_due_to_vesc = False
+    mock_bsc.motor_mode_locked_reason = 'Simulated motors locked.'
+    mock_bsc._real_motor_supported = False
+    mock_bsc.get_motor_status_message = MagicMock(return_value='Using simulated motors.')
+
+    window = BSCMainWindow()
+    qtbot.addWidget(window)
+
+    mock_notify.assert_not_called()
+
+
 # ============================================================================
 # SMART DOT CONNECT WIDGET TESTS
 # ============================================================================

@@ -92,6 +92,7 @@ class BSC:
         self.motor_mode = "simulated"
         self.motor_mode_locked = False
         self.motor_mode_locked_reason = None
+        self.motor_mode_locked_due_to_vesc = False
         self._real_motor_supported = utils.is_raspberry_pi_5()
         self.h = None
         self.motor1 = None
@@ -105,6 +106,7 @@ class BSC:
             self.use_simulated_motors(
                 "Simulated motors locked.",
                 locked=True,
+                due_to_vesc=False,
             )
             return
 
@@ -114,6 +116,7 @@ class BSC:
             self.use_simulated_motors(
                 "Simulated motors locked.",
                 locked=True,
+                due_to_vesc=True,
             )
 
     def _create_real_motors(self):
@@ -137,7 +140,7 @@ class BSC:
         self.motor_mode_locked = False
         self.motor_mode_locked_reason = None
 
-    def use_simulated_motors(self, reason=None, locked=False):
+    def use_simulated_motors(self, reason=None, locked=False, due_to_vesc=False):
         self.disconnect_all_motors()
         self.motor1 = SimMotor(2)
         self.motor2 = SimMotor(2)
@@ -145,6 +148,7 @@ class BSC:
         self.motor_mode = "simulated"
         self.motor_mode_locked = locked
         self.motor_mode_locked_reason = reason
+        self.motor_mode_locked_due_to_vesc = due_to_vesc
 
     def set_motor_mode(self, mode):
         if mode == "real":
@@ -154,6 +158,7 @@ class BSC:
                 self.use_simulated_motors(
                     "Simulated motors locked.",
                     locked=True,
+                    due_to_vesc=False,
                 )
                 return False
             try:
@@ -163,6 +168,7 @@ class BSC:
                 self.use_simulated_motors(
                     "Simulated motors locked.",
                     locked=True,
+                    due_to_vesc=True,
                 )
                 return False
         elif mode == "simulated":
