@@ -448,3 +448,44 @@ def test_BSCMainWindow_menu_navigation_cloud_test(mock_bsc, qtbot):
     
     assert window.tab.currentIndex() == 4
     assert "Cloud" in window.windowTitle()
+
+
+@patch('frontend.BSCMainWindow.bsc')
+def test_BSCMainWindow_locked_simulated_mode_shows_reason(mock_bsc, qtbot):
+    """When simulation is locked, the status bar shows the locked reason and real mode is disabled."""
+    mock_bsc.motor_mode = 'simulated'
+    mock_bsc.motor_mode_locked = True
+    mock_bsc.motor_mode_locked_reason = 'Simulated motors only: ensure motors are powered and E-stop is not pressed, then restart the system.'
+    mock_bsc._real_motor_supported = False
+    mock_bsc.get_motor_status_message = MagicMock(return_value='Using simulated motors.')
+
+    window = BSCMainWindow()
+    qtbot.addWidget(window)
+
+    window.statusBar.showMessage = MagicMock()
+    window.update_motor_mode_ui()
+
+    assert window.actionSimulatedMotor.isChecked() is True
+    assert window.actionRealMotor.isEnabled() is False
+    window.statusBar.showMessage.assert_called_with(mock_bsc.motor_mode_locked_reason, 0)
+
+
+@patch('frontend.BSCMainWindow.bsc')
+def test_BSCMainWindow_real_mode_switch_failure_reverts_to_simulated(mock_bsc, qtbot):
+    """If real mode fails during toggle, the UI should stay in simulated mode."""
+    mock_bsc.set_motor_mode = MagicMock(side_effect=lambda mode: False if mode == 'real' else True)
+    mock_bsc.motor_mode = 'simulated'
+    mock_bsc.motor_mode_locked = True
+    mock_bsc.motor_mode_locked_reason = 'Simulated motors only: locked because real motor init failed.'
+    mock_bsc._real_motor_supported = True
+    mock_bsc.get_motor_status_message = MagicMock(return_value='Using simulated motors.')
+
+    window = BSCMainWindow()
+    qtbot.addWidget(window)
+
+    window.statusBar.showMessage = MagicMock()
+    window.motorSimulationControl(True, False)
+
+    assert window.actionRealMotor.isChecked() is False
+    assert window.actionSimulatedMotor.isChecked() is True
+    window.statusBar.showMessage.assert_any_call(mock_bsc.motor_mode_locked_reason, 0)

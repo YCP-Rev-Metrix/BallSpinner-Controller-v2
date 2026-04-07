@@ -103,15 +103,12 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         self.actionSimulatedMotor = self.findChild(QAction, 'actSimMotor')
         self.actionRealMotor = self.findChild(QAction, 'actRealMotor')
 
-        #Lock to simulated motor by default; this ensures the application
-        self.actionSimulatedMotor.setDisabled(True)
-        self.actionRealMotor.setDisabled(True)
+        if self.actionSimulatedMotor is not None:
+            self.actionSimulatedMotor.toggled.connect(lambda checked: self.motorSimulationControl(checked, True))
+        if self.actionRealMotor is not None:
+            self.actionRealMotor.toggled.connect(lambda checked: self.motorSimulationControl(checked, False))
 
-        # Set default to Real Motor
-        self.actionSimulatedMotor.setChecked(True)
-
-        self.actionSimulatedMotor.toggled.connect(lambda checked: self.motorSimulationControl(checked, True))
-        self.actionRealMotor.toggled.connect(lambda checked: self.motorSimulationControl(checked, False))
+        self.update_motor_mode_ui()
 
 
     def estop(self):
@@ -242,14 +239,80 @@ class BSCMainWindow(QtWidgets.QMainWindow):
             else:
                 self.actionSimulatedMotor.setChecked(True)
             return
-            
-        # Uncheck the other option
-        if is_simulated:
-            self.actionRealMotor.setChecked(False)
-        else:
-            self.actionSimulatedMotor.setChecked(False)
-        
 
+        # Uncheck the other option while avoiding signal recursion
+        if self.actionRealMotor is not None:
+            self.actionRealMotor.blockSignals(True)
+        if self.actionSimulatedMotor is not None:
+            self.actionSimulatedMotor.blockSignals(True)
+
+        if is_simulated:
+            if self.actionRealMotor is not None:
+                self.actionRealMotor.setChecked(False)
+        else:
+            if self.actionSimulatedMotor is not None:
+                self.actionSimulatedMotor.setChecked(False)
+
+        if self.actionRealMotor is not None:
+            self.actionRealMotor.blockSignals(False)
+        if self.actionSimulatedMotor is not None:
+            self.actionSimulatedMotor.blockSignals(False)
+
+        requested_mode = "simulated" if is_simulated else "real"
+        success = bsc.set_motor_mode(requested_mode)
+
+        if requested_mode == "real" and not success:
+            if self.actionRealMotor is not None:
+                self.actionRealMotor.blockSignals(True)
+                self.actionRealMotor.setChecked(False)
+                self.actionRealMotor.blockSignals(False)
+            if self.actionSimulatedMotor is not None:
+                self.actionSimulatedMotor.blockSignals(True)
+                self.actionSimulatedMotor.setChecked(True)
+                self.actionSimulatedMotor.blockSignals(False)
+
+        self.update_motor_mode_ui()
+
+
+    def update_motor_mode_ui(self):
+        if self.actionSimulatedMotor is not None:
+            self.actionSimulatedMotor.blockSignals(True)
+        if self.actionRealMotor is not None:
+            self.actionRealMotor.blockSignals(True)
+
+        if bsc.motor_mode == "real":
+            if self.actionRealMotor is not None:
+                self.actionRealMotor.setChecked(True)
+            if self.actionSimulatedMotor is not None:
+                self.actionSimulatedMotor.setChecked(False)
+        else:
+            if self.actionRealMotor is not None:
+                self.actionRealMotor.setChecked(False)
+            if self.actionSimulatedMotor is not None:
+                self.actionSimulatedMotor.setChecked(True)
+
+        if self.actionRealMotor is not None:
+            self.actionRealMotor.setDisabled(getattr(bsc, 'motor_mode_locked', False) or not getattr(bsc, '_real_motor_supported', False))
+        if self.actionSimulatedMotor is not None:
+            self.actionSimulatedMotor.setDisabled(False)
+
+        motor_mode_locked = getattr(bsc, 'motor_mode_locked', False)
+        motor_mode_locked_reason = getattr(bsc, 'motor_mode_locked_reason', None)
+        if motor_mode_locked and motor_mode_locked_reason:
+            self.statusBar.showMessage(str(motor_mode_locked_reason), 0)
+        else:
+            if hasattr(bsc, 'get_motor_status_message'):
+                status_message = bsc.get_motor_status_message()
+                self.statusBar.showMessage(str(status_message), 5000)
+            else:
+                motor_mode = getattr(bsc, 'motor_mode', 'simulated')
+                default_status = "Using real motors." if motor_mode == 'real' else "Using simulated motors."
+                self.statusBar.showMessage(default_status, 5000)
+
+        if self.actionSimulatedMotor is not None:
+            self.actionSimulatedMotor.blockSignals(False)
+        if self.actionRealMotor is not None:
+            self.actionRealMotor.blockSignals(False)
 
 
 """
