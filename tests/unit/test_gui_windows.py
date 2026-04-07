@@ -277,9 +277,10 @@ def test_BSCMainWindow_shows_locked_motor_popup(mock_bsc, mock_notify, qtbot):
 
     window = BSCMainWindow()
     qtbot.addWidget(window)
+    qtbot.wait(10)
 
     mock_notify.assert_called_once_with(
-        'Simulated motors locked.',
+        'Simulated motors locked. Ensure the motors are powered and the E-stop is not pressed, then restart the system.',
         title='Motor Mode Locked',
         type='warning',
     )
@@ -298,6 +299,7 @@ def test_BSCMainWindow_does_not_notify_when_simulated_not_due_to_vesc(mock_bsc, 
 
     window = BSCMainWindow()
     qtbot.addWidget(window)
+    qtbot.wait(10)
 
     mock_notify.assert_not_called()
 

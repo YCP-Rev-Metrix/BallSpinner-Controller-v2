@@ -111,8 +111,8 @@ class BSCMainWindow(QtWidgets.QMainWindow):
             self.actionRealMotor.toggled.connect(lambda checked: self.motorSimulationControl(checked, False))
 
         self._motor_mode_locked_popup_shown = False
-        self.update_motor_mode_ui()
-        self.show_motor_mode_locked_popup_if_needed()
+        self.updateMotorModeUI()
+        QtCore.QTimer.singleShot(0, self.showMotorModeLockedPopupIfNeeded)
 
 
     def estop(self):
@@ -275,10 +275,10 @@ class BSCMainWindow(QtWidgets.QMainWindow):
                 self.actionSimulatedMotor.setChecked(True)
                 self.actionSimulatedMotor.blockSignals(False)
 
-        self.update_motor_mode_ui()
+        self.updateMotorModeUI()
 
 
-    def update_motor_mode_ui(self):
+    def updateMotorModeUI(self):
         if self.actionSimulatedMotor is not None:
             self.actionSimulatedMotor.blockSignals(True)
         if self.actionRealMotor is not None:
@@ -334,9 +334,7 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         if self.actionRealMotor is not None:
             self.actionRealMotor.blockSignals(False)
 
-        self.show_motor_mode_locked_popup_if_needed()
-
-    def show_motor_mode_locked_popup_if_needed(self):
+    def showMotorModeLockedPopupIfNeeded(self):
         if getattr(self, '_motor_mode_locked_popup_shown', False):
             return
 
@@ -350,8 +348,8 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         if motor_mode_locked and motor_mode_locked_due_to_vesc:
             try:
                 utils.notify_user(
-                    str(bsc.motor_mode_locked_reason),
-                    title="Motor Mode Locked",
+                    "Simulated motors locked. Ensure the motors are powered and the E-stop is not pressed, then restart the system.",
+                    title="VESC Failed to Initialize",
                     type="warning",
                 )
             except Exception:
