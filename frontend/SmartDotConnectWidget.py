@@ -62,7 +62,7 @@ class ConnectionWorker(QThread):
             error_str = str(e)
             # If we get here after a timeout, it means the retry also failed
             if "Timed out" in error_str:
-                self.connectionFailed.emit("Connection failed")
+                self.connectionFailed.emit(f"Connection failed: {error_str}")
             else:
                 self.connectionFailed.emit(f"Connection error: {error_str}")
 
@@ -310,7 +310,12 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
 
         # Notify user with a modal warning/critical dialog for visibility
         try:
-            utils.notify_user(error_message, title="SmartDot Connection Error", type="critical")
+            utils.notify_user(
+                "SmartDot connection failed. See details for the full exception.",
+                title="SmartDot Connection Error",
+                type="critical",
+                details=error_message,
+            )
         except Exception as e:
             print(f"Failed to show error dialog: {e}")
             logger.exception(f"Failed to show error dialog: {e}")
