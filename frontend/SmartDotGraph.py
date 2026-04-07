@@ -308,6 +308,25 @@ class SmartDotGraph(QtWidgets.QWidget):
             case _:
                 self.graph.enableAutoRange(axis='x')
     
+    def _safe_plot_data(self, x, y, name=None):
+        """Return x/y arrays trimmed to matching length for safe plotting."""
+        if x is None or y is None:
+            return np.array([]), np.array([])
+        x_arr = np.asarray(x).ravel()
+        y_arr = np.asarray(y).ravel()
+        if x_arr.shape != y_arr.shape:
+            min_len = min(x_arr.shape[0], y_arr.shape[0])
+            if min_len == 0:
+                if name is not None:
+                    print(f"SmartDotGraph: plot data for '{name}' has zero length after trimming")
+                return np.array([]), np.array([])
+            if name is not None:
+                print(
+                    f"SmartDotGraph: trimming mismatched plot data for '{name}' "
+                    f"from {x_arr.shape[0]} and {y_arr.shape[0]} to {min_len}"
+                )
+            return x_arr[:min_len], y_arr[:min_len]
+        return x_arr, y_arr
 
     def _on_graph_click(self, event):
         """Handle mouse clicks on the plot scene and print mapped data coordinates.
@@ -700,18 +719,21 @@ class SmartDotGraph(QtWidgets.QWidget):
         # Use persistent PlotDataItems and update their data/visibility
         try:
             if self.chkAccelerometer_X.isChecked():
-                self.curves['acc_x'].setData(self.accelerometerTime, self.accelerometerX)
-                self.curves['acc_x'].setVisible(True)
+                x, y = self._safe_plot_data(self.accelerometerTime, self.accelerometerX, 'acc_x')
+                self.curves['acc_x'].setData(x, y)
+                self.curves['acc_x'].setVisible(bool(x.size and y.size))
             else:
                 self.curves['acc_x'].setVisible(False)
             if self.chkAccelerometer_Y.isChecked():
-                self.curves['acc_y'].setData(self.accelerometerTime, self.accelerometerY)
-                self.curves['acc_y'].setVisible(True)
+                x, y = self._safe_plot_data(self.accelerometerTime, self.accelerometerY, 'acc_y')
+                self.curves['acc_y'].setData(x, y)
+                self.curves['acc_y'].setVisible(bool(x.size and y.size))
             else:
                 self.curves['acc_y'].setVisible(False)
             if self.chkAccelerometer_Z.isChecked():
-                self.curves['acc_z'].setData(self.accelerometerTime, self.accelerometerZ)
-                self.curves['acc_z'].setVisible(True)
+                x, y = self._safe_plot_data(self.accelerometerTime, self.accelerometerZ, 'acc_z')
+                self.curves['acc_z'].setData(x, y)
+                self.curves['acc_z'].setVisible(bool(x.size and y.size))
             else:
                 self.curves['acc_z'].setVisible(False)
         except Exception:
@@ -720,18 +742,21 @@ class SmartDotGraph(QtWidgets.QWidget):
     def drawGyroscope(self) :
         try:
             if self.chkGyroscope_X.isChecked():
-                self.curves['gyro_x'].setData(self.gyroscopeTime, self.gyroscopeX)
-                self.curves['gyro_x'].setVisible(True)
+                x, y = self._safe_plot_data(self.gyroscopeTime, self.gyroscopeX, 'gyro_x')
+                self.curves['gyro_x'].setData(x, y)
+                self.curves['gyro_x'].setVisible(bool(x.size and y.size))
             else:
                 self.curves['gyro_x'].setVisible(False)
             if self.chkGyroscope_Y.isChecked():
-                self.curves['gyro_y'].setData(self.gyroscopeTime, self.gyroscopeY)
-                self.curves['gyro_y'].setVisible(True)
+                x, y = self._safe_plot_data(self.gyroscopeTime, self.gyroscopeY, 'gyro_y')
+                self.curves['gyro_y'].setData(x, y)
+                self.curves['gyro_y'].setVisible(bool(x.size and y.size))
             else:
                 self.curves['gyro_y'].setVisible(False)
             if self.chkGyroscope_Z.isChecked():
-                self.curves['gyro_z'].setData(self.gyroscopeTime, self.gyroscopeZ)
-                self.curves['gyro_z'].setVisible(True)
+                x, y = self._safe_plot_data(self.gyroscopeTime, self.gyroscopeZ, 'gyro_z')
+                self.curves['gyro_z'].setData(x, y)
+                self.curves['gyro_z'].setVisible(bool(x.size and y.size))
             else:
                 self.curves['gyro_z'].setVisible(False)
         except Exception:
@@ -739,18 +764,21 @@ class SmartDotGraph(QtWidgets.QWidget):
     def drawMagnetometer(self) :
         try:
             if self.chkMagnetometer_X.isChecked():
-                self.curves['mag_x'].setData(self.magnetometerTime, self.magnetometerX)
-                self.curves['mag_x'].setVisible(True)
+                x, y = self._safe_plot_data(self.magnetometerTime, self.magnetometerX, 'mag_x')
+                self.curves['mag_x'].setData(x, y)
+                self.curves['mag_x'].setVisible(bool(x.size and y.size))
             else:
                 self.curves['mag_x'].setVisible(False)
             if self.chkMagnetometer_Y.isChecked():
-                self.curves['mag_y'].setData(self.magnetometerTime, self.magnetometerY)
-                self.curves['mag_y'].setVisible(True)
+                x, y = self._safe_plot_data(self.magnetometerTime, self.magnetometerY, 'mag_y')
+                self.curves['mag_y'].setData(x, y)
+                self.curves['mag_y'].setVisible(bool(x.size and y.size))
             else:
                 self.curves['mag_y'].setVisible(False)
             if self.chkMagnetometer_Z.isChecked():
-                self.curves['mag_z'].setData(self.magnetometerTime, self.magnetometerZ)
-                self.curves['mag_z'].setVisible(True)
+                x, y = self._safe_plot_data(self.magnetometerTime, self.magnetometerZ, 'mag_z')
+                self.curves['mag_z'].setData(x, y)
+                self.curves['mag_z'].setVisible(bool(x.size and y.size))
             else:
                 self.curves['mag_z'].setVisible(False)
         except Exception:
@@ -764,8 +792,9 @@ class SmartDotGraph(QtWidgets.QWidget):
                         lv_plot = np.where(self.lightValueRaw > 0, np.log2(self.lightValueRaw), np.nan).astype(np.float32)
                 else:
                     lv_plot = np.array([])
-                self.curves['light'].setData(self.lightTime, lv_plot)
-                self.curves['light'].setVisible(True)
+                x, y = self._safe_plot_data(self.lightTime, lv_plot, 'light')
+                self.curves['light'].setData(x, y)
+                self.curves['light'].setVisible(bool(x.size and y.size))
             else:
                 self.curves['light'].setVisible(False)
         except Exception:
