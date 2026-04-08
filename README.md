@@ -19,14 +19,17 @@ source venv/bin/activate
 ```
 
 ### Developing the frontend
-Install the QT Designer from https://www.pythonguis.com/installation/install-qt-designer-standalone/
-There is a link inside of this article that will download it right to Windows. 
-
-TODO: Matt Fill out this section? Maybe you have a good tutorial?
+See the UI guide in [BSC_Ui_README.md](BSC_Ui_README.md) for Qt Designer setup and the page workflow.
 
 ## Mac
+Install Python and create a virtual environment:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
-TODO: Matt, you will have to describe install steps for Mac.
+For UI work, see [BSC_Ui_README.md](BSC_Ui_README.md).
 
 
 
@@ -43,18 +46,29 @@ This guide will walk you through setting up a Raspberry Pi to run the BallSpinne
 
 ## Table of Contents
 
-1. [Initial Setup](#initial-setup)
-2. [Network Configuration](#network-configuration)
-3. [SSH Configuration](#ssh-configuration)
-4. [GitHub SSH Key Setup](#github-ssh-key-setup)
-5. [System Updates](#system-updates)
-6. [Python Installation](#python-installation)
-7. [Repository Setup](#repository-setup)
-8. [Motor Driver Requirements](#motor-driver-requirements)
-9. [MetaWear SDK Installation](#metawear-sdk-installation)
-10. [Testing](#testing)
+1. [Quick Install (Recommended)](#quick-install-recommended)
+2. [Initial Setup](#initial-setup)
+3. [Network Configuration](#network-configuration)
+4. [SSH Configuration](#ssh-configuration)
+5. [GitHub SSH Key Setup](#github-ssh-key-setup)
+6. [System Updates](#system-updates)
+7. [Python Installation](#python-installation)
+8. [Repository Setup](#repository-setup)
+9. [Motor Driver Requirements](#motor-driver-requirements)
+10. [MetaWear SDK Installation](#metawear-sdk-installation)
+11. [Testing](#testing)
 
 ---
+
+## Quick Install (Recommended)
+
+If you already cloned the repo on the Pi, run the single interactive installer. It installs system dependencies, creates the virtual environment, builds MetaWear/PyWarble, runs unit tests, and then starts the app via `startup.sh`. It can optionally configure autostart and logs to `logs/pi_install.log`.
+
+```bash
+cd BallSpinner-Controller-v2
+chmod +x pi_install.sh
+./pi_install.sh
+```
 
 ## Initial Setup
 
@@ -105,7 +119,7 @@ Replace `RPIname` with your Pi's hostname and `IPAddress` with the IP address fr
 
 1. Generate a GitHub SSH key on your Raspberry Pi
 ```bash
-ssh-keygen -o -t rsa -C “githubusername@github.com”
+ssh-keygen -o -t rsa -C "githubusername@github.com"
 ```
 3. Add the key to your GitHub SSH settings
 4. Use the `cat` command to display your public key:
@@ -163,7 +177,7 @@ source venv/bin/activate
 Inside the cloned directory and virtual environment:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-pi.txt
 ```
 
 ## Motor Driver Requirements
@@ -380,6 +394,12 @@ Run the main application:
 
 ```bash
 python main.py
+```
+
+Optional test runners:
+```bash
+./run_unit_tests.sh
+./run_integration_tests.sh
 ```
 
 **Expected Result:** The application should open and you should now be using the BallSpinner-Controller-v2.
