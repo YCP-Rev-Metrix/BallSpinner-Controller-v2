@@ -55,8 +55,9 @@ This guide will walk you through setting up a Raspberry Pi to run the BallSpinne
 7. [Python Installation](#python-installation)
 8. [Repository Setup](#repository-setup)
 9. [Motor Driver Requirements](#motor-driver-requirements)
-10. [MetaWear SDK Installation](#metawear-sdk-installation)
-11. [Testing](#testing)
+10. [GPIO Defaults](#gpio-defaults)
+11. [MetaWear SDK Installation](#metawear-sdk-installation)
+12. [Testing](#testing)
 
 ---
 
@@ -189,6 +190,27 @@ sudo apt-get install liblgpio-dev
 sudo apt install swig
 pip install rpi-lgpio
 ```
+
+## GPIO Defaults
+
+Set BCM pins 5 and 6 to output low at boot by editing `/boot/firmware/config.txt`:
+
+```bash
+sudo cp /boot/firmware/config.txt /boot/firmware/config.txt.bak
+sudo nano /boot/firmware/config.txt
+```
+
+Add this block at the end of the file:
+
+```ini
+# >>> BallSpinner GPIO defaults >>>
+gpio=5,6=op,dl
+# <<< BallSpinner GPIO defaults <<<
+```
+
+Reboot the Pi to apply the boot-time defaults.
+
+If you use `pi_install.sh`, it can add this block automatically.
 
 ## MetaWear SDK Installation
 

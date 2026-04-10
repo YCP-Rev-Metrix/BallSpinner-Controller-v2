@@ -50,6 +50,25 @@ echo "Updating system packages and installing dependencies..."
 run_cmd sudo apt-get update
 run_cmd sudo apt-get install -y git build-essential swig liblgpio-dev bluetooth bluez libbluetooth-dev libudev-dev libboost-all-dev python3-venv rfkill
 
+CONFIG_FILE="/boot/firmware/config.txt"
+if prompt_yes_no "Set GPIO defaults low for BCM 5 and 6 in /boot/firmware/config.txt?" "Y"; then
+    if [[ -f "$CONFIG_FILE" ]]; then
+        echo "Updating GPIO defaults in $CONFIG_FILE..."
+        run_cmd sudo cp "$CONFIG_FILE" "${CONFIG_FILE}.bak"
+        TMP_FILE="/tmp/ballspinner_config.txt"
+        run_cmd sudo awk 'BEGIN{skip=0} /^# >>> BallSpinner GPIO defaults >>>/{skip=1; next} /^# <<< BallSpinner GPIO defaults <<</{skip=0; next} !skip{print}' "$CONFIG_FILE" > "$TMP_FILE"
+        run_cmd sudo mv "$TMP_FILE" "$CONFIG_FILE"
+        run_cmd sudo bash -c "cat <<'EOF' >> '$CONFIG_FILE'
+# >>> BallSpinner GPIO defaults >>>
+gpio=5,6=op,dl
+# <<< BallSpinner GPIO defaults <<<
+EOF"
+        echo "GPIO defaults set. Reboot required to apply boot-time defaults."
+    else
+        echo "Config file not found: $CONFIG_FILE"
+    fi
+fi
+
 PYTHON_BIN=""
 if command -v python3 >/dev/null 2>&1; then
     PYTHON_BIN="python3"
