@@ -46,30 +46,20 @@ This guide will walk you through setting up a Raspberry Pi to run the BallSpinne
 
 ## Table of Contents
 
-1. [Quick Install (Recommended)](#quick-install-recommended)
-2. [Initial Setup](#initial-setup)
-3. [Network Configuration](#network-configuration)
-4. [SSH Configuration](#ssh-configuration)
-5. [GitHub SSH Key Setup](#github-ssh-key-setup)
+1. [Initial Setup](#initial-setup)
+2. [Network Configuration](#network-configuration)
+3. [SSH Configuration](#ssh-configuration)
+4. [GitHub SSH Key Setup](#github-ssh-key-setup)
+5. [Repository Setup](#repository-setup)
+   - [Quick Install (Recommended)](#quick-install-recommended)
 6. [System Updates](#system-updates)
 7. [Python Installation](#python-installation)
-8. [Repository Setup](#repository-setup)
-9. [Motor Driver Requirements](#motor-driver-requirements)
-10. [GPIO Defaults](#gpio-defaults)
-11. [MetaWear SDK Installation](#metawear-sdk-installation)
-12. [Testing](#testing)
+8. [Motor Driver Requirements](#motor-driver-requirements)
+9. [GPIO Defaults](#gpio-defaults)
+10. [MetaWear SDK Installation](#metawear-sdk-installation)
+11. [Testing](#testing)
 
 ---
-
-## Quick Install (Recommended)
-
-If you already cloned the repo on the Pi, run the single interactive installer. It installs system dependencies, creates the virtual environment, builds MetaWear/PyWarble, runs unit tests, and then starts the app via `startup.sh`. It can optionally configure autostart and logs to `logs/pi_install.log`.
-
-```bash
-cd BallSpinner-Controller-v2
-chmod +x pi_install.sh
-./pi_install.sh
-```
 
 ## Initial Setup
 
@@ -129,6 +119,24 @@ ssh-keygen -o -t rsa -C "githubusername@github.com"
  ```
 5. Copy all contents and add them to your GitHub account's SSH settings
 
+## Repository Setup
+
+### Clone the Repository
+
+```bash
+git clone git@github.com:YCP-Rev-Metrix/BallSpinner-Controller-v2.git
+```
+
+### Quick Install (Recommended)
+
+After cloning the repo on the Pi, run the single interactive installer. It installs system dependencies, creates the virtual environment, builds MetaWear/PyWarble, runs unit tests, and then starts the app via `startup.sh`. It can optionally configure autostart and logs to `logs/pi_install.log`.
+
+```bash
+cd BallSpinner-Controller-v2
+chmod +x pi_install.sh
+./pi_install.sh
+```
+
 ## System Updates
 
 Update your system packages:
@@ -155,14 +163,6 @@ sudo apt install --reinstall python3-launchpadlib
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt update
 sudo apt install python3.13 python3.13-venv
-```
-
-## Repository Setup
-
-### Clone the Repository
-
-```bash
-git clone git@github.com:YCP-Rev-Metrix/BallSpinner-Controller-v2.git
 ```
 
 ### Create Virtual Environment
