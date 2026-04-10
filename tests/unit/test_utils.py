@@ -168,7 +168,7 @@ def test_PackageMotorData_shot(monkeypatch):
                     return [type('E', (), {'time':0, 'rpm':100,'angleDeg':1,'tiltDeg':2})]
             self.shot_script_data = MD()
     class BSC:
-        diagnostic_sample_interval_ms = 50
+        sample_interval_ms = 50
         def get_data_controller(self):
             return DC()
     pkg = utils.PackageMotorData(BSC(), BSC()) if False else None

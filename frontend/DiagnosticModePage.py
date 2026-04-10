@@ -208,8 +208,8 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.btnClear.clicked.connect(lambda: self.clear_graphs())
         # Use a QTimer for periodic sampling & UI updates (runs in main thread)
         self._timer = QTimer(self)
-        # Get sample interval from central `bsc` object (milliseconds) and clamp to >=50ms
-        self._sample_interval_ms = max(50, bsc.diagnostic_sample_interval_ms)
+        # Get sample interval from central `bsc` object (milliseconds)
+        self._sample_interval_ms = bsc.sample_interval_ms
         self._sample_dt_s = self._sample_interval_ms / 1000.0
         self._timer.setInterval(self._sample_interval_ms)
         self._timer.timeout.connect(self._on_timer)
@@ -228,7 +228,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self._filled = False
 
         self._last_values = {'spin': 0.0, 'tilt': 0.0, 'angle': 0.0}
-        self._sample_index = 0  # drives quantized 50ms grid
+        self._sample_index = 0  # drives quantized sample grid
 
         #Current and Temp Labels
         self.lblSpinCurrent = self.findChild(QtWidgets.QLabel, 'lblSpinCurrent')

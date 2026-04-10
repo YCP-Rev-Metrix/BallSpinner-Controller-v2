@@ -123,8 +123,8 @@ class ShotModePage(QtWidgets.QWidget):
         bsc.set_data_controller(DataController(bsc.get_session()))
         print(f"Debug: {bsc.get_session().Spin_Instruction_Points}")  # Debug print to verify session data is set correctly
 
-        #Access the data controller's ShotModeData and add the three motors 
-        sample_interval = 0.050 # 50 ms sample interval, 25 was too short
+        #Access the data controller's ShotModeData and add the three motors
+        sample_interval = bsc.sample_interval_ms / 1000.0
         rpm_array = self.graph_rpm.sample_spline_display(sample_interval)
         tilt_array = self.graph_tilt.sample_spline_display(sample_interval)
         angle_array = self.graph_angle.sample_spline_display(sample_interval)
