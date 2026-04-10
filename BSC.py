@@ -86,8 +86,17 @@ class BSC:
         self.cloud_api = CloudAPI()
         self.session = None
         self.data_controller = None
-        # Diagnostic sampling interval (milliseconds) used by UI pages
-        self.diagnostic_sample_interval_ms = 30
+        # Shared sampling interval (milliseconds) used by UI pages
+        self.sample_interval_ms = 50
+        self._tuning_config = None
+        try:
+            from tuning_config import load_tuning_config
+            self._tuning_config = load_tuning_config()
+            interval_ms = self._tuning_config.get("sample_interval_ms")
+            if isinstance(interval_ms, (int, float)):
+                self.sample_interval_ms = interval_ms
+        except Exception:
+            self._tuning_config = None
 
         self.motor_mode = "simulated"
         self.motor_mode_locked = False
@@ -100,6 +109,21 @@ class BSC:
         self.motor3 = None
 
         self._initialize_motors()
+
+        if self._tuning_config:
+            try:
+                from tuning_config import apply_tuning_config
+                apply_tuning_config(self, self._tuning_config, apply_comm=False)
+            except Exception:
+                pass
+
+    @property
+    def diagnostic_sample_interval_ms(self):
+        return self.sample_interval_ms
+
+    @diagnostic_sample_interval_ms.setter
+    def diagnostic_sample_interval_ms(self, value):
+        self.sample_interval_ms = value
 
     def _initialize_motors(self):
         if not self._real_motor_supported:
@@ -126,7 +150,20 @@ class BSC:
             raise RuntimeError("lgpio is unavailable")
 
         self.h = lgpio.gpiochip_open(0)
-        self.motor1 = USBBDCMotor(h=self.h)
+        motor_cfg = {}
+        comm_cfg = {}
+        if isinstance(self._tuning_config, dict):
+            motor_cfg = self._tuning_config.get("motor1") or {}
+            if isinstance(motor_cfg, dict):
+                comm_cfg = motor_cfg.get("comm") or {}
+        self.motor1 = USBBDCMotor(
+            h=self.h,
+            duty_cycle_scale=motor_cfg.get("duty_cycle_scale") if isinstance(motor_cfg, dict) else None,
+            serial_port=comm_cfg.get("port") if isinstance(comm_cfg, dict) else None,
+            serial_baud=comm_cfg.get("baud") if isinstance(comm_cfg, dict) else None,
+            serial_timeout_s=comm_cfg.get("serial_timeout_s") if isinstance(comm_cfg, dict) else None,
+            get_values_timeout_s=comm_cfg.get("get_values_timeout_s") if isinstance(comm_cfg, dict) else None,
+        )
         self.motor2 = StepMotor(27, 17, self.h, 5, False)
         self.motor3 = StepMotor(23, 24, self.h, 6, False)
 
@@ -136,6 +173,12 @@ class BSC:
 
         self.disconnect_all_motors()
         self._create_real_motors()
+        if self._tuning_config:
+            try:
+                from tuning_config import apply_tuning_config
+                apply_tuning_config(self, self._tuning_config, apply_comm=False)
+            except Exception:
+                pass
         self.motor_mode = "real"
         self.motor_mode_locked = False
         self.motor_mode_locked_reason = None

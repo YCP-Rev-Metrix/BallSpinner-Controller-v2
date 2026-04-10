@@ -265,10 +265,10 @@ def PackageMotorData(self,bsc):
         logger.debug("Processing diagnostic mode motor data")
         motor_data = dc.diagnostic_script_data.get_diagnostic_script_data() #why are these different names? Brian?
         logger.debug(f"Retrieved {len(motor_data)} diagnostic entries")
-        sample_interval = bsc.diagnostic_sample_interval_ms / 1000.0  # convert ms to seconds
+        sample_interval = bsc.sample_interval_ms / 1000.0  # convert ms to seconds
         #See if data is already at the configured sample intervals
         if motor_data and abs(motor_data[-1].time - round(motor_data[-1].time / sample_interval) * sample_interval) < 1e-6:
-            logger.debug(f"Data already at {bsc.diagnostic_sample_interval_ms}ms intervals, packaging with forward-fill")
+            logger.debug(f"Data already at {bsc.sample_interval_ms}ms intervals, packaging with forward-fill")
             # Separate by motor_id
             rpm_data = {}
             angle_data = {}
@@ -309,7 +309,7 @@ def PackageMotorData(self,bsc):
             
             logger.info(f"Packaged diagnostic data on-grid with forward-fill: {len(motor_rpm)} RPM entries")
         else:
-            logger.debug(f"Data not at {bsc.diagnostic_sample_interval_ms}ms intervals, using legacy packing")
+            logger.debug(f"Data not at {bsc.sample_interval_ms}ms intervals, using legacy packing")
             LegacyDiagnosticPacking(motor_data, time_rpm, motor_rpm, time_angle, motor_angleDeg, time_tilt, motor_tiltDeg, interval=sample_interval)
     #Ensure all arrays have something to prevent errors downstream
     

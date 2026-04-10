@@ -13,6 +13,7 @@ class SimMotor(iMotor):
     GPIO_Pin = 26
 
     DEFAULT_KP = 1.0
+    DEFAULT_KI = 0.0
     DEFAULT_KD = 0.0
     DEFAULT_DUTY_CYCLE_SCALE = 0.000043333333
 
@@ -30,6 +31,7 @@ class SimMotor(iMotor):
 
         self.GPIO_Pin = GPIOPin
         self._Kp = self.DEFAULT_KP
+        self._Ki = self.DEFAULT_KI
         self._Kd = self.DEFAULT_KD
         self._duty_cycle_scale = self.DEFAULT_DUTY_CYCLE_SCALE
 
@@ -37,6 +39,19 @@ class SimMotor(iMotor):
         self.max_speed = max_speed
         self.time_constant = time_constant
         self.noise_std = noise_std
+
+        # Configurable tuning parameters (aligned with USBBDCMotor)
+        self.target_speed_min = 0.0
+        self.target_speed_max = max_speed
+        self.integral_limit = 1200.0
+        self.ramp_step = 12.0
+
+        self.kick_enabled = True
+        self.kick_min_target_rpm = 1.0
+        self.kick_threshold_divisor = 900.0
+        self.kick_duty_divisor = 6000.0
+        self.kick_max_duty = 1.0
+        self._kick_active = False
 
         self._enabled = False
         self._last_update = time.time()
@@ -79,7 +94,11 @@ class SimMotor(iMotor):
             return self.currSpeed
         else:
             # first-order dynamic response to simulate inertia and controller action
-            alpha = 1.0 - pow(2.718281828459045, -dt / max(1e-6, self.time_constant))
+            kp_scale = max(0.1, self._Kp)
+            effective_tc = max(1e-6, self.time_constant / kp_scale)
+            alpha = 1.0 - pow(2.718281828459045, -dt / effective_tc)
+            if self._kick_active:
+                alpha = min(1.0, alpha * (1.0 + min(1.0, max(0.0, self.kick_max_duty))))
             self.currSpeed += (self.targetSpeed - self.currSpeed) * alpha
             self.currSpeed = max(0.0, min(self.currSpeed, self.max_speed))
 
@@ -89,11 +108,14 @@ class SimMotor(iMotor):
 
         return self.currSpeed
 
-        return self.currSpeed
-
     def changeSpeed(self, dutyCycle: float, isShotMode: bool):
         # Accept the same command range as USBBDCMotor (0-1200), clamp it.
-        new_target = max(0.0, min(dutyCycle, 1200.0))
+        new_target = max(self.target_speed_min, min(dutyCycle, self.target_speed_max))
+        # use duty_cycle_scale as a simple gain so tuning is visible in sim
+        if self.DEFAULT_DUTY_CYCLE_SCALE > 0:
+            scale_ratio = self._duty_cycle_scale / self.DEFAULT_DUTY_CYCLE_SCALE
+            new_target *= max(0.0, scale_ratio)
+        new_target = max(self.target_speed_min, min(new_target, self.target_speed_max))
 
         # Ensure we can read values without requiring explicit start() first.
         self._enabled = True
@@ -105,10 +127,20 @@ class SimMotor(iMotor):
             return
 
         self.targetSpeed = new_target
+        kick_threshold_divisor = self.kick_threshold_divisor if self.kick_threshold_divisor > 0 else 900.0
+        kick_threshold = min((self.targetSpeed ** 2) / kick_threshold_divisor, self.targetSpeed)
+        if (
+            self.kick_enabled
+            and self.targetSpeed >= self.kick_min_target_rpm
+            and self.currSpeed < kick_threshold
+        ):
+            self._kick_active = True
         if self.mode == "instant":
             self.currSpeed = new_target
         else:
             self._update_sim()
+        if self._kick_active and self.currSpeed >= (self.targetSpeed * 0.95):
+            self._kick_active = False
 
     def rampUp(self, step: float = 12.0):
         if self.mode == "step":
@@ -118,7 +150,8 @@ class SimMotor(iMotor):
             return
 
         # Naive ramp towards target, respecting the max speed and preserving dynamics.
-        self.currSpeed = min(self.targetSpeed, self.currSpeed + step)
+        effective_step = self.ramp_step if self.ramp_step > 0 else step
+        self.currSpeed = min(self.targetSpeed, self.currSpeed + effective_step)
         self.currSpeed = max(0.0, min(self.currSpeed, self.max_speed))
 
     def rampDown(self, step: float = 12.0):
@@ -128,11 +161,12 @@ class SimMotor(iMotor):
         if self.targetSpeed >= self.currSpeed:
             return
 
-        self.currSpeed = max(self.targetSpeed, self.currSpeed - step)
+        effective_step = self.ramp_step if self.ramp_step > 0 else step
+        self.currSpeed = max(self.targetSpeed, self.currSpeed - effective_step)
         self.currSpeed = max(0.0, min(self.currSpeed, self.max_speed))
 
     def setTargetSpeed(self, targetSpeed: float):
-        self.targetSpeed = max(0.0, min(targetSpeed, 1200.0))
+        self.targetSpeed = max(self.target_speed_min, min(targetSpeed, self.target_speed_max))
 
     def setTargetPower(self, targetPower: float):
         self.targetPower = targetPower
@@ -164,6 +198,16 @@ class SimMotor(iMotor):
         if value < 0.0:
             raise ValueError("Kd must be non-negative")
         self._Kd = value
+
+    @property
+    def Ki(self) -> float:
+        return self._Ki
+
+    @Ki.setter
+    def Ki(self, value: float):
+        if value < 0.0:
+            raise ValueError("Ki must be non-negative")
+        self._Ki = value
 
     @property
     def duty_cycle_scale(self) -> float:

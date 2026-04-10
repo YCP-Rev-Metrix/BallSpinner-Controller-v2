@@ -190,10 +190,10 @@ class USBBDCMotor(iMotor):
     targetPower = 0.0
     GPIO_Pin = 0
     motor = None
-    ser = serial.Serial(PORT, BAUD, timeout = 0.05)
+    ser = None
 
-    def __init__(self, duty_cycle_scale: float = None, h=None):
-        # ser = serial.Serial(PORT, BAUD, timeout = 0.05)
+    def __init__(self, duty_cycle_scale: float = None, h=None, serial_port=None, serial_baud=None,
+                 serial_timeout_s=None, get_values_timeout_s=None):
         self._duty_cycle_scale = (
             duty_cycle_scale
             if duty_cycle_scale is not None
@@ -204,12 +204,31 @@ class USBBDCMotor(iMotor):
 
         # Track consecutive failed reads for getCurrentSpeed so we can log a warning
         self._missed_speed_reads = 0
-        self._missed_speed_warn_threshold = 10
+        self.missed_speed_warn_threshold = 10
 
         # Default PID gains
         self.Kp = 0.05
         self.Ki = 0.02
         self.Kd = 0.0000
+
+        # Control limits
+        self.target_speed_min = 0.0
+        self.target_speed_max = 1200.0
+        self.integral_limit = 1200.0
+        self.ramp_step = float(STEP)
+
+        # Kick/boost behavior tuning
+        self.kick_enabled = True
+        self.kick_min_target_rpm = 1.0
+        self.kick_threshold_divisor = 900.0
+        self.kick_duty_divisor = 6000.0
+        self.kick_max_duty = 1.0
+
+        # Serial and telemetry settings
+        self.serial_port = serial_port if serial_port is not None else PORT
+        self.serial_baud = serial_baud if serial_baud is not None else BAUD
+        self.serial_timeout_s = 0.05 if serial_timeout_s is None else serial_timeout_s
+        self.get_values_timeout_s = 0.2 if get_values_timeout_s is None else get_values_timeout_s
 
         self.h = h
         # For integral & derivative computation
@@ -217,6 +236,7 @@ class USBBDCMotor(iMotor):
         self._prev_error = 0.0
         self._prev_time = time.time()
 
+        self.ser = serial.Serial(self.serial_port, self.serial_baud, timeout=self.serial_timeout_s)
         self.ser.write(encode(SetDutyCycle(0.0)))
         if lgpio and getattr(self, 'h', None) is not None:
             lgpio.gpio_claim_output(self.h, FAULT_LIGHT_PIN, 0)
@@ -275,6 +295,23 @@ class USBBDCMotor(iMotor):
         if lgpio and getattr(self, 'h', None) is not None:
             lgpio.gpio_release(self.h, FAULT_LIGHT_PIN)
 
+    def reconfigure_serial(self, port=None, baud=None, timeout_s=None):
+        """Reopen the serial connection with updated settings."""
+        if port is not None:
+            self.serial_port = port
+        if baud is not None:
+            self.serial_baud = baud
+        if timeout_s is not None:
+            self.serial_timeout_s = timeout_s
+
+        try:
+            if self.ser is not None:
+                self.ser.close()
+        except Exception:
+            pass
+
+        self.ser = serial.Serial(self.serial_port, self.serial_baud, timeout=self.serial_timeout_s)
+
     def clamp(self, x, lo, hi):
         return max(lo, min(x, hi))
 
@@ -295,7 +332,7 @@ class USBBDCMotor(iMotor):
     def changeSpeed(self, dutyCycle: float, isShotMode: bool):
         """Basic P-style output toward a target speed."""
 
-        self.targetSpeed = self.clamp(dutyCycle, 0, 1200)
+        self.targetSpeed = self.clamp(dutyCycle, self.target_speed_min, self.target_speed_max)
         self.currSpeed = self.getCurrentSpeed()
 
         error = self.targetSpeed - self.currSpeed
@@ -308,14 +345,23 @@ class USBBDCMotor(iMotor):
 
         # Integral update (always run unless dt is zero) + anti-windup
         self._integral += error * dt
-        self._integral = self.clamp(self._integral, -1200, 1200)
+        self._integral = self.clamp(self._integral, -self.integral_limit, self.integral_limit)
 
         self._prev_error = error
         self._prev_time = now
-        if self.currSpeed < min(self.targetSpeed**2/900, self.targetSpeed) and self.targetSpeed != 0:
+        kick_threshold_divisor = self.kick_threshold_divisor if self.kick_threshold_divisor > 0 else 900.0
+        kick_duty_divisor = self.kick_duty_divisor if self.kick_duty_divisor > 0 else 6000.0
+        kick_max_duty = self.kick_max_duty if self.kick_max_duty > 0 else 0.0
+        kick_threshold = min((self.targetSpeed ** 2) / kick_threshold_divisor, self.targetSpeed)
+
+        if (
+            self.kick_enabled
+            and self.targetSpeed >= self.kick_min_target_rpm
+            and self.currSpeed < kick_threshold
+        ):
             # Motor is stopped give big kick to get it going, then let PID take over
             command = 1/self.duty_cycle_scale  # Garbage for logging purposes since we're not really using the PID output for this case
-            duty = min(self.targetSpeed/6000, 1.0)  # run at 100% duty until we get a speed reading, then PID can take over
+            duty = min(self.targetSpeed / kick_duty_divisor, kick_max_duty)
         else:
             command = (
                 self.targetSpeed
@@ -344,10 +390,10 @@ class USBBDCMotor(iMotor):
         If the VESC does not reply in time, keep the last-known speed.
         '''
         send_get_values(self.ser)
-        vals = read_mc_values(self.ser)
+        vals = read_mc_values(self.ser, timeout=self.get_values_timeout_s)
         if vals is None:
             self._missed_speed_reads += 1
-            if self._missed_speed_reads >= self._missed_speed_warn_threshold:
+            if self._missed_speed_reads >= self.missed_speed_warn_threshold:
                 logger.warning(
                     "No reply from VESC for getCurrentSpeed for %d consecutive reads; keeping last known speed %.1f RPM",
                     self._missed_speed_reads,
@@ -383,10 +429,10 @@ class USBBDCMotor(iMotor):
         return mech_rpm 
     def getVals(self):
         send_get_values(self.ser)
-        vals = read_mc_values(self.ser)
+        vals = read_mc_values(self.ser, timeout=self.get_values_timeout_s)
         if vals is None:
             self._missed_speed_reads += 1
-            if self._missed_speed_reads >= self._missed_speed_warn_threshold:
+            if self._missed_speed_reads >= self.missed_speed_warn_threshold:
                 logger.warning(
                     "No reply from VESC for getCurrentSpeed for %d consecutive reads; keeping last known speed %.1f RPM",
                     self._missed_speed_reads,
@@ -402,8 +448,9 @@ class USBBDCMotor(iMotor):
 
     def rampUp(self):
         logger.debug("USBBDCMotor.rampUp() from %.2f to %.2f", self.currSpeed, self.targetSpeed)
+        step = self.ramp_step if self.ramp_step > 0 else STEP
         while self.currSpeed < self.targetSpeed:
-            self.currSpeed += STEP
+            self.currSpeed += step
             if self.currSpeed > self.targetSpeed:
                 self.currSpeed = self.targetSpeed
 
@@ -415,8 +462,9 @@ class USBBDCMotor(iMotor):
 
     def rampDown(self):
         logger.debug("USBBDCMotor.rampDown() from %.2f to %.2f", self.currSpeed, self.targetSpeed)
+        step = self.ramp_step if self.ramp_step > 0 else STEP
         while self.currSpeed > self.targetSpeed:
-            self.currSpeed -= STEP
+            self.currSpeed -= step
             if self.currSpeed < self.targetSpeed:
                 self.currSpeed = self.targetSpeed
 

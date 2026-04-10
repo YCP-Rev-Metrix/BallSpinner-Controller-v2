@@ -265,109 +265,14 @@
           </sizepolicy>
          </property>
          <layout class="QGridLayout" name="gridLayout_3">
-          <item row="1" column="6">
-           <widget class="QPushButton" name="btnApplyMotorParams">
-            <property name="text">
-             <string>Apply Motor Params</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="5">
-           <widget class="QDoubleSpinBox" name="spnDutyScale">
-            <property name="decimals">
-             <number>9</number>
-            </property>
-            <property name="minimum">
-             <double>0.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>1.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.000010000000000</double>
-            </property>
-            <property name="value">
-             <double>0.000000000000000</double>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="0">
-           <widget class="QLabel" name="lblKp">
-            <property name="text">
-             <string>Kp:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="spnKd">
-            <property name="minimum">
-             <double>0.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-            <property name="value">
-             <double>0.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QDoubleSpinBox" name="spnKp">
-            <property name="minimum">
-             <double>0.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-            <property name="value">
-             <double>0.100000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="5">
-           <widget class="QLabel" name="lblDutyScale">
-            <property name="text">
-             <string>Duty Scale:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QLabel" name="lblKd">
-            <property name="text">
-             <string>Kd:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="4">
            <widget class="QLabel" name="lblTestDuration">
             <property name="text">
              <string>Test Duration (s):</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="2">
-           <widget class="QDoubleSpinBox" name="spnKi">
-            <property name="minimum">
-             <double>0.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-            <property name="value">
-             <double>0.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="4">
+          <item row="0" column="1">
            <widget class="QSpinBox" name="spnTestDuration">
             <property name="minimum">
              <number>1</number>
@@ -380,16 +285,16 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="2">
-           <widget class="QLabel" name="lblKi">
-            <property name="text">
-             <string>Ki:</string>
-            </property>
-           </widget>
-          </item>
          </layout>
         </widget>
        </item>
+        <item>
+         <widget class="QPushButton" name="btnEditMotorTuning">
+          <property name="text">
+           <string>Edit Motor Tuning...</string>
+          </property>
+         </widget>
+        </item>
       </layout>
      </widget>
     </widget>
