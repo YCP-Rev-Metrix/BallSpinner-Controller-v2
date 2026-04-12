@@ -50,6 +50,8 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.btnStop = self.findChild(QtWidgets.QPushButton, 'btnStop')
         self.btnClear = self.findChild(QtWidgets.QPushButton, 'btnClear')
         self.btnSave = self.findChild(QtWidgets.QPushButton, 'btnSave')
+        self.btnReturnZero = self.findChild(QtWidgets.QPushButton, 'btnReturnZero')
+        self.btnSetZero = self.findChild(QtWidgets.QPushButton, 'btnSetZero')
 
         # Additional initialization code can go here
         self.spinGraph = self.findChild(pg.PlotWidget, 'grphSpin')
@@ -164,14 +166,14 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.tiltGraph.setLabel('left', 'Tilt Angle', units='Degrees')
         self.tiltGraph.setLabel('bottom', 'Time', units='s')
         self.tiltCurve = self.tiltGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#00aa00', width=2)) #Extra refrence allows to be manipulated in thread
-        self.tiltGraph.setYRange(-50,50)
+        self.tiltGraph.setYRange(-22,22)
         self.tiltGraph.setMouseEnabled(x=False, y=False)
         #Angle Motor graph setup
         self.angleGraph.setTitle("Diagnostic Angle Graph")
         self.angleGraph.setLabel('left', 'Angle', units='Degrees')
         self.angleGraph.setLabel('bottom', 'Time', units='s')
         self.angleCurve = self.angleGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#0000ff', width=2)) #Extra refrence allows to be manipulated in thread
-        self.angleGraph.setYRange(-100,100)
+        self.angleGraph.setYRange(-45,45)
         self.angleGraph.setMouseEnabled(x=False, y=False)
         # Slider configurations 
         self.spinSlider = self.findChild(QtWidgets.QSlider, 'sliderSpin')
@@ -179,8 +181,8 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.angleSlider = self.findChild(QtWidgets.QSlider, 'sliderAngle')
         # Set slider ranges (orientation is set in UI file)
         self.spinSlider.setRange(0, 600)
-        self.tiltSlider.setRange(-45, 45)
-        self.angleSlider.setRange(-90, 90)
+        self.tiltSlider.setRange(-22, 22)
+        self.angleSlider.setRange(-45, 45)
 
         # Always update labels when sliders move (even if timer is stopped)
         self.spinSlider.valueChanged.connect(self._update_slider_labels)
@@ -206,6 +208,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.btnStart.clicked.connect(lambda: self.toggle_Buttons())
         self.btnStop.clicked.connect(lambda: self.toggle_Buttons())
         self.btnClear.clicked.connect(lambda: self.clear_graphs())
+        if self.btnReturnZero:
+            self.btnReturnZero.clicked.connect(self._return_motors_to_zero)
+        if self.btnSetZero:
+            self.btnSetZero.clicked.connect(self._set_current_position_zero)
         # Use a QTimer for periodic sampling & UI updates (runs in main thread)
         self._timer = QTimer(self)
         # Get sample interval from central `bsc` object (milliseconds)
@@ -237,6 +243,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.lblSpinTemp = self.findChild(QtWidgets.QLabel, 'lblSpinTemp')
         self.lblTiltTemp = self.findChild(QtWidgets.QLabel, 'lblTiltTemp')
         self.lblAngleTemp = self.findChild(QtWidgets.QLabel, 'lblAngleTemp')
+
+        self._set_zero_buttons_enabled(True)
+        self._set_motor_controls_enabled(False)
 
 
     def openPostDialog(self):
@@ -305,11 +314,13 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.btnStart.setEnabled(False)
         self.btnOverride.setEnabled(False)
         self.btnStop.setEnabled(True)
-
-        self.diagnostic_script.start_motors([1, 2, 3])
+        self._set_zero_buttons_enabled(False)
+        self._set_motor_controls_enabled(True)
 
         self._sample_index = 0
         self.clear_graphs()  # also resets buffers and indices
+
+        self.diagnostic_script.start_motors([1, 2, 3])
         self._timer.start()
 
         if self.SmartDot is not None:
@@ -324,6 +335,8 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.btnStart.setEnabled(True)
         self.btnOverride.setEnabled(True)
         self.btnStop.setEnabled(False)
+        self._set_zero_buttons_enabled(True)
+        self._set_motor_controls_enabled(False)
 
         try:
             self.diagnostic_script.stop_motors([1, 2, 3])
@@ -353,17 +366,21 @@ class DiagnosticModePage(QtWidgets.QWidget):
             except Exception:
                 pass
 
+            self.reset(clear_graphs=False, clear_data=False)
+
             self.navigationLock.emit(True, "")
 
     def EStop(self):
         #Motor.stop() uncomment when motor works
         self.diagnostic_script.stop_motors([1,2,3])
         bsc.disconnect_all_motors()
-        self.clear_graphs()
         self.btnStart.setEnabled(True)
         self.btnStop.setEnabled(False)
+        self._set_zero_buttons_enabled(True)
+        self._set_motor_controls_enabled(False)
         # ensure periodic updates stopped
         self._timer.stop()
+        self.reset(clear_graphs=False, clear_data=False)
         # expose EStop publicly so other modules can call: instance.EStop()
     def add_diag_data_instance_to_data_controller(self, time: float, motor_id: int, instruction: float):
         dc: DataController = bsc.get_data_controller()
@@ -566,22 +583,28 @@ class DiagnosticModePage(QtWidgets.QWidget):
         except Exception:
             enc_ag = 0.0
 
-    def reset(self):
+    def reset(self, clear_graphs: bool = True, clear_data: bool = True):
         # ensure not running and reset UI
         # Stop SmartDot updates if running
         if self.SmartDot is not None:
             self.stop_smartdot_updates()
-        # Clear SmartDot data from the data controller so we start fresh
-        dc = bsc.get_data_controller()
-        if dc is not None:
-            try:
-                dc.smartdot_data.data_entries.clear()
-            except AttributeError:
-                pass
-        self.clear_graphs()
+        if clear_data:
+            # Clear SmartDot data from the data controller so we start fresh
+            dc = bsc.get_data_controller()
+            if dc is not None:
+                try:
+                    dc.smartdot_data.data_entries.clear()
+                except AttributeError:
+                    pass
+        if clear_graphs:
+            self.clear_graphs()
         self.spinSlider.setValue(0)
         self.tiltSlider.setValue(0)
         self.angleSlider.setValue(0)
+        self._last_values = {'spin': 0.0, 'tilt': 0.0, 'angle': 0.0}
+        self.labelSpin.setText("Spin Rate: 0.00 RPM")
+        self.labelTilt.setText("Tilt Angle: 0.00 Degrees")
+        self.labelAngle.setText("Angle: 0.00 Degrees")
         # reset encoder labels if present
         if hasattr(self, 'labelSpinEncoder') and self.labelSpinEncoder:
             self.labelSpinEncoder.setText("Enc: 0.0 RPM")
@@ -591,6 +614,8 @@ class DiagnosticModePage(QtWidgets.QWidget):
             self.labelAngleEncoder.setText("Enc: 0.0 RPM")
         # ensure timer stopped
         self._timer.stop()
+        self._set_zero_buttons_enabled(True)
+        self._set_motor_controls_enabled(False)
     
     def clear_graphs(self):
         # Clear instance buffers and reset plots
@@ -616,6 +641,56 @@ class DiagnosticModePage(QtWidgets.QWidget):
         if self.SmartDotGraph is not None:
             if hasattr(self.SmartDotGraph, 'clear'):
                 self.SmartDotGraph.clear()   
+
+    def _set_zero_buttons_enabled(self, enabled: bool):
+        if self.btnReturnZero:
+            self.btnReturnZero.setEnabled(enabled)
+        if self.btnSetZero:
+            self.btnSetZero.setEnabled(enabled)
+
+    def _set_motor_controls_enabled(self, enabled: bool):
+        controls = (
+            self.spinSlider,
+            self.tiltSlider,
+            self.angleSlider,
+            self.btnSpinIncrease,
+            self.btnSpinDecrease,
+            self.btnTiltIncrease,
+            self.btnTiltDecrease,
+            self.btnAngleIncrease,
+            self.btnAngleDecrease,
+        )
+        for control in controls:
+            if control:
+                control.setEnabled(enabled)
+
+    def _return_motors_to_zero(self):
+        if self._timer.isActive():
+            return
+        for motor in (bsc.motor1, bsc.motor2, bsc.motor3):
+            try:
+                if motor is not None:
+                    motor.returnToZero()
+            except Exception as e:
+                print(f"Error returning motor to zero: {e}")
+        self.spinSlider.setValue(0)
+        self.tiltSlider.setValue(0)
+        self.angleSlider.setValue(0)
+        self._update_slider_labels()
+
+    def _set_current_position_zero(self):
+        if self._timer.isActive():
+            return
+        for motor in (bsc.motor1, bsc.motor2, bsc.motor3):
+            try:
+                if motor is not None:
+                    motor.setCurrentPositionZero()
+            except Exception as e:
+                print(f"Error setting motor zero position: {e}")
+        self.spinSlider.setValue(0)
+        self.tiltSlider.setValue(0)
+        self.angleSlider.setValue(0)
+        self._update_slider_labels()
     
     def toggle_override_mode(self):
         """Open override mode configuration dialog."""
@@ -656,13 +731,13 @@ class DiagnosticModePage(QtWidgets.QWidget):
             self.navigationLock.emit(True,"")
             # reset sliders to safe ranges
             self.spinSlider.setRange(0, 600)
-            self.tiltSlider.setRange(-90, 90)
+            self.tiltSlider.setRange(-22, 22)
             self.angleSlider.setRange(-45, 45)
 
             #update graph Y ranges
             self.spinGraph.setYRange(0,620)
-            self.tiltGraph.setYRange(-100,100)
-            self.angleGraph.setYRange(-50,50)
+            self.tiltGraph.setYRange(-22,22)
+            self.angleGraph.setYRange(-45,45)
             
         # Reset UI and state whenever override toggles
         self.reset()

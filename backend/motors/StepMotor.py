@@ -53,6 +53,7 @@ class StepMotor():
     connected = True
     #t = threading.Thread()#target=run_movement_chain, daemon=True)
     prev_angle = 0.0
+    current_angle = 0.0
 
     def stop(self):
         #self.t.join()  # Wait for the thread to finish before continuing
@@ -119,6 +120,7 @@ class StepMotor():
 
         self.movement_in_progress = False  # Track if a movement is currently running
         self.movement_lock = threading.Lock()  # Lock for thread safety
+        self.current_angle = 0.0
 
     def _write_enable(self, enabled: bool):
         """Write to the enable pin (if configured) taking active-low into account."""
@@ -194,6 +196,7 @@ class StepMotor():
                 total_time_s=0.1,
                 clockwise=isClockwise,
             )
+            self.current_angle = angle
         else:
             # Reactive approach: move towards target angle each time step
             target_angle = angle
@@ -219,8 +222,34 @@ class StepMotor():
                 )
                 
                 self.current_angle = target_angle  # Update current position
+            else:
+                self.current_angle = target_angle
 
         print(f"step motor on pin{self.GPIO_Pin} running and moving to {angle} degrees")
+
+    def returnToZero(self):
+        if not self.connected or not self.h:
+            return
+        angle_to_move = self.current_angle
+        if abs(angle_to_move) < 0.01:
+            self.current_angle = 0.0
+            self.prev_angle = 0.0
+            return
+        isClockwise = angle_to_move < 0
+        move_angle_timeds(
+            self.h,
+            step_pin=self.STEP_PIN,
+            dir_pin=self.DIR_PIN,
+            angle_deg=abs(angle_to_move),
+            total_time_s=0.1,
+            clockwise=isClockwise,
+        )
+        self.current_angle = 0.0
+        self.prev_angle = 0.0
+
+    def setCurrentPositionZero(self):
+        self.current_angle = 0.0
+        self.prev_angle = 0.0
 
     
     def _start_movement_sequence(self):

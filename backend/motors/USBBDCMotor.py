@@ -329,6 +329,12 @@ class USBBDCMotor(iMotor):
         self._prev_error = 0.0
         self._prev_time = time.time()
 
+    def returnToZero(self):
+        pass
+
+    def setCurrentPositionZero(self):
+        pass
+
     def changeSpeed(self, dutyCycle: float, isShotMode: bool):
         """Basic P-style output toward a target speed."""
 

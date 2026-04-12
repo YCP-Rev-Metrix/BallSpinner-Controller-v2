@@ -54,7 +54,7 @@ class ShotModePage(QtWidgets.QWidget):
         # Configure Tilt graph
         self.graph_tilt.set_graph_title("Tilt Input Graph")
         self.graph_tilt.hide_controls()
-        self.graph_tilt.set_bounds(0,1,-45,45)
+        self.graph_tilt.set_bounds(0,1,-22,22)
         self.graph_tilt.set_default_endpoints(0,0,True)
         self.graph_tilt.set_max_points(3)
         self.graph_tilt.reset_view_and_clear()
@@ -64,7 +64,7 @@ class ShotModePage(QtWidgets.QWidget):
         # Configure Angle graph
         self.graph_angle.set_graph_title("Angle Input Graph")
         self.graph_angle.hide_controls()
-        self.graph_angle.set_bounds(0,1,-90,90)
+        self.graph_angle.set_bounds(0,1,-45,45)
         self.graph_angle.set_default_endpoints(0,0,True)
         self.graph_angle.set_max_points(3)
         self.graph_angle.reset_view_and_clear()
@@ -158,8 +158,8 @@ class ShotModePage(QtWidgets.QWidget):
         # value comes from QSlider.value() (int)
         self.lblShotDuration.setText(f"Shot Duration: {1 + 0.02 * value:.2f} sec")
         self.graph_rpm.set_bounds(0,1 + 0.02 * value,0,600)
-        self.graph_tilt.set_bounds(0,1 + 0.02 * value,-45,45)
-        self.graph_angle.set_bounds(0,1 + 0.02 * value,-90,90)
+        self.graph_tilt.set_bounds(0,1 + 0.02 * value,-22,22)
+        self.graph_angle.set_bounds(0,1 + 0.02 * value,-45,45)
 
     def CheckButtons(self):
         if(bsc.smartdotConnectionManager.get_connections):

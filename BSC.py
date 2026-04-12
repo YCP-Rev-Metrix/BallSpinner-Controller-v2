@@ -26,6 +26,12 @@ except ModuleNotFoundError:
         def stop(self):
             self.currSpeed = 0.0
 
+        def returnToZero(self):
+            self.currSpeed = 0.0
+
+        def setCurrentPositionZero(self):
+            self.currSpeed = 0.0
+
         def changeSpeed(self, dutyCycle: int, isShotMode: bool):
             self.currSpeed = float(dutyCycle)
 
@@ -251,6 +257,11 @@ class BSC:
             if motor is not None and hasattr(motor, "disconnect"):
                 try:
                     motor.disconnect()
+                except Exception:
+                    pass
+                try:
+                    if hasattr(motor, "returnToZero"):
+                        motor.returnToZero()
                 except Exception:
                     pass
 

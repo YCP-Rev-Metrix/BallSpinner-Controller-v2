@@ -80,6 +80,17 @@ class SimMotor(iMotor):
         self._enabled = False
         self._last_update = time.time()
 
+    def returnToZero(self):
+        self.targetSpeed = 0.0
+        self.currSpeed = 0.0
+        self._last_update = time.time()
+
+    def setCurrentPositionZero(self):
+        # Sim motor has no positional encoder; treat zero as stopped.
+        self.targetSpeed = 0.0
+        self.currSpeed = 0.0
+        self._last_update = time.time()
+
     def _update_sim(self):
         now = time.time()
         dt = max(1e-6, now - self._last_update)

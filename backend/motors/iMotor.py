@@ -39,6 +39,14 @@ class iMotor(metaclass=ABCMeta):
     def rampUp(self):
         pass
 
+    @abstractmethod
+    def returnToZero(self):
+        pass
+
+    @abstractmethod
+    def setCurrentPositionZero(self):
+        pass
+
     @property
     @abstractmethod
     def Kp(self) -> float:
