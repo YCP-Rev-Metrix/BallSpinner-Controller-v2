@@ -4,6 +4,7 @@ except ImportError:
     lgpio = None
 import time
 import threading
+from typing import Optional
 #from .iMotor import iMotor
 
 # ================================
@@ -94,13 +95,24 @@ class StepMotor():
         if(self.connected):
             self.stop()
     
-    def __init__(self, GPIO_Pin, DIR_Pin, h, enable_pin=None, enable_active_low=True):
+    def __init__(
+        self,
+        GPIO_Pin,
+        DIR_Pin,
+        h,
+        enable_pin=None,
+        enable_active_low=True,
+        current_sensor=None,
+        current_sensor_channel=None,
+    ):
         self.GPIO_Pin = GPIO_Pin
         self.STEP_PIN = GPIO_Pin
         self.DIR_PIN = DIR_Pin
         self.h = h
         self.ENABLE_PIN = enable_pin
         self._enable_active_low = enable_active_low
+        self._current_sensor = current_sensor
+        self._current_sensor_channel = current_sensor_channel
 
         # Motor settings (needed for UI controls / interface compatibility)
         self._Kp = self.DEFAULT_KP
@@ -334,6 +346,23 @@ class StepMotor():
 
     def getCurrentSpeed(self):
         return self.currSpeed
+
+    def getVals(self):
+        """Return diagnostic sensor data for this stepper motor.
+
+        This method is used by the UI diagnostic code path. It returns a dictionary
+        with the keys expected by the existing motor sensor handling:
+            - input_current: current in amps or None when unavailable
+            - temp_motor: temperature, always None for stepper/INA240 today
+        """
+        current = None
+        if self._current_sensor is not None and self._current_sensor_channel is not None:
+            try:
+                current = self._current_sensor.read_current(self._current_sensor_channel)
+            except Exception as e:
+                print(f"Error reading current sensor for motor on pin {self.GPIO_Pin}: {e}")
+
+        return {"input_current": current, "temp_motor": None}
 
     def rampUp(self):
         pass

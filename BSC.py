@@ -61,6 +61,7 @@ except ModuleNotFoundError:
 lgpio = None
 USBBDCMotor = None
 StepMotor = None
+ADS1115CurrentSensor = None
 if utils.is_raspberry_pi_5():
     try:
         from backend.motors.USBBDCMotor import USBBDCMotor  # UNCOMMENT AFTER STEPPER
@@ -70,6 +71,10 @@ if utils.is_raspberry_pi_5():
         from backend.motors.StepMotor import StepMotor  # uncomment when stepper works
     except Exception:
         StepMotor = None
+    try:
+        from backend.sensors.ADS1115CurrentSensor import ADS1115CurrentSensor
+    except Exception:
+        ADS1115CurrentSensor = None
     try:
         import lgpio
     except ImportError:
@@ -113,6 +118,7 @@ class BSC:
         self.motor1 = None
         self.motor2 = None
         self.motor3 = None
+        self.current_sensor = None
 
         self._initialize_motors()
 
@@ -156,6 +162,18 @@ class BSC:
             raise RuntimeError("lgpio is unavailable")
 
         self.h = lgpio.gpiochip_open(0)
+        self.current_sensor = None
+        if ADS1115CurrentSensor is not None:
+            try:
+                self.current_sensor = ADS1115CurrentSensor()
+            except Exception as e:
+                print(f"Warning: ADS1115 current sensor initialization failed: {e}")
+                self.current_sensor = None
+
+        # Tilt and angle stepper motors both use the shared ADS1115 sensor.
+        # Channel 0 is assigned to the tilt motor and channel 1 is assigned to the angle motor.
+        # If the sensor is unavailable, current readings will remain None and the rest of the
+        # real motor stack continues to work.
         motor_cfg = {}
         comm_cfg = {}
         if isinstance(self._tuning_config, dict):
@@ -170,8 +188,24 @@ class BSC:
             serial_timeout_s=comm_cfg.get("serial_timeout_s") if isinstance(comm_cfg, dict) else None,
             get_values_timeout_s=comm_cfg.get("get_values_timeout_s") if isinstance(comm_cfg, dict) else None,
         )
-        self.motor2 = StepMotor(27, 17, self.h, 5, False)
-        self.motor3 = StepMotor(23, 24, self.h, 6, False)
+        self.motor2 = StepMotor(
+            27,
+            17,
+            self.h,
+            5,
+            False,
+            current_sensor=self.current_sensor,
+            current_sensor_channel=0,
+        )
+        self.motor3 = StepMotor(
+            23,
+            24,
+            self.h,
+            6,
+            False,
+            current_sensor=self.current_sensor,
+            current_sensor_channel=1,
+        )
 
     def use_real_motors(self):
         if not self._real_motor_supported:
@@ -264,6 +298,13 @@ class BSC:
                         motor.returnToZero()
                 except Exception:
                     pass
+
+        if getattr(self, "current_sensor", None) is not None:
+            try:
+                self.current_sensor.close()
+            except Exception:
+                pass
+            self.current_sensor = None
 
         if getattr(self, "h", None) is not None and lgpio is not None:
             try:
