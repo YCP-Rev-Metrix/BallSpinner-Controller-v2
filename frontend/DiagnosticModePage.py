@@ -604,8 +604,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
 
         if not self._timer.isActive():
             self._timer.start()
-
-        self.navigationLock.emit(False, "Motor Running")
+        self.navigationLock.emit(False, "Motors Connected - Manual Control Enabled")
 
     # Stop motors and disable manual control.
     def _disconnect_motors(self):
@@ -678,7 +677,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         if not self._timer.isActive():
             self._timer.start()
 
-        self.navigationLock.emit(False, "Motor Running")
+        
 
     # Stop diagnostic recording and restore controls.
     def _stop_diagnostics(self):
@@ -700,9 +699,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
                 pass
 
         self.reset(clear_graphs=False, clear_data=False)
-        if self._motors_connected:
-            self.navigationLock.emit(False, "Motor Running")
-        else:
+        if not self._motors_connected:
             self.navigationLock.emit(True, "")
 
     # Emergency stop that halts motors and resets UI state.
@@ -914,15 +911,11 @@ class DiagnosticModePage(QtWidgets.QWidget):
             print("Override Mode Enabled")
             # Mark override mode for QSS styling
             self._apply_override_style(True)
-            # Lock navigation when override mode is enabled
-            self.navigationLock.emit(False,"Override Mode Enabled")
             self._apply_channel_ranges(override=True)
         else:
             print("Override Mode Disabled")
             # Clear override mode styling flag
             self._apply_override_style(False)
-            # Unlock navigation when override mode is disabled
-            self.navigationLock.emit(True,"")
             self._apply_channel_ranges(override=False)
             
         # Reset UI and state whenever override toggles

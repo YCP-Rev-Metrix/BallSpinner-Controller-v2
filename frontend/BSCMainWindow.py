@@ -130,9 +130,9 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         """
         print("Toggling navigation:", enable, message)
         if enable:
-            self.LockCount -=1
+            self.LockCount = max(self.LockCount - 1, 0)
         else:
-            self.LockCount +=1
+            self.LockCount = max(self.LockCount + 1, 1)
             if self.LockCount == 1:
                 self.NavigationSatus.setTitle("Navigation Locked: " + message)
 
