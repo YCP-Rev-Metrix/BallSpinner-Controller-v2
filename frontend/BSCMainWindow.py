@@ -116,12 +116,35 @@ class BSCMainWindow(QtWidgets.QMainWindow):
 
 
     def estop(self):
-        """E-stop function: stops motor and forces navigation enabled."""
-        self.diagnosticPage.EStop()
+        """E-stop function: stops the BSC motors, disconnects them, and notifies the user."""
+        for motor_name in ("motor1", "motor2", "motor3"):
+            motor = getattr(bsc, motor_name, None)
+            if motor is None:
+                continue
+            if hasattr(motor, "stop"):
+                try:
+                    motor.stop()
+                except Exception:
+                    pass
+
+        try:
+            bsc.disconnect_all_motors()
+        except Exception:
+            pass
+
         self.LockCount = 0
         self.menuBar.setEnabled(True)
-        self.statusBar.showMessage("Navigation is enabled by force.",5000)
+        self.statusBar.showMessage("Emergency stop pressed. Motors stopped and disconnected.", 5000)
         self.NavigationSatus.setTitle("")
+
+        try:
+            utils.notify_user(
+                "Emergency stop has been activated. All motors have been stopped and disconnected.",
+                title="E-Stop Pressed",
+                type="warning",
+            )
+        except Exception:
+            pass
 
     def toggle_navigation(self, enable: bool, message: str = ""):
         """Enable or disable the navigation menu.

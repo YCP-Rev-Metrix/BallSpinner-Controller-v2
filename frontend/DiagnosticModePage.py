@@ -702,34 +702,6 @@ class DiagnosticModePage(QtWidgets.QWidget):
         if not self._motors_connected:
             self.navigationLock.emit(True, "")
 
-    # Emergency stop that halts motors and resets UI state.
-    def EStop(self):
-        #Motor.stop() uncomment when motor works
-        for channel in self._channels:
-            motor = self._get_motor(channel)
-            if motor is None:
-                continue
-            try:
-                motor.stop()
-            except Exception:
-                pass
-        bsc.disconnect_all_motors()
-        self._recording_enabled = False
-        self._diagnostic_active = False
-        self._motors_connected = False
-        self.btnConnectMotors.setText("Connect Motors")
-        self.btnConnectMotors.setEnabled(True)
-        self.btnStartDiagnostic.setEnabled(False)
-        self.btnStartDiagnostic.setText("Start Diagnostic")
-        self._set_zero_buttons_enabled(False)
-        self._set_motor_controls_enabled(False)
-        # ensure periodic updates stopped
-        try:
-            self._timer.stop()
-        except Exception:
-            pass
-        self.reset(clear_graphs=False, clear_data=False)
-        # expose EStop publicly so other modules can call: instance.EStop()
     # Add a diagnostic script data point to the data controller.
     def add_diag_data_instance_to_data_controller(self, time: float, motor_id: int, instruction: float):
         if not self._recording_enabled:
