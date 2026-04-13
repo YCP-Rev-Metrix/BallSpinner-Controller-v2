@@ -349,12 +349,15 @@ class BSCMainWindow(QtWidgets.QMainWindow):
             try:
                 utils.notify_user(
                     "Simulated motors locked. Ensure the motors are powered and the E-stop is not pressed, then restart the system.",
-                    title="VESC Failed to Initialize",
+                    title="Motor Mode Locked",
                     type="warning",
                 )
             except Exception:
                 pass
             self._motor_mode_locked_popup_shown = True
+
+    def update_motor_mode_ui(self):
+        self.updateMotorModeUI()
 
 
 """
