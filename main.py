@@ -52,9 +52,12 @@ def get_icon_path():
     else:
         base_path = os.path.dirname(os.path.abspath(__file__))
     
-    # Try multiple icon formats and locations
+    # Try multiple icon formats and locations from the repo Icons folder
     icon_candidates = [
+        os.path.join(base_path, 'Icons', 'BSC_Icon.png'),
         os.path.join(base_path, 'Icons', 'LogoTemp.png'),
+        os.path.join(base_path, 'Icons', 'RevMetrix_icon.png'),
+        os.path.join(base_path, 'Icons', 'BSC_Icon.icns'),
         os.path.join(base_path, 'Icons', 'LogoTemp.ico'),
         os.path.join(base_path, 'Icons', 'LogoTemp.icns'),
     ]
