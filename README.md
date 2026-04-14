@@ -31,6 +31,22 @@ pip install -r requirements.txt
 
 For UI work, see [BSC_Ui_README.md](BSC_Ui_README.md).
 
+## Build the Desktop App
+After installing dependencies in the virtual environment, build the macOS app bundle with PyInstaller:
+
+```bash
+source venv/bin/activate
+pip install pyinstaller
+python -m PyInstaller --clean -y main.spec
+```
+
+This creates the application in the `dist/` directory, typically as:
+- `dist/BallSpinnerController/`
+- `dist/BallSpinnerController.app`
+
+If PyInstaller warns about macOS codesigning, the bundle is still generated but may need manual signing for distribution.
+
+
 
 
 

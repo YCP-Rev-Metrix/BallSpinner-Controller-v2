@@ -5,7 +5,7 @@ QWidget {
 }
 
 /* ==================== ACCENT COLOR ==================== */
-/* ACCENT_COLOR: #b400c1 */
+/* ACCENT_COLOR: placeholder token replaced at runtime with a valid CSS color string */
 QWidget[accent="text"] {
     color: #b400c1;
 }

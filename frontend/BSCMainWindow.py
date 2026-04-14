@@ -29,7 +29,7 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         with open(stylesheet_path, 'r') as f:
             qss = f.read()
 
-        accent_color = "#2C62A4"  # Default accent color (Rev Metrix blue)
+        accent_color = "#fa8847"  # Default accent color (Rev Metrix blue)
 
         if accent_color:
             qss = qss.replace("ACCENT_COLOR", accent_color)

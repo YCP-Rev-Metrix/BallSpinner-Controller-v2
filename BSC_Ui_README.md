@@ -113,6 +113,7 @@ Object names follow Hungarian notation specifically so they can be referenced in
 3. **Never hardcode colors or styles in Python** - use the `.qss` file instead
 4. **Reference the style.qss file** in your main window initialization to apply styles globally
 5. **Use custom properties** in Qt Designer (e.g., `accent="text"`) to apply pre-defined style classes to multiple widgets
+6. **`ACCENT_COLOR` is a placeholder token in `frontend/style.qss`.** At runtime, the app replaces it with a valid CSS color string (for example, a `#RRGGBB` value).
 
 ###Importing Widgets
 In order to avoid recreating UI elements it is best practice to create a widget for it and import it within your page.

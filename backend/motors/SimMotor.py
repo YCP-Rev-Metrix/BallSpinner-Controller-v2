@@ -1,6 +1,4 @@
 from .iMotor import iMotor
-from gpiozero import Device, LED, PWMOutputDevice
-from gpiozero.pins.mock import MockFactory, MockPWMPin
 import random
 import time
 
@@ -25,10 +23,6 @@ class SimMotor(iMotor):
         time_constant: float = 0.1,
         noise_std: float = 1.5,
     ):
-        factory = MockFactory()
-        Device.pin_factory = MockFactory(pin_class=MockPWMPin)
-        motor = PWMOutputDevice(self.GPIO_Pin)
-
         self.GPIO_Pin = GPIOPin
         self._Kp = self.DEFAULT_KP
         self._Ki = self.DEFAULT_KI
@@ -45,13 +39,6 @@ class SimMotor(iMotor):
         self.target_speed_max = max_speed
         self.integral_limit = 1200.0
         self.ramp_step = 12.0
-
-        self.kick_enabled = True
-        self.kick_min_target_rpm = 1.0
-        self.kick_threshold_divisor = 900.0
-        self.kick_duty_divisor = 6000.0
-        self.kick_max_duty = 1.0
-        self._kick_active = False
 
         self._enabled = False
         self._last_update = time.time()
@@ -92,89 +79,61 @@ class SimMotor(iMotor):
         self._last_update = time.time()
 
     def _update_sim(self):
+        """Advance the simulated speed toward the target speed."""
         now = time.time()
-        dt = max(1e-6, now - self._last_update)
+        dt = max(0.05, now - self._last_update)
         self._last_update = now
 
-        if self.mode == "instant":
+        if self.mode in ("instant", "step"):
             self.currSpeed = self.targetSpeed
             return self.currSpeed
-        elif self.mode == "step":
-            # legacy behavior: direct assignment to preserve compatibility
-            self.currSpeed = self.targetSpeed
-            return self.currSpeed
-        else:
-            # first-order dynamic response to simulate inertia and controller action
-            kp_scale = max(0.1, self._Kp)
-            effective_tc = max(1e-6, self.time_constant / kp_scale)
-            alpha = 1.0 - pow(2.718281828459045, -dt / effective_tc)
-            if self._kick_active:
-                alpha = min(1.0, alpha * (1.0 + min(1.0, max(0.0, self.kick_max_duty))))
-            self.currSpeed += (self.targetSpeed - self.currSpeed) * alpha
-            self.currSpeed = max(0.0, min(self.currSpeed, self.max_speed))
 
-            if self.noise_std > 0.0 and self.currSpeed > 0:
-                self.currSpeed += random.gauss(0.0, self.noise_std)
-                self.currSpeed = max(0.0, min(self.currSpeed, self.max_speed))
+        # Simple first-order response: approach the target speed smoothly.
+        alpha = dt / max(dt + self.time_constant, 1e-6)
+        self.currSpeed += (self.targetSpeed - self.currSpeed) * alpha
+        self.currSpeed = max(0.0, min(self.currSpeed, self.max_speed))
+
+        if self.noise_std > 0.0 and self.currSpeed > 0:
+            self.currSpeed += random.gauss(0.0, self.noise_std)
+            self.currSpeed = max(0.0, min(self.currSpeed, self.max_speed))
 
         return self.currSpeed
 
     def changeSpeed(self, dutyCycle: float, isShotMode: bool):
-        # Accept the same command range as USBBDCMotor (0-1200), clamp it.
-        new_target = max(self.target_speed_min, min(dutyCycle, self.target_speed_max))
-        # use duty_cycle_scale as a simple gain so tuning is visible in sim
-        if self.DEFAULT_DUTY_CYCLE_SCALE > 0:
-            scale_ratio = self._duty_cycle_scale / self.DEFAULT_DUTY_CYCLE_SCALE
-            new_target *= max(0.0, scale_ratio)
-        new_target = max(self.target_speed_min, min(new_target, self.target_speed_max))
+        """Set the simulated motor target speed and update the current speed.
 
-        # Ensure we can read values without requiring explicit start() first.
+        This mirrors the USBBDCMotor semantic where `dutyCycle` is treated as the
+        target RPM value. The simulator responds smoothly unless it is in
+        instant or step mode.
+        """
+        new_target = max(self.target_speed_min, min(dutyCycle, self.target_speed_max))
         self._enabled = True
+        self.targetSpeed = new_target
 
         if self.mode == "step":
-            # Step motor compatibility path remains in BSC-style angle semantics.
             self.currSpeed = new_target
-            self.targetSpeed = new_target
             return
 
-        self.targetSpeed = new_target
-        kick_threshold_divisor = self.kick_threshold_divisor if self.kick_threshold_divisor > 0 else 900.0
-        kick_threshold = min((self.targetSpeed ** 2) / kick_threshold_divisor, self.targetSpeed)
-        if (
-            self.kick_enabled
-            and self.targetSpeed >= self.kick_min_target_rpm
-            and self.currSpeed < kick_threshold
-        ):
-            self._kick_active = True
         if self.mode == "instant":
             self.currSpeed = new_target
         else:
             self._update_sim()
-        if self._kick_active and self.currSpeed >= (self.targetSpeed * 0.95):
-            self._kick_active = False
 
     def rampUp(self, step: float = 12.0):
+        """Increase the current simulated speed toward the target speed."""
         if self.mode == "step":
             return
-
-        if self.targetSpeed <= self.currSpeed:
-            return
-
-        # Naive ramp towards target, respecting the max speed and preserving dynamics.
-        effective_step = self.ramp_step if self.ramp_step > 0 else step
-        self.currSpeed = min(self.targetSpeed, self.currSpeed + effective_step)
-        self.currSpeed = max(0.0, min(self.currSpeed, self.max_speed))
+        if self.currSpeed < self.targetSpeed:
+            self.currSpeed = min(self.currSpeed + step, self.targetSpeed)
+            self.currSpeed = max(0.0, min(self.currSpeed, self.max_speed))
 
     def rampDown(self, step: float = 12.0):
+        """Decrease the current simulated speed toward the target speed."""
         if self.mode == "step":
             return
-
-        if self.targetSpeed >= self.currSpeed:
-            return
-
-        effective_step = self.ramp_step if self.ramp_step > 0 else step
-        self.currSpeed = max(self.targetSpeed, self.currSpeed - effective_step)
-        self.currSpeed = max(0.0, min(self.currSpeed, self.max_speed))
+        if self.currSpeed > self.targetSpeed:
+            self.currSpeed = max(self.currSpeed - step, self.targetSpeed)
+            self.currSpeed = max(0.0, min(self.currSpeed, self.max_speed))
 
     def setTargetSpeed(self, targetSpeed: float):
         self.targetSpeed = max(self.target_speed_min, min(targetSpeed, self.target_speed_max))
@@ -183,11 +142,9 @@ class SimMotor(iMotor):
         self.targetPower = targetPower
 
     def getCurrentSpeed(self):
-        # Allow current speed reads even if start() hasn't been explicitly called,
-        # for compatibility with existing tests and control flows.
+        """Return the current simulated motor speed, updating internal state."""
         if not self._enabled:
             self._enabled = True
-
         return self._update_sim()
 
     @property
