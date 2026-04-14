@@ -128,7 +128,20 @@ if [[ ! -d "$SDK_ROOT" ]]; then
     echo "Cloning MetaWear-SDK-Python..."
     run_cmd git clone --recurse-submodules git@github.com:mbientlab/MetaWear-SDK-Python.git "$SDK_ROOT"
 else
-    echo "MetaWear-SDK-Python already present."
+    if [[ ! -d "$SDK_ROOT/.git" ]]; then
+        if prompt_yes_no "MetaWear-SDK-Python exists but is not a git repo. Replace with fresh clone?" "Y"; then
+            backup_dir="${SDK_ROOT}.bak.$(date +%Y%m%d%H%M%S)"
+            run_cmd mv "$SDK_ROOT" "$backup_dir"
+            echo "Cloning MetaWear-SDK-Python..."
+            run_cmd git clone --recurse-submodules git@github.com:mbientlab/MetaWear-SDK-Python.git "$SDK_ROOT"
+        else
+            echo "MetaWear-SDK-Python repo is required. Aborting."
+            exit 1
+        fi
+    else
+        echo "MetaWear-SDK-Python already present."
+        run_cmd git -C "$SDK_ROOT" submodule update --init --recursive
+    fi
 fi
 
 if [[ ! -d "$PYWARBLE_DIR" ]]; then
@@ -153,10 +166,14 @@ if [[ -d "$WARBLE_DIR" ]]; then
     echo "Building warble..."
     pushd "$WARBLE_DIR" >/dev/null
     if [[ -f "Makefile" ]]; then
-        if grep -q '^ARCH=' Makefile; then
-            run_cmd sed -i 's/^ARCH=.*/ARCH=-march=armv8-a/' Makefile
-        else
-            echo 'ARCH=-march=armv8-a' >> Makefile
+        HOST_ARCH="$(uname -m)"
+        if [[ "$HOST_ARCH" == "aarch64" || "$HOST_ARCH" == "arm64" ]]; then
+            run_cmd sed -i 's/-marm//g' Makefile
+            if grep -q '^ARCH=' Makefile; then
+                run_cmd sed -i 's/^ARCH=.*/ARCH=-march=armv8-a/' Makefile
+            else
+                echo 'ARCH=-march=armv8-a' >> Makefile
+            fi
         fi
     fi
     run_cmd make
@@ -203,14 +220,22 @@ export METAWEAR_LIB
 export BLEPP_LIB
 export BLEPP_HEADERS
 export WARBLE_BUILD
-export LD_LIBRARY_PATH="$METAWEAR_LIB:$BLEPP_LIB:$WARBLE_BUILD:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="$METAWEAR_LIB:$BLEPP_LIB:$WARBLE_BUILD${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export CFLAGS="-I$METAWEAR_HEADERS -I$BLEPP_HEADERS"
 export LDFLAGS="-L$METAWEAR_LIB -L$BLEPP_LIB -L$WARBLE_BUILD"
 
 echo "Installing PyWarble..."
+WARBLE_PY_LIB_DIR="$PYWARBLE_DIR/mbientlab/warble"
+if [[ -d "$WARBLE_PY_LIB_DIR" ]]; then
+    run_cmd rm -f "$WARBLE_PY_LIB_DIR"/libwarble.so*
+fi
 run_cmd "$VENV_DIR/bin/pip" install "$PYWARBLE_DIR"
 
 echo "Installing MetaWear-SDK-Python..."
+METAWEAR_PY_LIB_DIR="$SDK_ROOT/mbientlab/metawear"
+if [[ -d "$METAWEAR_PY_LIB_DIR" ]]; then
+    run_cmd rm -f "$METAWEAR_PY_LIB_DIR"/libmetawear.so*
+fi
 run_cmd "$VENV_DIR/bin/pip" install "$SDK_ROOT"
 
 if prompt_yes_no "Persist MetaWear environment variables to a shell profile?" "Y"; then
@@ -250,24 +275,27 @@ bash "$REPO_DIR/run_unit_tests.sh"
 TEST_EXIT=$?
 set -e
 if [[ $TEST_EXIT -ne 0 ]]; then
-    echo "Unit tests failed with exit code $TEST_EXIT. Continuing to startup."
+    echo "Unit tests failed with exit code $TEST_EXIT. Continuing to autostart setup."
 else
     echo "Unit tests passed."
 fi
 
-if prompt_yes_no "Configure autostart (desktop) for startup.sh?" "N"; then
-    AUTOSTART_DIR="$HOME/.config/autostart"
-    run_cmd mkdir -p "$AUTOSTART_DIR"
-    AUTOSTART_FILE="$AUTOSTART_DIR/RevMetrixStartupScript.desktop"
-    cat > "$AUTOSTART_FILE" <<EOF
+echo "Configuring autostart (desktop) for startup.sh..."
+run_cmd chmod +x "$REPO_DIR/startup.sh"
+AUTOSTART_DIR="$HOME/.config/autostart"
+run_cmd mkdir -p "$AUTOSTART_DIR"
+AUTOSTART_FILE="$AUTOSTART_DIR/RevMetrixStartupScript.desktop"
+cat > "$AUTOSTART_FILE" <<EOF
 [Desktop Entry]
 Type=Application
 Name=RevMetrixStartupScript
 Exec=lxterminal --command="$REPO_DIR/startup.sh"
 Terminal=true
 EOF
-    echo "Autostart file created at $AUTOSTART_FILE"
-fi
+echo "Autostart file created at $AUTOSTART_FILE"
 
-echo "Starting application via startup.sh..."
-run_cmd bash "$REPO_DIR/startup.sh"
+if prompt_yes_no "Reboot now to apply autostart and GPIO defaults?" "Y"; then
+    run_cmd sudo reboot
+else
+    echo "Reboot when ready to apply autostart and GPIO defaults."
+fi
