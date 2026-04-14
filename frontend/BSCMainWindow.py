@@ -116,12 +116,35 @@ class BSCMainWindow(QtWidgets.QMainWindow):
 
 
     def estop(self):
-        """E-stop function: stops motor and forces navigation enabled."""
-        self.diagnosticPage.EStop()
+        """E-stop function: stops the BSC motors, disconnects them, and notifies the user."""
+        for motor_name in ("motor1", "motor2", "motor3"):
+            motor = getattr(bsc, motor_name, None)
+            if motor is None:
+                continue
+            if hasattr(motor, "stop"):
+                try:
+                    motor.stop()
+                except Exception:
+                    pass
+
+        try:
+            bsc.disconnect_all_motors()
+        except Exception:
+            pass
+
         self.LockCount = 0
         self.menuBar.setEnabled(True)
-        self.statusBar.showMessage("Navigation is enabled by force.",5000)
+        self.statusBar.showMessage("Emergency stop pressed. Motors stopped and disconnected.", 5000)
         self.NavigationSatus.setTitle("")
+
+        try:
+            utils.notify_user(
+                "Emergency stop has been activated. All motors have been stopped and disconnected.",
+                title="E-Stop Pressed",
+                type="warning",
+            )
+        except Exception:
+            pass
 
     def toggle_navigation(self, enable: bool, message: str = ""):
         """Enable or disable the navigation menu.
@@ -130,9 +153,9 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         """
         print("Toggling navigation:", enable, message)
         if enable:
-            self.LockCount -=1
+            self.LockCount = max(self.LockCount - 1, 0)
         else:
-            self.LockCount +=1
+            self.LockCount = max(self.LockCount + 1, 1)
             if self.LockCount == 1:
                 self.NavigationSatus.setTitle("Navigation Locked: " + message)
 
@@ -349,12 +372,15 @@ class BSCMainWindow(QtWidgets.QMainWindow):
             try:
                 utils.notify_user(
                     "Simulated motors locked. Ensure the motors are powered and the E-stop is not pressed, then restart the system.",
-                    title="VESC Failed to Initialize",
+                    title="Motor Mode Locked",
                     type="warning",
                 )
             except Exception:
                 pass
             self._motor_mode_locked_popup_shown = True
+
+    def update_motor_mode_ui(self):
+        self.updateMotorModeUI()
 
 
 """

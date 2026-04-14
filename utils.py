@@ -46,9 +46,12 @@ def notify_user(message, title="Notification", type="info", details=None):
 
     app = QApplication.instance() or QApplication([])  # Ensure we have a QApplication instance
     msg_box = QMessageBox()
-    msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
-    msg_box.setModal(True)
-    msg_box.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
+    if hasattr(msg_box, "setWindowModality"):
+        msg_box.setWindowModality(Qt.WindowModality.ApplicationModal)
+    if hasattr(msg_box, "setModal"):
+        msg_box.setModal(True)
+    if hasattr(msg_box, "setWindowFlag"):
+        msg_box.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
     if type == "warning":
         msg_box.setIcon(QMessageBox.Icon.Warning)
     elif type == "critical":

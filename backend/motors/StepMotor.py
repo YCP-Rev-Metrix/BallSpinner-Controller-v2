@@ -4,6 +4,7 @@ except ImportError:
     lgpio = None
 import time
 import threading
+from typing import Optional
 #from .iMotor import iMotor
 
 # ================================
@@ -53,6 +54,7 @@ class StepMotor():
     connected = True
     #t = threading.Thread()#target=run_movement_chain, daemon=True)
     prev_angle = 0.0
+    current_angle = 0.0
 
     def stop(self):
         #self.t.join()  # Wait for the thread to finish before continuing
@@ -93,13 +95,24 @@ class StepMotor():
         if(self.connected):
             self.stop()
     
-    def __init__(self, GPIO_Pin, DIR_Pin, h, enable_pin=None, enable_active_low=True):
+    def __init__(
+        self,
+        GPIO_Pin,
+        DIR_Pin,
+        h,
+        enable_pin=None,
+        enable_active_low=True,
+        current_sensor=None,
+        current_sensor_channel=None,
+    ):
         self.GPIO_Pin = GPIO_Pin
         self.STEP_PIN = GPIO_Pin
         self.DIR_PIN = DIR_Pin
         self.h = h
         self.ENABLE_PIN = enable_pin
         self._enable_active_low = enable_active_low
+        self._current_sensor = current_sensor
+        self._current_sensor_channel = current_sensor_channel
 
         # Motor settings (needed for UI controls / interface compatibility)
         self._Kp = self.DEFAULT_KP
@@ -119,6 +132,7 @@ class StepMotor():
 
         self.movement_in_progress = False  # Track if a movement is currently running
         self.movement_lock = threading.Lock()  # Lock for thread safety
+        self.current_angle = 0.0
 
     def _write_enable(self, enabled: bool):
         """Write to the enable pin (if configured) taking active-low into account."""
@@ -194,6 +208,7 @@ class StepMotor():
                 total_time_s=0.1,
                 clockwise=isClockwise,
             )
+            self.current_angle = angle
         else:
             # Reactive approach: move towards target angle each time step
             target_angle = angle
@@ -219,8 +234,34 @@ class StepMotor():
                 )
                 
                 self.current_angle = target_angle  # Update current position
+            else:
+                self.current_angle = target_angle
 
         print(f"step motor on pin{self.GPIO_Pin} running and moving to {angle} degrees")
+
+    def returnToZero(self):
+        if not self.connected or not self.h:
+            return
+        angle_to_move = self.current_angle
+        if abs(angle_to_move) < 0.01:
+            self.current_angle = 0.0
+            self.prev_angle = 0.0
+            return
+        isClockwise = angle_to_move < 0
+        move_angle_timeds(
+            self.h,
+            step_pin=self.STEP_PIN,
+            dir_pin=self.DIR_PIN,
+            angle_deg=abs(angle_to_move),
+            total_time_s=0.1,
+            clockwise=isClockwise,
+        )
+        self.current_angle = 0.0
+        self.prev_angle = 0.0
+
+    def setCurrentPositionZero(self):
+        self.current_angle = 0.0
+        self.prev_angle = 0.0
 
     
     def _start_movement_sequence(self):
@@ -305,6 +346,23 @@ class StepMotor():
 
     def getCurrentSpeed(self):
         return self.currSpeed
+
+    def getVals(self):
+        """Return diagnostic sensor data for this stepper motor.
+
+        This method is used by the UI diagnostic code path. It returns a dictionary
+        with the keys expected by the existing motor sensor handling:
+            - input_current: current in amps or None when unavailable
+            - temp_motor: temperature, always None for stepper/INA240 today
+        """
+        current = None
+        if self._current_sensor is not None and self._current_sensor_channel is not None:
+            try:
+                current = self._current_sensor.read_current(self._current_sensor_channel)
+            except Exception as e:
+                print(f"Error reading current sensor for motor on pin {self.GPIO_Pin}: {e}")
+
+        return {"input_current": current, "temp_motor": None}
 
     def rampUp(self):
         pass

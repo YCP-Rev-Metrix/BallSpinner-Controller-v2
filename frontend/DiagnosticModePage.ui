@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1920</width>
-    <height>1052</height>
+    <height>1024</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -114,56 +114,8 @@
            <property name="sizeConstraint">
             <enum>QLayout::SetMinAndMaxSize</enum>
            </property>
-           <item row="2" column="0">
-            <widget class="QWidget" name="wigSpinControls" native="true">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Maximum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>300</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>300</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout">
-              <item>
-               <widget class="QLabel" name="lblSpin">
-                <property name="font">
-                 <font>
-                  <pointsize>16</pointsize>
-                 </font>
-                </property>
-                <property name="text">
-                 <string>Spin Rate (RPM): 0.0 RPM</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="lblSpinEncoder">
-                <property name="font">
-                 <font>
-                  <pointsize>16</pointsize>
-                 </font>
-                </property>
-                <property name="text">
-                 <string>Enc: 0.0 RPM</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="PlotWidget" name="grphTilt" native="true">
+           <item row="2" column="1">
+            <widget class="QWidget" name="wigTiltControls" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -182,43 +134,21 @@
                <height>16777215</height>
               </size>
              </property>
-            </widget>
-           </item>
-           <item row="2" column="2">
-            <widget class="QWidget" name="wigAngleControls" native="true">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>300</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>300</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_5">
+             <layout class="QVBoxLayout" name="verticalLayout_4">
               <item>
-               <widget class="QLabel" name="lblTilt">
+               <widget class="QLabel" name="lblAngle">
                 <property name="font">
                  <font>
                   <pointsize>16</pointsize>
                  </font>
                 </property>
                 <property name="text">
-                 <string>Tilt (Deg): 0 Deg</string>
+                 <string>Angle (Deg): 0 Deg</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="lblTiltEncoder">
+               <widget class="QLabel" name="lblAngleEncoder">
                 <property name="font">
                  <font>
                   <pointsize>16</pointsize>
@@ -232,8 +162,8 @@
              </layout>
             </widget>
            </item>
-           <item row="0" column="1">
-            <widget class="PlotWidget" name="grphAngle" native="true">
+           <item row="0" column="0">
+            <widget class="PlotWidget" name="grphSpin" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -482,30 +412,44 @@
                 </layout>
                </widget>
               </item>
+              <item>
+               <widget class="QWidget" name="wgtButtons" native="true">
+                <layout class="QHBoxLayout" name="horizontalLayout_5">
+                 <item>
+                  <widget class="QPushButton" name="btnEnableMotors">
+                   <property name="text">
+                    <string>Enable Motors</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="btnStartDiagnostic">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="text">
+                    <string>Start Diagnostic</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="btnZeroMotors">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="text">
+                    <string>Zero Motors</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
              </layout>
             </widget>
            </item>
-           <item row="5" column="1">
-            <widget class="QPushButton" name="btnClear">
-             <property name="minimumSize">
-              <size>
-               <width>300</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>300</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Clear</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="PlotWidget" name="grphSpin" native="true">
+           <item row="0" column="2">
+            <widget class="PlotWidget" name="grphTilt" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -526,52 +470,8 @@
              </property>
             </widget>
            </item>
-           <item row="5" column="2">
-            <widget class="QPushButton" name="btnStop">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>300</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>300</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Stop</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="0">
-            <widget class="QPushButton" name="btnStart">
-             <property name="minimumSize">
-              <size>
-               <width>300</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>300</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Start</string>
-             </property>
-             <property name="checkable">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QWidget" name="wigTiltControls" native="true">
+           <item row="0" column="1">
+            <widget class="PlotWidget" name="grphAngle" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
                <horstretch>0</horstretch>
@@ -590,21 +490,91 @@
                <height>16777215</height>
               </size>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_4">
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QWidget" name="wigSpinControls" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Maximum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>300</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>300</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout">
               <item>
-               <widget class="QLabel" name="lblAngle">
+               <widget class="QLabel" name="lblSpin">
                 <property name="font">
                  <font>
                   <pointsize>16</pointsize>
                  </font>
                 </property>
                 <property name="text">
-                 <string>Angle (Deg): 0 Deg</string>
+                 <string>Spin Rate (RPM): 0.0 RPM</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="lblAngleEncoder">
+               <widget class="QLabel" name="lblSpinEncoder">
+                <property name="font">
+                 <font>
+                  <pointsize>16</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Enc: 0.0 RPM</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QWidget" name="wigAngleControls" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>300</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>300</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_5">
+              <item>
+               <widget class="QLabel" name="lblTilt">
+                <property name="font">
+                 <font>
+                  <pointsize>16</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Tilt (Deg): 0 Deg</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="lblTiltEncoder">
                 <property name="font">
                  <font>
                   <pointsize>16</pointsize>

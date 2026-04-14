@@ -4,4 +4,5 @@ pigpio==1.78
 pyvesc @ git+https://github.com/LiamBindle/PyVESC.git@d2f2076afe91dafa920a38a437528819697e05e3
 crcmod==1.7
 pyserial
+smbus2==0.4.1
 lgpio

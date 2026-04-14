@@ -137,7 +137,28 @@ class BDCMotor(iMotor):
         self.disarm()
         self.disconnect(self.GPIO_Pin)
 
-    def changeSpeed(self, dutyCycle: float):
+    def returnToZero(self):
+        # Treat zero as minimum throttle for ESC-style PWM control.
+        self.targetSpeed = MIN_THR
+        if self.currSpeed > self.targetSpeed:
+            self.rampDown()
+        else:
+            self.currSpeed = self.targetSpeed
+            try:
+                self.set_pulse()
+            except Exception:
+                pass
+
+    def setCurrentPositionZero(self):
+        # No position encoder; align internal state to the zero-throttle baseline.
+        self.currSpeed = MIN_THR
+        self.targetSpeed = MIN_THR
+        try:
+            self.set_pulse()
+        except Exception:
+            pass
+
+    def changeSpeed(self, dutyCycle: float, isShotMode: bool = False):
         self.targetSpeed = self.clamp(dutyCycle / 12.0 + 1119.5, MIN_THR, MAX_THR)
         if self.targetSpeed >= 1120.0:
             self.targetSpeed += 5.0
@@ -176,3 +197,19 @@ class BDCMotor(iMotor):
         #if self.motor:
          #   self.motor.value = self.clamp(dutyCycle / 100.0, 0.0, 1.0)
         pass
+
+    @property
+    def Kp(self) -> float:
+        return self._Kp
+
+    @Kp.setter
+    def Kp(self, value: float):
+        self._Kp = float(value)
+
+    @property
+    def duty_cycle_scale(self) -> float:
+        return self._duty_cycle_scale
+
+    @duty_cycle_scale.setter
+    def duty_cycle_scale(self, value: float):
+        self._duty_cycle_scale = float(value)

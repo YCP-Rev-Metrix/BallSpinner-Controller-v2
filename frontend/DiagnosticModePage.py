@@ -1,236 +1,162 @@
+from dataclasses import dataclass
+from typing import Dict, List
+
 from PyQt6 import QtWidgets, uic
 import pyqtgraph as pg
 import numpy as np
 pg.setConfigOptions(antialias=False)
 import os
-from PyQt6.QtCore import pyqtSignal, QTimer, Qt
-from array import array
+from PyQt6.QtCore import pyqtSignal, QTimer
 
 #Database related imports
 from BSC import bsc
 from backend.models.SessionData import SessionData
 from backend.models.DataController import DataController
 from backend.models.DiagnosticScriptData import DiagnosticScriptDataInstance
+from backend.models.HeatData import HeatDataInstance
 from backend.models.EncoderData import EncoderDataInstance
 from backend.models.SmartDotData import SmartDotDataInstance
-from backend.drivers.DiagnosticScript import DiagnosticScript
-#from backend.motors.BDCMotor import BDCMotor
-#from backend.motors.SimMotor import SimMotor
 from frontend.SmartDotGraph import SmartDotGraph
 from frontend.SmartDotConnectWidget import SmartDotConnectWidget
 from frontend.SensorGraphDialog import SensorGraphDialog
 from frontend.OverrideDialog import OverrideDialog
-import utils
-if utils.is_raspberry_pi():
-    from backend.smartdot.MetaMotionS import MetaMotion
-else:
-    from backend.smartdot.SimSmartDot import SimSmartDot
 
 import datetime as dt
+
+
+@dataclass
+class MotorChannel:
+    key: str
+    motor_attr: str
+    slider: QtWidgets.QSlider
+    label: QtWidgets.QLabel
+    encoder_label: QtWidgets.QLabel
+    current_label: QtWidgets.QLabel
+    temp_label: QtWidgets.QLabel
+    graph: pg.PlotWidget
+    curve: pg.PlotDataItem
+    encoder_curve: pg.PlotDataItem
+    diag_motor_id: int
+    motor_id: int
+    label_fmt: str
+    slider_range: tuple
+    override_slider_range: tuple
+    graph_range: tuple
+    override_graph_range: tuple
+    temp_values: List[float]
+    temp_time: List[float]
+    current_values: List[float]
+    current_time: List[float]
+    apply_speed_on_tick: bool
+
+
+class CircularBufferSet:
+    # Initialize fixed-size circular buffers for values and encoders.
+    def __init__(self, size: int, keys: List[str]):
+        self.size = max(1, int(size))
+        self.keys = list(keys)
+        self.x = np.zeros(self.size, dtype=np.float64)
+        self.values = {key: np.zeros(self.size, dtype=np.float32) for key in self.keys}
+        self.encoders = {key: np.zeros(self.size, dtype=np.float32) for key in self.keys}
+        self.write_idx = 0
+        self.filled = False
+
+    # Reset buffers to zero and clear write state.
+    def clear(self):
+        self.x.fill(0.0)
+        for key in self.keys:
+            self.values[key].fill(0.0)
+            self.encoders[key].fill(0.0)
+        self.write_idx = 0
+        self.filled = False
+
+    # Append a timestamped sample into the circular buffers.
+    def append(self, t: float, values: Dict[str, float], encoders: Dict[str, float]):
+        idx = self.write_idx
+        self.x[idx] = t
+        for key in self.keys:
+            self.values[key][idx] = values.get(key, 0.0)
+            self.encoders[key][idx] = encoders.get(key, 0.0)
+        self.write_idx = (idx + 1) % self.size
+        if self.write_idx == 0:
+            self.filled = True
+
+    # Return chronological views of buffered values and encoder data.
+    def get_views(self):
+        if not self.filled:
+            count = self.write_idx
+            x_view = self.x[:count]
+            values_view = {key: self.values[key][:count] for key in self.keys}
+            encoder_view = {key: self.encoders[key][:count] for key in self.keys}
+            return x_view, values_view, encoder_view
+
+        idx = self.write_idx
+        x_view = np.concatenate((self.x[idx:], self.x[:idx]))
+        values_view = {
+            key: np.concatenate((self.values[key][idx:], self.values[key][:idx]))
+            for key in self.keys
+        }
+        encoder_view = {
+            key: np.concatenate((self.encoders[key][idx:], self.encoders[key][:idx]))
+            for key in self.keys
+        }
+        return x_view, values_view, encoder_view
 
 
 class DiagnosticModePage(QtWidgets.QWidget):
     changePage = pyqtSignal(int, object)
     navigationLock = pyqtSignal(bool, str) # False = lock, True = unlock
 
+    # Initialize UI, state, and helper structures.
     def __init__(self, parent=None):
         super().__init__(parent)
-        
-        #Set override mode to false initially
         self.OverrideMode = False
 
-        # Load the UI file (module-relative path).
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'DiagnosticModePage.ui'), self, package='frontend')
 
-        # Initialize diagnostic script object
-        self.diagnostic_script = DiagnosticScript(bsc.motor1, bsc.motor2, bsc.motor3)
+        self._channel_keys = ["spin", "tilt", "angle"]
+        self._setup_widgets()
+        self._setup_graphs()
+        self._setup_sensor_storage()
+        self._setup_channels()
+        self._setup_controls()
+        self._setup_smartdot()
+        self._setup_sampling()
 
-        #Buttons
-        self.btnStart = self.findChild(QtWidgets.QPushButton, 'btnStart')
-        self.btnStop = self.findChild(QtWidgets.QPushButton, 'btnStop')
-        self.btnClear = self.findChild(QtWidgets.QPushButton, 'btnClear')
+        self._last_values = {key: 0.0 for key in self._channel_keys}
+        self._sample_index = 0
+
+        self._motors_connected = False
+        self._diagnostic_active = False
+        self._recording_enabled = False
+
+        self._set_zero_buttons_enabled(False)
+        self._set_motor_controls_enabled(False)
+
+    # Resolve widgets by name from the UI file.
+    def _setup_widgets(self):
+        self.btnConnectMotors = self.findChild(QtWidgets.QPushButton, 'btnEnableMotors')
+        self.btnStartDiagnostic = self.findChild(QtWidgets.QPushButton, 'btnStartDiagnostic')
+        self.btnZeroMotors = self.findChild(QtWidgets.QPushButton, 'btnZeroMotors')
         self.btnSave = self.findChild(QtWidgets.QPushButton, 'btnSave')
+        self.btnAnalyze = self.findChild(QtWidgets.QPushButton, 'btnAnalyze')
+        self.btnOverride = self.findChild(QtWidgets.QPushButton, 'btnOverride')
 
-        # Additional initialization code can go here
+        self.btnGraphTemp = self.findChild(QtWidgets.QPushButton, 'btnGraphTemp')
+        self.btnGraphCurrent = self.findChild(QtWidgets.QPushButton, 'btnGraphCurrent')
+
         self.spinGraph = self.findChild(pg.PlotWidget, 'grphSpin')
         self.tiltGraph = self.findChild(pg.PlotWidget, 'grphTilt')
         self.angleGraph = self.findChild(pg.PlotWidget, 'grphAngle')
+        self.SmartDotGraph = self.findChild(SmartDotGraph, 'grphSmartDot')
 
-        #label configurations
         self.labelSpin = self.findChild(QtWidgets.QLabel, 'lblSpin')
         self.labelTilt = self.findChild(QtWidgets.QLabel, 'lblTilt')
         self.labelAngle = self.findChild(QtWidgets.QLabel, 'lblAngle')
-        # encoder value labels (UILabels may not be present in older UI versions)
         self.labelSpinEncoder = self.findChild(QtWidgets.QLabel, 'lblSpinEncoder')
         self.labelTiltEncoder = self.findChild(QtWidgets.QLabel, 'lblTiltEncoder')
         self.labelAngleEncoder = self.findChild(QtWidgets.QLabel, 'lblAngleEncoder')
 
-        # SmartDot initialization
-        self.SmartDot = None  # Placeholder for the connected SmartDot device
-        self.SmartDotGraph = self.findChild(SmartDotGraph, 'grphSmartDot')
-        #self.SmartDotGraph.setMaximumHeight(200)  # Adjust as needed for layout
-        self.smartdotConnectWidget = self.findChild(SmartDotConnectWidget, 'wgtSmartDotConnect')
-        if self.smartdotConnectWidget:
-            self.smartdotConnectWidget.signalSmartDotConnected.connect(self.connectSmartDot)
-            self.smartdotConnectWidget.signalDeviceDisconnected.connect(self.on_device_disconnected)
-        
-        # SmartDot data arrays
-        self.arrayGeneralTime = array('d', [0.0])
-        self.arrayAccelerometer_X = array('f', [0.0])
-        self.arrayAccelerometer_Y = array('f', [0.0])
-        self.arrayAccelerometer_Z = array('f', [0.0])
-        self.arrayGyroscope_X = array('f', [0.0])
-        self.arrayGyroscope_Y = array('f', [0.0])
-        self.arrayGyroscope_Z = array('f', [0.0])
-        self.arrayMagnetometer_X = array('f', [0.0])
-        self.arrayMagnetometer_Y = array('f', [0.0])
-        self.arrayMagnetometer_Z = array('f', [0.0])
-        self.arrayLight = array('f', [0.0])
-
-
-        #Motor Sensor Data Viewer Setup
-        #Current Value Labels
-        self.Spincurv = self.findChild(QtWidgets.QLabel, 'lblSpinCurrent')
-        self.Tiltcurv = self.findChild(QtWidgets.QLabel, 'lblTiltCurrent')
-        self.Anglecurv = self.findChild(QtWidgets.QLabel, 'lblAngleCurrent')
-        #Temp Value Labels
-        self.Spintempv = self.findChild(QtWidgets.QLabel, 'lblSpinTemp')
-        self.Tilttempv = self.findChild(QtWidgets.QLabel, 'lblTiltTemp')
-        self.Angletempv = self.findChild(QtWidgets.QLabel, 'lblAngleTemp')
-
-        #Example Initialization Values
-        """
-        self.Spincurv.setText("0.00 A")
-        self.Tiltcurv.setText("0.00 A")
-        self.Anglecurv.setText("0.00 A")
-        self.Spintempv.setText("25.0 °C")
-        self.Tilttempv.setText("25.0 °C")
-        self.Angletempv.setText("25.0 °C")
-        """
-        #Buttons for graphs
-        self.btnGraphTemp = self.findChild(QtWidgets.QPushButton, 'btnGraphTemp')
-        self.btnGraphCurrent = self.findChild(QtWidgets.QPushButton, 'btnGraphCurrent')
-        #Connect graph buttons
-        self.btnGraphTemp.clicked.connect(self.show_temp_graph) #see method at bottom
-        self.btnGraphCurrent.clicked.connect(self.show_current_graph) #see method at bottom
-
-        #Sensor Arrays
-        """example data arrays for input to graph dialog, feel free to use your own data collection methods"""
-        self.spin_temp_values = []
-        self.spin_temp_time = []
-        self.tilt_temp_values = []
-        self.tilt_temp_time = []
-        self.angle_temp_values = []
-        self.angle_temp_time = []
-        
-        self.spin_current_values = []
-        self.spin_current_time = []
-        self.tilt_current_values = []
-        self.tilt_current_time = []
-        self.angle_current_values = []
-        self.angle_current_time = []
-        
-        #Configure Save Button
-        self.btnSave.clicked.connect(self.openPostDialog)
-
-        # configure Analyze button (added via UI)
-        self.btnAnalyze = self.findChild(QtWidgets.QPushButton, 'btnAnalyze')
-        if self.btnAnalyze:
-            self.btnAnalyze.clicked.connect(self.analyze_data)
-            # leave enabled so user can move to analysis at any time
-            self.btnAnalyze.setEnabled(True)
-
-        #configure OverrideButton
-        self.btnOverride = self.findChild(QtWidgets.QPushButton, 'btnOverride')
-        self.btnOverride.setCheckable(True)
-        self.btnOverride.clicked.connect(self.toggle_override_mode)
-
-        #Spin Motor graph setup
-        self.spinGraph.setTitle("Diagnostic Spin Graph")
-        self.spinGraph.setLabel('left', 'Spin Rate', units='RPM')
-        self.spinGraph.setLabel('bottom', 'Time', units='s')
-        # align colors with analysis mode: rpm=red, angle=green, tilt=blue
-        self.spinCurve = self.spinGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#ff0000', width=2)) # rpm (spin)
-        # encoder overlay on spin graph (encoder rpm cyan)
-        self.spinEncoderCurve = self.spinGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#00ffff', width=1, style=pg.QtCore.Qt.PenStyle.DashLine), name='Spin Encoder')
-        # tilt encoder overlay (encoder tilt yellow)
-        self.tiltEncoderCurve = self.tiltGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#ffff00', width=1, style=pg.QtCore.Qt.PenStyle.DashLine), name='Tilt Encoder')
-        # angle encoder overlay (encoder angle magenta)
-        self.angleEncoderCurve = self.angleGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#ff00ff', width=1, style=pg.QtCore.Qt.PenStyle.DashLine), name='Angle Encoder')
-        self.spinGraph.setYRange(0,620)
-        self.spinGraph.setMouseEnabled(x=False, y=False)
-        #Tilt Motor graph setup
-        self.tiltGraph.setTitle("Diagnostic Tilt Graph")
-        self.tiltGraph.setLabel('left', 'Tilt Angle', units='Degrees')
-        self.tiltGraph.setLabel('bottom', 'Time', units='s')
-        self.tiltCurve = self.tiltGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#00aa00', width=2)) #Extra refrence allows to be manipulated in thread
-        self.tiltGraph.setYRange(-50,50)
-        self.tiltGraph.setMouseEnabled(x=False, y=False)
-        #Angle Motor graph setup
-        self.angleGraph.setTitle("Diagnostic Angle Graph")
-        self.angleGraph.setLabel('left', 'Angle', units='Degrees')
-        self.angleGraph.setLabel('bottom', 'Time', units='s')
-        self.angleCurve = self.angleGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#0000ff', width=2)) #Extra refrence allows to be manipulated in thread
-        self.angleGraph.setYRange(-100,100)
-        self.angleGraph.setMouseEnabled(x=False, y=False)
-        # Slider configurations 
-        self.spinSlider = self.findChild(QtWidgets.QSlider, 'sliderSpin')
-        self.tiltSlider = self.findChild(QtWidgets.QSlider, 'sliderTilt')
-        self.angleSlider = self.findChild(QtWidgets.QSlider, 'sliderAngle')
-        # Set slider ranges (orientation is set in UI file)
-        self.spinSlider.setRange(0, 600)
-        self.tiltSlider.setRange(-45, 45)
-        self.angleSlider.setRange(-90, 90)
-
-        # Always update labels when sliders move (even if timer is stopped)
-        self.spinSlider.valueChanged.connect(self._update_slider_labels)
-        self.tiltSlider.valueChanged.connect(self._update_slider_labels)
-        self.angleSlider.valueChanged.connect(self._update_slider_labels)
-
-        #Button connections
-        self.btnSpinIncrease = self.findChild(QtWidgets.QPushButton, 'btnSpinInc')
-        self.btnSpinDecrease = self.findChild(QtWidgets.QPushButton, 'btnSpinDec')
-        self.btnTiltIncrease = self.findChild(QtWidgets.QPushButton, 'btnTiltInc')
-        self.btnTiltDecrease = self.findChild(QtWidgets.QPushButton, 'btnTiltDec')
-        self.btnAngleIncrease = self.findChild(QtWidgets.QPushButton, 'btnAngleInc')
-        self.btnAngleDecrease = self.findChild(QtWidgets.QPushButton, 'btnAngleDec')
-
-        self.btnSpinIncrease.clicked.connect(lambda: self.adjustSliderWithButton(self.spinSlider, step=10, increase=True))
-        self.btnSpinDecrease.clicked.connect(lambda: self.adjustSliderWithButton(self.spinSlider, step=10, increase=False))
-        self.btnTiltIncrease.clicked.connect(lambda: self.adjustSliderWithButton(self.tiltSlider, step=1, increase=True))
-        self.btnTiltDecrease.clicked.connect(lambda: self.adjustSliderWithButton(self.tiltSlider, step=1, increase=False))
-        self.btnAngleIncrease.clicked.connect(lambda: self.adjustSliderWithButton(self.angleSlider, step=1, increase=True))
-        self.btnAngleDecrease.clicked.connect(lambda: self.adjustSliderWithButton(self.angleSlider, step=1, increase=False))
-
-
-        self.btnStart.clicked.connect(lambda: self.toggle_Buttons())
-        self.btnStop.clicked.connect(lambda: self.toggle_Buttons())
-        self.btnClear.clicked.connect(lambda: self.clear_graphs())
-        # Use a QTimer for periodic sampling & UI updates (runs in main thread)
-        self._timer = QTimer(self)
-        # Get sample interval from central `bsc` object (milliseconds)
-        self._sample_interval_ms = bsc.sample_interval_ms
-        self._sample_dt_s = self._sample_interval_ms / 1000.0
-        self._timer.setInterval(self._sample_interval_ms)
-        self._timer.timeout.connect(self._on_timer)
-
-        # Buffers: keep ~3s of history -> ~N samples based on sample interval
-        self._maxlen = int((3000 // self._sample_interval_ms))
-        # Numpy-backed circular buffers for fast, low-allocation updates
-        self._N = max(1, self._maxlen)
-        self._x = np.zeros(self._N, dtype=np.float64)
-        self._spin_arr = np.zeros(self._N, dtype=np.float32)
-        # axis encoder buffer copied alongside spin values
-        self._spin_enc_arr = np.zeros(self._N, dtype=np.float32)
-        self._tilt_arr = np.zeros(self._N, dtype=np.float32)
-        self._angle_arr = np.zeros(self._N, dtype=np.float32)
-        self._write_idx = 0
-        self._filled = False
-
-        self._last_values = {'spin': 0.0, 'tilt': 0.0, 'angle': 0.0}
-        self._sample_index = 0  # drives quantized sample grid
-
-        #Current and Temp Labels
         self.lblSpinCurrent = self.findChild(QtWidgets.QLabel, 'lblSpinCurrent')
         self.lblTiltCurrent = self.findChild(QtWidgets.QLabel, 'lblTiltCurrent')
         self.lblAngleCurrent = self.findChild(QtWidgets.QLabel, 'lblAngleCurrent')
@@ -238,7 +164,362 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.lblTiltTemp = self.findChild(QtWidgets.QLabel, 'lblTiltTemp')
         self.lblAngleTemp = self.findChild(QtWidgets.QLabel, 'lblAngleTemp')
 
+        self.spinSlider = self.findChild(QtWidgets.QSlider, 'sliderSpin')
+        self.tiltSlider = self.findChild(QtWidgets.QSlider, 'sliderTilt')
+        self.angleSlider = self.findChild(QtWidgets.QSlider, 'sliderAngle')
 
+        self.btnSpinIncrease = self.findChild(QtWidgets.QPushButton, 'btnSpinInc')
+        self.btnSpinDecrease = self.findChild(QtWidgets.QPushButton, 'btnSpinDec')
+        self.btnTiltIncrease = self.findChild(QtWidgets.QPushButton, 'btnTiltInc')
+        self.btnTiltDecrease = self.findChild(QtWidgets.QPushButton, 'btnTiltDec')
+        self.btnAngleIncrease = self.findChild(QtWidgets.QPushButton, 'btnAngleInc')
+        self.btnAngleDecrease = self.findChild(QtWidgets.QPushButton, 'btnAngleDec')
+
+        self.smartdotConnectWidget = self.findChild(SmartDotConnectWidget, 'wgtSmartDotConnect')
+
+    # Configure plot widgets and their base curves.
+    def _setup_graphs(self):
+        self.spinGraph.setTitle("Diagnostic Spin Graph")
+        self.spinGraph.setLabel('left', 'Spin Rate', units='RPM')
+        self.spinGraph.setLabel('bottom', 'Time', units='s')
+        self.spinCurve = self.spinGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#ff0000', width=2))
+        self.spinEncoderCurve = self.spinGraph.plot(
+            [0.0],
+            [0.0],
+            pen=pg.mkPen(color='#00ffff', width=1, style=pg.QtCore.Qt.PenStyle.DashLine),
+            name='Spin Encoder'
+        )
+        self.spinGraph.setMouseEnabled(x=False, y=False)
+
+        self.tiltGraph.setTitle("Diagnostic Tilt Graph")
+        self.tiltGraph.setLabel('left', 'Tilt Angle', units='Degrees')
+        self.tiltGraph.setLabel('bottom', 'Time', units='s')
+        self.tiltCurve = self.tiltGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#00aa00', width=2))
+        self.tiltEncoderCurve = self.tiltGraph.plot(
+            [0.0],
+            [0.0],
+            pen=pg.mkPen(color='#ffff00', width=1, style=pg.QtCore.Qt.PenStyle.DashLine),
+            name='Tilt Encoder'
+        )
+        self.tiltGraph.setMouseEnabled(x=False, y=False)
+
+        self.angleGraph.setTitle("Diagnostic Angle Graph")
+        self.angleGraph.setLabel('left', 'Angle', units='Degrees')
+        self.angleGraph.setLabel('bottom', 'Time', units='s')
+        self.angleCurve = self.angleGraph.plot([0.0], [0.0], pen=pg.mkPen(color='#0000ff', width=2))
+        self.angleEncoderCurve = self.angleGraph.plot(
+            [0.0],
+            [0.0],
+            pen=pg.mkPen(color='#ff00ff', width=1, style=pg.QtCore.Qt.PenStyle.DashLine),
+            name='Angle Encoder'
+        )
+        self.angleGraph.setMouseEnabled(x=False, y=False)
+
+    # Initialize lists used for sensor charting.
+    def _setup_sensor_storage(self):
+        self.spin_temp_values = []
+        self.spin_temp_time = []
+        self.tilt_temp_values = []
+        self.tilt_temp_time = []
+        self.angle_temp_values = []
+        self.angle_temp_time = []
+
+        self.spin_current_values = []
+        self.spin_current_time = []
+        self.tilt_current_values = []
+        self.tilt_current_time = []
+        self.angle_current_values = []
+        self.angle_current_time = []
+
+    # Build the per-motor channel configuration.
+    def _setup_channels(self):
+        self._channels = [
+            MotorChannel(
+                key="spin",
+                motor_attr="motor1",
+                slider=self.spinSlider,
+                label=self.labelSpin,
+                encoder_label=self.labelSpinEncoder,
+                current_label=self.lblSpinCurrent,
+                temp_label=self.lblSpinTemp,
+                graph=self.spinGraph,
+                curve=self.spinCurve,
+                encoder_curve=self.spinEncoderCurve,
+                diag_motor_id=0,
+                motor_id=1,
+                label_fmt="Spin Rate: {value:.2f} RPM",
+                slider_range=(0, 600),
+                override_slider_range=(0, 1200),
+                graph_range=(0, 620),
+                override_graph_range=(0, 1250),
+                temp_values=self.spin_temp_values,
+                temp_time=self.spin_temp_time,
+                current_values=self.spin_current_values,
+                current_time=self.spin_current_time,
+                apply_speed_on_tick=True,
+            ),
+            MotorChannel(
+                key="tilt",
+                motor_attr="motor2",
+                slider=self.tiltSlider,
+                label=self.labelTilt,
+                encoder_label=self.labelTiltEncoder,
+                current_label=self.lblTiltCurrent,
+                temp_label=self.lblTiltTemp,
+                graph=self.tiltGraph,
+                curve=self.tiltCurve,
+                encoder_curve=self.tiltEncoderCurve,
+                diag_motor_id=1,
+                motor_id=2,
+                label_fmt="Tilt Angle: {value:.2f} Degrees",
+                slider_range=(-22, 22),
+                override_slider_range=(-359, 359),
+                graph_range=(-22, 22),
+                override_graph_range=(-400, 400),
+                temp_values=self.tilt_temp_values,
+                temp_time=self.tilt_temp_time,
+                current_values=self.tilt_current_values,
+                current_time=self.tilt_current_time,
+                apply_speed_on_tick=False,
+            ),
+            MotorChannel(
+                key="angle",
+                motor_attr="motor3",
+                slider=self.angleSlider,
+                label=self.labelAngle,
+                encoder_label=self.labelAngleEncoder,
+                current_label=self.lblAngleCurrent,
+                temp_label=self.lblAngleTemp,
+                graph=self.angleGraph,
+                curve=self.angleCurve,
+                encoder_curve=self.angleEncoderCurve,
+                diag_motor_id=2,
+                motor_id=3,
+                label_fmt="Angle: {value:.2f} Degrees",
+                slider_range=(-45, 45),
+                override_slider_range=(-359, 359),
+                graph_range=(-45, 45),
+                override_graph_range=(-400, 400),
+                temp_values=self.angle_temp_values,
+                temp_time=self.angle_temp_time,
+                current_values=self.angle_current_values,
+                current_time=self.angle_current_time,
+                apply_speed_on_tick=False,
+            ),
+        ]
+        self._apply_channel_ranges(override=False)
+
+    # Wire up buttons, sliders, and other UI controls.
+    def _setup_controls(self):
+        self.btnGraphTemp.clicked.connect(self.show_temp_graph)
+        self.btnGraphCurrent.clicked.connect(self.show_current_graph)
+
+        self.btnSave.clicked.connect(self.openPostDialog)
+        self.btnAnalyze.clicked.connect(self.analyze_data)
+        self.btnAnalyze.setEnabled(True)
+
+        self.btnOverride.setCheckable(True)
+        self.btnOverride.clicked.connect(self.toggle_override_mode)
+
+        self.btnSpinIncrease.clicked.connect(
+            lambda: self.adjustSliderWithButton(self.spinSlider, step=10, increase=True)
+        )
+        self.btnSpinDecrease.clicked.connect(
+            lambda: self.adjustSliderWithButton(self.spinSlider, step=10, increase=False)
+        )
+        self.btnTiltIncrease.clicked.connect(
+            lambda: self.adjustSliderWithButton(self.tiltSlider, step=1, increase=True)
+        )
+        self.btnTiltDecrease.clicked.connect(
+            lambda: self.adjustSliderWithButton(self.tiltSlider, step=1, increase=False)
+        )
+        self.btnAngleIncrease.clicked.connect(
+            lambda: self.adjustSliderWithButton(self.angleSlider, step=1, increase=True)
+        )
+        self.btnAngleDecrease.clicked.connect(
+            lambda: self.adjustSliderWithButton(self.angleSlider, step=1, increase=False)
+        )
+
+        for channel in self._channels:
+            channel.slider.valueChanged.connect(self._update_slider_labels)
+
+        self.btnConnectMotors.setText("Connect Motors")
+        self.btnConnectMotors.clicked.connect(self.toggle_connect_motors)
+        self.btnStartDiagnostic.clicked.connect(self.toggle_diagnostics)
+        self.btnStartDiagnostic.setText("Start Diagnostic")
+        self.btnStartDiagnostic.setEnabled(False)
+        self.btnZeroMotors.clicked.connect(self._return_motors_to_zero)
+        self.btnZeroMotors.setEnabled(False)
+
+    # Initialize SmartDot integration and signals.
+    def _setup_smartdot(self):
+        self.SmartDot = None
+        if self.smartdotConnectWidget:
+            self.smartdotConnectWidget.signalSmartDotConnected.connect(self.connectSmartDot)
+            self.smartdotConnectWidget.signalDeviceDisconnected.connect(self.on_device_disconnected)
+
+    # Set up the timer and circular buffers for sampling.
+    def _setup_sampling(self):
+        self._timer = QTimer(self)
+        self._sample_interval_ms = bsc.sample_interval_ms
+        self._sample_dt_s = self._sample_interval_ms / 1000.0
+        self._timer.setInterval(self._sample_interval_ms)
+        self._timer.timeout.connect(self._on_timer)
+
+        self._history_seconds = 3.0
+        maxlen = int((self._history_seconds * 1000) // self._sample_interval_ms)
+        self._buffers = CircularBufferSet(maxlen, self._channel_keys)
+
+    # Resolve the motor instance for a channel.
+    def _get_motor(self, channel: MotorChannel):
+        return getattr(bsc, channel.motor_attr, None)
+
+    # Apply slider and graph ranges based on override state.
+    def _apply_channel_ranges(self, override: bool):
+        for channel in self._channels:
+            if override:
+                slider_min, slider_max = channel.override_slider_range
+                graph_min, graph_max = channel.override_graph_range
+            else:
+                slider_min, slider_max = channel.slider_range
+                graph_min, graph_max = channel.graph_range
+            channel.slider.setRange(slider_min, slider_max)
+            channel.graph.setYRange(graph_min, graph_max)
+
+    # Read current slider values into a keyed dict.
+    def _get_slider_values(self) -> Dict[str, float]:
+        return {channel.key: float(channel.slider.value()) for channel in self._channels}
+
+    # Read a single encoder value safely.
+    def _read_encoder_value(self, channel: MotorChannel) -> float:
+        motor = self._get_motor(channel)
+        if motor is None:
+            return 0.0
+        try:
+            return float(motor.getCurrentSpeed())
+        except Exception:
+            return 0.0
+
+    # Read encoder values for all channels.
+    def _read_encoder_values(self) -> Dict[str, float]:
+        return {channel.key: self._read_encoder_value(channel) for channel in self._channels}
+
+    # Read current and temperature values for all channels.
+    def _read_sensor_values(self) -> Dict[str, tuple]:
+        values = {}
+        for channel in self._channels:
+            motor = self._get_motor(channel)
+            current, temp, err = self._read_motor_vals(motor, channel.motor_attr)
+            values[channel.key] = (current, temp, err)
+        return values
+
+    # Update current/temp labels from sensor readings.
+    def _update_sensor_labels(self, sensor_values: Dict[str, tuple]):
+        for channel in self._channels:
+            current, temp, err = sensor_values[channel.key]
+            if err:
+                if channel.current_label:
+                    channel.current_label.setText("N/A Read Error")
+                if channel.temp_label:
+                    channel.temp_label.setText("N/A Read Error")
+                continue
+            if current is not None:
+                if channel.current_label:
+                    channel.current_label.setText(f"{current:.2f} A")
+            if temp is not None:
+                if channel.temp_label:
+                    channel.temp_label.setText(f"{temp:.1f} °C")
+
+    # Store sensor readings and heat data while recording.
+    def _record_sensor_data(self, t: float, sensor_values: Dict[str, tuple], dc: DataController):
+        if not self._recording_enabled:
+            return
+        for channel in self._channels:
+            current, temp, _err = sensor_values[channel.key]
+            if current is not None:
+                channel.current_time.append(t)
+                channel.current_values.append(current)
+            if temp is not None:
+                channel.temp_time.append(t)
+                channel.temp_values.append(temp)
+                if dc is not None:
+                    dc.add_heat_data(HeatDataInstance(time=t, motor_id=channel.motor_id, value=temp))
+
+    # Add encoder samples to the data controller.
+    def _record_encoder_data(self, t: float, encoder_values: Dict[str, float], dc: DataController):
+        if not self._recording_enabled or dc is None:
+            return
+        for channel in self._channels:
+            dc.add_encoder_data(EncoderDataInstance(time=t, pulses=encoder_values[channel.key], motor_id=channel.motor_id))
+
+    # Update encoder labels using the latest readings.
+    def _update_encoder_labels(self):
+        for channel in self._channels:
+            if channel.encoder_label:
+                enc_value = self._read_encoder_value(channel)
+                channel.encoder_label.setText(f"Enc: {enc_value:.1f} RPM")
+
+    # Apply motor output changes and record diagnostic instructions.
+    def _update_motor_outputs(self, t: float, slider_values: Dict[str, float], recording: bool, dc: DataController):
+        for channel in self._channels:
+            value = slider_values[channel.key]
+            if value != self._last_values[channel.key]:
+                if recording and dc is not None:
+                    enc_value = self._read_encoder_value(channel)
+                    dc.add_encoder_data(
+                        EncoderDataInstance(time=t, pulses=enc_value, motor_id=channel.motor_id)
+                    )
+                self.add_diag_data_instance_to_data_controller(t, channel.diag_motor_id, value)
+                self._last_values[channel.key] = value
+                if channel.label:
+                    channel.label.setText(channel.label_fmt.format(value=value))
+                if not channel.apply_speed_on_tick:
+                    motor = self._get_motor(channel)
+                    self._change_motor_speed(motor, value)
+
+        for channel in self._channels:
+            if channel.apply_speed_on_tick:
+                motor = self._get_motor(channel)
+                self._change_motor_speed(motor, slider_values[channel.key])
+
+        self._update_encoder_labels()
+
+    # Push SmartDot samples into the graph during recording.
+    def _update_smartdot_graph(self, recording: bool):
+        if recording and self.SmartDot is not None and self.SmartDotGraph is not None:
+            self.SmartDotGraph.updateDataBetter(
+                self.SmartDot.xl_time, self.SmartDot.xl_x, self.SmartDot.xl_y, self.SmartDot.xl_z,
+                self.SmartDot.gy_time, self.SmartDot.gy_x, self.SmartDot.gy_y, self.SmartDot.gy_z,
+                self.SmartDot.mg_time, self.SmartDot.mg_x, self.SmartDot.mg_y, self.SmartDot.mg_z,
+                self.SmartDot.lt_time, self.SmartDot.lt_value
+            )
+
+    # Refresh graph ranges and data from the circular buffers.
+    def _refresh_graphs(self):
+        last_idx = (self._buffers.write_idx - 1) % self._buffers.size
+        latest_t = float(self._buffers.x[last_idx])
+        start_t = max(0, latest_t - self._history_seconds)
+        for channel in self._channels:
+            channel.graph.setXRange(start_t, latest_t)
+
+        x_view, values_view, encoder_view = self._buffers.get_views()
+        for channel in self._channels:
+            channel.curve.setData(x_view, values_view[channel.key])
+            try:
+                channel.encoder_curve.setData(x_view, encoder_view[channel.key])
+            except Exception:
+                pass
+
+    # Clear the stored sensor value arrays.
+    def _clear_sensor_arrays(self):
+        for channel in self._channels:
+            channel.temp_values.clear()
+            channel.temp_time.clear()
+            channel.current_values.clear()
+            channel.current_time.clear()
+
+
+    # Open the post-session dialog and submit data if accepted.
     def openPostDialog(self):
         from .PostDialog import PostDialog
         dialog = PostDialog(self)
@@ -260,6 +541,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
             print("User rejected the dialog.")
             # Handle rejection (e.g., cancel operation)
     
+    # Show temperature graphs in a separate dialog.
     def show_temp_graph(self):
         """Open a dialog showing temperature graphs for all three motors."""
         dialog = SensorGraphDialog(
@@ -275,6 +557,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         )
         dialog.exec()
     
+    # Show current graphs in a separate dialog.
     def show_current_graph(self):
         """Open a dialog showing current graphs for all three motors."""
         dialog = SensorGraphDialog(
@@ -289,28 +572,101 @@ class DiagnosticModePage(QtWidgets.QWidget):
             parent=self
         )
         dialog.exec()
-    
-    def toggle_Buttons(self):
-        """Toggle diagnostic mode start/stop state.
 
-        If diagnostics are stopped, start motors and timer.
-        If diagnostics are running, stop motors and timer.
-        """
-        if self._timer.isActive():
+    # Toggle motor connection state.
+    def toggle_connect_motors(self):
+        if self._motors_connected:
+            self._disconnect_motors()
+        else:
+            self._connect_motors()
+
+    # Start motors and enable manual control without recording.
+    def _connect_motors(self):
+        # Start motors and allow manual control without recording data.
+        for channel in self._channels:
+            motor = self._get_motor(channel)
+            if motor is None:
+                continue
+            try:
+                motor.start()
+            except Exception as e:
+                print(f"Error starting motor: {e}")
+
+        self._motors_connected = True
+        self._recording_enabled = False
+        self._diagnostic_active = False
+
+        self.btnConnectMotors.setText("Disconnect Motors")
+        self.btnStartDiagnostic.setEnabled(True)
+        self.btnStartDiagnostic.setText("Start Diagnostic")
+        self._set_zero_buttons_enabled(True)
+        self._set_motor_controls_enabled(True)
+
+        if not self._timer.isActive():
+            self._timer.start()
+        self.navigationLock.emit(False, "Motors Connected - Manual Control Enabled")
+
+    # Stop motors and disable manual control.
+    def _disconnect_motors(self):
+        if self._diagnostic_active:
+            self._stop_diagnostics()
+
+        self._recording_enabled = False
+        self._diagnostic_active = False
+        self._motors_connected = False
+
+        try:
+            for channel in self._channels:
+                motor = self._get_motor(channel)
+                if motor is None:
+                    continue
+                try:
+                    motor.stop()
+                except Exception:
+                    pass
+            bsc.disconnect_all_motors()
+        finally:
+            try:
+                self._timer.stop()
+            except Exception:
+                pass
+
+        self.btnConnectMotors.setText("Connect Motors")
+        self.btnStartDiagnostic.setEnabled(False)
+        self.btnStartDiagnostic.setText("Start Diagnostic")
+        self._set_zero_buttons_enabled(False)
+        self._set_motor_controls_enabled(False)
+
+        self.reset(clear_graphs=False, clear_data=False)
+        self.navigationLock.emit(True, "")
+
+    # Toggle diagnostic recording state.
+    def toggle_diagnostics(self):
+        if self._diagnostic_active:
             self._stop_diagnostics()
         else:
             self._start_diagnostics()
 
+    # Start diagnostic recording and reset buffers.
     def _start_diagnostics(self):
-        self.btnStart.setEnabled(False)
-        self.btnOverride.setEnabled(False)
-        self.btnStop.setEnabled(True)
+        if not self._motors_connected:
+            self._connect_motors()
 
-        self.diagnostic_script.start_motors([1, 2, 3])
+        self.btnConnectMotors.setEnabled(False)
+        self._set_zero_buttons_enabled(False)
+        self.btnStartDiagnostic.setText("Stop Diagnostic")
+
+        self.btnOverride.setEnabled(False)
+
+        self._recording_enabled = True
+        self._diagnostic_active = True
+
+        if self._timer.isActive():
+            self._timer.stop()
 
         self._sample_index = 0
         self.clear_graphs()  # also resets buffers and indices
-        self._timer.start()
+        self._clear_sensor_arrays()
 
         if self.SmartDot is not None:
             self.start_smartdot_updates()
@@ -318,55 +674,41 @@ class DiagnosticModePage(QtWidgets.QWidget):
         bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Diagnostic Session", isShotMode=False))
         bsc.set_data_controller(DataController(bsc.get_session()))
 
-        self.navigationLock.emit(False, "Motor Running")
+        if not self._timer.isActive():
+            self._timer.start()
 
+        
+
+    # Stop diagnostic recording and restore controls.
     def _stop_diagnostics(self):
-        self.btnStart.setEnabled(True)
+        self._recording_enabled = False
+        self._diagnostic_active = False
+
+        self.btnConnectMotors.setEnabled(True)
+        self._set_zero_buttons_enabled(True)
+        self.btnStartDiagnostic.setText("Start Diagnostic")
         self.btnOverride.setEnabled(True)
-        self.btnStop.setEnabled(False)
 
-        try:
-            self.diagnostic_script.stop_motors([1, 2, 3])
-            bsc.disconnect_all_motors()
-            self._timer.stop()
+        if self.SmartDot is not None:
+            self.stop_smartdot_updates()
 
-            if self.SmartDot is not None:
-                self.stop_smartdot_updates()
-
-        except Exception as e:
-            print(f"Error during stopping motors: {e}")
-
-        finally:
-            # Safeguard: attempt to stop motors again even if stop procedure failed above.
-            try:
-                self.diagnostic_script.stop_motors([1, 2, 3])
-            except Exception as inner_e:
-                print(f"Secondary stop_motors call failed: {inner_e}")
-
-            # Ensure master disconnection and timer stop as safe fallback.
-            try:
-                bsc.disconnect_all_motors()
-            except Exception:
-                pass
+        if not self._motors_connected:
             try:
                 self._timer.stop()
             except Exception:
                 pass
 
+        self.reset(clear_graphs=False, clear_data=False)
+        if not self._motors_connected:
             self.navigationLock.emit(True, "")
 
-    def EStop(self):
-        #Motor.stop() uncomment when motor works
-        self.diagnostic_script.stop_motors([1,2,3])
-        bsc.disconnect_all_motors()
-        self.clear_graphs()
-        self.btnStart.setEnabled(True)
-        self.btnStop.setEnabled(False)
-        # ensure periodic updates stopped
-        self._timer.stop()
-        # expose EStop publicly so other modules can call: instance.EStop()
+    # Add a diagnostic script data point to the data controller.
     def add_diag_data_instance_to_data_controller(self, time: float, motor_id: int, instruction: float):
+        if not self._recording_enabled:
+            return
         dc: DataController = bsc.get_data_controller()
+        if dc is None:
+            return
         data = DiagnosticScriptDataInstance(
             time=time,
             motor_id=motor_id,
@@ -374,249 +716,153 @@ class DiagnosticModePage(QtWidgets.QWidget):
         )
         dc.add_diagnostic_script_data(data)
 
+    # Change motor speed with compatibility for different signatures.
+    def _change_motor_speed(self, motor, value: float):
+        if motor is None:
+            return
+        try:
+            motor.changeSpeed(float(value), False)
+        except TypeError:
+            try:
+                motor.changeSpeed(float(value))
+            except Exception as e:
+                print(f"Error changing motor speed: {e}")
+        except Exception as e:
+            print(f"Error changing motor speed: {e}")
+
+    # Read current and temperature values from a motor, if supported.
+    def _read_motor_vals(self, motor, motor_label: str):
+        if motor is None or not hasattr(motor, "getVals"):
+            return None, None, False
+        try:
+            vals = motor.getVals()
+        except Exception as e:
+            print(f"Error reading {motor_label} sensors: {e}")
+            return None, None, True
+        if not isinstance(vals, dict):
+            return None, None, True
+        return vals.get("input_current"), vals.get("temp_motor"), False
+
+    # Periodic sampling tick: read, record, drive outputs, and refresh graphs.
     def _on_timer(self):
         # Runs in main (GUI) thread. Poll sliders and update buffers + plots.
         # Called only when the timer is active; no separate `active` flag needed.
-        # grab data controller early for encoder logging
+        if not self._motors_connected:
+            return
         dc = bsc.get_data_controller()
-        # Update SmartDot graph if device is connected
-        if self.SmartDot is not None and self.SmartDotGraph is not None:
-            self.SmartDotGraph.updateDataBetter(
-                self.SmartDot.xl_time, self.SmartDot.xl_x, self.SmartDot.xl_y, self.SmartDot.xl_z,
-                self.SmartDot.gy_time, self.SmartDot.gy_x, self.SmartDot.gy_y, self.SmartDot.gy_z,
-                self.SmartDot.mg_time, self.SmartDot.mg_x, self.SmartDot.mg_y, self.SmartDot.mg_z,
-                self.SmartDot.lt_time, self.SmartDot.lt_value
-            )
+        recording = self._recording_enabled and dc is not None
+        self._update_smartdot_graph(recording)
 
         # Quantized time based on fixed interval (>=50ms)
         t = self._sample_index * self._sample_dt_s
-        self._sample_index += 1
+        if recording:
+            self._sample_index += 1
 
-        spin_v = float(self.spinSlider.value())
-        tilt_v = float(self.tiltSlider.value())
-        angle_v = float(self.angleSlider.value())
+        slider_values = self._get_slider_values()
+        encoder_values = self._read_encoder_values()
+        sensor_values = self._read_sensor_values()
 
-        # Write into circular numpy buffers (in-place, no allocations)
-        idx = self._write_idx
-        self._x[idx] = t
-        self._spin_arr[idx] = spin_v
-        self._tilt_arr[idx] = tilt_v
-        self._angle_arr[idx] = angle_v
-        # sample encoders at same instant
-        try:
-            enc_sp = bsc.motor1.getCurrentSpeed()
-        except Exception:
-            enc_sp = 0.0
-        try:
-            enc_tl = bsc.motor2.getCurrentSpeed()
-        except Exception:
-            enc_tl = 0.0
-        try:
-            enc_ag = bsc.motor3.getCurrentSpeed()
-        except Exception:
-            enc_ag = 0.0
+        self._update_sensor_labels(sensor_values)
+        self._record_sensor_data(t, sensor_values, dc)
 
-        #Get Temp and Current values, Worry about graph later
-        try:
-            vals = bsc.motor1.getVals()
-            spin_current = vals['input_current']
-            spin_temp = vals['temp_motor']
-            self.lblSpinCurrent.setText(f"{spin_current:.2f} A")
-            self.lblSpinTemp.setText(f"{spin_temp:.1f} °C")
-        except Exception as e:
-            print(f"Error reading motor 1 sensors: {e}")
-            self.lblSpinCurrent.setText("N/A Read Error")
-            self.lblSpinTemp.setText("N/A Read Error")
-        self._spin_enc_arr[idx] = enc_sp
-        self._tilt_enc_arr[idx] = enc_tl
-        self._angle_enc_arr[idx] = enc_ag
-        # record encoder readings every tick
-        if dc is not None:
-            dc.add_encoder_data(EncoderDataInstance(time=t, pulses=enc_sp, motor_id=1))
-            dc.add_encoder_data(EncoderDataInstance(time=t, pulses=enc_tl, motor_id=2))
-            dc.add_encoder_data(EncoderDataInstance(time=t, pulses=enc_ag, motor_id=3))
-        # advance write index
-        self._write_idx = (idx + 1) % self._N
-        if self._write_idx == 0:
-            self._filled = True
+        if recording:
+            self._buffers.append(t, slider_values, encoder_values)
+            self._record_encoder_data(t, encoder_values, dc)
 
-        # Only call change_speed/add data when value has changed; encoder labels update every tick
-        if spin_v != self._last_values['spin']:
-            # record encoder along with motor time when spin changes
-            try:
-                enc_sp = bsc.motor1.getCurrentSpeed()
-            except Exception:
-                enc_sp = 0.0
-            dc.add_encoder_data(EncoderDataInstance(time=t, pulses=enc_sp, motor_id=1))
-            self.add_diag_data_instance_to_data_controller(t, 0, spin_v)
-            self._last_values['spin'] = spin_v
-            self.labelSpin.setText(f"Spin Rate: {spin_v:.2f} RPM")
-            
-        # always refresh encoder label irrespective of change
-        self.diagnostic_script.change_speed(0, spin_v)
-        try:
-            enc_sp = bsc.motor1.getCurrentSpeed()
-        except Exception:
-            enc_sp = 0.0
-        if hasattr(self, 'labelSpinEncoder') and self.labelSpinEncoder:
-            self.labelSpinEncoder.setText(f"Enc: {enc_sp:.1f} RPM")
+        self._update_motor_outputs(t, slider_values, recording, dc)
 
-        if tilt_v != self._last_values['tilt']:
-            # record tilt encoder when tilt value changes
-            try:
-                enc_tl = bsc.motor2.getCurrentSpeed()
-            except Exception:
-                enc_tl = 0.0
-            dc.add_encoder_data(EncoderDataInstance(time=t, pulses=enc_tl, motor_id=2))
-            self.add_diag_data_instance_to_data_controller(t, 1, tilt_v)
-            self._last_values['tilt'] = tilt_v
-            self.labelTilt.setText(f"Tilt Angle: {tilt_v:.2f} Degrees")
-            self.diagnostic_script.change_speed(1, tilt_v)
-        # refresh tilt encoder label every tick
-        try:
-            enc_tl = bsc.motor2.getCurrentSpeed()
-        except Exception:
-            enc_tl = 0.0
-        if hasattr(self, 'labelTiltEncoder') and self.labelTiltEncoder:
-            self.labelTiltEncoder.setText(f"Enc: {enc_tl:.1f} RPM")
+        if recording:
+            self._refresh_graphs()
 
-        if angle_v != self._last_values['angle']:
-            # record angle encoder when angle value changes
-            try:
-                enc_ag = bsc.motor3.getCurrentSpeed()
-            except Exception:
-                enc_ag = 0.0
-            dc.add_encoder_data(EncoderDataInstance(time=t, pulses=enc_ag, motor_id=3))
-            self.add_diag_data_instance_to_data_controller(t, 2, angle_v)
-            self._last_values['angle'] = angle_v
-            self.labelAngle.setText(f"Angle: {angle_v:.2f} Degrees")
-            self.diagnostic_script.change_speed(2, angle_v)
-        # refresh angle encoder label every tick
-        try:
-            enc_ag = bsc.motor3.getCurrentSpeed()
-        except Exception:
-            enc_ag = 0.0
-        if hasattr(self, 'labelAngleEncoder') and self.labelAngleEncoder:
-            self.labelAngleEncoder.setText(f"Enc: {enc_ag:.1f} RPM")
-
-        # Update graph x-ranges to show last ~3s
-        # compute latest timestamp from circular buffer
-        last_idx = (self._write_idx - 1) % self._N
-        latest_t = float(self._x[last_idx])
-        start_t = max(0, latest_t - 3.0)
-        self.spinGraph.setXRange(start_t, latest_t)
-        self.tiltGraph.setXRange(start_t, latest_t)
-        self.angleGraph.setXRange(start_t, latest_t)
-
-        # Plotting: build chronological views from circular buffers
-        if not self._filled:
-            count = self._write_idx
-            x_view = self._x[:count]
-            spin_view = self._spin_arr[:count]
-            tilt_view = self._tilt_arr[:count]
-            angle_view = self._angle_arr[:count]
-            enc_view = self._spin_enc_arr[:count]
-            tilt_enc_view = self._tilt_enc_arr[:count]
-            angle_enc_view = self._angle_enc_arr[:count]
-        else:
-            idx = self._write_idx
-            # concatenate tail + head to make chronological arrays
-            x_view = np.concatenate((self._x[idx:], self._x[:idx]))
-            spin_view = np.concatenate((self._spin_arr[idx:], self._spin_arr[:idx]))
-            tilt_view = np.concatenate((self._tilt_arr[idx:], self._tilt_arr[:idx]))
-            angle_view = np.concatenate((self._angle_arr[idx:], self._angle_arr[:idx]))
-            enc_view = np.concatenate((self._spin_enc_arr[idx:], self._spin_enc_arr[:idx]))
-            tilt_enc_view = np.concatenate((self._tilt_enc_arr[idx:], self._tilt_enc_arr[:idx]))
-            angle_enc_view = np.concatenate((self._angle_enc_arr[idx:], self._angle_enc_arr[:idx]))
-
-        # update plots with numpy arrays (pyqtgraph handles numpy)
-        self.spinCurve.setData(x_view, spin_view)
-        # plot encoder overlay if available
-        try:
-            self.spinEncoderCurve.setData(x_view, enc_view)
-        except Exception:
-            pass
-        self.tiltCurve.setData(x_view, tilt_view)
-        try:
-            self.tiltEncoderCurve.setData(x_view, tilt_enc_view)
-        except Exception:
-            pass
-        self.angleCurve.setData(x_view, angle_view)
-        try:
-            self.angleEncoderCurve.setData(x_view, angle_enc_view)
-        except Exception:
-            pass
-
+    # Update slider labels and encoder labels on manual slider changes.
     def _update_slider_labels(self):
         """Update motor spin boxes to reflect current slider values regardless of timer state."""
-        spin_v = float(self.spinSlider.value())
-        tilt_v = float(self.tiltSlider.value())
-        angle_v = float(self.angleSlider.value())
-        # refresh encoder labels even if unchanged
-        try:
-            enc_sp = bsc.motor1.getCurrentSpeed()
-        except Exception:
-            enc_sp = 0.0
-        try:
-            enc_tl = bsc.motor2.getCurrentSpeed()
-        except Exception:
-            enc_tl = 0.0
-        try:
-            enc_ag = bsc.motor3.getCurrentSpeed()
-        except Exception:
-            enc_ag = 0.0
+        for channel in self._channels:
+            value = float(channel.slider.value())
+            if channel.label:
+                channel.label.setText(channel.label_fmt.format(value=value))
+        self._update_encoder_labels()
 
-    def reset(self):
+    # Reset UI state, buffers, and optionally recorded data.
+    def reset(self, clear_graphs: bool = True, clear_data: bool = True):
         # ensure not running and reset UI
         # Stop SmartDot updates if running
         if self.SmartDot is not None:
             self.stop_smartdot_updates()
-        # Clear SmartDot data from the data controller so we start fresh
-        dc = bsc.get_data_controller()
-        if dc is not None:
-            try:
-                dc.smartdot_data.data_entries.clear()
-            except AttributeError:
-                pass
-        self.clear_graphs()
-        self.spinSlider.setValue(0)
-        self.tiltSlider.setValue(0)
-        self.angleSlider.setValue(0)
-        # reset encoder labels if present
-        if hasattr(self, 'labelSpinEncoder') and self.labelSpinEncoder:
-            self.labelSpinEncoder.setText("Enc: 0.0 RPM")
-        if hasattr(self, 'labelTiltEncoder') and self.labelTiltEncoder:
-            self.labelTiltEncoder.setText("Enc: 0.0 RPM")
-        if hasattr(self, 'labelAngleEncoder') and self.labelAngleEncoder:
-            self.labelAngleEncoder.setText("Enc: 0.0 RPM")
+        if clear_data:
+            # Clear SmartDot data from the data controller so we start fresh
+            dc = bsc.get_data_controller()
+            if dc is not None:
+                try:
+                    dc.smartdot_data.data_entries.clear()
+                except AttributeError:
+                    pass
+        if clear_graphs:
+            self.clear_graphs()
+        for channel in self._channels:
+            channel.slider.setValue(0)
+        self._last_values = {key: 0.0 for key in self._channel_keys}
+        for channel in self._channels:
+            channel.label.setText(channel.label_fmt.format(value=0.0))
+            if channel.encoder_label:
+                channel.encoder_label.setText("Enc: 0.0 RPM")
         # ensure timer stopped
-        self._timer.stop()
+        if not self._motors_connected:
+            self._timer.stop()
+        self._set_zero_buttons_enabled(self._motors_connected and not self._diagnostic_active)
+        self._set_motor_controls_enabled(self._motors_connected)
     
+    # Clear plot data and reset circular buffers.
     def clear_graphs(self):
         # Clear instance buffers and reset plots
-        # reset buffers and start time
-        self._x = np.zeros(self._N, dtype=np.float64)
-        self._spin_arr = np.zeros(self._N, dtype=np.float32)
-        self._spin_enc_arr = np.zeros(self._N, dtype=np.float32)
-        self._tilt_arr = np.zeros(self._N, dtype=np.float32)
-        self._tilt_enc_arr = np.zeros(self._N, dtype=np.float32)
-        self._angle_arr = np.zeros(self._N, dtype=np.float32)
-        self._angle_enc_arr = np.zeros(self._N, dtype=np.float32)
-        self._write_idx = 0
-        self._filled = False
-        self.spinCurve.setData([0.0], [0.0])
-        self.tiltCurve.setData([0.0], [0.0])
-        self.angleCurve.setData([0.0], [0.0])
-        # also clear encoder overlays
-        self.spinEncoderCurve.setData([0.0], [0.0])
-        self.tiltEncoderCurve.setData([0.0], [0.0])
-        self.angleEncoderCurve.setData([0.0], [0.0])
+        self._buffers.clear()
+        for channel in self._channels:
+            channel.curve.setData([0.0], [0.0])
+            channel.encoder_curve.setData([0.0], [0.0])
         
         # Clear SmartDot graph data if available
         if self.SmartDotGraph is not None:
             if hasattr(self.SmartDotGraph, 'clear'):
                 self.SmartDotGraph.clear()   
-    
+
+    # Enable or disable the zeroing button.
+    def _set_zero_buttons_enabled(self, enabled: bool):
+        self.btnZeroMotors.setEnabled(enabled)
+
+    # Enable or disable motor control widgets.
+    def _set_motor_controls_enabled(self, enabled: bool):
+        controls = (
+            self.spinSlider,
+            self.tiltSlider,
+            self.angleSlider,
+            self.btnSpinIncrease,
+            self.btnSpinDecrease,
+            self.btnTiltIncrease,
+            self.btnTiltDecrease,
+            self.btnAngleIncrease,
+            self.btnAngleDecrease,
+        )
+        for control in controls:
+            if control:
+                control.setEnabled(enabled)
+
+    # Command motors to return to zero and reset sliders.
+    def _return_motors_to_zero(self):
+        if self._diagnostic_active:
+            return
+        for channel in self._channels:
+            motor = self._get_motor(channel)
+            try:
+                if motor is not None:
+                    motor.returnToZero()
+            except Exception as e:
+                print(f"Error returning motor to zero: {e}")
+        self.spinSlider.setValue(0)
+        self.tiltSlider.setValue(0)
+        self.angleSlider.setValue(0)
+        self._update_slider_labels()
+
+    # Show override dialog and apply the selected mode.
     def toggle_override_mode(self):
         """Open override mode configuration dialog."""
         dialog = OverrideDialog(self, current_enabled=self.OverrideMode)
@@ -629,44 +875,25 @@ class DiagnosticModePage(QtWidgets.QWidget):
             # User cancelled, reset button state
             self.btnOverride.setChecked(self.OverrideMode)
     
+    # Apply override mode ranges and styling.
     def toggle_enable_override(self, enable: bool):
         self.OverrideMode = enable
-        # Get the main window (top-level parent)
-        main_window = self.window()
         
         if self.OverrideMode:
             print("Override Mode Enabled")
             # Mark override mode for QSS styling
             self._apply_override_style(True)
-            # Lock navigation when override mode is enabled
-            self.navigationLock.emit(False,"Override Mode Enabled")
-            # set extended ranges for sliders
-            self.spinSlider.setRange(0, 1200)
-            self.tiltSlider.setRange(-359, 359)
-            self.angleSlider.setRange(-359, 359)
-            #update graph Y ranges
-            self.spinGraph.setYRange(0,1250)
-            self.tiltGraph.setYRange(-400,400)
-            self.angleGraph.setYRange(-400,400)
+            self._apply_channel_ranges(override=True)
         else:
             print("Override Mode Disabled")
             # Clear override mode styling flag
             self._apply_override_style(False)
-            # Unlock navigation when override mode is disabled
-            self.navigationLock.emit(True,"")
-            # reset sliders to safe ranges
-            self.spinSlider.setRange(0, 600)
-            self.tiltSlider.setRange(-90, 90)
-            self.angleSlider.setRange(-45, 45)
-
-            #update graph Y ranges
-            self.spinGraph.setYRange(0,620)
-            self.tiltGraph.setYRange(-100,100)
-            self.angleGraph.setYRange(-50,50)
+            self._apply_channel_ranges(override=False)
             
         # Reset UI and state whenever override toggles
         self.reset()
 
+    # Apply override mode styling on the main window.
     def _apply_override_style(self, enabled: bool):
         main_window = self.window()
         if main_window is None:
@@ -678,6 +905,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         main_window.setStyleSheet(main_window.styleSheet())
         main_window.update()
     
+    # Store the connected SmartDot device instance.
     def connectSmartDot(self, device):
         """Called when a SmartDot device is connected."""
         print("Connecting SmartDot...")
@@ -685,6 +913,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         print(f"SmartDot: {self.SmartDot}")
         print(f"Smart dot type: {type(self.SmartDot)}")
 
+    # Move buffered SmartDot readings into the data controller.
     def _package_smartdot_data_to_controller(self):
         """Move any buffered SmartDot readings into the shared DataController.
 
@@ -768,6 +997,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
             ))
         print("Packaged SmartDot data into DataController")
     
+    # Handle SmartDot disconnect events.
     def on_device_disconnected(self, mac_address):
         """Called when device disconnects."""
         print(f"Device disconnected: {mac_address}")
@@ -777,12 +1007,14 @@ class DiagnosticModePage(QtWidgets.QWidget):
         # Clear the SmartDot reference
         self.SmartDot = None
     
+    # Start collecting data from SmartDot.
     def start_smartdot_updates(self):
         """Start collecting data from SmartDot."""
         if self.SmartDot is not None:
             print("Starting SmartDot data collection")
             self.SmartDot.startCollecting()
     
+    # Stop collecting data from SmartDot and package results.
     def stop_smartdot_updates(self):
         """Stop collecting data from SmartDot."""
         if self.SmartDot is not None:
@@ -791,6 +1023,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
             # when we stop collecting we can also package what we've gathered
             self._package_smartdot_data_to_controller()
 
+    # Package SmartDot data and navigate to analysis view.
     def analyze_data(self):
         """Handler for the Analyze button.
 
@@ -806,6 +1039,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
             return
         self.changePage.emit(3, dc)
 
+    # Adjust a slider by a fixed step from a button click.
     def adjustSliderWithButton(self, slider: QtWidgets.QSlider, step: int, increase: bool):
         """Utility to adjust a slider by a fixed step when a button is clicked."""
         current_value = slider.value()
