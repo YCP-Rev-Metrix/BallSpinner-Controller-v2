@@ -30,6 +30,7 @@ exe = EXE(
     [],
     exclude_binaries=True,
     name='BallSpinnerController',
+    icon='Icons/BSC_Icon.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

@@ -8,7 +8,6 @@ import sys
 from logs.logger_config import setup_logging
 from gpiozero import Device
 from gpiozero.pins.mock import MockFactory, MockPWMPin
-from gpiozero.pins.native import NativeFactory
 from frontend.BSCMainWindow import BSCMainWindow
 from ErrorHandling.ErrorHandling import ErrorWindow
 
@@ -52,15 +51,31 @@ def get_icon_path():
     else:
         base_path = os.path.dirname(os.path.abspath(__file__))
     
-    # Try multiple icon formats and locations from the repo Icons folder
-    icon_candidates = [
-        os.path.join(base_path, 'Icons', 'BSC_Icon.png'),
-        os.path.join(base_path, 'Icons', 'LogoTemp.png'),
-        os.path.join(base_path, 'Icons', 'RevMetrix_icon.png'),
-        os.path.join(base_path, 'Icons', 'BSC_Icon.icns'),
-        os.path.join(base_path, 'Icons', 'LogoTemp.ico'),
-        os.path.join(base_path, 'Icons', 'LogoTemp.icns'),
-    ]
+    # Prefer platform-native icon formats when available.
+    if os.name == 'nt':
+        icon_candidates = [
+            os.path.join(base_path, 'Icons', 'BSC_Icon.ico'),
+            os.path.join(base_path, 'Icons', 'LogoTemp.ico'),
+            os.path.join(base_path, 'Icons', 'BSC_Icon.png'),
+            os.path.join(base_path, 'Icons', 'LogoTemp.png'),
+            os.path.join(base_path, 'Icons', 'RevMetrix_icon.png'),
+        ]
+    elif sys.platform == 'darwin':
+        icon_candidates = [
+            os.path.join(base_path, 'Icons', 'BSC_Icon.icns'),
+            os.path.join(base_path, 'Icons', 'LogoTemp.icns'),
+            os.path.join(base_path, 'Icons', 'BSC_Icon.png'),
+            os.path.join(base_path, 'Icons', 'LogoTemp.png'),
+            os.path.join(base_path, 'Icons', 'RevMetrix_icon.png'),
+        ]
+    else:
+        icon_candidates = [
+            os.path.join(base_path, 'Icons', 'BSC_Icon.png'),
+            os.path.join(base_path, 'Icons', 'LogoTemp.png'),
+            os.path.join(base_path, 'Icons', 'RevMetrix_icon.png'),
+            os.path.join(base_path, 'Icons', 'BSC_Icon.ico'),
+            os.path.join(base_path, 'Icons', 'LogoTemp.ico'),
+        ]
     
     for icon_path in icon_candidates:
         if os.path.exists(icon_path):

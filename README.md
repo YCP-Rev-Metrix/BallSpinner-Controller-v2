@@ -3,7 +3,7 @@
 The Code is setup to be Operating System independent. So libraries like Metawear using bluetooth and our motor functionality, ensures that we are on the Raspberry Pi to run. This allows us to develop on any platform and still be able to run the project 
 
 ## Windows - WSL
-It is recommended to use WSL as that is what our team used. 
+It is recommended to use WSL as that is what our team used.
 
 ### Running the project
 Clone the repo
@@ -32,7 +32,25 @@ pip install -r requirements.txt
 For UI work, see [BSC_Ui_README.md](BSC_Ui_README.md).
 
 ## Build the Desktop App
-After installing dependencies in the virtual environment, build the macOS app bundle with PyInstaller:
+
+### Build on Windows (Native)
+Preferred option (no manual venv activation required):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build_windows.ps1
+```
+
+Manual option:
+
+```powershell
+py -3.13 -m venv venv
+venv\Scripts\python.exe -m pip install --upgrade pip
+venv\Scripts\python.exe -m pip install -r requirements.txt pyinstaller
+venv\Scripts\python.exe -m PyInstaller --clean -y main.spec
+```
+
+### Build on macOS
+After installing dependencies in the virtual environment, build with PyInstaller:
 
 ```bash
 source venv/bin/activate
@@ -40,7 +58,7 @@ pip install pyinstaller
 python -m PyInstaller --clean -y main.spec
 ```
 
-This creates the application in the `dist/` directory, typically as:
+Build output is created in `dist/`, typically:
 - `dist/BallSpinnerController/`
 - `dist/BallSpinnerController.app`
 
