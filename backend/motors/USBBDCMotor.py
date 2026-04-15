@@ -34,6 +34,7 @@ FAULT_CODES = {
     7: "Encoder fault",
 }
 FAULT_LIGHT_PIN = 25
+ENABLE_GPIO_PIN = 26
 
 # ---------- VESC packet helpers (no pyvesc for GetValues) ----------
 
@@ -191,6 +192,9 @@ class USBBDCMotor(iMotor):
     GPIO_Pin = 0
     motor = None
     ser = None
+    enable_gpio_claimed = False
+    ENABLE_PIN = ENABLE_GPIO_PIN
+    _enable_active_low = False
 
     def __init__(self, duty_cycle_scale: float = None, h=None, serial_port=None, serial_baud=None,
                  serial_timeout_s=None, get_values_timeout_s=None):
@@ -231,6 +235,7 @@ class USBBDCMotor(iMotor):
         self.get_values_timeout_s = 0.2 if get_values_timeout_s is None else get_values_timeout_s
 
         self.h = h
+        self._enable_active_low = False
         # For integral & derivative computation
         self._integral = 0.0
         self._prev_error = 0.0
@@ -240,6 +245,9 @@ class USBBDCMotor(iMotor):
         self.ser.write(encode(SetDutyCycle(0.0)))
         if lgpio and getattr(self, 'h', None) is not None:
             lgpio.gpio_claim_output(self.h, FAULT_LIGHT_PIN, 0)
+            lgpio.gpio_claim_output(self.h, self.ENABLE_PIN, 1 if self._enable_active_low else 0)
+            self.enable_gpio_claimed = True
+            self.disable()
 
     @property
     def duty_cycle_scale(self) -> float:
@@ -286,13 +294,37 @@ class USBBDCMotor(iMotor):
         self._Kd = value
 
     # ---------------- CONNECT / DISCONNECT ----------------
+    def _write_enable(self, enabled: bool):
+        if self.ENABLE_PIN is None:
+            return
+        if self._enable_active_low:
+            lgpio.gpio_write(self.h, self.ENABLE_PIN, 0 if enabled else 1)
+        else:
+            lgpio.gpio_write(self.h, self.ENABLE_PIN, 1 if enabled else 0)
+
+    def enable(self):
+        if lgpio and getattr(self, 'h', None) is not None:
+            self._write_enable(True)
+
+    def disable(self):
+        if lgpio and getattr(self, 'h', None) is not None:
+            self._write_enable(False)
+
     def connect(self):
         logger.info("USBBDCMotor.connect() called")
-        # no-op placeholder in this implementation (GPIO VESC managed elsewhere)
+        if lgpio and getattr(self, 'h', None) is not None:
+            if not getattr(self, 'enable_gpio_claimed', False):
+                lgpio.gpio_claim_output(self.h, self.ENABLE_PIN, 1 if self._enable_active_low else 0)
+                self.enable_gpio_claimed = True
+            self.enable()
 
     def disconnect(self):
         logger.info("USBBDCMotor.disconnect() called")
         if lgpio and getattr(self, 'h', None) is not None:
+            self.disable()
+            if getattr(self, 'enable_gpio_claimed', False):
+                lgpio.gpio_release(self.h, self.ENABLE_PIN)
+                self.enable_gpio_claimed = False
             lgpio.gpio_release(self.h, FAULT_LIGHT_PIN)
 
     def reconfigure_serial(self, port=None, baud=None, timeout_s=None):
