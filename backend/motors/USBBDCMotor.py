@@ -245,9 +245,6 @@ class USBBDCMotor(iMotor):
         self.ser.write(encode(SetDutyCycle(0.0)))
         if lgpio and getattr(self, 'h', None) is not None:
             lgpio.gpio_claim_output(self.h, FAULT_LIGHT_PIN, 0)
-            lgpio.gpio_claim_output(self.h, self.ENABLE_PIN, 1 if self._enable_active_low else 0)
-            self.enable_gpio_claimed = True
-            self.disable()
 
     @property
     def duty_cycle_scale(self) -> float:
@@ -316,12 +313,10 @@ class USBBDCMotor(iMotor):
             if not getattr(self, 'enable_gpio_claimed', False):
                 lgpio.gpio_claim_output(self.h, self.ENABLE_PIN, 1 if self._enable_active_low else 0)
                 self.enable_gpio_claimed = True
-            self.enable()
 
     def disconnect(self):
         logger.info("USBBDCMotor.disconnect() called")
         if lgpio and getattr(self, 'h', None) is not None:
-            self.disable()
             if getattr(self, 'enable_gpio_claimed', False):
                 lgpio.gpio_release(self.h, self.ENABLE_PIN)
                 self.enable_gpio_claimed = False
@@ -349,12 +344,17 @@ class USBBDCMotor(iMotor):
 
     def start(self):
         logger.info("USBBDCMotor.start() called")
-        # start is a no-op at the low-level VESC interface here
+        if lgpio and getattr(self, 'h', None) is not None:
+            if not getattr(self, 'enable_gpio_claimed', False):
+                lgpio.gpio_claim_output(self.h, self.ENABLE_PIN, 1 if self._enable_active_low else 0)
+                self.enable_gpio_claimed = True
+            self.enable()
 
     def stop(self):
         logger.info("USBBDCMotor.stop() called")
         self.targetSpeed = 0.0
         self.rampDown()
+        self.disable()
 
         # Clear PID state parameters so control restarts cleanly next time
         self._integral = 0.0
