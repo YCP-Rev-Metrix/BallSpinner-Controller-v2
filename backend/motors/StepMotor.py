@@ -30,7 +30,7 @@ from typing import Optional
 #
 # Example:
 #   200 full steps/rev * 8x microstepping = 1600 steps/rev
-STEPS_PER_REV = 1600  # adjust if you change microstepping on the driver
+STEPS_PER_REV = 8000  # adjust if you change microstepping on the driver
 
 class StepMotor():
 
