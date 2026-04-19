@@ -44,11 +44,40 @@ run_cmd() {
     "$@"
 }
 
+configure_vnc() {
+    local vnc_service="vncserver-x11-serviced.service"
+
+    if ! command -v raspi-config >/dev/null 2>&1; then
+        echo "raspi-config not found; skipping automatic VNC enable."
+        return
+    fi
+
+    echo "Enabling VNC via raspi-config..."
+    if run_cmd sudo raspi-config nonint do_vnc 0; then
+        echo "VNC interface enabled."
+    else
+        echo "Warning: failed to enable VNC with raspi-config."
+        return
+    fi
+
+    if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files "$vnc_service" --no-legend 2>/dev/null | grep -q "$vnc_service"; then
+        echo "Ensuring VNC service is enabled and running..."
+        run_cmd sudo systemctl enable "$vnc_service"
+        run_cmd sudo systemctl restart "$vnc_service"
+    else
+        echo "VNC service unit not found; verify VNC server package is installed."
+    fi
+}
+
 echo "=== BallSpinner Pi Install ==="
 
 echo "Updating system packages and installing dependencies..."
 run_cmd sudo apt-get update
 run_cmd sudo apt-get install -y git build-essential swig liblgpio-dev bluetooth bluez libbluetooth-dev libudev-dev libboost-all-dev python3-venv rfkill
+
+if prompt_yes_no "Enable VNC for remote desktop access now?" "Y"; then
+    configure_vnc
+fi
 
 CONFIG_FILE="/boot/firmware/config.txt"
 if prompt_yes_no "Set GPIO defaults low for BCM 5 and 6 in /boot/firmware/config.txt?" "Y"; then

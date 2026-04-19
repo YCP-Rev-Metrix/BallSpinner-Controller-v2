@@ -1,4 +1,6 @@
 import platform
+import socket
+import subprocess
 from unittest import case
 from PyQt6 import QtWidgets, QtCore, uic
 import os
@@ -79,8 +81,6 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         self.setMinimumSize(1920, 1080)  # Prevent window from being resized smaller
         self.setMaximumSize(1920, 1080)  # Prevent window from being resized larger
         self.setWindowFlag(QtCore.Qt.WindowType.MSWindowsFixedSizeDialogHint)  # Disable resize handle
-    
-        self.switch_to_page(0, "Home")  # Start on FrontPage
 
         # connect to navigation from menu bar if exists
         self.actionHome = self.findChild(QAction, 'actHome')
@@ -97,9 +97,16 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         self.menuBar = self.findChild(QtWidgets.QMenuBar, 'menubar')
         self.NavigationSatus = QtWidgets.QMenu("")
         self.menuBar.addMenu(self.NavigationSatus)
+        self.cloudIpLabel = QtWidgets.QLabel("")
+        self.cloudIpLabel.setObjectName("lblCloudTestIp")
+        self.cloudIpLabel.setStyleSheet("padding-right: 10px;")
+        self.menuBar.setCornerWidget(self.cloudIpLabel, QtCore.Qt.Corner.TopRightCorner)
+        self.cloudIpLabel.hide()
         self.statusBar = self.findChild(QtWidgets.QStatusBar, 'statusbar')
         self.statusBar.show()
         self.LockCount=0
+
+        self.switch_to_page(0, "Home")  # Start on FrontPage
 
         # Make simulation menu checkboxes mutually exclusive
         self.actionSimulatedMotor = self.findChild(QAction, 'actSimMotor')
@@ -183,6 +190,7 @@ class BSCMainWindow(QtWidgets.QMainWindow):
     def switch_to_page(self, index, data):
         """Switch to the specified tab index and update the window title."""
         self.tab.setCurrentIndex(index)
+        self._update_cloud_test_ip_visibility(index)
         # data is if page needs components hidden or shown; not used yet
         match index:
             case 0: #Front Page
@@ -223,6 +231,60 @@ class BSCMainWindow(QtWidgets.QMainWindow):
                 pass 
             case _:
                 pass
+
+    def _update_cloud_test_ip_visibility(self, index):
+        """Show the local IP in the menu bar while on Cloud Test."""
+        if not hasattr(self, "cloudIpLabel"):
+            return
+        if index == 4:
+            self.cloudIpLabel.setText(self._build_cloud_ip_label_text())
+            self.cloudIpLabel.show()
+        else:
+            self.cloudIpLabel.hide()
+
+    def _build_cloud_ip_label_text(self):
+        ips = self._get_local_ipv4_addresses()
+        if not ips:
+            return "IP: Unavailable"
+        return "IP: " + ", ".join(ips)
+
+    def _get_local_ipv4_addresses(self):
+        """Collect best-effort non-loopback local IPv4 addresses."""
+        ip_set = set()
+        sock = None
+
+        try:
+            for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+                ip = info[4][0]
+                if ip and ip != "127.0.0.1":
+                    ip_set.add(ip)
+        except Exception:
+            pass
+
+        try:
+            output = subprocess.check_output(["hostname", "-I"], text=True).strip()
+            for ip in output.split():
+                if ip and ip != "127.0.0.1":
+                    ip_set.add(ip)
+        except Exception:
+            pass
+
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.connect(("8.8.8.8", 80))
+            ip = sock.getsockname()[0]
+            if ip and ip != "127.0.0.1":
+                ip_set.add(ip)
+        except Exception:
+            pass
+        finally:
+            try:
+                if sock is not None:
+                    sock.close()
+            except Exception:
+                pass
+
+        return sorted(ip_set)
 
     def closeEvent(self, event):
         """Signal background threads to stop when the window is closing."""

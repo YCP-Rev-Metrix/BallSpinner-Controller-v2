@@ -83,15 +83,16 @@ This guide will walk you through setting up a Raspberry Pi to run the BallSpinne
 1. [Initial Setup](#initial-setup)
 2. [Network Configuration](#network-configuration)
 3. [SSH Configuration](#ssh-configuration)
-4. [GitHub SSH Key Setup](#github-ssh-key-setup)
-5. [Repository Setup](#repository-setup)
+4. [VNC Configuration](#vnc-configuration)
+5. [GitHub SSH Key Setup](#github-ssh-key-setup)
+6. [Repository Setup](#repository-setup)
    - [Quick Install (Recommended)](#quick-install-recommended)
-6. [System Updates](#system-updates)
-7. [Python Installation](#python-installation)
-8. [Motor Driver Requirements](#motor-driver-requirements)
-9. [GPIO Defaults](#gpio-defaults)
-10. [MetaWear SDK Installation](#metawear-sdk-installation)
-11. [Testing](#testing)
+7. [System Updates](#system-updates)
+8. [Python Installation](#python-installation)
+9. [Motor Driver Requirements](#motor-driver-requirements)
+10. [GPIO Defaults](#gpio-defaults)
+11. [MetaWear SDK Installation](#metawear-sdk-installation)
+12. [Testing](#testing)
 
 ---
 
@@ -140,6 +141,18 @@ ssh RPIname@IPAddress
 
 Replace `RPIname` with your Pi's hostname and `IPAddress` with the IP address from the previous step.
 
+## VNC Configuration
+
+If you run `pi_install.sh`, VNC should already be enabled (the installer prompts to enable it, default is `Y`).
+
+If needed, you can enable it manually:
+
+```bash
+sudo raspi-config nonint do_vnc 0
+sudo systemctl enable vncserver-x11-serviced.service
+sudo systemctl restart vncserver-x11-serviced.service
+```
+
 ## GitHub SSH Key Setup
 
 1. Generate a GitHub SSH key on your Raspberry Pi
@@ -163,7 +176,7 @@ git clone git@github.com:YCP-Rev-Metrix/BallSpinner-Controller-v2.git
 
 ### Quick Install (Recommended)
 
-After cloning the repo on the Pi, run the single interactive installer. It installs system dependencies, creates the virtual environment, builds MetaWear/PyWarble, runs unit tests, and then starts the app via `startup.sh`. It can optionally configure autostart and logs to `logs/pi_install.log`.
+After cloning the repo on the Pi, run the single interactive installer. It installs system dependencies, can enable VNC for remote desktop access, creates the virtual environment, builds MetaWear/PyWarble, runs unit tests, and then starts the app via `startup.sh`. It can optionally configure autostart and logs to `logs/pi_install.log`.
 
 ```bash
 cd BallSpinner-Controller-v2
@@ -459,6 +472,34 @@ Optional test runners:
 ```
 
 **Expected Result:** The application should open and you should now be using the BallSpinner-Controller-v2.
+
+---
+
+## Basic VNC Connection (Mac to Raspberry Pi)
+
+Use VNC when you want to control the Pi desktop remotely and interact with the app UI.
+
+`pi_install.sh` should already enable VNC during setup (default prompt is `Y`).
+
+Assume the app is already open on the Pi:
+
+1. In the app, open **Cloud Test**.
+2. Read the IP shown in the top-right menu bar (`IP: ...`).
+3. On your Mac, open Screen Sharing (Finder -> Go -> Connect to Server) and connect to:
+   ```
+   vnc://PI_IP_ADDRESS
+   ```
+
+4. Log in with your Pi username and password.
+
+Manual fallback if VNC was previously disabled:
+```bash
+sudo raspi-config nonint do_vnc 0
+sudo systemctl enable vncserver-x11-serviced.service
+sudo systemctl restart vncserver-x11-serviced.service
+```
+
+If you are off-campus or off-LAN, use a VPN solution (for example Tailscale) and connect using the VPN IP.
 
 ---
 
