@@ -111,7 +111,23 @@ class ShotViewPage(QtWidgets.QWidget):
         if layout is not None:
             layout.addWidget(self.processOutputLabel)
         # Expose the nested StartShotView as a public method on the instance
-        
+
+    def motorWarmUp(self, motor, speed, Timeout, interval_s):
+        if speed <= 0:
+            return
+        target = float(speed)
+        tol = max(20.0, target * 0.05)
+        end_time = time.time() + float(Timeout)
+        interval_s = max(float(interval_s), 0.001)
+        while time.time() < end_time:
+            try:
+                self.shot_script.change_speed_single(0, target)
+                if abs(float(motor.getCurrentSpeed()) - target) <= tol:
+                    return
+            except Exception:
+                pass
+            QtWidgets.QApplication.processEvents()
+            time.sleep(interval_s)
 
     def StartShotView(self):
         Controller = bsc.get_data_controller()
@@ -128,6 +144,7 @@ class ShotViewPage(QtWidgets.QWidget):
         self.dt_ms = int(self.dt * 1000)
 
         self.shot_script.start_motors([0, 1, 2])
+        self.motorWarmUp(bsc.motor1, self.scriptSpin[0] if len(self.scriptSpin) > 0 else 0, 3.0, self.dt_ms / 1000.0)
         time_values = []
         t = 0.0
         time_values = np.arange(0.25, self.MaxTime, self.dt)
@@ -183,6 +200,9 @@ class ShotViewPage(QtWidgets.QWidget):
                 bsc.motor2.set_motor_times_from_indices(time_values)
         except Exception as e:
             print("Warning: motor2 interpolation skipped:", e)
+
+        
+    
 
 
 
