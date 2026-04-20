@@ -82,7 +82,7 @@ class ShotModePage(QtWidgets.QWidget):
 # Make the slider more touch-friendly: larger hit area, bigger handle,
 # accept touch events, and coarser page steps so it's easier to move on
 # a touchscreen.
-        self.sliderTime.setMaximum(100)  # set maximum to 100 for 1.00 sec max duration
+        self.sliderTime.setMaximum(200)  # set maximum to 200 for 5.00 sec max duration
         self.sliderTime.setSingleStep(1)
         self.sliderTime.setPageStep(5)
         self.sliderTime.setTickInterval(5)
