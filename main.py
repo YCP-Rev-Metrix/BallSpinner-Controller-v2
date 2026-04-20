@@ -51,31 +51,11 @@ def get_icon_path():
     else:
         base_path = os.path.dirname(os.path.abspath(__file__))
     
-    # Prefer platform-native icon formats when available.
-    if os.name == 'nt':
-        icon_candidates = [
-            os.path.join(base_path, 'Icons', 'BSC_Icon.ico'),
-            os.path.join(base_path, 'Icons', 'LogoTemp.ico'),
-            os.path.join(base_path, 'Icons', 'BSC_Icon.png'),
-            os.path.join(base_path, 'Icons', 'LogoTemp.png'),
-            os.path.join(base_path, 'Icons', 'RevMetrix_icon.png'),
-        ]
-    elif sys.platform == 'darwin':
-        icon_candidates = [
-            os.path.join(base_path, 'Icons', 'BSC_Icon.icns'),
-            os.path.join(base_path, 'Icons', 'LogoTemp.icns'),
-            os.path.join(base_path, 'Icons', 'BSC_Icon.png'),
-            os.path.join(base_path, 'Icons', 'LogoTemp.png'),
-            os.path.join(base_path, 'Icons', 'RevMetrix_icon.png'),
-        ]
-    else:
-        icon_candidates = [
-            os.path.join(base_path, 'Icons', 'BSC_Icon.png'),
-            os.path.join(base_path, 'Icons', 'LogoTemp.png'),
-            os.path.join(base_path, 'Icons', 'RevMetrix_icon.png'),
-            os.path.join(base_path, 'Icons', 'BSC_Icon.ico'),
-            os.path.join(base_path, 'Icons', 'LogoTemp.ico'),
-        ]
+    # Use only the official app icon.
+    icon_candidates = [
+        os.path.join(base_path, 'Icons', 'BSC_Icon.ico'),
+        os.path.join(base_path, 'Icons', 'BSC_Icon.png'),
+    ]
     
     for icon_path in icon_candidates:
         if os.path.exists(icon_path):

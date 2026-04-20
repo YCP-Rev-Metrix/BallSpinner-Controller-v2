@@ -4,7 +4,7 @@ import glob
 
 frontend_ui_files = [(f, 'frontend') for f in glob.glob('frontend/*.ui')]
 frontend_style_files = [(f, 'frontend') for f in glob.glob('frontend/*.qss')]
-icon_files = [(f, 'Icons') for f in glob.glob('Icons/*')]
+icon_files = [(f, 'Icons') for f in glob.glob('Icons/BSC_Icon.*')]
 
 a = Analysis(
     ['main.py'],
