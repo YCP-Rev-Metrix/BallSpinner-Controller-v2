@@ -207,6 +207,11 @@ class BSC:
             current_sensor_channel=1,
         )
 
+    def _create_simulated_motors(self):
+        self.motor1 = SimMotor(2)
+        self.motor2 = SimMotor(2)
+        self.motor3 = SimMotor(2)
+
     def use_real_motors(self):
         if not self._real_motor_supported:
             raise RuntimeError("Real motor mode is not supported on this device")
@@ -225,9 +230,7 @@ class BSC:
 
     def use_simulated_motors(self, reason=None, locked=False, due_to_vesc=False):
         self.disconnect_all_motors()
-        self.motor1 = SimMotor(2)
-        self.motor2 = SimMotor(2)
-        self.motor3 = SimMotor(2)
+        self._create_simulated_motors()
         self.motor_mode = "simulated"
         self.motor_mode_locked = locked
         self.motor_mode_locked_reason = reason
