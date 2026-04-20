@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1920</width>
-    <height>1024</height>
+    <width>1645</width>
+    <height>893</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -595,7 +595,7 @@
       </item>
       <item>
        <widget class="QWidget" name="widget_3" native="true">
-        <layout class="QVBoxLayout" name="verticalLayout_7" stretch="1,0">
+        <layout class="QVBoxLayout" name="verticalLayout_7" stretch="1,1">
          <item>
           <widget class="QWidget" name="widget" native="true">
            <layout class="QHBoxLayout" name="horizontalLayout_3">
