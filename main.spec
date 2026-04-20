@@ -54,6 +54,6 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='BallSpinnerController.app',
-    icon='Icons/BSC_Icon.png',
+    icon='Icons/BSC_Icon.icns',
     bundle_identifier=None,
 )

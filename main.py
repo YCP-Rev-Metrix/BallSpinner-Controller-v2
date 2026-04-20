@@ -52,10 +52,13 @@ def get_icon_path():
         base_path = os.path.dirname(os.path.abspath(__file__))
     
     # Use only the official app icon.
-    icon_candidates = [
+    icon_candidates = []
+    if sys.platform == 'darwin':
+        icon_candidates.append(os.path.join(base_path, 'Icons', 'BSC_Icon.icns'))
+    icon_candidates.extend([
         os.path.join(base_path, 'Icons', 'BSC_Icon.ico'),
         os.path.join(base_path, 'Icons', 'BSC_Icon.png'),
-    ]
+    ])
     
     for icon_path in icon_candidates:
         if os.path.exists(icon_path):
