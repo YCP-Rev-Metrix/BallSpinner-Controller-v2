@@ -189,9 +189,14 @@ class BSCMainWindow(QtWidgets.QMainWindow):
             return
     def switch_to_page(self, index, data):
         """Switch to the specified tab index and update the window title."""
+        
+        if self.LockCount>0:
+            utils.notify_user("This Action is disabled while the motor is running.", title="Action Disabled", type="warning", details="Please disconnect the motor or wait for it to stop before navigating to a different page. If naviagtion is urgent then press the E-Stop button to immediately stop and disconnect all motors, which will re-enable navigation.")
+            print("Navigation attempt blocked due to active motor operation.")
+            return
         self.tab.setCurrentIndex(index)
         self._update_cloud_test_ip_visibility(index)
-        # data is if page needs components hidden or shown; not used yet
+        # data is deprecated and should not be used; the page change signals should be refactored to not send it, but for now we ignore it to avoid breaking existing code.
         match index:
             case 0: #Front Page
                 #No Data Expected

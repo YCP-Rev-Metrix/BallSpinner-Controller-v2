@@ -1031,7 +1031,6 @@ class DiagnosticModePage(QtWidgets.QWidget):
         analysis page by emitting the changePage signal with the active
         DataController (same behaviour as DataViewPage.analyze_data).
         """
-        print("Analyze Data Clicked")
         # ensure collected samples are stored in the controller
         self._package_smartdot_data_to_controller()
         dc = bsc.get_data_controller()
