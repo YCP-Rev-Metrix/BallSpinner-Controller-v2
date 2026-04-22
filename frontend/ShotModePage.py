@@ -108,6 +108,10 @@ class ShotModePage(QtWidgets.QWidget):
 
     def start_shot(self):
         print("Shot started!")
+        try:
+            bsc.home()
+        except Exception as e:
+            print(f"Error homing motors before shot: {e}")
         #When we start a shot, we need to create a new session data object and its associated data controller
         bsc.set_session(
             SessionData(

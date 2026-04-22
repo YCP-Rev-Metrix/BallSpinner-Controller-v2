@@ -899,13 +899,10 @@ class DiagnosticModePage(QtWidgets.QWidget):
     def _return_motors_to_zero(self):
         if self._diagnostic_active:
             return
-        for channel in self._channels:
-            motor = self._get_motor(channel)
-            try:
-                if motor is not None:
-                    motor.returnToZero()
-            except Exception as e:
-                print(f"Error returning motor to zero: {e}")
+        try:
+            bsc.zero()
+        except Exception as e:
+            print(f"Error homing motors: {e}")
         self.spinSlider.setValue(0)
         self.tiltSlider.setValue(0)
         self.angleSlider.setValue(0)

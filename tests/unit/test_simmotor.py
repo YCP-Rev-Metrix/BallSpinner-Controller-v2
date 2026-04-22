@@ -63,3 +63,19 @@ def test_SimMotor_noise_and_ramp():
     assert states[0] <= states[-1]
     assert any(abs(states[i] - states[i-1]) > 0 for i in range(1, len(states)))
     assert 0 <= states[-1] <= 600
+
+
+def test_SimMotor_zero_resets_state():
+    motor = SimMotor(GPIOPin=17, mode='instant', noise_std=0.0)
+    motor.changeSpeed(dutyCycle=100, isShotMode=False)
+    motor.zero()
+    assert motor.currSpeed == 0.0
+    assert motor.targetSpeed == 0.0
+
+
+def test_SimMotor_home_aliases_zero():
+    motor = SimMotor(GPIOPin=17, mode='instant', noise_std=0.0)
+    motor.changeSpeed(dutyCycle=120, isShotMode=False)
+    motor.home()
+    assert motor.currSpeed == 0.0
+    assert motor.targetSpeed == 0.0

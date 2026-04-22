@@ -4,6 +4,7 @@ from backend.cloud_api.CloudAPI import CloudAPI
 # from backend.models.SessionData import SessionData
 import utils
 import random
+import time
 
 try:
     from backend.motors.SimMotor import SimMotor
@@ -31,6 +32,12 @@ except ModuleNotFoundError:
 
         def setCurrentPositionZero(self):
             self.currSpeed = 0.0
+
+        def zero(self):
+            self.currSpeed = 0.0
+
+        def home(self):
+            self.zero()
 
         def changeSpeed(self, dutyCycle: int, isShotMode: bool):
             self.currSpeed = float(dutyCycle)
@@ -92,6 +99,9 @@ class MotorData:
 
         
 class BSC:
+    POSITIVE_LIMIT_PIN = 22
+    NEGATIVE_LIMIT_PIN = 25
+
     def __init__(self):
         self.smartdotConnectionManager = SmartDotConnectionManager()
         self.cloud_api = CloudAPI()
@@ -119,6 +129,8 @@ class BSC:
         self.motor2 = None
         self.motor3 = None
         self.current_sensor = None
+        self.positive_limit_pin = self.POSITIVE_LIMIT_PIN
+        self.negative_limit_pin = self.NEGATIVE_LIMIT_PIN
 
         self._initialize_motors()
 
@@ -162,6 +174,8 @@ class BSC:
             raise RuntimeError("lgpio is unavailable")
 
         self.h = lgpio.gpiochip_open(0)
+        lgpio.gpio_claim_input(self.h, self.positive_limit_pin)
+        lgpio.gpio_claim_input(self.h, self.negative_limit_pin)
         self.current_sensor = None
         if ADS1115CurrentSensor is not None:
             try:
@@ -196,6 +210,8 @@ class BSC:
             False,
             current_sensor=self.current_sensor,
             current_sensor_channel=0,
+            positive_limit_pin=self.positive_limit_pin,
+            negative_limit_pin=self.negative_limit_pin,
         )
         self.motor3 = StepMotor(
             23,
@@ -205,6 +221,8 @@ class BSC:
             False,
             current_sensor=self.current_sensor,
             current_sensor_channel=1,
+            positive_limit_pin=self.positive_limit_pin,
+            negative_limit_pin=self.negative_limit_pin,
         )
 
     def _create_simulated_motors(self):
@@ -288,6 +306,25 @@ class BSC:
     def set_data_controller(self, data_controller):
         self.data_controller = data_controller
 
+    def home(self):
+        self.zero()
+
+    def zero(self):
+        try:
+            self.motor2.zero()
+            #self.motor3.zero() Moto3 has no limit switchws, using a dirty hack for now
+            self.motor2.changeSpeed(dutyCycle=10, isShotMode=False) #Go to 10 degrees on motor 2 to balance out the unit
+            self.motor3.disconnect() #Disconnect motor 3 to let it fall to the bottom
+            time.sleep(1)
+            self.motor3.connect() #Connect motor 3 to let it fall to the bottom
+            self.motor2.changeSpeed(dutyCycle=0, isShotMode=False) #Go to 0 degrees on motor 2 to return to home position
+            self.motor3.setCurrentPositionZero() #Set motor 3 to 0 degrees to return to home position
+        except Exception as e:
+            print(f"Error zeroing motors: {e}")
+            raise e
+        
+
+
     def disconnect_all_motors(self):
         for motor_name in ("motor1", "motor2", "motor3"):
             motor = getattr(self, motor_name, None)
@@ -311,6 +348,15 @@ class BSC:
 
         if getattr(self, "h", None) is not None and lgpio is not None:
             try:
+                for pin in (
+                    getattr(self, "positive_limit_pin", None),
+                    getattr(self, "negative_limit_pin", None),
+                ):
+                    if pin is not None:
+                        try:
+                            lgpio.gpio_free(self.h, pin)
+                        except Exception:
+                            pass
                 lgpio.gpiochip_close(self.h)
             except Exception:
                 pass

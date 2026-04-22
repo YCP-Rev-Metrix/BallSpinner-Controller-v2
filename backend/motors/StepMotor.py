@@ -104,6 +104,8 @@ class StepMotor():
         enable_active_low=True,
         current_sensor=None,
         current_sensor_channel=None,
+        positive_limit_pin=None,
+        negative_limit_pin=None,
     ):
         self.GPIO_Pin = GPIO_Pin
         self.STEP_PIN = GPIO_Pin
@@ -113,6 +115,9 @@ class StepMotor():
         self._enable_active_low = enable_active_low
         self._current_sensor = current_sensor
         self._current_sensor_channel = current_sensor_channel
+        self._positive_limit_pin = positive_limit_pin
+        self._negative_limit_pin = negative_limit_pin
+        self.current_step_position = 0
 
         # Motor settings (needed for UI controls / interface compatibility)
         self._Kp = self.DEFAULT_KP
@@ -133,6 +138,53 @@ class StepMotor():
         self.movement_in_progress = False  # Track if a movement is currently running
         self.movement_lock = threading.Lock()  # Lock for thread safety
         self.current_angle = 0.0
+
+    def _steps_for_angle(self, angle_deg: float) -> int:
+        return int(round(STEPS_PER_REV * (abs(angle_deg) / 360.0)))
+
+    def _is_limit_active(self, clockwise: bool) -> bool:
+        if lgpio is None or not self.h:
+            return False
+        limit_pin = self._positive_limit_pin if clockwise else self._negative_limit_pin
+        if limit_pin is None:
+            return False
+        try:
+            return bool(lgpio.gpio_read(self.h, limit_pin))
+        except Exception:
+            return False
+
+    def _set_direction(self, clockwise: bool):
+        lgpio.gpio_write(self.h, self.DIR_PIN, 0 if clockwise else 1)
+        time.sleep(0.001)
+
+    def _single_step(self, clockwise: bool, half_delay: float = 0.0005):
+        self._set_direction(clockwise)
+        pulse(self.h, self.STEP_PIN, half_delay)
+        self.current_step_position += 1 if clockwise else -1
+
+    def _reverse_one_step(self, blocked_clockwise: bool):
+        # Back off one microstep when a limit is hit to relieve switch pressure.
+        self._single_step(clockwise=not blocked_clockwise)
+
+    def _move_steps_timed(self, steps: int, total_time_s: float, clockwise: bool) -> int:
+        if steps <= 0:
+            return 0
+        time_per_step = total_time_s / max(steps, 1)
+        half_delay = max(0.00001, time_per_step / 2.0)
+        self._set_direction(clockwise)
+        moved = 0
+        for _ in range(steps):
+            if self._is_limit_active(clockwise):
+                self._reverse_one_step(blocked_clockwise=clockwise)
+                break
+            pulse(self.h, self.STEP_PIN, half_delay)
+            self.current_step_position += 1 if clockwise else -1
+            moved += 1
+        return moved
+
+    def _move_angle_timed(self, angle_deg: float, total_time_s: float, clockwise: bool) -> int:
+        steps = self._steps_for_angle(angle_deg)
+        return self._move_steps_timed(steps=steps, total_time_s=total_time_s, clockwise=clockwise)
 
     def _write_enable(self, enabled: bool):
         """Write to the enable pin (if configured) taking active-low into account."""
@@ -200,15 +252,16 @@ class StepMotor():
                 
             self.prev_angle = angle
 
-            move_angle_timeds(
-                self.h,
-                step_pin=self.STEP_PIN,
-                dir_pin=self.DIR_PIN,
+            moved_steps = self._move_angle_timed(
                 angle_deg=new_angle,
                 total_time_s=0.1,
                 clockwise=isClockwise,
             )
-            self.current_angle = angle
+            expected_steps = self._steps_for_angle(new_angle)
+            if moved_steps == expected_steps:
+                self.current_angle = angle
+            else:
+                self.current_angle += (360.0 * moved_steps / STEPS_PER_REV) * (1 if isClockwise else -1)
         else:
             # Reactive approach: move towards target angle each time step
             target_angle = angle
@@ -224,16 +277,17 @@ class StepMotor():
                 isClockwise = angle_diff > 0
                 
                 # Move the difference over the time interval
-                move_angle_timeds(
-                    self.h,
-                    step_pin=self.STEP_PIN,
-                    dir_pin=self.DIR_PIN,
+                moved_steps = self._move_angle_timed(
                     angle_deg=abs(angle_diff),
                     total_time_s=dt,
                     clockwise=isClockwise,
                 )
-                
-                self.current_angle = target_angle  # Update current position
+                expected_steps = self._steps_for_angle(abs(angle_diff))
+                if moved_steps == expected_steps:
+                    self.current_angle = target_angle
+                else:
+                    direction = 1 if isClockwise else -1
+                    self.current_angle += (360.0 * moved_steps / STEPS_PER_REV) * direction
             else:
                 self.current_angle = target_angle
 
@@ -248,20 +302,52 @@ class StepMotor():
             self.prev_angle = 0.0
             return
         isClockwise = angle_to_move < 0
-        move_angle_timeds(
-            self.h,
-            step_pin=self.STEP_PIN,
-            dir_pin=self.DIR_PIN,
+        self._move_angle_timed(
             angle_deg=abs(angle_to_move),
             total_time_s=0.1,
             clockwise=isClockwise,
         )
         self.current_angle = 0.0
         self.prev_angle = 0.0
+        self.current_step_position = 0
 
     def setCurrentPositionZero(self):
         self.current_angle = 0.0
         self.prev_angle = 0.0
+        self.current_step_position = 0
+
+    def zero(self):
+        if not self.connected or not self.h:
+            return
+        if self._positive_limit_pin is None or self._negative_limit_pin is None:
+            self.setCurrentPositionZero()
+            return
+
+        search_step_delay = 0.001
+        search_limit = STEPS_PER_REV * 5
+
+        # Move negative until negative limit is active.
+        neg_search = 0
+        while not self._is_limit_active(clockwise=False) and neg_search < search_limit:
+            self._single_step(clockwise=False, half_delay=search_step_delay)
+            neg_search += 1
+        if not self._is_limit_active(clockwise=False):
+            return
+
+        # Traverse to positive limit while counting span.
+        span_steps = 0
+        while not self._is_limit_active(clockwise=True) and span_steps < search_limit:
+            self._single_step(clockwise=True, half_delay=search_step_delay)
+            span_steps += 1
+        if span_steps <= 0 or not self._is_limit_active(clockwise=True):
+            return
+
+        half_span = span_steps // 2
+        self._move_steps_timed(steps=half_span, total_time_s=max(half_span * 0.002, 0.01), clockwise=False)
+        self.setCurrentPositionZero()
+
+    def home(self):
+        self.zero()
 
     
     def _start_movement_sequence(self):
@@ -291,10 +377,7 @@ class StepMotor():
                         
                         if abs(target_angle) > 0.01:  # Only move if significant
                             print(f"Moving to waypoint {self.count}: {target_angle}° in {time_to_use}s")
-                            move_angle_timeds(
-                                self.h,
-                                step_pin=self.STEP_PIN,
-                                dir_pin=self.DIR_PIN,
+                            self._move_angle_timed(
                                 angle_deg=abs(target_angle),
                                 total_time_s=time_to_use,
                                 clockwise=(target_angle > 0),
@@ -310,10 +393,7 @@ class StepMotor():
                         
                         if abs(angle_diff) > 0.01:  # Only move if significant difference
                             print(f"Moving to waypoint {self.count}: {self.motor_degrees[self.count]}° (Δ{angle_diff}°) in {time_to_use}s")
-                            move_angle_timeds(
-                                self.h,
-                                step_pin=self.STEP_PIN,
-                                dir_pin=self.DIR_PIN,
+                            self._move_angle_timed(
                                 angle_deg=abs(angle_diff),
                                 total_time_s=time_to_use,
                                 clockwise=(angle_diff > 0),
@@ -327,10 +407,7 @@ class StepMotor():
                         # Use the last time interval, or default to 1 second
                         time_to_zero = self.motor_times[-1] if len(self.motor_times) > 0 else 1.0
                         print(f"Returning to 0° from {final_angle}° in {time_to_zero}s")
-                        move_angle_timeds(
-                            self.h,
-                            step_pin=self.STEP_PIN,
-                            dir_pin=self.DIR_PIN,
+                        self._move_angle_timed(
                             angle_deg=abs(final_angle),
                             total_time_s=time_to_zero,
                             clockwise=(final_angle < 0),  # Opposite direction to return to 0

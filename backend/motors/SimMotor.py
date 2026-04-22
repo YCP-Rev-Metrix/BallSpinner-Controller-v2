@@ -78,6 +78,12 @@ class SimMotor(iMotor):
         self.currSpeed = 0.0
         self._last_update = time.time()
 
+    def zero(self):
+        self.setCurrentPositionZero()
+
+    def home(self):
+        self.zero()
+
     def _update_sim(self):
         """Advance the simulated speed toward the target speed."""
         now = time.time()
