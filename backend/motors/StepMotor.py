@@ -104,8 +104,7 @@ class StepMotor():
         enable_active_low=True,
         current_sensor=None,
         current_sensor_channel=None,
-        positive_limit_pin=None,
-        negative_limit_pin=None,
+        limit_switch_pin=None,
     ):
         self.GPIO_Pin = GPIO_Pin
         self.STEP_PIN = GPIO_Pin
@@ -115,8 +114,7 @@ class StepMotor():
         self._enable_active_low = enable_active_low
         self._current_sensor = current_sensor
         self._current_sensor_channel = current_sensor_channel
-        self._positive_limit_pin = positive_limit_pin
-        self._negative_limit_pin = negative_limit_pin
+        self._limit_switch_pin = limit_switch_pin
         self.current_step_position = 0
 
         # Motor settings (needed for UI controls / interface compatibility)
@@ -142,10 +140,10 @@ class StepMotor():
     def _steps_for_angle(self, angle_deg: float) -> int:
         return int(round(STEPS_PER_REV * (abs(angle_deg) / 360.0)))
 
-    def _is_limit_active(self, clockwise: bool) -> bool:
+    def _is_limit_active(self) -> bool:
         if lgpio is None or not self.h:
             return False
-        limit_pin = self._positive_limit_pin if clockwise else self._negative_limit_pin
+        limit_pin = self._limit_switch_pin
         if limit_pin is None:
             return False
         try:
@@ -174,7 +172,7 @@ class StepMotor():
         self._set_direction(clockwise)
         moved = 0
         for _ in range(steps):
-            if self._is_limit_active(clockwise):
+            if self._is_limit_active():
                 self._reverse_one_step(blocked_clockwise=clockwise)
                 break
             pulse(self.h, self.STEP_PIN, half_delay)
@@ -319,31 +317,23 @@ class StepMotor():
     def zero(self):
         if not self.connected or not self.h:
             return
-        if self._positive_limit_pin is None or self._negative_limit_pin is None:
+        if self._limit_switch_pin is None:
             self.setCurrentPositionZero()
             return
 
         search_step_delay = 0.001
         search_limit = STEPS_PER_REV * 5
 
-        # Move negative until negative limit is active.
+        # Move toward home direction until the single limit switch is active.
         neg_search = 0
-        while not self._is_limit_active(clockwise=False) and neg_search < search_limit:
+        while not self._is_limit_active() and neg_search < search_limit:
             self._single_step(clockwise=False, half_delay=search_step_delay)
             neg_search += 1
-        if not self._is_limit_active(clockwise=False):
+        if not self._is_limit_active():
             return
 
-        # Traverse to positive limit while counting span.
-        span_steps = 0
-        while not self._is_limit_active(clockwise=True) and span_steps < search_limit:
-            self._single_step(clockwise=True, half_delay=search_step_delay)
-            span_steps += 1
-        if span_steps <= 0 or not self._is_limit_active(clockwise=True):
-            return
-
-        half_span = span_steps // 2
-        self._move_steps_timed(steps=half_span, total_time_s=max(half_span * 0.002, 0.01), clockwise=False)
+        # Back off one microstep after switch trigger for mechanical relief.
+        self._reverse_one_step(blocked_clockwise=False)
         self.setCurrentPositionZero()
 
     def home(self):

@@ -16,7 +16,7 @@ from ErrorHandling.ErrorHandling import ErrorWindow
 # Milestone: After a milestone presentation, increment this (e.g., 1.1.0)
 # Patch: any build after a milestone, increment this for bug fixes and minor improvements (e.g., 1.1.1, 1.1.2, etc.)
 # Make sure v is lower case
-
+# Build pipeline is broken, just build manually with pyinstaller.
 
 
 

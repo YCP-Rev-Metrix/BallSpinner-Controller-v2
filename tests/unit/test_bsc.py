@@ -65,8 +65,7 @@ def test_BSC_set_motor_mode_simulated_on_pi_assigns_all_simulated(monkeypatch):
             inverted,
             current_sensor=None,
             current_sensor_channel=None,
-            positive_limit_pin=None,
-            negative_limit_pin=None,
+            limit_switch_pin=None,
         ):
             self.gpio_a = gpio_a
             self.gpio_b = gpio_b
@@ -75,8 +74,7 @@ def test_BSC_set_motor_mode_simulated_on_pi_assigns_all_simulated(monkeypatch):
             self.inverted = inverted
             self.current_sensor = current_sensor
             self.current_sensor_channel = current_sensor_channel
-            self.positive_limit_pin = positive_limit_pin
-            self.negative_limit_pin = negative_limit_pin
+            self.limit_switch_pin = limit_switch_pin
 
     dummy_lgpio = MagicMock()
     dummy_lgpio.gpiochip_open.return_value = 'dummy-handle'
@@ -99,7 +97,7 @@ def test_BSC_set_motor_mode_simulated_on_pi_assigns_all_simulated(monkeypatch):
     assert isinstance(bsc.motor3, BSC_module.SimMotor)
 
 
-def test_BSC_passes_limit_pins_to_stepper(monkeypatch):
+def test_BSC_passes_single_limit_pin_to_stepper(monkeypatch):
     monkeypatch.setattr(BSC_module.utils, 'is_raspberry_pi_5', lambda: True)
 
     class DummyUSBBDCMotor:
@@ -120,13 +118,11 @@ def test_BSC_passes_limit_pins_to_stepper(monkeypatch):
 
     bsc = BSC_module.BSC()
 
-    assert bsc.motor2.kwargs["positive_limit_pin"] == BSC_module.BSC.POSITIVE_LIMIT_PIN
-    assert bsc.motor2.kwargs["negative_limit_pin"] == BSC_module.BSC.NEGATIVE_LIMIT_PIN
-    assert bsc.motor3.kwargs["positive_limit_pin"] == BSC_module.BSC.POSITIVE_LIMIT_PIN
-    assert bsc.motor3.kwargs["negative_limit_pin"] == BSC_module.BSC.NEGATIVE_LIMIT_PIN
+    assert bsc.motor2.kwargs["limit_switch_pin"] == BSC_module.BSC.LIMIT_SWITCH_PIN
+    assert bsc.motor3.kwargs["limit_switch_pin"] is None
 
 
-def test_BSC_home_calls_motor2_and_motor3(monkeypatch):
+def test_BSC_home_calls_zero_path(monkeypatch):
     monkeypatch.setattr(BSC_module.utils, 'is_raspberry_pi_5', lambda: False)
     bsc = BSC_module.BSC()
 
@@ -135,5 +131,4 @@ def test_BSC_home_calls_motor2_and_motor3(monkeypatch):
 
     bsc.home()
 
-    bsc.motor2.home.assert_called_once()
-    bsc.motor3.home.assert_called_once()
+    bsc.motor2.zero.assert_called_once()

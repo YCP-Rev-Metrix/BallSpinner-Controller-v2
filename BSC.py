@@ -99,8 +99,7 @@ class MotorData:
 
         
 class BSC:
-    POSITIVE_LIMIT_PIN = 22
-    NEGATIVE_LIMIT_PIN = 25
+    LIMIT_SWITCH_PIN = 22
 
     def __init__(self):
         self.smartdotConnectionManager = SmartDotConnectionManager()
@@ -129,8 +128,7 @@ class BSC:
         self.motor2 = None
         self.motor3 = None
         self.current_sensor = None
-        self.positive_limit_pin = self.POSITIVE_LIMIT_PIN
-        self.negative_limit_pin = self.NEGATIVE_LIMIT_PIN
+        self.limit_switch_pin = self.LIMIT_SWITCH_PIN
 
         self._initialize_motors()
 
@@ -174,8 +172,7 @@ class BSC:
             raise RuntimeError("lgpio is unavailable")
 
         self.h = lgpio.gpiochip_open(0)
-        lgpio.gpio_claim_input(self.h, self.positive_limit_pin)
-        lgpio.gpio_claim_input(self.h, self.negative_limit_pin)
+        lgpio.gpio_claim_input(self.h, self.limit_switch_pin)
         self.current_sensor = None
         if ADS1115CurrentSensor is not None:
             try:
@@ -210,8 +207,7 @@ class BSC:
             False,
             current_sensor=self.current_sensor,
             current_sensor_channel=0,
-            positive_limit_pin=self.positive_limit_pin,
-            negative_limit_pin=self.negative_limit_pin,
+            limit_switch_pin=self.limit_switch_pin,
         )
         self.motor3 = StepMotor(
             23,
@@ -221,8 +217,7 @@ class BSC:
             False,
             current_sensor=self.current_sensor,
             current_sensor_channel=1,
-            positive_limit_pin=self.positive_limit_pin,
-            negative_limit_pin=self.negative_limit_pin,
+            limit_switch_pin=None,
         )
 
     def _create_simulated_motors(self):
@@ -348,15 +343,12 @@ class BSC:
 
         if getattr(self, "h", None) is not None and lgpio is not None:
             try:
-                for pin in (
-                    getattr(self, "positive_limit_pin", None),
-                    getattr(self, "negative_limit_pin", None),
-                ):
-                    if pin is not None:
-                        try:
-                            lgpio.gpio_free(self.h, pin)
-                        except Exception:
-                            pass
+                limit_pin = getattr(self, "limit_switch_pin", None)
+                if limit_pin is not None:
+                    try:
+                        lgpio.gpio_free(self.h, limit_pin)
+                    except Exception:
+                        pass
                 lgpio.gpiochip_close(self.h)
             except Exception:
                 pass
