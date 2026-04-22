@@ -7,6 +7,7 @@ import numpy as np
 pg.setConfigOptions(antialias=False)
 import os
 from PyQt6.QtCore import pyqtSignal, QTimer
+from PyQt6.QtWidgets import QMessageBox
 
 #Database related imports
 from BSC import bsc
@@ -125,6 +126,13 @@ class DiagnosticModePage(QtWidgets.QWidget):
 
         self._last_values = {key: 0.0 for key in self._channel_keys}
         self._sample_index = 0
+
+        self._diagnostic_duration_s = 300.0
+        self._diagnostic_warning_threshold_s = 60.0
+        self._diagnostic_end_time_s = self._diagnostic_duration_s
+        self._diagnostic_warning_shown = False
+        self._diagnostic_warning_pending = False
+        self._extend_warning_dialog = None
 
         self._motors_connected = False
         self._diagnostic_active = False
@@ -671,6 +679,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
         if self.SmartDot is not None:
             self.start_smartdot_updates()
 
+        self._diagnostic_end_time_s = self._diagnostic_duration_s
+        self._diagnostic_warning_shown = False
+
         bsc.set_session(SessionData(id=-1, timeStamp=dt.datetime.now().isoformat(), name="Diagnostic Session", isShotMode=False))
         bsc.set_data_controller(DataController(bsc.get_session()))
 
@@ -716,6 +727,34 @@ class DiagnosticModePage(QtWidgets.QWidget):
         )
         dc.add_diagnostic_script_data(data)
 
+    def _show_extend_diagnostic_warning(self):
+        self._diagnostic_warning_pending = True
+        self._diagnostic_warning_shown = True
+
+        dialog = QMessageBox(self)
+        dialog.setIcon(QMessageBox.Icon.Warning)
+        dialog.setWindowTitle("Diagnostic Timeout Warning")
+        dialog.setText(
+            "Diagnostic recording will stop in 1 minute. "
+            "Would you like to extend the diagnostic for another 5 minutes?"
+        )
+        dialog.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        dialog.setDefaultButton(QMessageBox.StandardButton.No)
+        dialog.buttonClicked.connect(self._on_extend_warning_response)
+        dialog.finished.connect(self._on_extend_warning_finished)
+        dialog.open()
+
+        self._extend_warning_dialog = dialog
+
+    def _on_extend_warning_response(self, button):
+        if button == self._extend_warning_dialog.button(QMessageBox.StandardButton.Yes):
+            self._diagnostic_end_time_s += self._diagnostic_duration_s
+            self._diagnostic_warning_shown = False
+
+    def _on_extend_warning_finished(self, result):
+        self._diagnostic_warning_pending = False
+        self._extend_warning_dialog = None
+
     # Change motor speed with compatibility for different signatures.
     def _change_motor_speed(self, motor, value: float):
         if motor is None:
@@ -756,6 +795,16 @@ class DiagnosticModePage(QtWidgets.QWidget):
         # Quantized time based on fixed interval (>=50ms)
         t = self._sample_index * self._sample_dt_s
         if recording:
+            if t >= self._diagnostic_end_time_s:
+                if self._extend_warning_dialog is not None and self._extend_warning_dialog.isVisible():
+                    self._extend_warning_dialog.done(QMessageBox.StandardButton.No)
+                self._stop_diagnostics()
+                QMessageBox.information(self, "Diagnostic Timeout", "Diagnostic recording has reached the timeout and has been stopped.")
+                return
+            if (t >= self._diagnostic_end_time_s - self._diagnostic_warning_threshold_s
+                    and not self._diagnostic_warning_shown
+                    and not self._diagnostic_warning_pending):
+                self._show_extend_diagnostic_warning()
             self._sample_index += 1
 
         slider_values = self._get_slider_values()
