@@ -99,7 +99,7 @@ class MotorData:
 
         
 class BSC:
-    LIMIT_SWITCH_PIN = 22
+    LIMIT_SWITCH_PIN = 15
 
     def __init__(self):
         self.smartdotConnectionManager = SmartDotConnectionManager()
@@ -122,6 +122,7 @@ class BSC:
         self.motor_mode_locked = False
         self.motor_mode_locked_reason = None
         self.motor_mode_locked_due_to_vesc = False
+        self.motor_mode_locked_due_to_pin_busy = False
         self._real_motor_supported = utils.is_raspberry_pi_5()
         self.h = None
         self.motor1 = None
@@ -158,11 +159,15 @@ class BSC:
 
         try:
             self.use_real_motors()
-        except Exception:
+        except Exception as e:
+            err = str(e)
+            is_pin_busy = "limit switch pin gpio" in err.lower() and "busy" in err.lower()
+            reason = err if is_pin_busy else "Simulated motors locked."
             self.use_simulated_motors(
-                "Simulated motors locked.",
+                reason,
                 locked=True,
                 due_to_vesc=True,
+                due_to_pin_busy=is_pin_busy,
             )
 
     def _create_real_motors(self):
@@ -172,7 +177,13 @@ class BSC:
             raise RuntimeError("lgpio is unavailable")
 
         self.h = lgpio.gpiochip_open(0)
-        lgpio.gpio_claim_input(self.h, self.limit_switch_pin)
+        try:
+            lgpio.gpio_claim_input(self.h, self.limit_switch_pin)
+        except Exception as e:
+            raise RuntimeError(
+                f"Limit switch pin GPIO{self.limit_switch_pin} is busy. "
+                "Release the pin from UART/other process and restart."
+            ) from e
         self.current_sensor = None
         if ADS1115CurrentSensor is not None:
             try:
@@ -240,14 +251,16 @@ class BSC:
         self.motor_mode = "real"
         self.motor_mode_locked = False
         self.motor_mode_locked_reason = None
+        self.motor_mode_locked_due_to_pin_busy = False
 
-    def use_simulated_motors(self, reason=None, locked=False, due_to_vesc=False):
+    def use_simulated_motors(self, reason=None, locked=False, due_to_vesc=False, due_to_pin_busy=False):
         self.disconnect_all_motors()
         self._create_simulated_motors()
         self.motor_mode = "simulated"
         self.motor_mode_locked = locked
         self.motor_mode_locked_reason = reason
         self.motor_mode_locked_due_to_vesc = due_to_vesc
+        self.motor_mode_locked_due_to_pin_busy = due_to_pin_busy
 
     def set_motor_mode(self, mode):
         if mode == "real":

@@ -434,6 +434,24 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         motor_mode_locked_due_to_vesc = getattr(bsc, 'motor_mode_locked_due_to_vesc', False)
         if not isinstance(motor_mode_locked_due_to_vesc, bool):
             motor_mode_locked_due_to_vesc = False
+        motor_mode_locked_due_to_pin_busy = getattr(bsc, 'motor_mode_locked_due_to_pin_busy', False)
+        if not isinstance(motor_mode_locked_due_to_pin_busy, bool):
+            motor_mode_locked_due_to_pin_busy = False
+        motor_mode_locked_reason = getattr(bsc, 'motor_mode_locked_reason', None)
+        if not isinstance(motor_mode_locked_reason, str):
+            motor_mode_locked_reason = ""
+
+        if motor_mode_locked and motor_mode_locked_due_to_pin_busy:
+            try:
+                utils.notify_user(
+                    motor_mode_locked_reason or "Limit switch pin is busy. Release the pin and restart the system.",
+                    title="Motor Pin Busy",
+                    type="warning",
+                )
+            except Exception:
+                pass
+            self._motor_mode_locked_popup_shown = True
+            return
 
         if motor_mode_locked and motor_mode_locked_due_to_vesc:
             try:

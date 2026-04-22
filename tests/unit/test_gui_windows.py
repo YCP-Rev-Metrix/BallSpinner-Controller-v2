@@ -304,6 +304,29 @@ def test_BSCMainWindow_does_not_notify_when_simulated_not_due_to_vesc(mock_bsc, 
     mock_notify.assert_not_called()
 
 
+@patch('utils.notify_user')
+@patch('frontend.BSCMainWindow.bsc')
+def test_BSCMainWindow_notifies_when_limit_switch_pin_busy(mock_bsc, mock_notify, qtbot):
+    """Test launch popup is shown when the configured limit switch pin is busy."""
+    mock_bsc.motor_mode = 'simulated'
+    mock_bsc.motor_mode_locked = True
+    mock_bsc.motor_mode_locked_due_to_vesc = True
+    mock_bsc.motor_mode_locked_due_to_pin_busy = True
+    mock_bsc.motor_mode_locked_reason = 'Limit switch pin GPIO15 is busy. Release the pin from UART/other process and restart.'
+    mock_bsc._real_motor_supported = False
+    mock_bsc.get_motor_status_message = MagicMock(return_value='Using simulated motors.')
+
+    window = BSCMainWindow()
+    qtbot.addWidget(window)
+    qtbot.wait(10)
+
+    mock_notify.assert_called_once_with(
+        mock_bsc.motor_mode_locked_reason,
+        title='Motor Pin Busy',
+        type='warning',
+    )
+
+
 # ============================================================================
 # SMART DOT CONNECT WIDGET TESTS
 # ============================================================================
