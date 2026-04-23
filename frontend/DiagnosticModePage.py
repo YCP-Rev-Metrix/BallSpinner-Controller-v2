@@ -646,6 +646,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self._set_motor_controls_enabled(False)
 
         self.reset(clear_graphs=False, clear_data=False)
+        self._clear_encoder_values()
         self.navigationLock.emit(True, "")
 
     # Toggle diagnostic recording state.
@@ -709,7 +710,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
             except Exception:
                 pass
 
-        self.reset(clear_graphs=False, clear_data=False)
+        self._reset_spin_motor_only()
         if not self._motors_connected:
             self.navigationLock.emit(True, "")
 
@@ -874,6 +875,16 @@ class DiagnosticModePage(QtWidgets.QWidget):
             if hasattr(self.SmartDotGraph, 'clear'):
                 self.SmartDotGraph.clear()   
 
+    # Clear encoder readout labels and encoder graph traces.
+    def _clear_encoder_values(self):
+        for channel in self._channels:
+            if channel.encoder_label:
+                channel.encoder_label.setText("Enc: 0.0 RPM")
+            try:
+                channel.encoder_curve.setData([0.0], [0.0])
+            except Exception:
+                pass
+
     # Enable or disable the zeroing button.
     def _set_zero_buttons_enabled(self, enabled: bool):
         self.btnZeroMotors.setEnabled(enabled)
@@ -908,6 +919,29 @@ class DiagnosticModePage(QtWidgets.QWidget):
         self.angleSlider.setValue(0)
         self._update_slider_labels()
 
+    # Reset only spin motor/channel state while leaving tilt/angle untouched.
+    def _reset_spin_motor_only(self):
+        spin_channel = next((channel for channel in self._channels if channel.key == "spin"), None)
+        if spin_channel is None:
+            return
+
+        # Command spin motor to zero output and stop movement.
+        spin_motor = self._get_motor(spin_channel)
+        self._change_motor_speed(spin_motor, 0.0)
+        if spin_motor is not None and hasattr(spin_motor, "stop"):
+            try:
+                spin_motor.stop()
+            except Exception:
+                pass
+
+        if spin_channel.slider.value() != 0:
+            spin_channel.slider.setValue(0)
+        self._last_values["spin"] = 0.0
+        if spin_channel.label:
+            spin_channel.label.setText(spin_channel.label_fmt.format(value=0.0))
+        if spin_channel.encoder_label:
+            spin_channel.encoder_label.setText("Enc: 0.0 RPM")
+
     # Show override dialog and apply the selected mode.
     def toggle_override_mode(self):
         """Open override mode configuration dialog."""
@@ -935,9 +969,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
             # Clear override mode styling flag
             self._apply_override_style(False)
             self._apply_channel_ranges(override=False)
-            
-        # Reset UI and state whenever override toggles
-        self.reset()
+            self._reset_spin_motor_only()
 
     # Apply override mode styling on the main window.
     def _apply_override_style(self, enabled: bool):

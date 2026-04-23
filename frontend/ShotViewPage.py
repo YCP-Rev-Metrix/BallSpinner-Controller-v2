@@ -157,6 +157,13 @@ class ShotViewPage(QtWidgets.QWidget):
         self.displayedSpinTime = array('d')
         self.displayedTiltTime = array('d')
         self.displayedAngleTime = array('d')
+        # Reset encoder buffers so encoder values do not carry over between shots.
+        self.displayedSpinEncoder = array('f')
+        self.displayedSpinEncoderTime = array('d')
+        self.displayedTiltEncoder = array('f')
+        self.displayedTiltEncoderTime = array('d')
+        self.displayedAngleEncoder = array('f')
+        self.displayedAngleEncoderTime = array('d')
         self.ElapsedTime = 0.0
         self.count = 0
         if(len(self.ConnectionManager.get_smartdots()) > 0):
