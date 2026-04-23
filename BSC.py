@@ -319,17 +319,19 @@ class BSC:
 
     def zero(self):
         try:
-            self.motor2.zero()
-            #self.motor3.zero() Moto3 has no limit switchws, using a dirty hack for now
-            self.motor2.changeSpeed(dutyCycle=10, isShotMode=False) #Go to 10 degrees on motor 2 to balance out the unit
-            self.motor3.disconnect() #Disconnect motor 3 to let it fall to the bottom
-            time.sleep(1)
-            self.motor3.connect() #Connect motor 3 to let it fall to the bottom
-            self.motor2.changeSpeed(dutyCycle=0, isShotMode=False) #Go to 0 degrees on motor 2 to return to home position
-            self.motor3.setCurrentPositionZero() #Set motor 3 to 0 degrees to return to home position
+            # Zero both tilt (motor2) and angle (motor3) steppers using
+            # their own homing/zero implementations.
+            if getattr(self, "motor2", None) is not None and hasattr(self.motor2, "zero"):
+                self.motor2.zero()
+            else:
+                utils.notify_user("Motor 2 does not support zeroing.")
+            if getattr(self, "motor3", None) is not None and hasattr(self.motor3, "zero"):
+                self.motor3.zero()
+            else:
+                utils.notify_user("Motor 3 does not support zeroing.")
         except Exception as e:
             print(f"Error zeroing motors: {e}")
-            raise e
+            raise
         
 
 
