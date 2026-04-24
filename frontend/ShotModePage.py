@@ -13,6 +13,7 @@ from BSC import bsc, MotorData
 from backend.models.SessionData import SessionData
 from backend.models.DataController import DataController
 from frontend.SmartDotConnectWidget import SmartDotConnectWidget
+from frontend.LoadingOverlay import LoadingOverlay
 from backend.models.ShotScriptData import ShotScriptDataInstance
 
 import datetime as dt
@@ -106,6 +107,14 @@ class ShotModePage(QtWidgets.QWidget):
         self.CheckButtons()
         self.btnStartShot.clicked.connect(self.start_shot)
 
+    def _get_loading_overlay(self):
+        host = self.window() or self
+        overlay = getattr(host, "_global_loading_overlay", None)
+        if overlay is None:
+            overlay = LoadingOverlay(host)
+            setattr(host, "_global_loading_overlay", overlay)
+        return overlay
+
     def start_shot(self):
         print("Shot started!")
         try:
@@ -175,46 +184,54 @@ class ShotModePage(QtWidgets.QWidget):
         print("SmartDot list:",bsc.smartdotConnectionManager.get_connections())
 
     def reset(self):
+        overlay = self._get_loading_overlay()
         self.session = bsc.get_session()
-        self.graph_rpm.reset_view_and_clear()
-        self.graph_tilt.reset_view_and_clear()
-        self.graph_angle.reset_view_and_clear()
-        self.sliderTime.setValue(0)
-        if self.session is None:
-            print("No session found in BSC when resetting ShotModePage.")
-            return
-        if self.session.id != -1:
-            spinPoints = self.session.get_spin_instruction_points()
-            anglePoints = self.session.get_angle_instruction_points()
-            tiltPoints = self.session.get_tilt_instruction_points()
-            if spinPoints == [] or anglePoints == [] or tiltPoints == []:
-                notify_user("Failed to load session instruction points, shot can not be edited.")
+        show_overlay = bool(self.session is not None and getattr(self.session, "id", -1) != -1)
+        if show_overlay:
+            overlay.show_message("Loading shot edit data...")
+        try:
+            self.graph_rpm.reset_view_and_clear()
+            self.graph_tilt.reset_view_and_clear()
+            self.graph_angle.reset_view_and_clear()
+            self.sliderTime.setValue(0)
+            if self.session is None:
+                print("No session found in BSC when resetting ShotModePage.")
                 return
-            self.graph_rpm.set_current_points(self.session.get_spin_instruction_points())
-            self.graph_tilt.set_current_points(self.session.get_tilt_instruction_points())
-            self.graph_angle.set_current_points(self.session.get_angle_instruction_points())
-            #Print the points for debugging
-            print("RPM points:", self.session.Spin_Instruction_Points)
-            print("Tilt points:", self.session.Tilt_Instruction_Points)
-            print("Angle points:", self.session.Angle_Instruction_Points)
+            if self.session.id != -1:
+                spinPoints = self.session.get_spin_instruction_points()
+                anglePoints = self.session.get_angle_instruction_points()
+                tiltPoints = self.session.get_tilt_instruction_points()
+                if spinPoints == [] or anglePoints == [] or tiltPoints == []:
+                    notify_user("Failed to load session instruction points, shot can not be edited.")
+                    return
+                self.graph_rpm.set_current_points(self.session.get_spin_instruction_points())
+                self.graph_tilt.set_current_points(self.session.get_tilt_instruction_points())
+                self.graph_angle.set_current_points(self.session.get_angle_instruction_points())
+                #Print the points for debugging
+                print("RPM points:", self.session.Spin_Instruction_Points)
+                print("Tilt points:", self.session.Tilt_Instruction_Points)
+                print("Angle points:", self.session.Angle_Instruction_Points)
 
-            # Use the time of the last shot script data entry as the final time.
-            # Guard against empty shot script data so we don't crash on [-1].
-            self.motorData = bsc.get_data_controller().get_shot_script_data() or []
-            if self.motorData:
-                self.FinalTime = self.motorData[-1].get_time()
-            else:
-                self.FinalTime = 0.0
+                # Use the time of the last shot script data entry as the final time.
+                # Guard against empty shot script data so we don't crash on [-1].
+                self.motorData = bsc.get_data_controller().get_shot_script_data() or []
+                if self.motorData:
+                    self.FinalTime = self.motorData[-1].get_time()
+                else:
+                    self.FinalTime = 0.0
 
-            # Convert final time back to slider units (duration = 1 + 0.02 * slider_value)
-            if self.FinalTime <= 1.0:
-                slider_value = 0
-            else:
-                slider_value = round((self.FinalTime - 1.0) / 0.02)
+                # Convert final time back to slider units (duration = 1 + 0.02 * slider_value)
+                if self.FinalTime <= 1.0:
+                    slider_value = 0
+                else:
+                    slider_value = round((self.FinalTime - 1.0) / 0.02)
 
-            # clamp to slider valid range
-            slider_value = max(0, min(self.sliderTime.maximum(), slider_value))
-            self.sliderTime.setValue(slider_value)
+                # clamp to slider valid range
+                slider_value = max(0, min(self.sliderTime.maximum(), slider_value))
+                self.sliderTime.setValue(slider_value)
+        finally:
+            if show_overlay:
+                overlay.hide_overlay()
 
         
 

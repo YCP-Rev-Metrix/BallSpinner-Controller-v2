@@ -16,6 +16,7 @@ else:
     from backend.smartdot.SimSmartDot import SimSmartDot
 
 from backend.smartdot.SubprocessScan import ProcessRunner
+from frontend.LoadingOverlay import LoadingOverlay
 import ast
 
 from BSC import bsc
@@ -86,6 +87,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         self.last_connect_target = None
         self.retry_attempts = 0
         self.max_retry_attempts = 3
+        self._connection_attempt_active = False
 
         # set a smaller font for all buttons in this widget (including dynamically created ones)
         # using Qt style sheet ensures the size applies globally here
@@ -104,6 +106,8 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         # The .ui defines the scroll area as 'conDevices' and the contained widget
         # is the scroll area's widget (named 'scrollAreaWidgetContents' in the .ui).
         self.conDevices = self.findChild(QtWidgets.QScrollArea, 'conDevices')
+        self.conDevices.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.conDevices.setWidgetResizable(True)
         # Use the scroll area's widget() accessor to get the contained QWidget.
         self.wDeviceList = self.conDevices.widget()
         self.Devices = []
@@ -112,6 +116,8 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         # The .ui defines the scroll area as 'conDisconnectDevices' and the contained widget
         # is the scroll area's widget (named 'scrollAreaWidgetContentsDisconnect' in the .ui).
         self.conDisconnectDevices = self.findChild(QtWidgets.QScrollArea, 'conDisconnectDevices')
+        self.conDisconnectDevices.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.conDisconnectDevices.setWidgetResizable(True)
         # Use the scroll area's widget() accessor to get the contained QWidget.
         self.wDisconnectDeviceList = self.conDisconnectDevices.widget()
         
@@ -122,6 +128,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         self.process_runner.outputReceived.connect(self.on_process_output)
         self.process_runner.errorReceived.connect(self.on_process_error)
         self.process_runner.finished.connect(self.on_process_finished)
+        self.loadingOverlay = None
 
         self.scanBtn = self.findChild(QtWidgets.QPushButton, "btnStartScan")
         if self.scanBtn:
@@ -150,7 +157,9 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         self.updateDisconnectList()
         
         # Store original width for collapse/expand
-        self.original_width = self.width() if self.width() > 0 else 1065
+        self.expanded_width = max(self.width(), 430)
+        self.setMinimumWidth(self.expanded_width)
+        self.setMaximumWidth(self.expanded_width)
     
     def toggle_collapse(self):
         """Toggle collapse/expand state of the widget"""
@@ -173,10 +182,12 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         # Adjust width
         if self.is_collapsed:
             self.setMaximumWidth(80)  # Narrow width when collapsed
+            self.setMinimumWidth(80)
             self.resize(80, self.height())  # Force resize to narrow width
         else:
-            self.setMaximumWidth(350)  # Reset to original width
-            self.resize(350, self.height())  # Force resize to original width
+            self.setMaximumWidth(self.expanded_width)
+            self.setMinimumWidth(self.expanded_width)
+            self.resize(self.expanded_width, self.height())  # Force resize to expanded width
         
         # Update button text
         self.collapseBtn.setText("▶" if self.is_collapsed else "▼")
@@ -185,6 +196,7 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
     def start_scan(self):
         """Starts the ScanSmartDots.py script using ProcessRunner"""
         self.lblStatus.setText("Scanning for SmartDots...")
+        self._show_loading("Scanning for SmartDots...")
         print("Starting scan subprocess...")
         logger.info("Starting scan subprocess")
 
@@ -227,11 +239,13 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         print("[Scan Error]", text)
         logger.error(f"Scan error: {text}")
         self.lblStatus.setText(f"Error: {text}")
+        self._hide_loading()
 
     def on_process_finished(self, code: int, status: int):
         print(f"Scan finished (code={code}, status={status})")
         logger.info(f"Scan finished: code={code}, status={status}")
         self.lblStatus.setText("Scan complete")
+        self._hide_loading()
         # You could reload the device list here if the scan outputs it to a file or stdout
 
     def connect_to_smartdot(self, text):
@@ -241,11 +255,13 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
 
         # Track target for retry path
         self.last_connect_target = text
+        self._connection_attempt_active = True
 
         logger.info(f"connect_to_smartdot start: {text}")
 
         # Update status to show connection attempt
         self.lblStatus.setText(f"Connecting to {text}...")
+        self._show_loading(f"Connecting to {text}...")
         
         # Check if this is a simulated device
         is_simulated = (text == "SI:MU:LA:TE:DD:OT" or not utils.is_raspberry_pi())
@@ -254,6 +270,8 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         for i in bsc.get_smartdotConnectionManager().get_connections():
             if i == text:
                 self.lblStatus.setText(f"Already connected to {text}")
+                self._connection_attempt_active = False
+                self._hide_loading()
                 return
 
         # Create and start connection worker thread
@@ -272,6 +290,8 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         logger.info(f"Connection success: {device_address}")
         self.smartdot = smartdot
         self.lblStatus.setText(f"Connected to {device_address}")
+        self._connection_attempt_active = False
+        self._hide_loading()
         self.signalSmartDotConnected.emit(self.smartdot)
 
         #Add the connection to the manager upon successful connection
@@ -285,10 +305,14 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
     def on_status_update(self, status_message):
         """Called when status update is emitted"""
         self.lblStatus.setText(status_message)
+        if self._connection_attempt_active:
+            self._show_loading(status_message)
     
     def on_device_disconnected(self, mac_address):
         """Called when device disconnects"""
         self.lblStatus.setText(f'Disconnected "{mac_address}"')
+        if not self._connection_attempt_active:
+            self._hide_loading()
 
         #Remove the connection from the manager upon disconnection
         smartdot = bsc.get_smartdotConnectionManager().get_smartdot(mac_address)
@@ -345,9 +369,31 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
             if self.retry_attempts <= self.max_retry_attempts and self.last_connect_target:
                 delay_ms = 1000 * self.retry_attempts
                 self.lblStatus.setText(f"Retrying connection ({self.retry_attempts}/{self.max_retry_attempts})...")
+                self._show_loading(
+                    f"Recovering Bluetooth and retrying ({self.retry_attempts}/{self.max_retry_attempts})..."
+                )
                 QtCore.QTimer.singleShot(delay_ms, lambda: self.connect_to_smartdot(self.last_connect_target))
             else:
                 self.lblStatus.setText("Maximum retries reached. Please restart Bluetooth or device and try again.")
+                self._connection_attempt_active = False
+                self._hide_loading()
+        else:
+            self._connection_attempt_active = False
+            self._hide_loading()
+
+    def _get_loading_overlay(self):
+        host = self.window() or self
+        overlay = getattr(host, "_global_loading_overlay", None)
+        if overlay is None:
+            overlay = LoadingOverlay(host)
+            setattr(host, "_global_loading_overlay", overlay)
+        return overlay
+
+    def _show_loading(self, message: str):
+        self._get_loading_overlay().show_message(message)
+
+    def _hide_loading(self):
+        self._get_loading_overlay().hide_overlay()
 
     def _run_ble_recovery_scripts(self):
         """Run local BLE recovery scripts after SmartDot connection failures."""

@@ -9,6 +9,7 @@ import datetime as dt
 from BSC import bsc
 from backend.models.DataController import DataController
 from backend.models.SessionData import SessionData
+from frontend.LoadingOverlay import LoadingOverlay
 from utils import notify_user
 
 class DataViewPage(QtWidgets.QWidget):
@@ -369,9 +370,23 @@ class DataViewPage(QtWidgets.QWidget):
     
     def edit_data(self):
         print("Edit Data Clicked")
-        if(self.load_data() == -1):
-            return
-        self.changePage.emit(2, bsc.get_data_controller())
+        overlay = self._get_loading_overlay()
+        overlay.show_message("Loading shot edit data...")
+        try:
+            if(self.load_data() == -1):
+                return
+            self.changePage.emit(2, bsc.get_data_controller())
+        finally:
+            # Keep it visible long enough for page transition/render to start.
+            QtCore.QTimer.singleShot(150, overlay.hide_overlay)
+
+    def _get_loading_overlay(self):
+        host = self.window() or self
+        overlay = getattr(host, "_global_loading_overlay", None)
+        if overlay is None:
+            overlay = LoadingOverlay(host)
+            setattr(host, "_global_loading_overlay", overlay)
+        return overlay
        
 
 
