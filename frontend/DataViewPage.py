@@ -358,15 +358,25 @@ class DataViewPage(QtWidgets.QWidget):
 
     def analyze_data(self):
         print("Analyze Data Clicked")
-        if(self.load_data() == -1):
-            return
-        self.changePage.emit(3, bsc.get_data_controller())
+        overlay = self._get_loading_overlay()
+        overlay.show_message("Loading data for analysis...")
+        try:
+            if(self.load_data() == -1):
+                return
+            self.changePage.emit(3, bsc.get_data_controller())
+        finally:
+            QtCore.QTimer.singleShot(150, overlay.hide_overlay)
        
     def replay_data(self):
         print("Replay Data Clicked")
-        if(self.load_data() == -1):
-            return
-        self.changePage.emit(6, bsc.get_data_controller())
+        overlay = self._get_loading_overlay()
+        overlay.show_message("Loading data for replay...")
+        try:
+            if(self.load_data() == -1):
+                return
+            self.changePage.emit(6, bsc.get_data_controller())
+        finally:
+            QtCore.QTimer.singleShot(150, overlay.hide_overlay)
     
     def edit_data(self):
         print("Edit Data Clicked")

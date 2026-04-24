@@ -117,55 +117,56 @@ class ShotModePage(QtWidgets.QWidget):
 
     def start_shot(self):
         print("Shot started!")
+        overlay = self._get_loading_overlay()
+        overlay.show_message("Preparing shot...")
         try:
-            bsc.home()
-        except Exception as e:
-            print(f"Error homing motors before shot: {e}")
-        #When we start a shot, we need to create a new session data object and its associated data controller
-        bsc.set_session(
-            SessionData(
-                id=-1,
-                timeStamp=dt.datetime.now().isoformat(), 
-                name="Shot Session", 
-                isShotMode=True, 
-                Spin_Instruction_Points=self.graph_rpm.get_current_points(), 
-                Angle_Instruction_Points=self.graph_angle.get_current_points(), 
-                Tilt_Instruction_Points=self.graph_tilt.get_current_points()
-                )
-        )
-        bsc.set_data_controller(DataController(bsc.get_session()))
-        print(f"Debug: {bsc.get_session().Spin_Instruction_Points}")  # Debug print to verify session data is set correctly
+            #When we start a shot, we need to create a new session data object and its associated data controller
+            bsc.set_session(
+                SessionData(
+                    id=-1,
+                    timeStamp=dt.datetime.now().isoformat(), 
+                    name="Shot Session", 
+                    isShotMode=True, 
+                    Spin_Instruction_Points=self.graph_rpm.get_current_points(), 
+                    Angle_Instruction_Points=self.graph_angle.get_current_points(), 
+                    Tilt_Instruction_Points=self.graph_tilt.get_current_points()
+                    )
+            )
+            bsc.set_data_controller(DataController(bsc.get_session()))
+            print(f"Debug: {bsc.get_session().Spin_Instruction_Points}")  # Debug print to verify session data is set correctly
 
-        #Access the data controller's ShotModeData and add the three motors
-        sample_interval = bsc.sample_interval_ms / 1000.0
-        rpm_array = self.graph_rpm.sample_spline_display(sample_interval)
-        tilt_array = self.graph_tilt.sample_spline_display(sample_interval)
-        angle_array = self.graph_angle.sample_spline_display(sample_interval)
+            #Access the data controller's ShotModeData and add the three motors
+            sample_interval = bsc.sample_interval_ms / 1000.0
+            rpm_array = self.graph_rpm.sample_spline_display(sample_interval)
+            tilt_array = self.graph_tilt.sample_spline_display(sample_interval)
+            angle_array = self.graph_angle.sample_spline_display(sample_interval)
 
-        data_controller: DataController = bsc.get_data_controller()
-        for i in range(0,len(rpm_array)):
-            data_controller.add_shot_script_data(ShotScriptDataInstance(
-                time=i*sample_interval,
-                rpm=rpm_array[i],
-                angleDeg=angle_array[i],
-                tiltDeg=tilt_array[i]
-            ))
+            data_controller: DataController = bsc.get_data_controller()
+            for i in range(0,len(rpm_array)):
+                data_controller.add_shot_script_data(ShotScriptDataInstance(
+                    time=i*sample_interval,
+                    rpm=rpm_array[i],
+                    angleDeg=angle_array[i],
+                    tiltDeg=tilt_array[i]
+                ))
 
-        # print(bsc.get_session())
-        print(bsc.get_data_controller())
+            # print(bsc.get_session())
+            print(bsc.get_data_controller())
 
-        # print(self.graph_rpm.sample_spline_display(sample_interval))
-        # print(self.graph_tilt.sample_spline_display(sample_interval))
-        # print(self.graph_angle.sample_spline_display(sample_interval))
+            # print(self.graph_rpm.sample_spline_display(sample_interval))
+            # print(self.graph_tilt.sample_spline_display(sample_interval))
+            # print(self.graph_angle.sample_spline_display(sample_interval))
 
-        self.GraphsData = MotorData(
-            dt=sample_interval,
-            length=1 + 0.02 * self.sliderTime.value(),
-            spin=rpm_array,
-            tilt=tilt_array,
-            angle=angle_array
-        )
-        self.changePage.emit(6, self.GraphsData)
+            self.GraphsData = MotorData(
+                dt=sample_interval,
+                length=1 + 0.02 * self.sliderTime.value(),
+                spin=rpm_array,
+                tilt=tilt_array,
+                angle=angle_array
+            )
+            self.changePage.emit(6, self.GraphsData)
+        finally:
+            QtCore.QTimer.singleShot(150, overlay.hide_overlay)
 
     def update_shot_duration_label(self, value):
         # value comes from QSlider.value() (int)

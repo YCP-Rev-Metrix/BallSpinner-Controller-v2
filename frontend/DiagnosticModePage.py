@@ -19,6 +19,7 @@ from backend.models.EncoderData import EncoderDataInstance
 from backend.models.SmartDotData import SmartDotDataInstance
 from frontend.SmartDotGraph import SmartDotGraph
 from frontend.SmartDotConnectWidget import SmartDotConnectWidget
+from frontend.LoadingOverlay import LoadingOverlay
 from frontend.SensorGraphDialog import SensorGraphDialog
 from frontend.OverrideDialog import OverrideDialog
 
@@ -537,17 +538,29 @@ class DiagnosticModePage(QtWidgets.QWidget):
             session_name = dialog.getSessionName()
             print(f"Session Name: {session_name}")
             bsc.get_data_controller().set_session_name(session_name)
+            overlay = self._get_loading_overlay()
+            overlay.show_message("Submitting diagnostic session...")
+            try:
+                # make sure any collected SmartDot data is moved into the DataController
+                self._package_smartdot_data_to_controller()
 
-            # make sure any collected SmartDot data is moved into the DataController
-            self._package_smartdot_data_to_controller()
-
-            print("Submitting data to cloud")
-            bsc.get_data_controller().submit_session_data()
-            print("Data submitted to cloud")
+                print("Submitting data to cloud")
+                bsc.get_data_controller().submit_session_data()
+                print("Data submitted to cloud")
+            finally:
+                QTimer.singleShot(150, overlay.hide_overlay)
             # Handle acceptance (e.g., save data)
         else:
             print("User rejected the dialog.")
             # Handle rejection (e.g., cancel operation)
+
+    def _get_loading_overlay(self):
+        host = self.window() or self
+        overlay = getattr(host, "_global_loading_overlay", None)
+        if overlay is None:
+            overlay = LoadingOverlay(host)
+            setattr(host, "_global_loading_overlay", overlay)
+        return overlay
     
     # Show temperature graphs in a separate dialog.
     def show_temp_graph(self):
