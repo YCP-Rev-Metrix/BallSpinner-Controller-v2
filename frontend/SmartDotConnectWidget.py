@@ -321,8 +321,15 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
             logger.exception(f"Failed to show error dialog: {e}")
 
         # Handle stale BLE condition and retry for common errors
-        recovery_keywords = ["socket connection failed", "Failed to discover GATT services", "Connection failed"]
+        recovery_keywords = [
+            "socket connection failed",
+            "Failed to discover GATT services",
+            "Connection failed",
+            "Error initializing the API",
+            "Connection error",
+        ]
         if any(keyword in error_message for keyword in recovery_keywords):
+            self._run_ble_recovery_scripts()
             if self.last_connect_target:
                 existing = bsc.get_smartdotConnectionManager().get_smartdot(self.last_connect_target)
                 if existing is not None:
@@ -341,6 +348,23 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
                 QtCore.QTimer.singleShot(delay_ms, lambda: self.connect_to_smartdot(self.last_connect_target))
             else:
                 self.lblStatus.setText("Maximum retries reached. Please restart Bluetooth or device and try again.")
+
+    def _run_ble_recovery_scripts(self):
+        """Run local BLE recovery scripts after SmartDot connection failures."""
+        try:
+            repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            restart_script = os.path.join(repo_root, "restartbluetooth.sh")
+            scan_script = os.path.join(repo_root, "bluetoothctlscantrick.sh")
+
+            if os.path.exists(restart_script):
+                logger.info(f"Running BLE recovery script: {restart_script}")
+                QtCore.QProcess.startDetached("bash", [restart_script])
+
+            if os.path.exists(scan_script):
+                logger.info(f"Running BLE scan recovery script: {scan_script}")
+                QtCore.QProcess.startDetached("expect", [scan_script])
+        except Exception as e:
+            logger.exception(f"Failed to run BLE recovery scripts: {e}")
 
 
     def removeDeviceFromList(self, device):

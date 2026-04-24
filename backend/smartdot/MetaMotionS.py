@@ -13,6 +13,7 @@ import queue
 import math
 import subprocess
 import threading
+import os
 class MetaMotion(iSmartDot):
 
     XL_availSampleRate = [12.5, 25, 50, 100, 200, 400, 800]
@@ -120,13 +121,26 @@ class MetaMotion(iSmartDot):
             return True
         except Exception as e:
             print(e)
-            if "Timed out" in str(e) and retry_count == 0:
+            err_text = str(e)
+            recoverable_errors = ("Timed out", "Error initializing the API", "socket connection failed", "Failed to discover GATT services")
+            if any(token in err_text for token in recoverable_errors) and retry_count == 0:
                 #Restart bluetooth and try again real quick :P (only retry once)
-                print("You timed out - retrying connection...")
+                print("SmartDot connect failed - running BLE recovery and retrying...")
                 # Call status callback if provided to notify UI of retry
                 if status_callback:
                     status_callback("Connection failed, retrying...")
-                subprocess.run(["sudo", "systemctl", "restart", "bluetooth"])
+                try:
+                    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+                    restart_script = os.path.join(repo_root, "restartbluetooth.sh")
+                    scan_script = os.path.join(repo_root, "bluetoothctlscantrick.sh")
+                    if os.path.exists(restart_script):
+                        subprocess.run(["bash", restart_script], check=False)
+                    else:
+                        subprocess.run(["sudo", "systemctl", "restart", "bluetooth"], check=False)
+                    if os.path.exists(scan_script):
+                        subprocess.run(["expect", scan_script], check=False)
+                except Exception as recovery_err:
+                    print(f"Bluetooth recovery script failed: {recovery_err}")
                 time.sleep(1)
                 # Retry with incremented retry_count to prevent infinite loops
                 return self.connect(MAC_Address, retry_count=1, status_callback=status_callback)

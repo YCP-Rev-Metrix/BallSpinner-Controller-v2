@@ -196,6 +196,9 @@ class StepMotor():
     def enable(self):
         """Enable the stepper driver (assert enable pin)."""
         self._write_enable(True)
+        self.current_angle = 0.0
+        self.prev_angle = 0.0
+        self.current_step_position = 0
 
     def disable(self):
         """Disable the stepper driver (deassert enable pin)."""

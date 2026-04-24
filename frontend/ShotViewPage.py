@@ -432,7 +432,13 @@ class ShotViewPage(QtWidgets.QWidget):
             self.SmartDot.stopCollecting()
             #Get datacontroller
             dc = bsc.get_data_controller()
-            for i in range(0,len(self.SmartDot.xl_time)):
+            xl_count = min(
+                len(self.SmartDot.xl_time),
+                len(self.SmartDot.xl_x),
+                len(self.SmartDot.xl_y),
+                len(self.SmartDot.xl_z),
+            )
+            for i in range(xl_count):
                 dc.add_smartdot_data(SmartDotDataInstance(
                     time=self.SmartDot.xl_time[i],
                     data_selector=0, #Accelerometer
@@ -447,7 +453,13 @@ class ShotViewPage(QtWidgets.QWidget):
                     magnetometer_z=-1,
                     light=-1
                 ))
-            for i in range(0,len(self.SmartDot.gy_time)):
+            gy_count = min(
+                len(self.SmartDot.gy_time),
+                len(self.SmartDot.gy_x),
+                len(self.SmartDot.gy_y),
+                len(self.SmartDot.gy_z),
+            )
+            for i in range(gy_count):
                 dc.add_smartdot_data(SmartDotDataInstance(
                     time=self.SmartDot.gy_time[i],
                     data_selector=1, #Gyroscope
@@ -462,7 +474,13 @@ class ShotViewPage(QtWidgets.QWidget):
                     magnetometer_z=-1,
                     light=-1
                 ))
-            for i in range(0,len(self.SmartDot.mg_time)):
+            mg_count = min(
+                len(self.SmartDot.mg_time),
+                len(self.SmartDot.mg_x),
+                len(self.SmartDot.mg_y),
+                len(self.SmartDot.mg_z),
+            )
+            for i in range(mg_count):
                 dc.add_smartdot_data(SmartDotDataInstance(
                     time=self.SmartDot.mg_time[i],
                     data_selector=2, #Magnetometer
@@ -477,7 +495,8 @@ class ShotViewPage(QtWidgets.QWidget):
                     magnetometer_z=self.SmartDot.mg_z[i],
                     light=-1
                 ))
-            for i in range(0,len(self.SmartDot.lt_time)):
+            lt_count = min(len(self.SmartDot.lt_time), len(self.SmartDot.lt_value))
+            for i in range(lt_count):
                 dc.add_smartdot_data(SmartDotDataInstance(
                     time=self.SmartDot.lt_time[i],
                     data_selector=3, #Light
