@@ -4,29 +4,13 @@ weight = 85
 description = 'Scan, connect, and disconnect SmartDot devices from the UI.'
 +++
 
-### What's on this page
+### How to use the SmartDot Connect Widget
 
-- **Scan for SmartDot** starts discovery.
-- **Devices** list shows discoverable/available SmartDots.
-- **Disconnect** list shows currently connected SmartDots.
-- **Status label** reports connection and retry state.
-- **Collapse button** minimizes the widget footprint.
+1. Press **Scan for SmartDot** and wait for scan completion.
+2. In the devices list, select the SmartDot you want to connect.
+3. Confirm status changes to connected before starting a run.
+4. If needed, use the disconnect list to disconnect an active device.
+5. If you are on desktop, use `SI:MU:LA:TE:DD:OT`.
+6. Use the collapse button to minimize the widget when not actively connecting.
 
-### How to use this page
-
-1. Tap **Scan for SmartDot** and wait for discovery to finish.
-2. Choose the desired device from the devices list.
-3. Connect and confirm status updates.
-4. Disconnect from the lower list when done.
-
-### Warnings
-
-> **Do NOT** start a shot or recording
-> before SmartDot status confirms connected.
->
-> **Do NOT** repeatedly start scans
-> while a connection attempt is in progress.
->
-> **Do NOT** leave stale connections active
-> when switching devices.
 

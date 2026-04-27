@@ -28,7 +28,7 @@ This guide assumes first-time use and starts from [Home](../home/).
    - End value: `10`
 7. Add Spin curve points to match this example:
 
-![Sample Spin Curve](Screenshot 2026-04-27 at 3.07.36 PM.png)
+<img src="Screenshot%202026-04-27%20at%203.07.36%E2%80%AFPM.png" alt="Sample Spin Curve" width="520" />
 
 8. Set shot duration slider to `2.6` seconds.
 9. Press **Enter Shot**.
