@@ -206,7 +206,7 @@
          <item>
           <widget class="QCheckBox" name="chkMotorRPM">
            <property name="text">
-            <string>Motor RPM</string>
+            <string>Spin</string>
            </property>
            <property name="checked">
             <bool>true</bool>
@@ -236,7 +236,7 @@
          <item>
           <widget class="QCheckBox" name="chkEncoderRPM">
            <property name="text">
-            <string>Encoder RPM</string>
+            <string>Spin Encoder</string>
            </property>
            <property name="checked">
             <bool>true</bool>

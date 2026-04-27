@@ -148,8 +148,15 @@
     <addaction name="separator"/>
     <addaction name="actRealMotor"/>
    </widget>
+   <widget class="QMenu" name="mnuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actPageHelp"/>
+   </widget>
    <addaction name="mnuNavigation"/>
    <addaction name="menuSimulation"/>
+   <addaction name="mnuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actHome">
@@ -191,6 +198,11 @@
    </property>
    <property name="text">
     <string>Real Motor</string>
+   </property>
+  </action>
+  <action name="actPageHelp">
+   <property name="text">
+    <string>Page Help</string>
    </property>
   </action>
  </widget>

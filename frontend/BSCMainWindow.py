@@ -16,6 +16,7 @@ from frontend.ShotModePage import ShotModePage
 from frontend.CloudTest import CloudTest
 from frontend.ShotViewPage import ShotViewPage
 from frontend.ExitDialog import ExitDialog
+from frontend.HelpDialog import HelpDialog
 from BSC import bsc
 from BSC import MotorData
 
@@ -86,12 +87,15 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         self.actionHome = self.findChild(QAction, 'actHome')
         self.actionCloudTest = self.findChild(QAction, 'actCloudTest')
         self.actionQuit = self.findChild(QAction, 'actExitApplication')
+        self.actionPageHelp = self.findChild(QAction, 'actPageHelp')
 
         self.actionHome.triggered.connect(lambda: self.switch_to_page(0, "Home"))
         self.actionCloudTest.triggered.connect(lambda: self.switch_to_page(4, "Cloud Test"))
 
         # Open confirmation dialog on quit; only close if confirmed
         self.actionQuit.triggered.connect(self.attempt_exit)
+        if self.actionPageHelp is not None:
+            self.actionPageHelp.triggered.connect(self.open_help)
 
         self.navigation_menu = self.findChild(QtWidgets.QMenu, 'mnuNavigation')
         self.menuBar = self.findChild(QtWidgets.QMenuBar, 'menubar')
@@ -118,6 +122,7 @@ class BSCMainWindow(QtWidgets.QMainWindow):
             self.actionRealMotor.toggled.connect(lambda checked: self.motorSimulationControl(checked, False))
 
         self._motor_mode_locked_popup_shown = False
+        self._help_dialog = None
         self.updateMotorModeUI()
         QtCore.QTimer.singleShot(0, self.showMotorModeLockedPopupIfNeeded)
 
@@ -187,6 +192,27 @@ class BSCMainWindow(QtWidgets.QMainWindow):
         else:
             #print("User canceled exit.")
             return
+
+    def open_help(self):
+        """Open the in-app help dialog and select the current page."""
+        if self._help_dialog is None:
+            self._help_dialog = HelpDialog(self)
+
+        page_map = {
+            0: "home",
+            1: "diagnostic_mode",
+            2: "shot_mode",
+            3: "analysis_mode",
+            4: "cloud_test",
+            6: "shot_view",
+            7: "data_view",
+        }
+        current_index = self.tab.currentIndex() if self.tab is not None else 0
+        self._help_dialog.show_page(page_map.get(current_index, "home"))
+        self._help_dialog.show()
+        self._help_dialog.raise_()
+        self._help_dialog.activateWindow()
+
     def switch_to_page(self, index, data):
         """Switch to the specified tab index and update the window title."""
         

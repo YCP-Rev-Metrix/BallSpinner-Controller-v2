@@ -187,10 +187,10 @@ class AnalysisModePage(QtWidgets.QWidget):
         # Compute and display Motor standard deviations (6 fields)
         lblMotorStdDev = self.findChild(QtWidgets.QLabel, 'lblMotorStdDev')
         motor_fields = [
-            ("Motor RPM", motor_package.motor_rpm, "#ff0000"),
+            ("Spin", motor_package.motor_rpm, "#ff0000"),
             ("Motor Angle", motor_package.motor_angleDeg, "#00aa00"),
             ("Motor Tilt", motor_package.motor_tiltDeg, "#0000ff"),
-            ("Encoder RPM", motor_package.encoder_rpm, "#ff0000"),
+            ("Spin Encoder", motor_package.encoder_rpm, "#ff0000"),
             ("Encoder Angle", motor_package.encoder_angle, "#00aa00"),
             ("Encoder Tilt", motor_package.encoder_tilt, "#0000ff"),
         ]
@@ -314,10 +314,10 @@ class AnalysisDialog(QtWidgets.QDialog):
                 "light": {"label": "Light", "time": "time_light", "data": "light", "color": self.lightColor, "deriv": False, "fft": False},
             },
             "motor": {
-                "motor_rpm": {"label": "Motor RPM", "time": "time_rpm", "data": "motor_rpm", "color": self.motorRPMColor, "deriv": True, "fft": True},
+                "motor_rpm": {"label": "Spin", "time": "time_rpm", "data": "motor_rpm", "color": self.motorRPMColor, "deriv": True, "fft": True},
                 "motor_angle": {"label": "Motor Angle", "time": "time_angle", "data": "motor_angleDeg", "color": self.motorAngleColor, "deriv": True, "fft": True},
                 "motor_tilt": {"label": "Motor Tilt", "time": "time_tilt", "data": "motor_tiltDeg", "color": self.motorTiltColor, "deriv": True, "fft": True},
-                "encoder_rpm": {"label": "Encoder RPM", "time": "time_encoder_rpm", "data": "encoder_rpm", "color": self.encoderRPMColor, "deriv": True, "fft": True},
+                "encoder_rpm": {"label": "Spin Encoder", "time": "time_encoder_rpm", "data": "encoder_rpm", "color": self.encoderRPMColor, "deriv": True, "fft": True},
                 "encoder_angle": {"label": "Encoder Angle", "time": "time_encoder_angle", "data": "encoder_angle", "color": self.encoderAngleColor, "deriv": True, "fft": True},
                 "encoder_tilt": {"label": "Encoder Tilt", "time": "time_encoder_tilt", "data": "encoder_tilt", "color": self.encoderTiltColor, "deriv": True, "fft": True},
             },

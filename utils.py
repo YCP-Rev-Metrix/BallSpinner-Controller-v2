@@ -25,10 +25,10 @@ def get_series_defs(parent=None):
             "light": {"label": "Light", "time": "time_light", "data": "light", "color": getattr(parent, 'lightColor', None), "deriv": False, "fft": False},
         },
         "motor": {
-            "motor_rpm": {"label": "Motor RPM", "time": "time_rpm", "data": "motor_rpm", "color": getattr(parent, 'motorRPMColor', None), "deriv": True, "fft": True},
+            "motor_rpm": {"label": "Spin", "time": "time_rpm", "data": "motor_rpm", "color": getattr(parent, 'motorRPMColor', None), "deriv": True, "fft": True},
             "motor_angle": {"label": "Motor Angle", "time": "time_angle", "data": "motor_angleDeg", "color": getattr(parent, 'motorAngleColor', None), "deriv": True, "fft": True},
             "motor_tilt": {"label": "Motor Tilt", "time": "time_tilt", "data": "motor_tiltDeg", "color": getattr(parent, 'motorTiltColor', None), "deriv": True, "fft": True},
-            "encoder_rpm": {"label": "Encoder RPM", "time": "time_encoder", "data": "encoder_rpm", "color": getattr(parent, 'encoderRPMColor', None), "deriv": True, "fft": True},
+            "encoder_rpm": {"label": "Spin Encoder", "time": "time_encoder", "data": "encoder_rpm", "color": getattr(parent, 'encoderRPMColor', None), "deriv": True, "fft": True},
             "encoder_angle": {"label": "Encoder Angle", "time": "time_encoder", "data": "encoder_angle", "color": getattr(parent, 'encoderAngleColor', None), "deriv": True, "fft": True},
             "encoder_tilt": {"label": "Encoder Tilt", "time": "time_encoder", "data": "encoder_tilt", "color": getattr(parent, 'encoderTiltColor', None), "deriv": True, "fft": True},
         },

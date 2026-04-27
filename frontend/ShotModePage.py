@@ -41,8 +41,8 @@ class ShotModePage(QtWidgets.QWidget):
         self.graph_tilt = self.findChild(InputGraph, 'grphInputTilt')
         self.graph_angle = self.findChild(InputGraph, 'grphInputAngle')
 
-        # Configure RPM graph
-        self.graph_rpm.set_graph_title("RPM Input Graph")
+        # Configure Spin graph (units remain RPM)
+        self.graph_rpm.set_graph_title("Spin Input Graph")
         self.graph_rpm.hide_controls()
         self.graph_rpm.set_bounds(0,1,0,600)
         self.graph_rpm.set_default_endpoints(0,0,True)

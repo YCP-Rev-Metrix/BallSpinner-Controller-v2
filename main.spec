@@ -1,10 +1,18 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 import glob
+import os
 
 frontend_ui_files = [(f, 'frontend') for f in glob.glob('frontend/*.ui')]
 frontend_style_files = [(f, 'frontend') for f in glob.glob('frontend/*.qss')]
 icon_files = [(f, 'Icons') for f in glob.glob('Icons/BSC_Icon.*')]
+help_files = []
+for root, _dirs, files in os.walk('frontend/help'):
+    for filename in files:
+        if filename.endswith('.md'):
+            source = os.path.join(root, filename)
+            destination = root
+            help_files.append((source, destination))
 
 a = Analysis(
     ['main.py'],
@@ -13,7 +21,8 @@ a = Analysis(
     datas=
         frontend_ui_files +
         frontend_style_files +
-        icon_files,
+        icon_files +
+        help_files,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
