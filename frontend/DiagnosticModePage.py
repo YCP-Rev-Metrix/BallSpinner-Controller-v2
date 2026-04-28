@@ -645,7 +645,9 @@ class DiagnosticModePage(QtWidgets.QWidget):
                     motor.stop()
                 except Exception:
                     pass
-            bsc.disconnect_all_motors()
+            # Keep shared gpiochip/limit-switch claim alive between pages (diagnostic -> shot)
+            # and only release per-motor driver pins here.
+            bsc.disconnect_motor_drivers()
         finally:
             try:
                 self._timer.stop()

@@ -234,7 +234,7 @@ class BSC:
                 self.current_sensor = None
 
         # Tilt and angle stepper motors both use the shared ADS1115 sensor.
-        # Channel 0 is assigned to the tilt motor and channel 1 is assigned to the angle motor.
+        # Channel 0 is assigned to motor2 and channel 1 is assigned to motor3.
         # If the sensor is unavailable, current readings will remain None and the rest of the
         # real motor stack continues to work.
         motor_cfg = {}
@@ -264,10 +264,10 @@ class BSC:
             if isinstance(hc, dict):
                 homing_cfg = hc
         self.motor2 = StepMotor(
-            27,
-            17,
+            23,
+            24,
             self.h,
-            5,
+            6,
             False,
             current_sensor=self.current_sensor,
             current_sensor_channel=0,
@@ -276,10 +276,10 @@ class BSC:
             homing_config=homing_cfg or None,
         )
         self.motor3 = StepMotor(
-            23,
-            24,
+            27,
+            17,
             self.h,
-            6,
+            5,
             False,
             current_sensor=self.current_sensor,
             current_sensor_channel=1,
@@ -380,12 +380,12 @@ class BSC:
         Disconnect the tilt stepper GPIO, wait, reconnect, jog by ``tilt_soft_home_deg``
         from tuning (default −5°), then ``setCurrentPositionZero()`` so that pose is the
         new software zero. Simulated tilt keeps using ``SimMotor.zero()``."""
-        m2 = getattr(self, "motor2", None)
-        if m2 is None:
+        m3 = getattr(self, "motor3", None)
+        if m3 is None:
             return False
-        if StepMotor is None or not isinstance(m2, StepMotor):
-            if hasattr(m2, "zero"):
-                return bool(m2.zero())
+        if StepMotor is None or not isinstance(m3, StepMotor):
+            if hasattr(m3, "zero"):
+                return bool(m3.zero())
             return False
 
         hc = {}
@@ -396,19 +396,19 @@ class BSC:
         move_time = float(hc.get("tilt_soft_move_time_s", 0.5))
 
         try:
-            m2.disconnect()
+            m3.disconnect()
             time.sleep(max(0.0, sleep_s))
-            m2.start()
+            m3.start()
             cw = tilt_deg >= 0.0
-            m2._move_angle_timed(abs(tilt_deg), max(0.05, move_time), cw)
-            m2.setCurrentPositionZero()
+            m3._move_angle_timed(abs(tilt_deg), max(0.05, move_time), cw)
+            m3.setCurrentPositionZero()
             return True
         except Exception as e:
             print(f"Tilt soft reference failed: {e}")
             return False
 
     def zero(self, silent=False, phase_callback=None):
-        """Home angle (motor 3) then tilt (motor 2); shared limit GPIO requires this order.
+        """Home angle (motor 2) then tilt (motor 3); shared limit GPIO requires this order.
 
         ``phase_callback(name, info)`` is optional; ``name`` is ``\"after_angle\"`` | ``\"before_tilt\"``
         | ``\"after_tilt\"``. ``info`` is a dict with ``\"ok\": bool`` where applicable (UI may refresh).
@@ -416,10 +416,10 @@ class BSC:
         Returns True if both axes homed successfully, False otherwise. Raises on unexpected error.
         """
         try:
-            # Angle (motor3) must home before tilt (motor2); shared limit GPIO.
-            m3 = getattr(self, "motor3", None)
-            if m3 is not None and hasattr(m3, "zero"):
-                ok_angle = m3.zero()
+            # Angle (motor2) must home before tilt (motor3); shared limit GPIO.
+            m2 = getattr(self, "motor2", None)
+            if m2 is not None and hasattr(m2, "zero"):
+                ok_angle = m2.zero()
                 if phase_callback:
                     try:
                         phase_callback("after_angle", {"ok": ok_angle is not False})
@@ -427,7 +427,7 @@ class BSC:
                         pass
                 if ok_angle is False:
                     if not silent:
-                        utils.notify_user("Angle (motor 3) homing failed.")
+                        utils.notify_user("Angle (motor 2) homing failed.")
                     return False
             else:
                 if phase_callback:
@@ -436,13 +436,13 @@ class BSC:
                     except Exception:
                         pass
                 if not silent:
-                    utils.notify_user("Motor 3 does not support zeroing.")
+                    utils.notify_user("Motor 2 does not support zeroing.")
                 return False
 
-            m2 = getattr(self, "motor2", None)
-            if m2 is None:
+            m3 = getattr(self, "motor3", None)
+            if m3 is None:
                 if not silent:
-                    utils.notify_user("Motor 2 does not support zeroing.")
+                    utils.notify_user("Motor 3 does not support zeroing.")
                 return False
             if phase_callback:
                 try:
@@ -457,7 +457,7 @@ class BSC:
                     pass
             if ok_tilt is False:
                 if not silent:
-                    utils.notify_user("Tilt (motor 2) soft reference failed.")
+                    utils.notify_user("Tilt (motor 3) soft reference failed.")
                 return False
             return True
         except Exception as e:
@@ -465,19 +465,19 @@ class BSC:
             raise
 
     def zero_angle_only(self, silent=False):
-        """Home the angle stepper (motor 3) only; does not move tilt (motor 2).
+        """Home the angle stepper (motor 2) only; does not move tilt (motor 3).
 
         If ``silent`` is False (default), failed homing surfaces a GUI notification when possible.
         """
         try:
-            m3 = getattr(self, "motor3", None)
-            if m3 is None or not hasattr(m3, "zero"):
+            m2 = getattr(self, "motor2", None)
+            if m2 is None or not hasattr(m2, "zero"):
                 if not silent:
-                    utils.notify_user("Motor 3 does not support zeroing.")
+                    utils.notify_user("Motor 2 does not support zeroing.")
                 return False
-            ok = m3.zero()
+            ok = m2.zero()
             if ok is False and not silent:
-                utils.notify_user("Angle (motor 3) homing failed.")
+                utils.notify_user("Angle (motor 2) homing failed.")
             return bool(ok)
         except Exception as e:
             print(f"Error homing angle: {e}")
@@ -491,7 +491,7 @@ class BSC:
         try:
             ok = self._tilt_soft_reference()
             if ok is False and not silent:
-                utils.notify_user("Tilt (motor 2) soft reference failed.")
+                utils.notify_user("Tilt (motor 3) soft reference failed.")
             return bool(ok)
         except Exception as e:
             print(f"Error homing tilt: {e}")
