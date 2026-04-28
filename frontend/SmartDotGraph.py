@@ -611,6 +611,43 @@ class SmartDotGraph(QtWidgets.QWidget):
             last = 0
         self.limit_view_change(last)
         # Persistent cursor/markers are created in __init__ and reused; nothing to re-add here.
+
+    def clear_plots(self):
+        """Clear stored series and redraw empty curves (e.g. between shots).
+
+        Forces pyqtgraph items to drop stale points (curves, click markers, cursor).
+        """
+        empty = np.array([])
+        try:
+            for curve in getattr(self, "curves", {}).values():
+                curve.setData([], [])
+        except Exception:
+            pass
+        try:
+            if getattr(self, "vline", None) is not None:
+                self.vline.setVisible(False)
+        except Exception:
+            pass
+        for name in (
+            "marker_acc_x", "marker_acc_y", "marker_acc_z",
+            "marker_gyro_x", "marker_gyro_y", "marker_gyro_z",
+            "marker_mag_x", "marker_mag_y", "marker_mag_z",
+            "marker_light",
+        ):
+            try:
+                m = getattr(self, name, None)
+                if m is not None:
+                    m.setData(x=[], y=[])
+                    m.setVisible(False)
+            except Exception:
+                pass
+        self.updateDataBetter(
+            empty, empty, empty, empty,
+            empty, empty, empty, empty,
+            empty, empty, empty, empty,
+            empty, empty,
+        )
+
     def updateAccelerometer(self, time, x, y, z):
         # store latest accelerometer arrays for click lookup
         # copy inputs to avoid referencing external buffers that may be mutated

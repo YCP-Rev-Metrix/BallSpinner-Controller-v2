@@ -66,6 +66,8 @@ def test_BSC_set_motor_mode_simulated_on_pi_assigns_all_simulated(monkeypatch):
             current_sensor=None,
             current_sensor_channel=None,
             limit_switch_pin=None,
+            limit_switch_active_low=False,
+            homing_config=None,
         ):
             self.gpio_a = gpio_a
             self.gpio_b = gpio_b
@@ -75,6 +77,8 @@ def test_BSC_set_motor_mode_simulated_on_pi_assigns_all_simulated(monkeypatch):
             self.current_sensor = current_sensor
             self.current_sensor_channel = current_sensor_channel
             self.limit_switch_pin = limit_switch_pin
+            self.limit_switch_active_low = limit_switch_active_low
+            self.homing_config = homing_config
 
     dummy_lgpio = MagicMock()
     dummy_lgpio.gpiochip_open.return_value = 'dummy-handle'
@@ -118,8 +122,10 @@ def test_BSC_passes_single_limit_pin_to_stepper(monkeypatch):
 
     bsc = BSC_module.BSC()
 
-    assert bsc.motor2.kwargs["limit_switch_pin"] == BSC_module.BSC.LIMIT_SWITCH_PIN
-    assert bsc.motor3.kwargs["limit_switch_pin"] is None
+    assert bsc.motor2.kwargs["limit_switch_pin"] == bsc.limit_switch_pin
+    assert bsc.motor2.kwargs["limit_switch_active_low"] == bsc.limit_switch_active_low
+    assert bsc.motor3.kwargs["limit_switch_pin"] == bsc.limit_switch_pin
+    assert bsc.motor3.kwargs["limit_switch_active_low"] == bsc.limit_switch_active_low
 
 
 def test_BSC_home_calls_zero_path(monkeypatch):
@@ -128,7 +134,21 @@ def test_BSC_home_calls_zero_path(monkeypatch):
 
     bsc.motor2 = MagicMock()
     bsc.motor3 = MagicMock()
+    order = []
+
+    def track_m3(*_a, **_k):
+        order.append("m3")
+        return True
+
+    def track_m2(*_a, **_k):
+        order.append("m2")
+        return True
+
+    bsc.motor3.zero.side_effect = track_m3
+    bsc.motor2.zero.side_effect = track_m2
 
     bsc.home()
 
+    bsc.motor3.zero.assert_called_once()
     bsc.motor2.zero.assert_called_once()
+    assert order == ["m3", "m2"]

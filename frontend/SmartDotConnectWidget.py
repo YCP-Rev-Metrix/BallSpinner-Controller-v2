@@ -387,7 +387,15 @@ class SmartDotConnectWidget(QtWidgets.QWidget):
         if overlay is None:
             overlay = LoadingOverlay(host)
             setattr(host, "_global_loading_overlay", overlay)
+            overlay.cancel_requested.connect(self._on_loading_cancel)
         return overlay
+
+    def _on_loading_cancel(self):
+        """Dismiss overlay; reset connection UI state (BLE connect may still finish in background)."""
+        self._connection_attempt_active = False
+        self._hide_loading()
+        if self.lblStatus is not None:
+            self.lblStatus.setText("Cancelled.")
 
     def _show_loading(self, message: str):
         self._get_loading_overlay().show_message(message)

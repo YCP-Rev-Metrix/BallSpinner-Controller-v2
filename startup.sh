@@ -11,6 +11,7 @@ if [[ ! -x "$PYTHON_BIN" ]]; then
     PYTHON_BIN="$(command -v python3)"
 fi
 
+# cap_net_raw on the same interpreter binary that runs main.py (venv or system python).
 echo "ensure python has permission to use the bluetooth hardware"
 sudo setcap cap_net_raw+eip "$(readlink -f "$PYTHON_BIN")"
 
@@ -30,8 +31,10 @@ else
     echo "Warning: venv not found, using system python."
 fi
 
+# Run the GUI as root for privileged GPIO/hardware access. setcap above must target this PYTHON_BIN.
+# Autostart/kiosk: configure passwordless sudo for this script's user, or the loop will block on password.
 while true; do
-    if "$PYTHON_BIN" "$REPO_DIR/main.py"; then
+    if sudo -E env PATH="$PATH" "$PYTHON_BIN" "$REPO_DIR/main.py"; then
         echo "main.py finished successfully."
         break                 # exit the loop
     else

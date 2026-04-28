@@ -312,7 +312,7 @@ def test_BSCMainWindow_notifies_when_limit_switch_pin_busy(mock_bsc, mock_notify
     mock_bsc.motor_mode_locked = True
     mock_bsc.motor_mode_locked_due_to_vesc = True
     mock_bsc.motor_mode_locked_due_to_pin_busy = True
-    mock_bsc.motor_mode_locked_reason = 'Limit switch pin GPIO15 is busy. Release the pin from UART/other process and restart.'
+    mock_bsc.motor_mode_locked_reason = 'Limit switch pin GPIO14 is busy. Release the pin from UART/other process and restart.'
     mock_bsc._real_motor_supported = False
     mock_bsc.get_motor_status_message = MagicMock(return_value='Using simulated motors.')
 

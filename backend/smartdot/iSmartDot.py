@@ -36,6 +36,27 @@ class iSmartDot(metaclass=ABCMeta):
         self._gy_lock = threading.Lock()
         self._mg_lock = threading.Lock()
         self._lt_lock = threading.Lock()
+
+    def clear_buffers(self):
+        """Drop all sampled sensor arrays so a new shot does not retain previous data."""
+        with self._xl_lock:
+            del self.xl_time[:]
+            del self.xl_x[:]
+            del self.xl_y[:]
+            del self.xl_z[:]
+        with self._gy_lock:
+            del self.gy_time[:]
+            del self.gy_x[:]
+            del self.gy_y[:]
+            del self.gy_z[:]
+        with self._mg_lock:
+            del self.mg_time[:]
+            del self.mg_x[:]
+            del self.mg_y[:]
+            del self.mg_z[:]
+        with self._lt_lock:
+            del self.lt_time[:]
+            del self.lt_value[:]
     
     #Confirm all class under this interface have called all functions
     @classmethod

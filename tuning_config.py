@@ -11,6 +11,8 @@ DEFAULT_TUNING_PATH = os.path.join(
 DEFAULT_TUNING_CONFIG = {
     "version": 1,
     "sample_interval_ms": 50,
+    "limit_switch_pin": 14,
+    "limit_switch_active_low": False,
     "motor1": {
         "duty_cycle_scale": 0.0000218,
         "kp": 0.05,
@@ -41,6 +43,21 @@ DEFAULT_TUNING_CONFIG = {
         "sample_interval_s": 0.1,
         "dwell_time_s": 3.0,
         "scale_candidates": [],
+    },
+    # Stepper homing / limit (see backend/motors/StepMotor.py).
+    "homing": {
+        "phase_timeout_s": 120.0,
+        "max_search_steps": 125000,
+        "backoff_clear_steps": 80,
+        "first_sweep_clockwise": False,
+        "limit_sample_angle_deg": 1.0,
+        "limit_backoff_angle_deg": 1.0,
+        "homing_search_half_delay_s": 0.001,
+        "limit_release_timeout_s": 2.5,
+        # Tilt cannot reach shared limit: BSC.zero uses soft reference (see BSC._tilt_soft_reference).
+        "tilt_soft_home_deg": -5.0,
+        "tilt_soft_disconnect_sleep_s": 1.0,
+        "tilt_soft_move_time_s": 0.5,
     },
 }
 
@@ -104,87 +121,93 @@ def apply_tuning_config(bsc, config, apply_comm=False):
 
     motor_cfg = config.get("motor1") or {}
     motor = getattr(bsc, "motor1", None)
-    if motor is None:
-        return
+    if motor is not None:
 
-    if hasattr(motor, "duty_cycle_scale"):
-        motor.duty_cycle_scale = _as_float(
-            motor_cfg.get("duty_cycle_scale", motor.duty_cycle_scale),
-            motor.duty_cycle_scale,
-        )
-    if hasattr(motor, "Kp"):
-        motor.Kp = _as_float(motor_cfg.get("kp", motor.Kp), motor.Kp)
-    if hasattr(motor, "Ki"):
-        motor.Ki = _as_float(motor_cfg.get("ki", motor.Ki), motor.Ki)
-    if hasattr(motor, "Kd"):
-        motor.Kd = _as_float(motor_cfg.get("kd", motor.Kd), motor.Kd)
+        if hasattr(motor, "duty_cycle_scale"):
+            motor.duty_cycle_scale = _as_float(
+                motor_cfg.get("duty_cycle_scale", motor.duty_cycle_scale),
+                motor.duty_cycle_scale,
+            )
+        if hasattr(motor, "Kp"):
+            motor.Kp = _as_float(motor_cfg.get("kp", motor.Kp), motor.Kp)
+        if hasattr(motor, "Ki"):
+            motor.Ki = _as_float(motor_cfg.get("ki", motor.Ki), motor.Ki)
+        if hasattr(motor, "Kd"):
+            motor.Kd = _as_float(motor_cfg.get("kd", motor.Kd), motor.Kd)
 
-    if hasattr(motor, "target_speed_min"):
-        motor.target_speed_min = _as_float(
-            motor_cfg.get("target_speed_min", motor.target_speed_min),
-            motor.target_speed_min,
-        )
-    if hasattr(motor, "target_speed_max"):
-        motor.target_speed_max = _as_float(
-            motor_cfg.get("target_speed_max", motor.target_speed_max),
-            motor.target_speed_max,
-        )
-    if hasattr(motor, "integral_limit"):
-        motor.integral_limit = _as_float(
-            motor_cfg.get("integral_limit", motor.integral_limit),
-            motor.integral_limit,
-        )
-    if hasattr(motor, "ramp_step"):
-        motor.ramp_step = _as_float(motor_cfg.get("ramp_step", motor.ramp_step), motor.ramp_step)
-    if hasattr(motor, "missed_speed_warn_threshold"):
-        motor.missed_speed_warn_threshold = _as_int(
-            motor_cfg.get("missed_speed_warn_threshold", motor.missed_speed_warn_threshold),
-            motor.missed_speed_warn_threshold,
-        )
+        if hasattr(motor, "target_speed_min"):
+            motor.target_speed_min = _as_float(
+                motor_cfg.get("target_speed_min", motor.target_speed_min),
+                motor.target_speed_min,
+            )
+        if hasattr(motor, "target_speed_max"):
+            motor.target_speed_max = _as_float(
+                motor_cfg.get("target_speed_max", motor.target_speed_max),
+                motor.target_speed_max,
+            )
+        if hasattr(motor, "integral_limit"):
+            motor.integral_limit = _as_float(
+                motor_cfg.get("integral_limit", motor.integral_limit),
+                motor.integral_limit,
+            )
+        if hasattr(motor, "ramp_step"):
+            motor.ramp_step = _as_float(motor_cfg.get("ramp_step", motor.ramp_step), motor.ramp_step)
+        if hasattr(motor, "missed_speed_warn_threshold"):
+            motor.missed_speed_warn_threshold = _as_int(
+                motor_cfg.get("missed_speed_warn_threshold", motor.missed_speed_warn_threshold),
+                motor.missed_speed_warn_threshold,
+            )
 
-    kick_cfg = motor_cfg.get("kick") or {}
-    if hasattr(motor, "kick_enabled"):
-        motor.kick_enabled = bool(kick_cfg.get("enabled", motor.kick_enabled))
-    if hasattr(motor, "kick_min_target_rpm"):
-        motor.kick_min_target_rpm = _as_float(
-            kick_cfg.get("min_target_rpm", motor.kick_min_target_rpm),
-            motor.kick_min_target_rpm,
-        )
-    if hasattr(motor, "kick_threshold_divisor"):
-        motor.kick_threshold_divisor = _as_float(
-            kick_cfg.get("threshold_divisor", motor.kick_threshold_divisor),
-            motor.kick_threshold_divisor,
-        )
-    if hasattr(motor, "kick_duty_divisor"):
-        motor.kick_duty_divisor = _as_float(
-            kick_cfg.get("duty_divisor", motor.kick_duty_divisor),
-            motor.kick_duty_divisor,
-        )
-    if hasattr(motor, "kick_max_duty"):
-        motor.kick_max_duty = _as_float(
-            kick_cfg.get("max_duty", motor.kick_max_duty),
-            motor.kick_max_duty,
-        )
+        kick_cfg = motor_cfg.get("kick") or {}
+        if hasattr(motor, "kick_enabled"):
+            motor.kick_enabled = bool(kick_cfg.get("enabled", motor.kick_enabled))
+        if hasattr(motor, "kick_min_target_rpm"):
+            motor.kick_min_target_rpm = _as_float(
+                kick_cfg.get("min_target_rpm", motor.kick_min_target_rpm),
+                motor.kick_min_target_rpm,
+            )
+        if hasattr(motor, "kick_threshold_divisor"):
+            motor.kick_threshold_divisor = _as_float(
+                kick_cfg.get("threshold_divisor", motor.kick_threshold_divisor),
+                motor.kick_threshold_divisor,
+            )
+        if hasattr(motor, "kick_duty_divisor"):
+            motor.kick_duty_divisor = _as_float(
+                kick_cfg.get("duty_divisor", motor.kick_duty_divisor),
+                motor.kick_duty_divisor,
+            )
+        if hasattr(motor, "kick_max_duty"):
+            motor.kick_max_duty = _as_float(
+                kick_cfg.get("max_duty", motor.kick_max_duty),
+                motor.kick_max_duty,
+            )
 
-    comm_cfg = motor_cfg.get("comm") or {}
-    if hasattr(motor, "serial_port"):
-        motor.serial_port = comm_cfg.get("port", motor.serial_port)
-    if hasattr(motor, "serial_baud"):
-        motor.serial_baud = _as_int(comm_cfg.get("baud", motor.serial_baud), motor.serial_baud)
-    if hasattr(motor, "serial_timeout_s"):
-        motor.serial_timeout_s = _as_float(
-            comm_cfg.get("serial_timeout_s", motor.serial_timeout_s),
-            motor.serial_timeout_s,
-        )
-    if hasattr(motor, "get_values_timeout_s"):
-        motor.get_values_timeout_s = _as_float(
-            comm_cfg.get("get_values_timeout_s", motor.get_values_timeout_s),
-            motor.get_values_timeout_s,
-        )
+        comm_cfg = motor_cfg.get("comm") or {}
+        if hasattr(motor, "serial_port"):
+            motor.serial_port = comm_cfg.get("port", motor.serial_port)
+        if hasattr(motor, "serial_baud"):
+            motor.serial_baud = _as_int(comm_cfg.get("baud", motor.serial_baud), motor.serial_baud)
+        if hasattr(motor, "serial_timeout_s"):
+            motor.serial_timeout_s = _as_float(
+                comm_cfg.get("serial_timeout_s", motor.serial_timeout_s),
+                motor.serial_timeout_s,
+            )
+        if hasattr(motor, "get_values_timeout_s"):
+            motor.get_values_timeout_s = _as_float(
+                comm_cfg.get("get_values_timeout_s", motor.get_values_timeout_s),
+                motor.get_values_timeout_s,
+            )
 
-    if apply_comm and hasattr(motor, "reconfigure_serial"):
-        motor.reconfigure_serial(
-            port=comm_cfg.get("port"),
-            baud=comm_cfg.get("baud"),
-            timeout_s=comm_cfg.get("serial_timeout_s"),
-        )
+        if apply_comm and hasattr(motor, "reconfigure_serial"):
+            motor.reconfigure_serial(
+                port=comm_cfg.get("port"),
+                baud=comm_cfg.get("baud"),
+                timeout_s=comm_cfg.get("serial_timeout_s"),
+            )
+
+    homing_cfg = config.get("homing") or {}
+    if isinstance(homing_cfg, dict):
+        for name in ("motor2", "motor3"):
+            stepper = getattr(bsc, name, None)
+            if stepper is not None and hasattr(stepper, "set_homing_config"):
+                stepper.set_homing_config(homing_cfg)

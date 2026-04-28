@@ -35,6 +35,7 @@ except ModuleNotFoundError:
 
         def zero(self):
             self.currSpeed = 0.0
+            return True
 
         def home(self):
             self.zero()
@@ -99,7 +100,17 @@ class MotorData:
 
         
 class BSC:
-    LIMIT_SWITCH_PIN = 15
+    # Limit default: J8 physical pin 8 = BCM GPIO 14 (UART0 TX). Not to be confused with J8 pin 15 (= GPIO22).
+    # GPIO 14 shares UART0 TX — release UART from kernel if the pin reads busy / wrong.
+    # Unusable as a GPIO limit while the kernel/console keeps UART0 on GPIO14/15. Prefer another
+    # BCM pin via "limit_switch_pin" in motor_tuning.json, or on the Pi run:
+    #   sudo bash scripts/disable_serial_console_boot.sh --disable-uart-driver && sudo reboot
+    # USBBDCMotor is unaffected: it uses pyserial on the USB device (e.g. /dev/ttyACM0 from
+    # motor_tuning motor1.comm.port), not the Pi’s UART TX/RX pins — UART-over-USB keeps working.
+    LIMIT_SWITCH_PIN = 14
+    # False = switch connects GPIO to logic high when closed (internal pull-down → open reads LOW).
+    # True = switch shorts GPIO to GND when closed (internal pull-up → open reads HIGH).
+    LIMIT_SWITCH_ACTIVE_LOW = False
 
     def __init__(self):
         self.smartdotConnectionManager = SmartDotConnectionManager()
@@ -130,6 +141,20 @@ class BSC:
         self.motor3 = None
         self.current_sensor = None
         self.limit_switch_pin = self.LIMIT_SWITCH_PIN
+        self.limit_switch_active_low = self.LIMIT_SWITCH_ACTIVE_LOW
+        self.limit_switch_pull = None  # None = auto from polarity; else "up"|"down"|"none"
+        if isinstance(self._tuning_config, dict):
+            lp = self._tuning_config.get("limit_switch_pin")
+            if isinstance(lp, int) and lp >= 0:
+                self.limit_switch_pin = lp
+            al = self._tuning_config.get("limit_switch_active_low")
+            if isinstance(al, bool):
+                self.limit_switch_active_low = al
+            pull = self._tuning_config.get("limit_switch_pull")
+            if isinstance(pull, str):
+                pl = pull.strip().lower()
+                if pl in ("up", "down", "none"):
+                    self.limit_switch_pull = pl
 
         self._initialize_motors()
 
@@ -171,14 +196,30 @@ class BSC:
             )
 
     def _create_real_motors(self):
-        if USBBDCMotor is None or StepMotor is None:
-            raise RuntimeError("Real motor classes are unavailable")
+        # Steppers are required for real mode; spin (USB VESC) can fall back to simulation
+        # when pyserial/pyvesc are missing so limit homing and tilt/angle GPIO still work.
+        if StepMotor is None:
+            raise RuntimeError(
+                "StepMotor is unavailable (need lgpio and backend/motors/StepMotor)."
+            )
         if lgpio is None:
             raise RuntimeError("lgpio is unavailable")
 
         self.h = lgpio.gpiochip_open(0)
         try:
-            lgpio.gpio_claim_input(self.h, self.limit_switch_pin)
+            if self.limit_switch_pull == "up":
+                _pull = lgpio.SET_PULL_UP
+            elif self.limit_switch_pull == "down":
+                _pull = lgpio.SET_PULL_DOWN
+            elif self.limit_switch_pull == "none":
+                _pull = lgpio.SET_PULL_NONE
+            else:
+                _pull = (
+                    lgpio.SET_PULL_UP
+                    if self.limit_switch_active_low
+                    else lgpio.SET_PULL_DOWN
+                )
+            lgpio.gpio_claim_input(self.h, self.limit_switch_pin, _pull)
         except Exception as e:
             raise RuntimeError(
                 f"Limit switch pin GPIO{self.limit_switch_pin} is busy. "
@@ -202,14 +243,26 @@ class BSC:
             motor_cfg = self._tuning_config.get("motor1") or {}
             if isinstance(motor_cfg, dict):
                 comm_cfg = motor_cfg.get("comm") or {}
-        self.motor1 = USBBDCMotor(
-            h=self.h,
-            duty_cycle_scale=motor_cfg.get("duty_cycle_scale") if isinstance(motor_cfg, dict) else None,
-            serial_port=comm_cfg.get("port") if isinstance(comm_cfg, dict) else None,
-            serial_baud=comm_cfg.get("baud") if isinstance(comm_cfg, dict) else None,
-            serial_timeout_s=comm_cfg.get("serial_timeout_s") if isinstance(comm_cfg, dict) else None,
-            get_values_timeout_s=comm_cfg.get("get_values_timeout_s") if isinstance(comm_cfg, dict) else None,
-        )
+        if USBBDCMotor is not None:
+            self.motor1 = USBBDCMotor(
+                h=self.h,
+                duty_cycle_scale=motor_cfg.get("duty_cycle_scale") if isinstance(motor_cfg, dict) else None,
+                serial_port=comm_cfg.get("port") if isinstance(comm_cfg, dict) else None,
+                serial_baud=comm_cfg.get("baud") if isinstance(comm_cfg, dict) else None,
+                serial_timeout_s=comm_cfg.get("serial_timeout_s") if isinstance(comm_cfg, dict) else None,
+                get_values_timeout_s=comm_cfg.get("get_values_timeout_s") if isinstance(comm_cfg, dict) else None,
+            )
+        else:
+            print(
+                "Warning: USBBDCMotor not loaded (e.g. pyserial/pyvesc missing); "
+                "using SimMotor for spin while tilt/angle use real steppers."
+            )
+            self.motor1 = SimMotor(2)
+        homing_cfg = {}
+        if isinstance(self._tuning_config, dict):
+            hc = self._tuning_config.get("homing")
+            if isinstance(hc, dict):
+                homing_cfg = hc
         self.motor2 = StepMotor(
             27,
             17,
@@ -219,6 +272,8 @@ class BSC:
             current_sensor=self.current_sensor,
             current_sensor_channel=0,
             limit_switch_pin=self.limit_switch_pin,
+            limit_switch_active_low=self.limit_switch_active_low,
+            homing_config=homing_cfg or None,
         )
         self.motor3 = StepMotor(
             23,
@@ -228,7 +283,9 @@ class BSC:
             False,
             current_sensor=self.current_sensor,
             current_sensor_channel=1,
-            limit_switch_pin=None,
+            limit_switch_pin=self.limit_switch_pin,
+            limit_switch_active_low=self.limit_switch_active_low,
+            homing_config=homing_cfg or None,
         )
 
     def _create_simulated_motors(self):
@@ -317,22 +374,128 @@ class BSC:
     def home(self):
         self.zero()
 
-    def zero(self):
+    def _tilt_soft_reference(self):
+        """Tilt cannot reach the shared limit from both directions.
+
+        Disconnect the tilt stepper GPIO, wait, reconnect, jog by ``tilt_soft_home_deg``
+        from tuning (default −5°), then ``setCurrentPositionZero()`` so that pose is the
+        new software zero. Simulated tilt keeps using ``SimMotor.zero()``."""
+        m2 = getattr(self, "motor2", None)
+        if m2 is None:
+            return False
+        if StepMotor is None or not isinstance(m2, StepMotor):
+            if hasattr(m2, "zero"):
+                return bool(m2.zero())
+            return False
+
+        hc = {}
+        if isinstance(self._tuning_config, dict):
+            hc = self._tuning_config.get("homing") or {}
+        tilt_deg = float(hc.get("tilt_soft_home_deg", -5.0))
+        sleep_s = float(hc.get("tilt_soft_disconnect_sleep_s", 1.0))
+        move_time = float(hc.get("tilt_soft_move_time_s", 0.5))
+
         try:
-            # Zero both tilt (motor2) and angle (motor3) steppers using
-            # their own homing/zero implementations.
-            if getattr(self, "motor2", None) is not None and hasattr(self.motor2, "zero"):
-                self.motor2.zero()
+            m2.disconnect()
+            time.sleep(max(0.0, sleep_s))
+            m2.start()
+            cw = tilt_deg >= 0.0
+            m2._move_angle_timed(abs(tilt_deg), max(0.05, move_time), cw)
+            m2.setCurrentPositionZero()
+            return True
+        except Exception as e:
+            print(f"Tilt soft reference failed: {e}")
+            return False
+
+    def zero(self, silent=False, phase_callback=None):
+        """Home angle (motor 3) then tilt (motor 2); shared limit GPIO requires this order.
+
+        ``phase_callback(name, info)`` is optional; ``name`` is ``\"after_angle\"`` | ``\"before_tilt\"``
+        | ``\"after_tilt\"``. ``info`` is a dict with ``\"ok\": bool`` where applicable (UI may refresh).
+
+        Returns True if both axes homed successfully, False otherwise. Raises on unexpected error.
+        """
+        try:
+            # Angle (motor3) must home before tilt (motor2); shared limit GPIO.
+            m3 = getattr(self, "motor3", None)
+            if m3 is not None and hasattr(m3, "zero"):
+                ok_angle = m3.zero()
+                if phase_callback:
+                    try:
+                        phase_callback("after_angle", {"ok": ok_angle is not False})
+                    except Exception:
+                        pass
+                if ok_angle is False:
+                    if not silent:
+                        utils.notify_user("Angle (motor 3) homing failed.")
+                    return False
             else:
-                utils.notify_user("Motor 2 does not support zeroing.")
-            if getattr(self, "motor3", None) is not None and hasattr(self.motor3, "zero"):
-                self.motor3.zero()
-            else:
-                utils.notify_user("Motor 3 does not support zeroing.")
+                if phase_callback:
+                    try:
+                        phase_callback("after_angle", {"ok": False})
+                    except Exception:
+                        pass
+                if not silent:
+                    utils.notify_user("Motor 3 does not support zeroing.")
+                return False
+
+            m2 = getattr(self, "motor2", None)
+            if m2 is None:
+                if not silent:
+                    utils.notify_user("Motor 2 does not support zeroing.")
+                return False
+            if phase_callback:
+                try:
+                    phase_callback("before_tilt", {})
+                except Exception:
+                    pass
+            ok_tilt = self._tilt_soft_reference()
+            if phase_callback:
+                try:
+                    phase_callback("after_tilt", {"ok": ok_tilt is not False})
+                except Exception:
+                    pass
+            if ok_tilt is False:
+                if not silent:
+                    utils.notify_user("Tilt (motor 2) soft reference failed.")
+                return False
+            return True
         except Exception as e:
             print(f"Error zeroing motors: {e}")
             raise
-        
+
+    def zero_angle_only(self, silent=False):
+        """Home the angle stepper (motor 3) only; does not move tilt (motor 2).
+
+        If ``silent`` is False (default), failed homing surfaces a GUI notification when possible.
+        """
+        try:
+            m3 = getattr(self, "motor3", None)
+            if m3 is None or not hasattr(m3, "zero"):
+                if not silent:
+                    utils.notify_user("Motor 3 does not support zeroing.")
+                return False
+            ok = m3.zero()
+            if ok is False and not silent:
+                utils.notify_user("Angle (motor 3) homing failed.")
+            return bool(ok)
+        except Exception as e:
+            print(f"Error homing angle: {e}")
+            raise
+
+    def zero_tilt_only(self, silent=False):
+        """Establish tilt reference without limit homing (see ``_tilt_soft_reference``).
+
+        If ``silent`` is False (default), failure surfaces a GUI notification when possible.
+        """
+        try:
+            ok = self._tilt_soft_reference()
+            if ok is False and not silent:
+                utils.notify_user("Tilt (motor 2) soft reference failed.")
+            return bool(ok)
+        except Exception as e:
+            print(f"Error homing tilt: {e}")
+            raise
 
 
     def disconnect_all_motors(self):
@@ -371,6 +534,23 @@ class BSC:
                 self.h = None
 
         self.connected = False
+
+    def disconnect_motor_drivers(self):
+        """Disable each motor driver (disconnect/stop pins, VESC enable release) **without**
+        closing the shared gpiochip, limit-switch input, or current sensor — so hardware stays
+        ready for the next shot aside from intentional tilt disconnect during ``zero()``."""
+        for motor_name in ("motor1", "motor2", "motor3"):
+            motor = getattr(self, motor_name, None)
+            if motor is not None and hasattr(motor, "disconnect"):
+                try:
+                    motor.disconnect()
+                except Exception:
+                    pass
+                try:
+                    if hasattr(motor, "returnToZero"):
+                        motor.returnToZero()
+                except Exception:
+                    pass
 
 
 bsc = BSC()

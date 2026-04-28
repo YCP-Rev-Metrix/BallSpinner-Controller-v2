@@ -13,7 +13,7 @@ from .iMotor import iMotor
 from logs.logger_config import get_logger
 logger = get_logger(__name__)
 
-PORT = "/dev/ttyACM0"   # or "/dev/ttyUSB0"
+PORT = "/dev/ttyACM0"   # USB VESC; not GPIO UART — independent of ttyAMA0 / GPIO 14–15
 BAUD = 115200
 
 DUTY = 0.05        # 5% duty
@@ -342,7 +342,8 @@ class USBBDCMotor(iMotor):
     def clamp(self, x, lo, hi):
         return max(lo, min(x, hi))
 
-    def start(self):
+    def start(self, *args, **kwargs):
+        """Enable VESC output path; extra args ignored (ShotScript passes a dummy duty)."""
         logger.info("USBBDCMotor.start() called")
         if lgpio and getattr(self, 'h', None) is not None:
             if not getattr(self, 'enable_gpio_claimed', False):

@@ -254,7 +254,9 @@ class BSCMainWindow(QtWidgets.QMainWindow):
                 pass
             case 6: #Shot View Page
                 self.window().setWindowTitle("Ball Spinner Controller - Shot View")
-                self.shotViewPage.StartShotView()
+                # Defer heavy homing until after the stacked widget paints tab 6; otherwise the UI
+                # stays on Shot Mode until StartShotView returns and the overlay never repaints.
+                QtCore.QTimer.singleShot(0, self.shotViewPage.StartShotView)
                 pass
             case 7: #Data View Page
                 #No Data Expected

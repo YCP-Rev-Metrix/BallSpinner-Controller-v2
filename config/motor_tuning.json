@@ -1,6 +1,21 @@
 {
   "version": 1,
   "sample_interval_ms": 50,
+  "limit_switch_pin": 14,
+  "limit_switch_active_low": false,
+  "homing": {
+    "phase_timeout_s": 120.0,
+    "max_search_steps": 125000,
+    "backoff_clear_steps": 80,
+    "first_sweep_clockwise": false,
+    "limit_sample_angle_deg": 1.0,
+    "limit_backoff_angle_deg": 1.0,
+    "homing_search_half_delay_s": 0.001,
+    "limit_release_timeout_s": 2.5,
+    "tilt_soft_home_deg": -5.0,
+    "tilt_soft_disconnect_sleep_s": 1.0,
+    "tilt_soft_move_time_s": 0.5
+  },
   "motor1": {
     "duty_cycle_scale": 0.0000218,
     "kp": 0.05,

@@ -80,6 +80,7 @@ class SimMotor(iMotor):
 
     def zero(self):
         self.setCurrentPositionZero()
+        return True
 
     def home(self):
         self.zero()

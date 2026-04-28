@@ -382,13 +382,18 @@ class DataViewPage(QtWidgets.QWidget):
         print("Edit Data Clicked")
         overlay = self._get_loading_overlay()
         overlay.show_message("Loading shot edit data...")
-        try:
-            if(self.load_data() == -1):
-                return
-            self.changePage.emit(2, bsc.get_data_controller())
-        finally:
-            # Keep it visible long enough for page transition/render to start.
-            QtCore.QTimer.singleShot(150, overlay.hide_overlay)
+        overlay.raise_()
+        QtWidgets.QApplication.processEvents()
+
+        def _finish_edit_load():
+            try:
+                if self.load_data() == -1:
+                    return
+                self.changePage.emit(2, bsc.get_data_controller())
+            finally:
+                QtCore.QTimer.singleShot(150, overlay.hide_overlay)
+
+        QtCore.QTimer.singleShot(0, _finish_edit_load)
 
     def _get_loading_overlay(self):
         host = self.window() or self

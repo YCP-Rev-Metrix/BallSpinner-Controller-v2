@@ -18,6 +18,7 @@ from PyQt6.QtCore import pyqtSignal, Qt, QTimer, QThread, QThreadPool, QRunnable
 #Database related imports
 from frontend.SmartDotGraph import SmartDotGraph
 from frontend.MotorGraph import MotorGraph
+from frontend.LoadingOverlay import LoadingOverlay
 
 from BSC import bsc, MotorData
 
@@ -40,7 +41,8 @@ class ShotViewPage(QtWidgets.QWidget):
         #sim_motor2 = SimMotor(2)
         #sim_motor3 = SimMotor(3)
         #self.shot_script = ShotScript(self.motor1, sim_motor2, sim_motor3)
-        self.shot_script = ShotScript(bsc.motor1, bsc.motor2, bsc.motor3)
+        # ShotScript indices: 1 = tilt, 2 = angle — tilt is motor3, angle is motor2.
+        self.shot_script = ShotScript(bsc.motor1, bsc.motor3, bsc.motor2)
 
 
         # Load the UI file (module-relative path).
@@ -112,6 +114,14 @@ class ShotViewPage(QtWidgets.QWidget):
             layout.addWidget(self.processOutputLabel)
         # Expose the nested StartShotView as a public method on the instance
 
+    def _get_loading_overlay(self):
+        host = self.window() or self
+        overlay = getattr(host, "_global_loading_overlay", None)
+        if overlay is None:
+            overlay = LoadingOverlay(host)
+            setattr(host, "_global_loading_overlay", overlay)
+        return overlay
+
     def motorWarmUp(self, motor, speed, Timeout, interval_s):
         if speed <= 0:
             return
@@ -132,7 +142,31 @@ class ShotViewPage(QtWidgets.QWidget):
     def StartShotView(self):
         Controller = bsc.get_data_controller()
         self.btnAnalyze.setEnabled(False)  # Disabled during shot view
-        self.navigationLock.emit(False,"Shot in progress") # Lock navigation during shot view
+        self.navigationLock.emit(False, "Shot in progress")  # Lock navigation during shot view
+
+        # If GPIO was fully torn down elsewhere (e.g. legacy disconnect_all_motors), recreate real motors.
+        if utils.is_raspberry_pi():
+            if getattr(bsc, "h", None) is None and getattr(bsc, "motor_mode", "") == "real":
+                try:
+                    bsc.use_real_motors()
+                except Exception as e:
+                    print(f"Could not restore real motors: {e}")
+                    utils.notify_user(f"Could not restore motors: {e}")
+                    self.navigationLock.emit(True, "")
+                    return
+
+        # Enable spin + angle + tilt before homing (same as shot_script wiring: motor1,
+        # motor3, motor2). Must run before zero() and before spin warmup later.
+        print("Engaging spin, angle, and tilt before homing...")
+        try:
+            self.shot_script.start_motors([0, 1, 2])
+        except Exception as e:
+            print(f"Could not start motors for homing: {e}")
+            utils.notify_user(f"Could not enable motors: {e}")
+            self.navigationLock.emit(True, "")
+            return
+
+        # Package script from data controller before zero (does not depend on homing); needed for dt + warmup target RPM.
         print("Packaging motor data for Shot View")
         motor_package = utils.PackageMotorData(self, bsc)
         print("Motor data packaged")
@@ -143,7 +177,45 @@ class ShotViewPage(QtWidgets.QWidget):
         self.dt = motor_package.time_rpm[1] - motor_package.time_rpm[0]  # interval in seconds
         self.dt_ms = int(self.dt * 1000)
 
-        self.shot_script.start_motors([0, 1, 2])
+        print("Homing motors (zero) before shot playback...")
+        overlay = self._get_loading_overlay()
+        # Indeterminate marquee only (same as ShotMode / SmartDot / DataView loading).
+        overlay.show_message("Homing angle...")
+        overlay.raise_()
+        # Allow the overlay to paint before blocking on homing (same thread as GUI).
+        QtWidgets.QApplication.processEvents()
+
+        def _hom_phase_cb(name, info):
+            QtWidgets.QApplication.processEvents()
+            if name == "after_angle" and info.get("ok"):
+                overlay.show_message("Homing tilt...")
+
+        ok = False
+        try:
+            ok = bsc.zero(silent=True, phase_callback=_hom_phase_cb)
+        except Exception as e:
+            print(f"Homing failed: {e}")
+            utils.notify_user(f"Homing failed: {e}")
+            self.navigationLock.emit(True, "")
+            return
+        finally:
+            overlay.hide_overlay()
+
+        if not ok:
+            utils.notify_user("Homing failed; shot cancelled.")
+            self.navigationLock.emit(True, "")
+            return
+
+        # Re-assert all driver enables after homing (tilt soft-ref cycles tilt GPIO).
+        try:
+            self.shot_script.start_motors([0, 1, 2])
+        except Exception as e:
+            print(f"Could not re-engage motors after homing: {e}")
+            utils.notify_user(f"Could not re-engage motors: {e}")
+            self.navigationLock.emit(True, "")
+            return
+
+        # Immediately after zero: spin warmup (motors already enabled).
         self.motorWarmUp(bsc.motor1, self.scriptSpin[0] if len(self.scriptSpin) > 0 else 0, 3.0, self.dt_ms / 1000.0)
         time_values = []
         t = 0.0
@@ -176,6 +248,21 @@ class ShotViewPage(QtWidgets.QWidget):
         print("Starting Shot View with interval (ms):", self.dt_ms)
         print("Max Time (sec):", self.MaxTime)
 
+        try:
+            self.SmartDotGraph.clear_plots()
+        except Exception as e:
+            print("SmartDotGraph clear_plots:", e)
+
+        if self.SmartDot:
+            try:
+                self.SmartDot.stopCollecting()
+            except Exception:
+                pass
+            try:
+                self.SmartDot.clear_buffers()
+            except Exception as e:
+                print("SmartDot clear_buffers:", e)
+
         if (self.SmartDot):
             print("Using SmartDot in Shot View")
             self.SmartDot.startCollecting()
@@ -201,12 +288,12 @@ class ShotViewPage(QtWidgets.QWidget):
 
         # Only call interpolate / set_motor_times_from_indices if motor supports them
         try:
-            if hasattr(bsc.motor2, 'interpolate'):
-                bsc.motor2.interpolate(self.scriptTilt)
-            if hasattr(bsc.motor2, 'set_motor_times_from_indices'):
-                bsc.motor2.set_motor_times_from_indices(time_values)
+            if hasattr(bsc.motor3, 'interpolate'):
+                bsc.motor3.interpolate(self.scriptTilt)
+            if hasattr(bsc.motor3, 'set_motor_times_from_indices'):
+                bsc.motor3.set_motor_times_from_indices(time_values)
         except Exception as e:
-            print("Warning: motor2 interpolation skipped:", e)
+            print("Warning: motor3 tilt interpolation skipped:", e)
 
         
     
@@ -512,8 +599,14 @@ class ShotViewPage(QtWidgets.QWidget):
                     light=self.SmartDot.lt_value[i]
                 ))
             print("Submitted SmartDot data to DataController")
-        if(utils.is_raspberry_pi()):
-            bsc.disconnect_all_motors()
+
+        # Release motor drivers after the shot but keep GPIO/limit intact for the next homing cycle.
+        if utils.is_raspberry_pi():
+            try:
+                bsc.disconnect_motor_drivers()
+            except Exception as e:
+                print(f"disconnect_motor_drivers after shot: {e}")
+
         print("Shot View Ended")
         self.btnAnalyze.setEnabled(True)  # Enable Analyze button after shot view
         self.navigationLock.emit(True,"") # Unlock navigation after shot view

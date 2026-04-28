@@ -4,7 +4,7 @@ except ImportError:
     lgpio = None
 import time
 import threading
-from typing import Optional
+from typing import Optional, Tuple
 #from .iMotor import iMotor
 
 # ================================
@@ -31,6 +31,19 @@ from typing import Optional
 # Example:
 #   200 full steps/rev * 8x microstepping = 1600 steps/rev
 STEPS_PER_REV = 25000  # adjust if you change microstepping on the driver
+
+DEFAULT_HOMING_CFG = {
+    "phase_timeout_s": 120.0,
+    "max_search_steps": STEPS_PER_REV * 5,
+    "backoff_clear_steps": 80,
+    "first_sweep_clockwise": False,
+    "limit_sample_angle_deg": 1.0,
+    "limit_backoff_angle_deg": 1.0,
+    "homing_search_half_delay_s": 0.001,
+    # Max time for a single “back off until switch opens” phase (per release call).
+    "limit_release_timeout_s": 2.5,
+}
+
 
 class StepMotor():
 
@@ -94,7 +107,7 @@ class StepMotor():
         # Close the gpiochip handle to release resources.
         if(self.connected):
             self.stop()
-    
+
     def __init__(
         self,
         GPIO_Pin,
@@ -105,6 +118,8 @@ class StepMotor():
         current_sensor=None,
         current_sensor_channel=None,
         limit_switch_pin=None,
+        limit_switch_active_low=False,
+        homing_config=None,
     ):
         self.GPIO_Pin = GPIO_Pin
         self.STEP_PIN = GPIO_Pin
@@ -115,7 +130,11 @@ class StepMotor():
         self._current_sensor = current_sensor
         self._current_sensor_channel = current_sensor_channel
         self._limit_switch_pin = limit_switch_pin
+        self._limit_switch_active_low = limit_switch_active_low
         self.current_step_position = 0
+        self._homing_cfg = dict(DEFAULT_HOMING_CFG)
+        if isinstance(homing_config, dict):
+            self._homing_cfg.update(homing_config)
 
         # Motor settings (needed for UI controls / interface compatibility)
         self._Kp = self.DEFAULT_KP
@@ -137,6 +156,10 @@ class StepMotor():
         self.movement_lock = threading.Lock()  # Lock for thread safety
         self.current_angle = 0.0
 
+    def set_homing_config(self, cfg: dict) -> None:
+        if isinstance(cfg, dict):
+            self._homing_cfg.update(cfg)
+
     def _steps_for_angle(self, angle_deg: float) -> int:
         return int(round(STEPS_PER_REV * (abs(angle_deg) / 360.0)))
 
@@ -147,7 +170,8 @@ class StepMotor():
         if limit_pin is None:
             return False
         try:
-            return bool(lgpio.gpio_read(self.h, limit_pin))
+            raw = bool(lgpio.gpio_read(self.h, limit_pin))
+            return (not raw) if self._limit_switch_active_low else raw
         except Exception:
             return False
 
@@ -160,29 +184,64 @@ class StepMotor():
         pulse(self.h, self.STEP_PIN, half_delay)
         self.current_step_position += 1 if clockwise else -1
 
-    def _reverse_one_step(self, blocked_clockwise: bool):
-        # Back off one microstep when a limit is hit to relieve switch pressure.
-        self._single_step(clockwise=not blocked_clockwise)
-
-    def _move_steps_timed(self, steps: int, total_time_s: float, clockwise: bool) -> int:
+    def _move_steps_timed_plain(self, steps: int, total_time_s: float, clockwise: bool) -> int:
+        """Pulse steps with timing; no limit checks (used when no limit GPIO)."""
         if steps <= 0:
             return 0
         time_per_step = total_time_s / max(steps, 1)
         half_delay = max(0.00001, time_per_step / 2.0)
         self._set_direction(clockwise)
-        moved = 0
         for _ in range(steps):
-            if self._is_limit_active():
-                self._reverse_one_step(blocked_clockwise=clockwise)
-                break
             pulse(self.h, self.STEP_PIN, half_delay)
             self.current_step_position += 1 if clockwise else -1
-            moved += 1
-        return moved
+        return steps
 
-    def _move_angle_timed(self, angle_deg: float, total_time_s: float, clockwise: bool) -> int:
+    def _move_steps_timed(self, steps: int, total_time_s: float, clockwise: bool) -> Tuple[int, bool]:
+        """Returns (steps moved in commanded direction, limit_hit).
+
+        With a limit GPIO: advance in ~1° chunks, read limit once per chunk; on hit back off
+        ``limit_backoff_angle_deg`` in the opposite direction (no limit checks during backoff).
+        """
+        if steps <= 0:
+            return (0, False)
+        if self._limit_switch_pin is None:
+            return (self._move_steps_timed_plain(steps, total_time_s, clockwise), False)
+
+        hc = self._homing_cfg
+        sample_deg = float(hc.get("limit_sample_angle_deg", 1.0))
+        backoff_deg = float(hc.get("limit_backoff_angle_deg", 1.0))
+        chunk_steps = max(1, self._steps_for_angle(sample_deg))
+        backoff_steps = max(1, self._steps_for_angle(backoff_deg))
+
+        time_per_step = total_time_s / max(steps, 1)
+        half_delay = max(0.00001, time_per_step / 2.0)
+        moved = 0
+        while moved < steps:
+            batch = min(chunk_steps, steps - moved)
+            self._set_direction(clockwise)
+            for _ in range(batch):
+                pulse(self.h, self.STEP_PIN, half_delay)
+                self.current_step_position += 1 if clockwise else -1
+                moved += 1
+            if self._is_limit_active():
+                self._set_direction(not clockwise)
+                for _ in range(backoff_steps):
+                    pulse(self.h, self.STEP_PIN, half_delay)
+                    self.current_step_position += 1 if (not clockwise) else -1
+                return (moved, True)
+        return (moved, False)
+
+    def _move_angle_timed(self, angle_deg: float, total_time_s: float, clockwise: bool) -> Tuple[int, bool]:
+        """Returns (steps_moved_in_command_direction, limit_hit). Updates ``current_angle`` if limit hit."""
         steps = self._steps_for_angle(angle_deg)
-        return self._move_steps_timed(steps=steps, total_time_s=total_time_s, clockwise=clockwise)
+        ca0 = self.current_angle
+        moved, hit = self._move_steps_timed(steps, total_time_s, clockwise)
+        if hit:
+            bd = float(self._homing_cfg.get("limit_backoff_angle_deg", 1.0))
+            moved_deg = 360.0 * moved / STEPS_PER_REV
+            net_deg = moved_deg - bd
+            self.current_angle = ca0 + (1 if clockwise else -1) * net_deg
+        return (moved, hit)
 
     def _write_enable(self, enabled: bool):
         """Write to the enable pin (if configured) taking active-low into account."""
@@ -216,24 +275,29 @@ class StepMotor():
         else:
             # No handle, open it
             self.h = lgpio.gpiochip_open(0)
-        
-        # If pins might already be claimed, try to free them first
+
+        # Re-claim STEP/DIR every time. The class default ``connected = True`` means the
+        # old ``if not self.connected`` branch was often skipped after gpio_free, leaving
+        # STEP/DIR unclaimed so pulses did not drive the driver (motor appeared "disabled").
         try:
-            # Try to free pins if they're already claimed (won't error if not claimed)
             lgpio.gpio_free(self.h, self.STEP_PIN)
             lgpio.gpio_free(self.h, self.DIR_PIN)
         except Exception:
-            pass  # Pins weren't claimed, that's fine
-        
-        if not (self.connected):
-            self.connected = True
-            lgpio.gpio_claim_output(self.h, self.STEP_PIN, 0)
-            lgpio.gpio_claim_output(self.h, self.DIR_PIN, 0)
-            self.movement_in_progress = False  # Track if a movement is currently running
-            self.movement_lock = threading.Lock()  # Lock for thread safety
+            pass
+        lgpio.gpio_claim_output(self.h, self.STEP_PIN, 0)
+        lgpio.gpio_claim_output(self.h, self.DIR_PIN, 0)
 
-        # Ensure enable line is asserted before moving
+        self.connected = True
+        if not hasattr(self, "movement_lock") or self.movement_lock is None:
+            self.movement_lock = threading.Lock()
+
+        # After stop(), ENABLE was freed; reclaim then assert enabled level.
         if self.ENABLE_PIN is not None:
+            try:
+                lgpio.gpio_free(self.h, self.ENABLE_PIN)
+            except Exception:
+                pass
+            lgpio.gpio_claim_output(self.h, self.ENABLE_PIN, 1 if self._enable_active_low else 0)
             self.enable()
 
         self.count = 0  # Reset counter for new sequence
@@ -253,13 +317,15 @@ class StepMotor():
                 
             self.prev_angle = angle
 
-            moved_steps = self._move_angle_timed(
+            moved_steps, hit_limit = self._move_angle_timed(
                 angle_deg=new_angle,
                 total_time_s=0.1,
                 clockwise=isClockwise,
             )
             expected_steps = self._steps_for_angle(new_angle)
-            if moved_steps == expected_steps:
+            if hit_limit:
+                pass  # current_angle already adjusted for backoff in _move_angle_timed
+            elif moved_steps == expected_steps:
                 self.current_angle = angle
             else:
                 self.current_angle += (360.0 * moved_steps / STEPS_PER_REV) * (1 if isClockwise else -1)
@@ -278,13 +344,15 @@ class StepMotor():
                 isClockwise = angle_diff > 0
                 
                 # Move the difference over the time interval
-                moved_steps = self._move_angle_timed(
+                moved_steps, hit_limit = self._move_angle_timed(
                     angle_deg=abs(angle_diff),
                     total_time_s=dt,
                     clockwise=isClockwise,
                 )
                 expected_steps = self._steps_for_angle(abs(angle_diff))
-                if moved_steps == expected_steps:
+                if hit_limit:
+                    pass
+                elif moved_steps == expected_steps:
                     self.current_angle = target_angle
                 else:
                     direction = 1 if isClockwise else -1
@@ -303,41 +371,150 @@ class StepMotor():
             self.prev_angle = 0.0
             return
         isClockwise = angle_to_move < 0
-        self._move_angle_timed(
+        _, hit_limit = self._move_angle_timed(
             angle_deg=abs(angle_to_move),
             total_time_s=0.1,
             clockwise=isClockwise,
         )
-        self.current_angle = 0.0
-        self.prev_angle = 0.0
-        self.current_step_position = 0
+        if not hit_limit:
+            self.current_angle = 0.0
+            self.prev_angle = 0.0
+            self.current_step_position = 0
+        else:
+            self.prev_angle = self.current_angle
 
     def setCurrentPositionZero(self):
         self.current_angle = 0.0
         self.prev_angle = 0.0
         self.current_step_position = 0
 
-    def zero(self):
+    def _release_limit_switch(
+        self,
+        half_delay: float,
+        backoff_clear: int,
+        phase_deadline: float,
+        approach_clockwise: Optional[bool] = None,
+    ) -> bool:
+        """Clear the limit: step until the switch opens or the release timeout expires.
+
+        When ``approach_clockwise`` is known, the switch was closed while moving in that
+        direction; we **only** step in the opposite direction (away from that motion) until
+        open or timeout. A shared limit can trip from either side — stepping again in the
+        approach direction would drive back into the trip, so we never do that here.
+
+        When ``approach_clockwise`` is unknown (e.g. homing starts on the switch), fall back
+        to long single-direction bursts in each direction.
+
+        Wall time is capped by ``limit_release_timeout_s`` and ``phase_deadline``.
+        """
+        max_burst = max(backoff_clear * 12, 800)
+        release_budget = float(self._homing_cfg.get("limit_release_timeout_s", 2.5))
+        release_deadline = min(phase_deadline, time.monotonic() + release_budget)
+
+        def burst_clear(clockwise: bool, max_steps: int, until: float) -> bool:
+            """Return True if switch opens before max_steps or ``until`` deadline."""
+            for _ in range(max_steps):
+                if not self._is_limit_active():
+                    return True
+                if time.monotonic() > until:
+                    return False
+                self._single_step(clockwise, half_delay)
+            return not self._is_limit_active()
+
+        if not self._is_limit_active():
+            return True
+
+        if approach_clockwise is not None:
+            away = not approach_clockwise
+            while self._is_limit_active():
+                if time.monotonic() > release_deadline:
+                    return False
+                self._single_step(away, half_delay)
+            return True
+
+        while self._is_limit_active():
+            if time.monotonic() > release_deadline:
+                return False
+            if burst_clear(False, max_burst, release_deadline):
+                return True
+            if burst_clear(True, max_burst, release_deadline):
+                return True
+            return False
+
+    def _search_until_limit(self, clockwise: bool, half_delay: float, max_steps: int, deadline: float) -> bool:
+        """Move in one direction until limit activates or step/timeout cap. Returns True if limit hit."""
+        if self._is_limit_active():
+            return False
+        n = 0
+        while True:
+            if time.monotonic() > deadline:
+                return False
+            if n >= max_steps:
+                return False
+            self._single_step(clockwise, half_delay)
+            n += 1
+            if self._is_limit_active():
+                return True
+
+    def zero(self) -> bool:
+        """Two-sweep limit homing: find both edges, move to midpoint, zero reference.
+
+        Returns True on success. Uses ``homing`` config for timeouts and sweep direction.
+        """
         if not self.connected or not self.h:
-            return
+            return False
         if self._limit_switch_pin is None:
             self.setCurrentPositionZero()
-            return
+            return True
 
-        search_step_delay = 0.001
-        search_limit = STEPS_PER_REV * 5
+        hc = self._homing_cfg
+        half_delay = float(hc.get("homing_search_half_delay_s", 0.001))
+        max_search = int(hc.get("max_search_steps", STEPS_PER_REV * 5))
+        phase_timeout = float(hc.get("phase_timeout_s", 120.0))
+        backoff_clear = int(hc.get("backoff_clear_steps", 80))
+        first_cw = bool(hc.get("first_sweep_clockwise", False))
 
-        # Move toward home direction until the single limit switch is active.
-        neg_search = 0
-        while not self._is_limit_active() and neg_search < search_limit:
-            self._single_step(clockwise=False, half_delay=search_step_delay)
-            neg_search += 1
-        if not self._is_limit_active():
-            return
-
-        # Back off one microstep after switch trigger for mechanical relief.
-        self._reverse_one_step(blocked_clockwise=False)
         self.setCurrentPositionZero()
+
+        deadline = time.monotonic() + phase_timeout
+        if self._is_limit_active():
+            if not self._release_limit_switch(half_delay, backoff_clear, deadline):
+                return False
+
+        deadline = time.monotonic() + phase_timeout
+        if not self._search_until_limit(first_cw, half_delay, max_search, deadline):
+            return False
+        edge1 = self.current_step_position
+
+        # Back off opposite to sweep 1 approach direction (same axis as ``first_cw`` search).
+        deadline = time.monotonic() + phase_timeout
+        if not self._release_limit_switch(
+            half_delay, backoff_clear, deadline, approach_clockwise=first_cw
+        ):
+            return False
+
+        deadline = time.monotonic() + phase_timeout
+        if not self._search_until_limit(not first_cw, half_delay, max_search, deadline):
+            return False
+        edge2 = self.current_step_position
+
+        mid = (edge1 + edge2) // 2
+
+        deadline = time.monotonic() + phase_timeout
+        if not self._release_limit_switch(
+            half_delay, backoff_clear, deadline, approach_clockwise=(not first_cw)
+        ):
+            return False
+
+        delta = mid - self.current_step_position
+        if delta != 0:
+            cw_to_center = delta > 0
+            steps = abs(int(delta))
+            total_time = max(0.05, (half_delay * 2.0) * steps)
+            _, _ = self._move_steps_timed(steps, total_time, cw_to_center)
+
+        self.setCurrentPositionZero()
+        return True
 
     def home(self):
         self.zero()
@@ -370,11 +547,13 @@ class StepMotor():
                         
                         if abs(target_angle) > 0.01:  # Only move if significant
                             print(f"Moving to waypoint {self.count}: {target_angle}° in {time_to_use}s")
-                            self._move_angle_timed(
+                            _, hit = self._move_angle_timed(
                                 angle_deg=abs(target_angle),
                                 total_time_s=time_to_use,
                                 clockwise=(target_angle > 0),
                             )
+                            if hit:
+                                break
                         self.count += 1
                     else:
                         # Subsequent movements: from previous waypoint to current waypoint
@@ -386,11 +565,13 @@ class StepMotor():
                         
                         if abs(angle_diff) > 0.01:  # Only move if significant difference
                             print(f"Moving to waypoint {self.count}: {self.motor_degrees[self.count]}° (Δ{angle_diff}°) in {time_to_use}s")
-                            self._move_angle_timed(
+                            _, hit = self._move_angle_timed(
                                 angle_deg=abs(angle_diff),
                                 total_time_s=time_to_use,
                                 clockwise=(angle_diff > 0),
                             )
+                            if hit:
+                                break
                         self.count += 1
                 
                 # After completing all waypoints, move back to 0
@@ -400,11 +581,13 @@ class StepMotor():
                         # Use the last time interval, or default to 1 second
                         time_to_zero = self.motor_times[-1] if len(self.motor_times) > 0 else 1.0
                         print(f"Returning to 0° from {final_angle}° in {time_to_zero}s")
-                        self._move_angle_timed(
+                        _, hit = self._move_angle_timed(
                             angle_deg=abs(final_angle),
                             total_time_s=time_to_zero,
                             clockwise=(final_angle < 0),  # Opposite direction to return to 0
                         )
+                        if hit:
+                            pass  # stopped on limit; skip complete message semantics
                 
                 print(f"Movement sequence complete. Returned to 0°")
             finally:
