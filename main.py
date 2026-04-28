@@ -157,7 +157,7 @@ if __name__ == '__main__':
     window.setScreen(screen)
     
     # Make window fullscreen
-    if scale == 1:
+    if scale == 1 or is_raspberry_pi():
         window.showFullScreen()
     else: 
         window.resize(window_width, window_height)
