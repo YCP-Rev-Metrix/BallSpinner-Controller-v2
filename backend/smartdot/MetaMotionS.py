@@ -105,10 +105,14 @@ class MetaMotion(iSmartDot):
             
             #self.setSampleRanges(XL=100, GY=100, MG=10)
 
-            self.XL_Range = 2
+            self.XL_Range = 16
             self.GY_Range = 2
-            
-            self.MG_SampleRate = 10
+
+            # Default all sensors to their maximum available sample rates.
+            self.XL_SampleRate = max(self.XL_availSampleRate)
+            self.GY_SampleRate = max(self.GY_availSampleRate)
+            self.MG_SampleRate = max(self.MG_availSampleRate)
+            self.LT_SampleRate = max(self.LT_availSampleRate)
 
             self.turnOnBlueLED()
             print("Connected to device")
@@ -497,7 +501,7 @@ class MetaMotion(iSmartDot):
             XL=max(self.XL_availSampleRate),
             GY=max(self.GY_availSampleRate),
             MG=max(self.MG_availSampleRate),
-            LT=min(self.LT_availSampleRate)
+            LT=max(self.LT_availSampleRate)
         )
         self.startAccel()
         self.startMag()
