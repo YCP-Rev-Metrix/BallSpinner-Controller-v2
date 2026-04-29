@@ -13,7 +13,11 @@ fi
 
 # cap_net_raw on the same interpreter binary that runs main.py (venv or system python).
 echo "ensure python has permission to use the bluetooth hardware"
-sudo setcap cap_net_raw+eip "$(readlink -f "$PYTHON_BIN")"
+PYTHON_REAL="$(readlink -f "$PYTHON_BIN")"
+if ! getcap "$PYTHON_REAL" 2>/dev/null | grep -q "cap_net_raw"; then
+    echo "Warning: $PYTHON_REAL is missing cap_net_raw."
+    echo "Run once (outside autostart): sudo setcap cap_net_raw+eip \"$PYTHON_REAL\""
+fi
 
 #echo "restart the bluetooth service"
 #sudo systemctl restart bluetooth
@@ -31,16 +35,15 @@ else
     echo "Warning: venv not found, using system python."
 fi
 
-# Run the GUI as root for privileged GPIO/hardware access. setcap above must target this PYTHON_BIN.
-# Autostart/kiosk: configure passwordless sudo for this script's user, or the loop will block on password.
+# Autostart should be non-interactive (no sudo prompts during boot).
 while true; do
-    if sudo -E env PATH="$PATH" "$PYTHON_BIN" "$REPO_DIR/main.py"; then
+    if env PATH="$PATH" "$PYTHON_BIN" "$REPO_DIR/main.py"; then
         echo "main.py finished successfully."
         break                 # exit the loop
     else
         echo "main.py failed (exit $?)."
         echo "Please ensure the E-Stop is not pressed."
-        echo "Press ENTER to retry or Ctrl-C to quit."
-        read -r              # wait for the user to hit Enter
+        echo "Retrying in 3 seconds..."
+        sleep 3
     fi
 done

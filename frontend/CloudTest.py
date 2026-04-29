@@ -6,6 +6,7 @@ from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QTextCursor
 import datetime as dt
 import pyqtgraph as pg
+import webbrowser
 from backend.models.EncoderData import EncoderDataInstance
 from backend.models.HeatData import HeatDataInstance
 from backend.models.SessionData import SessionData
@@ -337,6 +338,7 @@ class MotorTuneWorker(QtCore.QThread):
             sys.stdout = old_out
             sys.stderr = old_err
 
+
 class CloudTest(QtWidgets.QWidget):
     changePage = pyqtSignal(int, str)
 
@@ -378,6 +380,9 @@ class CloudTest(QtWidgets.QWidget):
         self.btnEditMotorTuning = self.findChild(QtWidgets.QPushButton, 'btnEditMotorTuning')
         if self.btnEditMotorTuning is not None:
             self.btnEditMotorTuning.clicked.connect(self.open_motor_tuning_dialog)
+        self.btnPlayYoutubePopup = self.findChild(QtWidgets.QPushButton, 'btnPlayYoutubePopup')
+        if self.btnPlayYoutubePopup is not None:
+            self.btnPlayYoutubePopup.clicked.connect(self.play_youtube_popup)
 
     def spin_diagnostic_data(self):
         """Run the motor diagnostic and show a live log dialog while it runs."""
@@ -523,6 +528,10 @@ class CloudTest(QtWidgets.QWidget):
     def open_motor_tuning_dialog(self):
         dialog = MotorTuningDialog(bsc, parent=self)
         dialog.exec()
+
+    def play_youtube_popup(self):
+        watch_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        webbrowser.open(watch_url)
 
 
     def ask_cloud_for_6(self):

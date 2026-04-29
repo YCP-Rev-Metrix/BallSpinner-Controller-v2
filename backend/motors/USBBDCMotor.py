@@ -32,6 +32,7 @@ FAULT_CODES = {
     5: "Motor stalled",
     6: "Current sensor fault",
     7: "Encoder fault",
+    8: "Limit switch stuck",
 }
 FAULT_LIGHT_PIN = 25
 ENABLE_GPIO_PIN = 26

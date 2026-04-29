@@ -131,7 +131,7 @@ class ShotViewPage(QtWidgets.QWidget):
         interval_s = max(float(interval_s), 0.001)
         while time.time() < end_time:
             try:
-                self.shot_script.change_speed_single(0, target)
+                self.shot_script.change_speed_single(0, target, interval_s)
                 if abs(float(motor.getCurrentSpeed()) - target) <= tol:
                     return
             except Exception:
@@ -361,16 +361,17 @@ class ShotViewPage(QtWidgets.QWidget):
 
     class MotorRunnable(QRunnable):
         """A QRunnable that calls ShotScript.change_speed_single and emits a finished signal."""
-        def __init__(self, motor_index: int, value: float, shot_script: ShotScript, signals: 'ShotViewPage.WorkerSignals'):
+        def __init__(self, motor_index: int, value: float, dt_s: float, shot_script: ShotScript, signals: 'ShotViewPage.WorkerSignals'):
             super().__init__()
             self.motor_index = motor_index
             self.value = value
+            self.dt_s = dt_s
             self.shot_script = shot_script
             self.signals = signals
 
         def run(self):
             try:
-                self.shot_script.change_speed_single(self.motor_index, self.value)
+                self.shot_script.change_speed_single(self.motor_index, self.value, self.dt_s)
                 result = {'motor_index': self.motor_index, 'value': self.value}
             except Exception as e:
                 result = {'motor_index': self.motor_index, 'value': self.value, 'error': str(e)}
@@ -389,7 +390,7 @@ class ShotViewPage(QtWidgets.QWidget):
         rather than the receipt time.
         """
         signals = ShotViewPage.WorkerSignals()
-        runnable = ShotViewPage.MotorRunnable(motor_index, value, self.shot_script, signals)
+        runnable = ShotViewPage.MotorRunnable(motor_index, value, self.dt, self.shot_script, signals)
         # attach time information for later use
         runnable.delta = delta
         # keep reference so the runnable and its signals are not garbage collected

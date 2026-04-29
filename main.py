@@ -90,7 +90,7 @@ if __name__ == '__main__':
     
     QtWidgets.QApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_DontUseNativeMenuBar, True)
 
-    app = QtWidgets.QApplication([])
+    app = QtWidgets.QApplication(sys.argv if sys.argv else ["main.py"])
     
     # Load and set application icon
     icon_path = get_icon_path()

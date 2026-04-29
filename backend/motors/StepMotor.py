@@ -132,6 +132,7 @@ class StepMotor():
         self._limit_switch_pin = limit_switch_pin
         self._limit_switch_active_low = limit_switch_active_low
         self.current_step_position = 0
+        self._last_limit_fault = None
         self._homing_cfg = dict(DEFAULT_HOMING_CFG)
         if isinstance(homing_config, dict):
             self._homing_cfg.update(homing_config)
@@ -155,6 +156,37 @@ class StepMotor():
         self.movement_in_progress = False  # Track if a movement is currently running
         self.movement_lock = threading.Lock()  # Lock for thread safety
         self.current_angle = 0.0
+
+    def _set_limit_fault(self, reason: str):
+        self._last_limit_fault = str(reason)
+        print(f"StepMotor limit fault (GPIO {self.GPIO_Pin}): {self._last_limit_fault}")
+        self._signal_primary_motor_fault(self._last_limit_fault)
+
+    def _clear_limit_fault(self):
+        self._last_limit_fault = None
+
+    def get_last_limit_fault(self):
+        return self._last_limit_fault
+
+    def _signal_primary_motor_fault(self, reason: Optional[str] = None):
+        """If the primary motor is actively running, use its built-in fault light."""
+        try:
+            from BSC import bsc
+            primary = getattr(bsc, "motor1", None)
+            if primary is None or not hasattr(primary, "trigger_fault"):
+                return
+            active_now = False
+            for attr in ("targetSpeed", "currSpeed"):
+                val = getattr(primary, attr, 0.0)
+                if isinstance(val, (int, float)) and abs(val) > 1.0:
+                    active_now = True
+                    break
+            if active_now:
+                reason_txt = (reason or "").lower()
+                fault_code = 8 if "stuck" in reason_txt else 5
+                primary.trigger_fault(fault_code)
+        except Exception:
+            pass
 
     def set_homing_config(self, cfg: dict) -> None:
         if isinstance(cfg, dict):
@@ -303,62 +335,64 @@ class StepMotor():
         self.count = 0  # Reset counter for new sequence
         self.movement_in_progress = False
         self.current_angle = 0.0  # Track current position
+        self._clear_limit_fault()
         # Don't move here - wait for first changeSpeed call
 
-    def changeSpeed(self, dutyCycle: float, isShotMode: bool):
+    def changeSpeed(self, dutyCycle: float, isShotMode: bool, dt_s: Optional[float] = None):
         angle = dutyCycle # so i dont have to fix imotor lol
         #This not being fixed lead me down a rabbit 
-        if not (isShotMode):
-            isClockwise = True
-            new_angle = angle - self.prev_angle
-            if(new_angle<0):
-                new_angle = new_angle * -1
-                isClockwise = False
-                
-            self.prev_angle = angle
+        with self.movement_lock:
+            if not (isShotMode):
+                isClockwise = True
+                new_angle = angle - self.prev_angle
+                if(new_angle<0):
+                    new_angle = new_angle * -1
+                    isClockwise = False
+                    
+                self.prev_angle = angle
 
-            moved_steps, hit_limit = self._move_angle_timed(
-                angle_deg=new_angle,
-                total_time_s=0.1,
-                clockwise=isClockwise,
-            )
-            expected_steps = self._steps_for_angle(new_angle)
-            if hit_limit:
-                pass  # current_angle already adjusted for backoff in _move_angle_timed
-            elif moved_steps == expected_steps:
-                self.current_angle = angle
-            else:
-                self.current_angle += (360.0 * moved_steps / STEPS_PER_REV) * (1 if isClockwise else -1)
-        else:
-            # Reactive approach: move towards target angle each time step
-            target_angle = angle
-            angle_diff = target_angle - self.current_angle
-            
-            if abs(angle_diff) > 0.01:  # Only move if significant difference
-                # Get dt from ShotViewPage - we need to pass it or calculate it
-                # For now, use a small default that will be overridden
-                # You'll need to pass dt as a parameter or store it
-                dt = 0.1  # This should come from the caller or be stored
-                
-                # Determine direction
-                isClockwise = angle_diff > 0
-                
-                # Move the difference over the time interval
                 moved_steps, hit_limit = self._move_angle_timed(
-                    angle_deg=abs(angle_diff),
-                    total_time_s=dt,
+                    angle_deg=new_angle,
+                    total_time_s=0.1,
                     clockwise=isClockwise,
                 )
-                expected_steps = self._steps_for_angle(abs(angle_diff))
+                expected_steps = self._steps_for_angle(new_angle)
                 if hit_limit:
-                    pass
+                    self._set_limit_fault("Limit hit while tracking manual angle command.")
                 elif moved_steps == expected_steps:
-                    self.current_angle = target_angle
+                    self.current_angle = angle
+                    self._clear_limit_fault()
                 else:
-                    direction = 1 if isClockwise else -1
-                    self.current_angle += (360.0 * moved_steps / STEPS_PER_REV) * direction
+                    self.current_angle += (360.0 * moved_steps / STEPS_PER_REV) * (1 if isClockwise else -1)
             else:
-                self.current_angle = target_angle
+                # Reactive approach: move towards target angle each time step
+                target_angle = angle
+                angle_diff = target_angle - self.current_angle
+                
+                if abs(angle_diff) > 0.01:  # Only move if significant difference
+                    dt = float(dt_s) if dt_s and dt_s > 0.0 else 0.1
+                    
+                    # Determine direction
+                    isClockwise = angle_diff > 0
+                    
+                    # Move the difference over the time interval
+                    moved_steps, hit_limit = self._move_angle_timed(
+                        angle_deg=abs(angle_diff),
+                        total_time_s=dt,
+                        clockwise=isClockwise,
+                    )
+                    expected_steps = self._steps_for_angle(abs(angle_diff))
+                    if hit_limit:
+                        self._set_limit_fault("Limit hit during shot-mode angle tracking.")
+                    elif moved_steps == expected_steps:
+                        self.current_angle = target_angle
+                        self._clear_limit_fault()
+                    else:
+                        direction = 1 if isClockwise else -1
+                        self.current_angle += (360.0 * moved_steps / STEPS_PER_REV) * direction
+                else:
+                    self.current_angle = target_angle
+                    self._clear_limit_fault()
 
         print(f"step motor on pin{self.GPIO_Pin} running and moving to {angle} degrees")
 
@@ -428,17 +462,20 @@ class StepMotor():
             away = not approach_clockwise
             while self._is_limit_active():
                 if time.monotonic() > release_deadline:
+                    self._set_limit_fault("Limit switch stuck: timeout while backing off switch.")
                     return False
                 self._single_step(away, half_delay)
             return True
 
         while self._is_limit_active():
             if time.monotonic() > release_deadline:
+                self._set_limit_fault("Limit switch stuck: timeout while clearing switch.")
                 return False
             if burst_clear(False, max_burst, release_deadline):
                 return True
             if burst_clear(True, max_burst, release_deadline):
                 return True
+            self._set_limit_fault("Limit switch stuck: failed to clear after bidirectional backoff.")
             return False
 
     def _search_until_limit(self, clockwise: bool, half_delay: float, max_steps: int, deadline: float) -> bool:
@@ -448,12 +485,15 @@ class StepMotor():
         n = 0
         while True:
             if time.monotonic() > deadline:
+                self._set_limit_fault("Timed out searching for limit switch edge.")
                 return False
             if n >= max_steps:
+                self._set_limit_fault("Max steps reached while searching for limit switch edge.")
                 return False
             self._single_step(clockwise, half_delay)
             n += 1
             if self._is_limit_active():
+                self._clear_limit_fault()
                 return True
 
     def zero(self) -> bool:
@@ -474,47 +514,51 @@ class StepMotor():
         backoff_clear = int(hc.get("backoff_clear_steps", 80))
         first_cw = bool(hc.get("first_sweep_clockwise", False))
 
-        self.setCurrentPositionZero()
+        with self.movement_lock:
+            self.setCurrentPositionZero()
 
-        deadline = time.monotonic() + phase_timeout
-        if self._is_limit_active():
-            if not self._release_limit_switch(half_delay, backoff_clear, deadline):
+            deadline = time.monotonic() + phase_timeout
+            if self._is_limit_active():
+                if not self._release_limit_switch(half_delay, backoff_clear, deadline):
+                    if self._last_limit_fault is None:
+                        self._set_limit_fault("Limit switch stuck active at homing start.")
+                    return False
+
+            deadline = time.monotonic() + phase_timeout
+            if not self._search_until_limit(first_cw, half_delay, max_search, deadline):
+                return False
+            edge1 = self.current_step_position
+
+            # Back off opposite to sweep 1 approach direction (same axis as ``first_cw`` search).
+            deadline = time.monotonic() + phase_timeout
+            if not self._release_limit_switch(
+                half_delay, backoff_clear, deadline, approach_clockwise=first_cw
+            ):
                 return False
 
-        deadline = time.monotonic() + phase_timeout
-        if not self._search_until_limit(first_cw, half_delay, max_search, deadline):
-            return False
-        edge1 = self.current_step_position
+            deadline = time.monotonic() + phase_timeout
+            if not self._search_until_limit(not first_cw, half_delay, max_search, deadline):
+                return False
+            edge2 = self.current_step_position
 
-        # Back off opposite to sweep 1 approach direction (same axis as ``first_cw`` search).
-        deadline = time.monotonic() + phase_timeout
-        if not self._release_limit_switch(
-            half_delay, backoff_clear, deadline, approach_clockwise=first_cw
-        ):
-            return False
+            mid = (edge1 + edge2) // 2
 
-        deadline = time.monotonic() + phase_timeout
-        if not self._search_until_limit(not first_cw, half_delay, max_search, deadline):
-            return False
-        edge2 = self.current_step_position
+            deadline = time.monotonic() + phase_timeout
+            if not self._release_limit_switch(
+                half_delay, backoff_clear, deadline, approach_clockwise=(not first_cw)
+            ):
+                return False
 
-        mid = (edge1 + edge2) // 2
+            delta = mid - self.current_step_position
+            if delta != 0:
+                cw_to_center = delta > 0
+                steps = abs(int(delta))
+                total_time = max(0.05, (half_delay * 2.0) * steps)
+                _, _ = self._move_steps_timed(steps, total_time, cw_to_center)
 
-        deadline = time.monotonic() + phase_timeout
-        if not self._release_limit_switch(
-            half_delay, backoff_clear, deadline, approach_clockwise=(not first_cw)
-        ):
-            return False
-
-        delta = mid - self.current_step_position
-        if delta != 0:
-            cw_to_center = delta > 0
-            steps = abs(int(delta))
-            total_time = max(0.05, (half_delay * 2.0) * steps)
-            _, _ = self._move_steps_timed(steps, total_time, cw_to_center)
-
-        self.setCurrentPositionZero()
-        return True
+            self.setCurrentPositionZero()
+            self._clear_limit_fault()
+            return True
 
     def home(self):
         self.zero()
