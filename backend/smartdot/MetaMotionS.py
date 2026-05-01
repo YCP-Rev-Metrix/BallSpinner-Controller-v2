@@ -105,7 +105,7 @@ class MetaMotion(iSmartDot):
             
             #self.setSampleRanges(XL=100, GY=100, MG=10)
 
-            self.XL_Range = 16
+            self.XL_Range = 4
             self.GY_Range = 2
 
             # Default all sensors to their maximum available sample rates.
