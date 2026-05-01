@@ -5,6 +5,7 @@ import os
 
 frontend_ui_files = [(f, 'frontend') for f in glob.glob('frontend/*.ui')]
 frontend_style_files = [(f, 'frontend') for f in glob.glob('frontend/*.qss')]
+frontend_image_files = [(f, 'frontend') for f in glob.glob('frontend/*.png')]
 icon_files = [(f, 'Icons') for f in glob.glob('Icons/BSC_Icon.*')]
 help_files = []
 for root, _dirs, files in os.walk('frontend/help'):
@@ -21,6 +22,7 @@ a = Analysis(
     datas=
         frontend_ui_files +
         frontend_style_files +
+        frontend_image_files +
         icon_files +
         help_files,
     hiddenimports=[],

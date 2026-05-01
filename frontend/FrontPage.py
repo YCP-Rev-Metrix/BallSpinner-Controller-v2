@@ -15,11 +15,10 @@ class FrontPage(QtWidgets.QWidget):
         self.btnShotMode = self.findChild(QtWidgets.QPushButton, 'btnShot')
         self.btnData = self.findChild(QtWidgets.QPushButton, 'btnAnalysis')
 
-        """
-         self.lblLogo = self.findChild(QtWidgets.QLabel, 'lblLogo')
-        self.logo = QPixmap('BSC_Logo.png') 
-        self.lblLogo.setPixmap(self.logo)
-        """
+        self.lblLogo = self.findChild(QtWidgets.QLabel, 'lblLogo')
+        logo_path = os.path.join(os.path.dirname(__file__), 'logo.png')
+        if self.lblLogo and os.path.exists(logo_path):
+            self.lblLogo.setPixmap(QPixmap(logo_path))
 
         self.btnDiagnostics.clicked.connect(lambda: self.changePage.emit(1, "Diagnostics"))
         self.btnShotMode.clicked.connect(lambda: self.changePage.emit(2, "Shot Mode"))
