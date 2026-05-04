@@ -3,35 +3,49 @@
 The codebase is operating-system independent for development. Hardware-bound pieces (MetaWear over Bluetooth, motor drivers) are meant to run on the Raspberry Pi, so you can develop on any platform and run the full stack on the Pi.
 
 ## Windows - WSL
-It is recommended to use WSL; that is what our team used.
+It is recommended to use WSL; that is what our team used. A guide to installing WSL can be found at https://ycpcs.github.io/dev-env-setup-guide/ under the Windows 11: WSL2 guide (Personal Computer) section (only up to step 3 is required).
 
-A guide to installing the WSL version can be found at https://ycpcs.github.io/dev-env-setup-guide/ under the Windows 11: WSL2 guide (Personal Computer) section.
+### Opening WSL
 
-Only up to step 3 of that guide is required. You can use whatever IDE you like: VS Code was used for our development, but IDEs such as Cursor and PyCharm work fine.
+1. **Open the WSL application:**
+   - Press `Win + R` to open the Run dialog
+   - Type `wsl` and press Enter
+   - Alternatively, search for "WSL" or "Ubuntu" in the Windows Start menu
 
-For day-to-day development, stay in WSL. Packaging with PyInstaller on Windows is documented below under [Build on Windows (Native)](#build-on-windows-native). Building under WSL will result in a Linux application rather than Windows.
+2. **You'll now be in a Linux terminal** where you can run the commands below.
 
 ### Running the project
+
 Clone the repo:
 
 ```bash
 git clone https://github.com/YCP-Rev-Metrix/BallSpinner-Controller-v2/
+cd BallSpinner-Controller-v2
 ```
 
-**Python version**
+**Check Python version**
 
-This project targets **Python 3.13** (same as the native Windows build scripts). In WSL, check your version:
+This project targets **Python 3.13**:
 
 ```bash
 python3 --version
 ```
 
-If you need 3.13 on Ubuntu/WSL, use your distro's packages or [deadsnakes](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa) (`python3.13`, `python3.13-venv`) before creating the venv.
-
-**Virtual environment and dependencies**
+If you need 3.13 on Ubuntu/WSL, add the deadsnakes PPA first, then install:
 
 ```bash
-cd BallSpinner-Controller-v2
+sudo apt update
+sudo apt install software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+sudo apt install python3.13 python3.13-venv
+```
+
+More info on [deadsnakes PPA](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa).
+
+**Create virtual environment and install dependencies**
+
+```bash
 python3 -m venv venv
 source venv/bin/activate
 python -m pip install --upgrade pip
@@ -49,46 +63,56 @@ python main.py
 1. **Install VS Code on Windows** (if not already installed)
    - Download from https://code.visualstudio.com/
 
-2. **Install the Remote - WSL extension in VS Code**
-   - Open VS Code
-   - Go to Extensions (Ctrl+Shift+X)
-   - Search for "Remote - WSL" (by Microsoft)
-   - Click Install
-
-3. **Open the project in WSL from VS Code**
-   
-   Option A: From the command line in WSL:
+2. **Open the project in VS Code**
+   - In WSL, from your repo folder, try:
    ```bash
-   cd /mnt/c/Users/YourUsername/Documents/GitHub/BallSpinner-Controller-v2
    code .
    ```
-   
-   Option B: From VS Code directly:
-   - Click the green "WSL" indicator at the bottom-left corner
-   - Select "Connect to WSL"
-   - Use File → Open Folder and navigate to `/mnt/c/Users/YourUsername/Documents/GitHub/BallSpinner-Controller-v2`
+   - If that fails with `Exec format error` or `code: command not found`, run this from Windows PowerShell instead:
+   ```powershell
+   code --remote wsl+Ubuntu /home/matty/BallSpinner-Controller-v2
+   ```
+   - If you still want to launch from WSL and `code .` continues to fail, repair WSL interop in WSL:
+   ```bash
+   sudo sh -c 'echo :WSLInterop:M::MZ::/init:PF > /usr/lib/binfmt.d/WSLInterop.conf'
+   sudo systemctl unmask systemd-binfmt.service
+   sudo systemctl restart systemd-binfmt
+   code .
+   ```
 
-4. **Run the project from VS Code**
+3. **Run the project from VS Code**
    - Open the integrated terminal (Ctrl+`)
-   - Your terminal will automatically be inside WSL
+   - Ensure the terminal is in WSL
    - Activate the virtual environment: `source venv/bin/activate`
    - Run the app: `python main.py`
 
-5. **Run and debug from VS Code**
-   - Install Python extension in VS Code (while connected to WSL)
-   - Set breakpoints by clicking line numbers
-   - Press F5 or go to Run → Start Debugging
-   - Select "Python" as the debug environment
 
 ### Developing the frontend
 See the UI guide in [BSC_Ui_README.md](BSC_Ui_README.md) for how to set up Qt Designer and the page workflow.
 
-## Mac
-Install Python (3.13.7 recommended), create a virtual environment, and install dependencies:
+## macOS
+Install Homebrew and Python 3.13, then create a virtual environment and install dependencies:
 
 ```bash
-python3 -m venv venv
+# Install Homebrew (if not already installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Add Homebrew to your shell (Apple Silicon)
+echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# Install Python 3.13
+brew update
+brew install python@3.13
+python3.13 --version
+```
+
+Create a virtual environment and install dependencies:
+
+```bash
+python3.13 -m venv venv
 source venv/bin/activate
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
@@ -99,6 +123,7 @@ python main.py
 ```
 
 For UI work, see [BSC_Ui_README.md](BSC_Ui_README.md).
+
 
 ## Build the Desktop App
 
