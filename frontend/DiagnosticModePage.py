@@ -972,6 +972,7 @@ class DiagnosticModePage(QtWidgets.QWidget):
     
     # Apply override mode ranges and styling.
     def toggle_enable_override(self, enable: bool):
+        was_override = self.OverrideMode
         self.OverrideMode = enable
         
         if self.OverrideMode:
@@ -979,12 +980,16 @@ class DiagnosticModePage(QtWidgets.QWidget):
             # Mark override mode for QSS styling
             self._apply_override_style(True)
             self._apply_channel_ranges(override=True)
+            if not was_override:
+                self.navigationLock.emit(False, "Override mode active")
         else:
             print("Override Mode Disabled")
             # Clear override mode styling flag
             self._apply_override_style(False)
             self._apply_channel_ranges(override=False)
             self._reset_spin_motor_only()
+            if was_override:
+                self.navigationLock.emit(True, "")
 
     # Apply override mode styling on the main window.
     def _apply_override_style(self, enabled: bool):
