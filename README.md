@@ -44,6 +44,42 @@ pip install -r requirements.txt
 python main.py
 ```
 
+### Setting up VS Code with WSL
+
+1. **Install VS Code on Windows** (if not already installed)
+   - Download from https://code.visualstudio.com/
+
+2. **Install the Remote - WSL extension in VS Code**
+   - Open VS Code
+   - Go to Extensions (Ctrl+Shift+X)
+   - Search for "Remote - WSL" (by Microsoft)
+   - Click Install
+
+3. **Open the project in WSL from VS Code**
+   
+   Option A: From the command line in WSL:
+   ```bash
+   cd /mnt/c/Users/YourUsername/Documents/GitHub/BallSpinner-Controller-v2
+   code .
+   ```
+   
+   Option B: From VS Code directly:
+   - Click the green "WSL" indicator at the bottom-left corner
+   - Select "Connect to WSL"
+   - Use File → Open Folder and navigate to `/mnt/c/Users/YourUsername/Documents/GitHub/BallSpinner-Controller-v2`
+
+4. **Run the project from VS Code**
+   - Open the integrated terminal (Ctrl+`)
+   - Your terminal will automatically be inside WSL
+   - Activate the virtual environment: `source venv/bin/activate`
+   - Run the app: `python main.py`
+
+5. **Run and debug from VS Code**
+   - Install Python extension in VS Code (while connected to WSL)
+   - Set breakpoints by clicking line numbers
+   - Press F5 or go to Run → Start Debugging
+   - Select "Python" as the debug environment
+
 ### Developing the frontend
 See the UI guide in [BSC_Ui_README.md](BSC_Ui_README.md) for how to set up Qt Designer and the page workflow.
 
