@@ -3,7 +3,41 @@
 The codebase is operating-system independent for development. Hardware-bound pieces (MetaWear over Bluetooth, motor drivers) are meant to run on the Raspberry Pi, so you can develop on any platform and run the full stack on the Pi.
 
 ## Windows - WSL
-It is recommended to use WSL; that is what our team used. A guide to installing WSL can be found at https://ycpcs.github.io/dev-env-setup-guide/ under the Windows 11: WSL2 guide (Personal Computer) section (only up to step 3 is required).
+It is recommended to use WSL; that is what our team used. A guide to installing WSL can be found at https://ycpcs.github.io/dev-env-setup-guide/ under the Windows 11: WSL2 guide (Personal Computer) section. The instructions below focus on the relevant steps.
+
+### Table of Contents
+
+1. [Enable Virtualization in your PC BIOS/UEFI](#enable-virtualization-in-your-pc-biosuefi)
+2. [Install WSL2 and an Ubuntu 24.04 LTS Virtual Machine](#install-wsl2-and-an-ubuntu-2404-lts-virtual-machine)
+3. [A. I Already Have WSL Installed](#a-i-already-have-wsl-installed)
+4. [Opening WSL](#opening-wsl)
+5. [Running the project](#running-the-project)
+6. [Setting up VS Code with WSL](#setting-up-vs-code-with-wsl)
+
+### Enable Virtualization in your PC BIOS/UEFI
+
+---
+
+Follow the full virtualization instructions in:
+
+- [Windows PC Virtualization Settings](win11_enable_virtualization.md)
+
+## Install WSL2 and an Ubuntu 24.04 LTS Virtual Machine
+
+---
+
+Follow the full WSL2 + Ubuntu installation instructions in:
+
+- [Windows 11 WSL2 and Ubuntu Installation](win11_wsl2_installation.md)
+
+Source for both guides: [YCP Dev Environment Setup Guide](https://ycpcs.github.io/dev-env-setup-guide/)
+See the linked guide pages for full attribution and copyright.
+
+---
+
+### A. I Already Have WSL Installed
+
+If WSL is already installed, you can skip the virtualization and installation sections above and continue at **Opening WSL**.
 
 ### Opening WSL
 
